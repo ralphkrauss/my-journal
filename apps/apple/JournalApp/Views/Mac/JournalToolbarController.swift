@@ -499,6 +499,14 @@
     final class MenuToolbarButton: NSButton {
         var statusMenu: NSMenu?
 
+        /// The toolbar restyles the button after the item's place was measured (a regular button becomes a toolbar
+        /// one), and nothing else tells the place to measure again, so Editor Only would shift a point the first time
+        /// Sync Status appears.
+        override func invalidateIntrinsicContentSize() {
+            super.invalidateIntrinsicContentSize()
+            superview?.invalidateIntrinsicContentSize()
+        }
+
         override func mouseDown(with event: NSEvent) {
             guard isEnabled else { return }
             showMenu()

@@ -92,6 +92,7 @@ extension NativeEditor.Coordinator {
             view.selectedRange = selection
             view.typingAttributes = typing
             textViewDidChange(view)
+            revealCaretAfterEdit()
         #endif
     }
 }

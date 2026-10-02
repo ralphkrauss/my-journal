@@ -38,6 +38,7 @@ A design and its reviews share one row.
 | [recently-deleted-2026-09-30.md](recently-deleted-2026-09-30.md) | Current. Cancelling a swipe to delete permanently keeps the row; the footer check. |
 | [device-orientations.md](device-orientations.md), [review](device-orientations-review.md) | Current, amended. The constrained iOS header was replaced by unified-entry-scrolling.md. |
 | [unified-entry-scrolling.md](unified-entry-scrolling.md), [review](unified-entry-scrolling-review.md) | Current. |
+| [typing-scroll.md](typing-scroll.md), [review](typing-scroll-review.md) | Current. Scrolling while typing on iPhone and iPad: the writing controls' area is the entry's bottom inset and the text view follows the caret, as in Notes. |
 | [entry-title-accessibility.md](entry-title-accessibility.md), [review](entry-title-accessibility-review.md) | Current, amended. The header layout was replaced by unified-entry-scrolling.md. |
 | [mac-live-acceptance.md](mac-live-acceptance.md), [review](mac-live-acceptance-review.md) | Evidence. Live Mac checks of a 2026-09-21 build. |
 | [mac-settings-navigation-review.md](mac-settings-navigation-review.md) | Evidence. The Settings window was later redesigned (owner-decisions-2026-09-25.md §9). |

@@ -494,7 +494,9 @@ enum EntryTextInset {
             view.accessibilityLabel = "Entry text"
             view.delegate = context.coordinator
             view.allowsEditingTextAttributes = true
-            view.inputAccessoryView = WritingAccessory(actions: actions)
+            let accessory = WritingAccessory(actions: actions)
+            accessory.controlsMoved = { [weak coordinator = context.coordinator] in coordinator?.updateWritingInset() }
+            view.inputAccessoryView = accessory
             WritingAccessory.hideSystemFormatting(of: view)
             view.isFindInteractionEnabled = true
             view.formattingActions = actions
@@ -574,9 +576,8 @@ enum EntryTextInset {
             var reading = EditorReading()
             /// This editor's pictures, decoded at the size they are shown.
             let thumbnails = ImageThumbnails()
-            /// Where the entry was scrolled, and its bottom inset, before a sheet made room for the selection.
-            var revealedScroll: RevealedScroll?
-            /// Until when the caret is kept above the keyboard after a picture was inserted (SelectionReveal.swift).
+            /// Until when the caret is kept above the writing controls after a picture was inserted or the entry was
+            /// resized (SelectionReveal.swift).
             var caretRevealDeadline: Date?
             /// The entry's size when it was last laid out, to notice rotation.
             var laidOutSize = CGSize.zero
@@ -584,7 +585,18 @@ enum EntryTextInset {
             private var previousSelection = NSRange(location: 0, length: 0)
             /// The line as typed before a Markdown shortcut converted it, so Backspace right after can restore it.
             var shortcutRevert: MarkdownShortcuts.Revert?
-            init(_ parent: NativeEditor) { self.parent = parent }
+            init(_ parent: NativeEditor) {
+                self.parent = parent
+                super.init()
+                // The keyboard, the Format panel and the writing controls change the room left for the entry.
+                NotificationCenter.default.addObserver(
+                    self, selector: #selector(keyboardChangedFrame),
+                    name: UIResponder.keyboardDidChangeFrameNotification,
+                    object: nil)
+            }
+            @objc private func keyboardChangedFrame(_ notification: Notification) {
+                updateWritingInset()
+            }
             func update(_ parent: NativeEditor) {
                 if lastID != parent.itemID || self.parent.editable != parent.editable
                     || rendered != parent.document
@@ -601,6 +613,7 @@ enum EntryTextInset {
                 view.layoutChanged = { [weak self] in
                     self?.refreshImages()
                     self?.synchronizeTables()
+                    self?.updateWritingInset()
                     self?.revealCaretAfterResize()
                     self?.keepCaretRevealed()
                 }
@@ -770,6 +783,7 @@ enum EntryTextInset {
             func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String)
                 -> Bool
             {
+                endCaretReveal()
                 guard markdownShortcutShouldChange(in: range, replacement: text) else { return false }
                 if text == "\n", convertLineOnReturn(selection: range) { return false }
                 guard text == "\n", textView.markedTextRange == nil, !editingSource,
@@ -787,6 +801,7 @@ enum EntryTextInset {
             }
             func textViewDidEndEditing(_ textView: UITextView) {
                 parent.actions.setEditing(false, by: textView)
+                updateWritingInset()
             }
             func textViewDidChangeSelection(_ textView: UITextView) {
                 let selection = textView.selectedRange
@@ -821,7 +836,6 @@ enum EntryTextInset {
                 refreshImages(force: view.undoManager?.isUndoing == true || view.undoManager?.isRedoing == true)
                 synchronizeTables()
                 parent.actions.formattingSelectionChanged()
-                revealCaretWhileWriting()
             }
             /// Replaces text as one undo step. `adopting` text is placed like pasted text: it joins the block it lands in.
             func replace(
@@ -838,6 +852,7 @@ enum EntryTextInset {
                 view.selectedRange = NSRange(location: range.location + text.length, length: 0)
                 if view.textStorage.length == 0 { view.typingAttributes = typing }
                 textViewDidChange(view)
+                revealCaretAfterEdit()
                 if cell != nil { cellTyping?.document = parent.document }
             }
             func formattingSession() -> ((EditorCommand) -> Void)? {

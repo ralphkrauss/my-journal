@@ -27,6 +27,14 @@
         }
         required init?(coder: NSCoder) { nil }
 
+        /// Reports a change in the controls' size or place, such as a new text size, which the keyboard doesn't
+        /// always announce.
+        var controlsMoved: (() -> Void)?
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            DispatchQueue.main.async { [weak self] in self?.controlsMoved?() }
+        }
+
         /// The accessory spans the keyboard's width, but only the controls' capsule takes touches: beside it, they
         /// reach the entries list and sidebar, as in Notes.
         override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {

@@ -106,7 +106,10 @@ final class SyncRecoveryUITests: XCTestCase {
             "The server address doesn’t lead to a My Journal server. Your changes are saved on this device.", app: app)
         capture(app, "6 Not a My Journal server")
         try request("genuine")
-        tap(app.buttons["Check Again"])
+        // The app may notice the journal server is back and recover before the tap; both end synced. A tap at the
+        // button's place lands on Sync Now in its row if recovery wins the race after the check.
+        let checkAgain = app.buttons["Check Again"]
+        if checkAgain.exists { checkAgain.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
         expectSynced(app)
 
         // Stop Syncing keeps everything; connecting again joins by identity after Merge Journals asks.

@@ -1,3 +1,4 @@
+import Vision
 import XCTest
 
 /// Small native details of starting a journal and writing an entry on iPhone.
@@ -95,6 +96,121 @@ final class EntryBasicsUITests: XCTestCase {
         below.tap()
         app.typeText("L")
         XCTAssertEqual(body.value as? String, "Coffee and pastries blorptzKL")
+    }
+
+    /// Writing line after line, as in Notes: the entry only ever scrolls forward, and the line being typed stays in view
+    /// just above the writing controls, at the end of the entry and after Returns in the middle of it, at the default
+    /// and the largest text size. Build 9's own caret reveal fought the text view's scrolling on every Return.
+    @MainActor func testLineBeingTypedStaysAboveTheWritingControls() throws {
+        for largest in [false, true] {
+            let app = XCUIApplication()
+            app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
+            if largest {
+                app.launchArguments += [
+                    "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+                ]
+            }
+            app.launch()
+            defer { app.terminate() }
+            XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+            app.buttons["Start a Journal"].tap()
+            app.buttons["Continue Without Encryption"].tap()
+            NavigationTestSupport.selectCollection("Default", app: app)
+            NavigationTestSupport.newEntryFromList(app)
+            XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+            NavigationTestSupport.dismissKeyboardTips(app)
+            app.typeText("Scrolling\n")
+            var writing = TypedLines(app: app, test: self)
+            let lines = largest ? 8 : 14
+            for line in 1...lines {
+                app.typeText(line == 1 ? "Line 1" : "\nLine \(line)")
+                writing.check("Line \(line)")
+            }
+            XCTAssertLessThan(writing.header, writing.firstHeader, "Typing reached the controls and scrolled.")
+            // Returns in the middle: the text below moves down until the caret line reaches the controls.
+            let earlier = try XCTUnwrap(writing.frame(of: "Line \(lines - 2)"), "An earlier line is in view.")
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: earlier.maxX + 4, dy: earlier.midY))
+                .tap()
+            for line in 1...(largest ? 4 : 6) {
+                app.typeText("\nAdded \(line)")
+                writing.check("Added \(line)")
+            }
+            capture(app, "Writing after Returns in the middle" + (largest ? ", largest text" : ""))
+            XCTAssertTrue(
+                (app.textViews["Entry text"].value as? String ?? "").hasSuffix(
+                    "Added \(largest ? 4 : 6)\nLine \(lines - 1)\nLine \(lines)"))
+        }
+    }
+
+    /// Where the line being typed is, read from the screen, and how far the entry has scrolled, read from the header,
+    /// which scrolls with the text.
+    @MainActor private struct TypedLines {
+        let app: XCUIApplication
+        let test: XCTestCase
+        let firstHeader: CGFloat
+        var header: CGFloat
+        init(app: XCUIApplication, test: XCTestCase) {
+            self.app = app
+            self.test = test
+            firstHeader = app.otherElements["Entry header"].frame.minY
+            header = firstHeader
+        }
+
+        mutating func check(_ line: String, file: StaticString = #filePath, lineNumber: UInt = #line) {
+            let top = app.otherElements["Entry header"].frame.minY
+            XCTAssertLessThanOrEqual(
+                top, header + 0.5, "\(line): the entry scrolled back.", file: file, line: lineNumber)
+            let controls = app.buttons["Formatting"].firstMatch.frame
+            let body = app.textViews["Entry text"].frame
+            guard let typed = frame(of: line) else {
+                XCTFail("\(line) isn't in view.", file: file, line: lineNumber)
+                return
+            }
+            XCTAssertLessThanOrEqual(
+                typed.maxY, controls.minY, "\(line) is behind the controls.", file: file, line: lineNumber)
+            XCTAssertGreaterThanOrEqual(
+                typed.minY, body.minY, "\(line) is above the entry.", file: file, line: lineNumber)
+            if top < header - 0.5 {
+                // It scrolled only as far as the line needs: the line is just above the controls.
+                XCTAssertGreaterThan(
+                    typed.maxY, controls.minY - 3 * typed.height, "\(line) scrolled too far.", file: file,
+                    line: lineNumber)
+            }
+            header = top
+        }
+
+        /// The recognized text that starts with `line`'s words, in screen points.
+        func frame(of line: String) -> CGRect? {
+            guard let image = app.screenshot().image.cgImage else { return nil }
+            let request = VNRecognizeTextRequest()
+            request.recognitionLevel = .accurate
+            request.usesLanguageCorrection = false
+            try? VNImageRequestHandler(cgImage: image).perform([request])
+            let size = app.frame.size
+            let limit = app.buttons["Formatting"].firstMatch.frame.maxY
+            for observation in request.results ?? [] {
+                guard let text = observation.topCandidates(1).first?.string, Self.reads(text, as: line) else {
+                    continue
+                }
+                let box = observation.boundingBox
+                let frame = CGRect(
+                    x: box.minX * size.width, y: (1 - box.maxY) * size.height, width: box.width * size.width,
+                    height: box.height * size.height)
+                if frame.minY < limit { return frame }
+            }
+            return nil
+        }
+
+        /// Whether recognized text starts with the line's words. The caret right after the last digit can read as
+        /// one more character.
+        private static func reads(_ text: String, as line: String) -> Bool {
+            let expected = line.split(separator: " ")
+            let found = text.split(separator: " ")
+            guard found.count >= expected.count else { return false }
+            return zip(expected, found).allSatisfy { word, read in
+                word == read || (word.allSatisfy(\.isNumber) && read.prefix(while: \.isNumber) == word)
+            }
+        }
     }
 
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {

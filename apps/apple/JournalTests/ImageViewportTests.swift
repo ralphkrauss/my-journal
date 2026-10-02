@@ -37,25 +37,30 @@
 
         /// A picture inserted above the caret pushes the caret line down; it ends up clear of the writing bar's
         /// capsule, which is drawn above the top of the keyboard's area, rather than half hidden behind it.
-        func testCaretLineStaysClearOfTheWritingBarAfterInsertingAnImage() throws {
+        func testCaretLineStaysClearOfTheWritingBarAfterInsertingAnImage() async throws {
             let id = UUID()
-            let png = try EditorClipboardTests.image(.png, width: 1000, height: 1450)
-            let harness = EditorHarness(
-                JournalDocument(blocks: [DocumentBlock(runs: [TextRun("Body text for the caret line")])]),
-                images: [id: png], width: 400)
-            defer { harness.close() }
-            harness.caret(at: 0)
+            let state = ImageViewportState()
+            state.document = JournalDocument(blocks: [DocumentBlock(runs: [TextRun("Body text for the caret line")])])
+            state.loading = []
+            state.images = [id: try EditorClipboardTests.image(.png, width: 1000, height: 1450)]
+            let host = UIHostingController(rootView: ImageViewportHarness(state: state, size: 17))
+            let window = makeWindow(host, appearance: .light)
+            defer { window.isHidden = true }
+            let view = try await editor(in: host)
+            XCTAssertTrue(view.becomeFirstResponder())
+            view.selectedRange = NSRange(location: 0, length: 0)
+            try await Task.sleep(for: .milliseconds(500))
+            let coordinator = try XCTUnwrap(view.delegate as? NativeEditor.Coordinator)
             let block = DocumentBlock(kind: "image", attachmentID: id, imageDescription: "", mediaType: "image/png")
-            harness.coordinator.perform(.image(block))
-            harness.settle(0.3)
-            let view = harness.view
+            coordinator.perform(.image(block))
+            try await Task.sleep(for: .milliseconds(800))
             XCTAssertTrue(view.isFirstResponder)
-            XCTAssertEqual(harness.document.blocks.map(\.kind), ["image", "paragraph"])
-            let caret = view.convert(view.caretRect(for: try XCTUnwrap(view.selectedTextRange).end), to: nil)
-            let keyboard = view.convert(view.keyboardLayoutGuide.layoutFrame, to: nil)
-            let visibleBottom = min(view.convert(view.bounds, to: nil).maxY, keyboard.minY)
-            XCTAssertLessThanOrEqual(caret.maxY, visibleBottom - 17)
-            XCTAssertGreaterThanOrEqual(caret.minY, view.convert(view.bounds, to: nil).minY)
+            XCTAssertEqual(state.document.blocks.map(\.kind), ["image", "paragraph"])
+            let caret = view.convert(view.caretRect(for: try XCTUnwrap(view.selectedTextRange).end), to: window)
+            let controls = try XCTUnwrap(
+                (view.inputAccessoryView as? WritingAccessory)?.capsuleFrame(in: window), "The writing controls show.")
+            XCTAssertLessThanOrEqual(caret.maxY, controls.minY - 8, "The caret line is clear of the writing controls.")
+            XCTAssertGreaterThanOrEqual(caret.minY, view.convert(view.bounds, to: window).minY)
         }
 
         func testImageArrivalAboveViewportKeepsVisibleTextAndSelection() async throws {
