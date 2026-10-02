@@ -234,3 +234,114 @@ The reviewer confirmed against the code:
    sync handed the gate breaks quiet. Tested.
 2. **Who computes "settled"?** The engine, from `settledFacts()` and its own refused and retry state.
 3. **Funnel's timeout.** Unverified, and now stated as an assumption. The fallback covers it.
+
+## Round 7 (revision 7)
+
+**Verdict: approved with required changes.**
+
+The reviewer confirmed against the code:
+
+- **The server side:** the digest and request hash, the signal and fresh reads, the deadline re-check, and the
+  identity and revocation paths.
+- **Content safety:** no path that loses or duplicates content, or acknowledges a change the server doesn't hold.
+
+| # | Required change | Resolution in revision 8 |
+| --- | --- | --- |
+| 1 | An edit to a refused record made during a sync, after the re-queue pass and before `settledFacts()`, was folded into the quiet mark. `commitMutation` changes (delete, move, rename, an image description) start no sync, so the change would wait for the safety sync while Last Synced said "Just now" | Simplest option taken: nothing refused is part of "settled". While any record or image is refused, or a record is held back by a refused image, the device polls as today. Tests updated |
+| 2 | Outbox rows under review weren't classified; counting them would silently disable waiting during long reviews | Classified as settled, using the set `pending()` returns. Resolving the review writes `conflicts` and breaks quiet. Test: an entry under review doesn't stop waiting |
+| 3 | The confirming-`false` timing rule was ambiguous with a clamped timeout | Clients send at most 25. The rule is min(requested, 25) − 2 s, and goes into protocol/README.md |
+
+**Optional suggestions, all adopted:**
+
+- **Client replacement.** The wait task keeps the client alive, so `deinit` doesn't cancel it. A `clientReplaced`
+  event now makes the watcher cancel its wait and sync.
+- **Re-encryption writes.** They go to a copy through another `DatabaseQueue`. The "same store object" check is what
+  protects there; §4.6 and the tests are corrected.
+- **`automaticSyncStopped`.** It covers only My Journal needing an update; the other Update or fix needed cases are
+  failures, as the text now says.
+- **Automatic renames.** The first wait afterwards answers `true` at once. This is noted as expected in §7.4.
+- **One event name.** `waitEnded(id, result, sentAt)`, including cancellations.
+- **Path changes.** Defined as a change of status or interfaces, debounced by 1 s.
+- **Red team case.** An aborted Revoke with a skipped `Notify()`.
+
+**Questions:**
+
+1. **Should a network change reset the fallback?** Yes: a path change resets the strike count and ends a fallback
+   period.
+2. **Is the kind check only for short receipts?** Yes, on purpose. Full receipts keep today's handling unchanged; a
+   receipt with both `payload` and `payloadDigest` is checked as a short one.
+3. **Which loop does the bandwidth run use?** The idle measurement now runs the Release app's real loop on the iOS
+   simulator. JournalProbe measures only the writing session.
+
+## Round 8 (revision 8)
+
+**Verdict: approved with required changes.**
+
+The reviewer confirmed the claims against the server, JournalCore and app code:
+
+- **Short receipts:** the hash and retry path, the digest on both sides, and the acknowledgement checks.
+- **Waiting:** rate-limiter placement, and every place that writes the log or revokes a device.
+- **The store:** the gate is shared across engines, and all store writes go through the actor.
+
+It found no way for short receipts to lose, duplicate or overwrite content, and no lost wake-up.
+
+| # | Required change | Resolution in revision 9 |
+| --- | --- | --- |
+| 1 | A failed automatic rename push is swallowed, and renames never sit in the outbox, so the device could wait while a rename stayed unsent and Last Synced said "Just now" | `settledFacts()` also reports whether an automatic rename is outstanding. If one is, the sync isn't settled, and the device polls and retries as today. Table row and test added |
+| 2 | HTTP/3 was missing: the shipped Caddy deployment publishes UDP 443, and QUIC idle timeouts (30 s in quic-go) and UDP NAT mappings leave a thin margin at 25 s | The client asks for 20 s (the server's maximum stays 25 s), leaving a 10 s margin. HTTP/3 is added to §4.7 and verified through the pinned Caddy image with UDP enabled, with the protocol confirmed by `URLSessionTaskMetrics`. If waits are still cut, the client falls back to polling, which is accepted. §6 estimates updated to 3 waits a minute |
+
+**Optional suggestions:**
+
+1. **A simpler fallback, without strikes, progress or the one-hour period.** Not adopted. Round 1 required a `true`
+   without progress to count toward a fallback. Without one, an inactive Mac facing a faulty server, or a proxy that
+   fails waits at once, would make a request every 3 s instead of today's 30. The strike rule is small and
+   test-covered.
+2. **Read `writes` inside the same `db.read` as the facts, and use a counter-only `isQuiet(mark)` on the tick.**
+   Adopted.
+3. **`Notify()` in a `finally` once the commit was attempted.** Adopted.
+4. **A `loopStarted` event that clears a wait still marked in flight.** Adopted.
+5. **Baseline from git.** The owner has since committed build 9 (9c6c83d), so the mixed-version baseline is a git
+   worktree of that commit.
+6. **The read-only rule as code comments** on each post-sync step. Adopted.
+
+**Questions:**
+
+1. **Should an outstanding rename block waiting?** Yes: the device polls, as today.
+2. **Is a shorter timeout acceptable?** Yes: the client asks for 20 s.
+3. **Is a stale in-flight wait cleared on purpose at loop restart?** Yes: `loopStarted` clears it.
+
+## Round 9 (revision 9)
+
+**Verdict: approved, with no required changes.** The reviewer checked the design's descriptions of today's code
+against the source, and confirmed:
+
+- **Short receipts:** they give the store the same bytes it receives today.
+- **The long-poll server:** level-triggered, with the signal taken before reading and a final check at the deadline.
+- **The quiet mark:** consistent with commits on the `DatabaseQueue`, and every write that needs sending creates an
+  outbox row.
+- **Last Synced:** a confirming `false` is sound evidence, because the log is append-only within one identity.
+
+No path loses or duplicates content, acknowledges an unheld change, overwrites a conflicting edit, stops sync, or
+breaks compatibility.
+
+**Optional suggestions applied** (minor clarifications, no change to the approved behavior):
+
+- **Wait timeouts.** The wait's request timeout is 30 s and its resource timeout 35 s; the watcher deadline is 40 s.
+  A black-holed wait is noticed sooner.
+- **Loop actions.** Only the running loop carries out actions. Events after its task ends are dropped, so iOS
+  cancelling the loop never triggers a sync.
+- **The classification table.** The `takeForSending` row is reworded as "record gone, or only a lost image".
+- **The observer** stops observing until the next transaction after its first relevant change.
+- **protocol/README.md** gets the list of client obligations and the proxy guidance.
+- **§9** records why both `early` and the timing check exist, and that Last Synced keeps today's meaning.
+
+**Not adopted:** not counting `early` answers as strikes during server restarts. Strikes only matter after three in
+a row, and the 3-second floor bounds the rate either way.
+
+**Questions:**
+
+1. **Should a confirming `false` mark Last Synced when retries or lost images remain?** Today's meaning is kept,
+   because today's syncs mark it in the same cases. Recorded in §9 for the owner.
+2. **Does `configureSync` run on unlock?** Harmless either way; to be confirmed during implementation.
+3. **Does URLSession's QUIC send keep-alives, or use its own idle timeout?** To be confirmed in §7.3.6. The fallback
+   covers either answer.

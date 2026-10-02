@@ -5,7 +5,7 @@ import os
 @testable import JournalCore
 
 /// A server in memory with the protocol's revision, cursor and image rules.
-private actor MemoryServer: SyncServer {
+actor MemoryServer: SyncServer {
     struct State {
         var records: [UUID: RemoteChange] = [:]
         var log: [RemoteChange] = []
@@ -29,6 +29,15 @@ private actor MemoryServer: SyncServer {
     var confirmsContinuity = false
     /// Also confirms that change's payload (capability `sync-continuity-digest`).
     var confirmsDigest = false
+    /// Offers capability `sync-short-receipt`: a push that asks gets a short receipt, read back by the real decoder.
+    var answersShortReceipts = false
+    /// Whether each push asked for a short receipt.
+    var shortReceiptRequests: [Bool] = []
+    /// Offers capability `sync-wait`; waits answer from `waitAnswers` in order, then `unchanged`.
+    var holdsWaits = false
+    var waitAnswers: [WaitAnswer] = []
+    var waitPositions: [QuietPosition] = []
+    private var pushesBeforeFailure: Int?
     private var stallsPages = false
     private var failsNextPage = false
     private var failsPageAfterNextPush = false
@@ -42,7 +51,8 @@ private actor MemoryServer: SyncServer {
         ServerStatus(
             protocolVersion: 1, initialized: true,
             features: (confirmsContinuity ? ["sync-continuity"] : [])
-                + (confirmsDigest ? ["sync-continuity-digest"] : []),
+                + (confirmsDigest ? ["sync-continuity-digest"] : [])
+                + (answersShortReceipts ? [ServerClient.shortReceiptFeature] : []) + (holdsWaits ? ["sync-wait"] : []),
             serverId: "memory-server")
     }
     func changes(after cursor: Int64, limit: Int, applied: LoggedChange?) async throws -> SyncPage {
@@ -77,7 +87,45 @@ private actor MemoryServer: SyncServer {
             changes: page, cursor: page.last?.cursor ?? cursor, hasMore: newer.count > page.count,
             serverId: "memory-server", serverIdCursor: 0)
     }
-    func push(_ pending: PendingChange, serverID: String?) async throws -> ServerClient.PushResult {
+    func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) async throws -> ServerClient.PushResult {
+        shortReceiptRequests.append(shortReceipt)
+        if let remaining = pushesBeforeFailure {
+            pushesBeforeFailure = remaining > 1 ? remaining - 1 : nil
+            if remaining == 1 { throw ServerUnavailable() }
+        }
+        let result = try await apply(pending)
+        guard shortReceipt, answersShortReceipts, case .accepted(let change) = result else { return result }
+        return .accepted(try ServerClient.receipt(Self.shortReceipt(change), for: pending))
+    }
+    /// The short receipt a server with `sync-short-receipt` sends for `change`.
+    static func shortReceipt(_ change: RemoteChange) throws -> Data {
+        struct Short: Encodable {
+            var cursor: Int64
+            var recordId: UUID
+            var revision: Int64
+            var kind: String
+            var deviceId: UUID
+            var modifiedAt: Date
+            var payloadDigest: String
+        }
+        return try JournalCoding.encoder().encode(
+            Short(
+                cursor: change.cursor, recordId: change.recordId, revision: change.revision, kind: change.kind,
+                deviceId: change.deviceId, modifiedAt: change.modifiedAt,
+                payloadDigest: JournalStore.payloadDigest(change.payload)))
+    }
+    func waitForChange(_ position: QuietPosition, digest: Bool) -> WaitAnswer {
+        waitPositions.append(position)
+        return waitAnswers.isEmpty ? .unchanged(early: false) : waitAnswers.removeFirst()
+    }
+    func offerShortReceipts() { answersShortReceipts = true }
+    /// The `count`th push from now fails with a server error before anything is applied.
+    func failPush(number count: Int) { pushesBeforeFailure = count }
+    func holdWaits(answering answers: [WaitAnswer] = []) {
+        holdsWaits = true
+        waitAnswers = answers
+    }
+    private func apply(_ pending: PendingChange) async throws -> ServerClient.PushResult {
         if let action = whileSendingNext {
             whileSendingNext = nil
             await action()
@@ -310,9 +358,14 @@ final class SyncEngineTests: XCTestCase {
     }
 
     func testAServerRestoredFromACopyOfItsDataIsReadAgain() async throws {
+        // Short receipts keep the cursor check that notices an accepted change at a position already seen.
+        for short in [false, true] { try await serverRestoredFromACopy(shortReceipts: short) }
+    }
+    private func serverRestoredFromACopy(shortReceipts: Bool) async throws {
         let server = MemoryServer()
-        let mac = try device("mac")
-        let phone = try device("phone")
+        if shortReceipts { await server.offerShortReceipts() }
+        let mac = try device("mac-\(shortReceipts)")
+        let phone = try device("phone-\(shortReceipts)")
         let phoneSync = SyncEngine(store: phone, server: server)
         let first = JournalItem(kind: "entry", journalID: UUID(), document: .plain("First"))
         try await phone.save(first)
@@ -327,7 +380,7 @@ final class SyncEngineTests: XCTestCase {
 
         await server.rollBack(to: copy)
         let tablet = JournalItem(kind: "entry", journalID: UUID(), document: .plain("Written after the restore"))
-        let tabletStore = try device("tablet")
+        let tabletStore = try device("tablet-\(shortReceipts)")
         try await tabletStore.save(tablet)
         try await SyncEngine(store: tabletStore, server: server).synchronize()
         var edited = try await item(mac, first.id)

@@ -662,7 +662,10 @@ struct RootView: View {
                                 submit: { editor.perform(.focus) }
                             ).id(item.id).disabled(!model.canEdit)
                             EntryEditingNote(document: item.document)
-                        }.padding(.horizontal, 28).padding(.top, 28).padding(.bottom, 12)
+                        }
+                        // The title's first letter where the body's starts.
+                        .padding(.horizontal, Self.editorMargin + EntryTextInset.text)
+                        .padding(.top, 28).padding(.bottom, 12)
                     #else
                         // Above the writing rather than in it, so it stays in view however far the entry is
                         // scrolled, as on the Mac.
@@ -670,7 +673,7 @@ struct RootView: View {
                             ConflictNotice(id: item.id)
                         }
                     #endif
-                    entryEditor(item).padding(.horizontal, 24)
+                    entryEditor(item).padding(.horizontal, Self.editorMargin)
                     #if os(macOS)
                         if model.saveFailure {
                             SaveFailureNotice(entryID: item.id).padding()
@@ -718,6 +721,8 @@ struct RootView: View {
             EntryRecoveryNotice(entry: item).padding().background(.quaternary)
         }
     }
+    /// The space beside the editor in the detail column.
+    static let editorMargin: CGFloat = 24
     private var editorSize: CGFloat {
         #if os(macOS)
             model.textSize

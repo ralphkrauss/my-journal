@@ -24,7 +24,7 @@ private actor EncryptedServer: SyncServer {
             changes: page, cursor: page.last?.cursor ?? cursor, hasMore: newer.count > page.count,
             serverId: "encrypted-server", serverIdCursor: 0)
     }
-    func push(_ pending: PendingChange, serverID: String?) async -> ServerClient.PushResult {
+    func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) async -> ServerClient.PushResult {
         if let hook = beforeNextPush {
             beforeNextPush = nil
             await hook()

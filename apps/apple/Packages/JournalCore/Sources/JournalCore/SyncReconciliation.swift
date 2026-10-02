@@ -245,6 +245,7 @@ extension JournalStore {
     func beginSynchronization() async throws {
         guard synchronizing else {
             synchronizing = true
+            quiet.generation += 1
             return
         }
         let id = UUID()
@@ -267,12 +268,19 @@ extension JournalStore {
             throw CancellationError()
         }
     }
-    func endSynchronization() {
+    /// Releases the gate and returns the quiet mark: this release and the write count the synchronization's settled
+    /// facts were read at. A synchronization handed the gate here advances the generation again, so it breaks the mark.
+    @discardableResult func endSynchronization() -> QuietMark {
+        quiet.generation += 1
+        let mark = QuietMark(store: quiet.epoch, generation: quiet.generation, writes: quiet.factsWrites ?? -1)
+        quiet.factsWrites = nil
         if synchronizationWaiters.isEmpty {
             synchronizing = false
         } else {
+            quiet.generation += 1
             synchronizationWaiters.removeFirst().continuation.resume()
         }
+        return mark
     }
     /// Removes a cancelled waiter. One already handed the gate isn't queued any more and passes it on itself.
     private func stopWaitingForSynchronization(_ id: UUID) {

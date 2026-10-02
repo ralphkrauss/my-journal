@@ -103,7 +103,8 @@ final class JournalNameSyncTests: XCTestCase {
             JournalItem(kind: "journal", title: "Work", date: Date(timeIntervalSince1970: 2_000)),
         ])
         for pending in try await tablet.pending() {
-            guard case .accepted(let receipt) = try await server.push(pending, serverID: nil) else {
+            guard case .accepted(let receipt) = try await server.push(pending, serverID: nil, shortReceipt: false)
+            else {
                 return XCTFail("The fixture wasn't accepted.")
             }
             try await tablet.acknowledge(pending, receipt: receipt)
@@ -114,7 +115,7 @@ final class JournalNameSyncTests: XCTestCase {
         XCTAssertEqual(late.count, 1)
         try await macSync.synchronize()
         let rename = try XCTUnwrap(late.first)
-        guard case .conflict = try await server.push(rename.change, serverID: nil) else {
+        guard case .conflict = try await server.push(rename.change, serverID: nil, shortReceipt: false) else {
             return XCTFail("The Mac renamed it first.")
         }
         let beforeSync = try await settled(phone)

@@ -17,7 +17,7 @@ public static class EncryptionEndpoints
     public static void MapEncryption(this WebApplication app) =>
         app.MapPost("/v1/recovery/encrypt", TurnOn).RequireAuthorization().RequireRateLimiting(RateLimits.Password);
 
-    private static async Task<IResult> TurnOn(TurnOnEncryptionRequest request, JournalDb db, StoragePaths paths, WriteGate gate, AuditLog audit, HttpContext http)
+    private static async Task<IResult> TurnOn(TurnOnEncryptionRequest request, JournalDb db, StoragePaths paths, WriteGate gate, SyncSignal signal, AuditLog audit, HttpContext http)
     {
         var ct = http.RequestAborted;
         if (!ValidRequest(request))
@@ -80,7 +80,15 @@ public static class EncryptionEndpoints
             await AgentGrantEndpoints.RemoveAll(db, ct);
             signedOut = await db.Devices.Where(device => device.Id != requester && !device.Revoked)
                 .ExecuteUpdateAsync(update => update.SetProperty(device => device.Revoked, true), ct);
-            await transaction.CommitAsync(ct);
+            try
+            {
+                await transaction.CommitAsync(ct);
+            }
+            finally
+            {
+                // Before the slow purge: waits of revoked devices are refused, and the requester's sees the new identity.
+                signal.Notify();
+            }
         }
         audit.EncryptionTurnedOn(requester, signedOut);
         // The vault has changed; removing what it no longer refers to finishes even if the device disconnects. If it

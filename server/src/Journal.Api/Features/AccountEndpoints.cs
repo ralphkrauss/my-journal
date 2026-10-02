@@ -13,7 +13,7 @@ public static class AccountEndpoints
     private static readonly int[] ProtocolVersions = [1];
     private static readonly int[] RecoveryVersions = [1, 2, 3, 4];
     // Additive protocol v1 capabilities; see protocol/README.md.
-    private static readonly string[] Features = ["sync-identity", "pairing-check-code", "password-change", "sync-continuity", SyncEndpoints.ContinuityDigestFeature, "private-envelope", "pairing-invite", "setup-check", EncryptionEndpoints.Feature, "agent-access-2"];
+    private static readonly string[] Features = ["sync-identity", "pairing-check-code", "password-change", "sync-continuity", SyncEndpoints.ContinuityDigestFeature, "private-envelope", "pairing-invite", "setup-check", EncryptionEndpoints.Feature, "agent-access-2", SyncEndpoints.ShortReceiptFeature, SyncEndpoints.WaitFeature];
     private static readonly string ServerVersion = (typeof(AccountEndpoints).Assembly
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0").Split('+')[0];
 
@@ -180,7 +180,7 @@ public static class AccountEndpoints
         return Results.Ok(new RecoveryGrant(device.Id, token, Envelope(vault)));
     }
 
-    private static async Task<IResult> Revoke(Guid id, JournalDb db, WriteGate gate, AuditLog audit, HttpContext http)
+    private static async Task<IResult> Revoke(Guid id, JournalDb db, WriteGate gate, SyncSignal signal, AuditLog audit, HttpContext http)
     {
         var ct = http.RequestAborted;
         using var lease = await gate.Enter(ct);
@@ -196,7 +196,15 @@ public static class AccountEndpoints
         }
 
         device.Revoked = true;
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        finally
+        {
+            // A wait held by the revoked device re-checks its credential now and is refused.
+            signal.Notify();
+        }
         var revokedBy = DeviceAuthentication.Current(http).Id;
         audit.DeviceRevoked(id, revokedBy);
         return Results.NoContent();

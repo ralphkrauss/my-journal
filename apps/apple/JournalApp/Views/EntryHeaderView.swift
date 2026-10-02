@@ -35,7 +35,9 @@
                             .accessibilityIdentifier("Entry title")
                     }
                     EntryEditingNote(document: item.document)
-                }.padding(.horizontal, 4).padding(.top, 28).padding(.bottom, 12)
+                }
+                // The title's first letter where the body's starts.
+                .padding(.horizontal, EntryTextInset.text).padding(.top, 28).padding(.bottom, 12)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .contain)

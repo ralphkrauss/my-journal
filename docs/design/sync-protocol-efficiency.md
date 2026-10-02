@@ -1,8 +1,8 @@
 # Sync protocol efficiency: short push receipts and waiting for changes
 
-Status: **revision 7, design only. Nothing is implemented.**
+Status: **revision 9, approved by review round 9 with no required changes. Design only; nothing is implemented.**
 
-- Rounds 1 to 4 and 6 approved with required changes; round 5 requested changes. All are applied here. The rounds are recorded in
+- Rounds 1 to 4 and 6 to 8 approved with required changes; round 5 requested changes. All are applied here, with round 9's minor clarifications. The rounds are recorded in
   [sync-protocol-efficiency-review.md](sync-protocol-efficiency-review.md).
 - Waiting for: the next independent review round, a red team, the tests in §7 and the owner's approval.
 - Target: build 10.
@@ -40,7 +40,8 @@ The two improvements, from a bandwidth audit:
 design gate doesn't apply. The one thing that could have changed is Last Synced. It updates only after a full sync
 today (`syncActivity.synced()`, AppModel.swift), and waits replace most idle syncs. So a wait answered `false`, on
 time and while settled, counts as a completed sync for Last Synced (§4.6). Last Synced therefore keeps reading "Just
-now" while idle, as today, including when a refused entry or image stays behind.
+now" while idle, as today. While a refused entry or image stays behind, the device doesn't wait; it polls and updates
+Last Synced exactly as today.
 
 ## 1. What happens today (from the code)
 
@@ -157,6 +158,7 @@ Everything else is unchanged:
   - `payloadDigest` equals `JournalStore.payloadDigest(pending.payload)`.
 
   The client then builds the same `RemoteChange` a full receipt would have given, with `payload = pending.payload`.
+  Full receipts are handled exactly as today, without a kind check, so the existing path doesn't change.
 - **Rejection**: `JournalError.invalidData`, exactly as a full receipt with another payload is treated today.
 - **Response limit**: stays at 16 MiB (`pushResponseLimit`), because a full receipt is still possible.
 
@@ -208,7 +210,7 @@ and are out of scope.
 | --- | --- | --- |
 | Proxy buffering (nginx `proxy_buffering`, response compression, corporate proxies) | Irrelevant: each response is tiny and complete | Events can sit in buffers until flushed; needs `X-Accel-Buffering: no` and no compression |
 | Idle timeouts (nginx 60 s, AWS ALB 60 s, Cloudflare 100 s, typical HAProxy 30–50 s) | Each request ends within 25 s, below all of them | Needs heartbeats under the shortest timeout, which cost traffic comparable to a long-poll cycle |
-| Half-open connections (Wi-Fi to cellular, NAT expiry) | The request's own timeout ends it within 40 s | Needs heartbeat-based detection on the client |
+| Half-open connections (Wi-Fi to cellular, NAT expiry) | The request's own timeout ends it within 30 s | Needs heartbeat-based detection on the client |
 | Revocation | Every cycle re-authenticates; a waiting request is also woken and refused (§4.4) | A stream authenticated once must be found and closed by extra code |
 | Reconnection and missed events | None needed: each request compares the database with the client's position (level-triggered) | Needs `Last-Event-ID` semantics or a resync on every reconnect |
 | Tailscale Serve and Funnel, Caddy | Ordinary request and response; the existing reverse proxies need no settings | Works in Caddy and Serve, but behind other proxies depends on their settings |
@@ -257,8 +259,9 @@ Nothing else is sent: no cursor, no record IDs, no content.
   named.
 - **An early `false`** (`early: true`): a newer wait from the same device replaced this one, or the server is
   stopping. It proves nothing about the position.
-- **Clients** treat a `false` as confirming only when it has no `early` member and arrives no sooner than the
-  requested timeout minus 2 s after the request was sent. A caching proxy could replay an old body at once.
+- **Clients** send a `timeout` of at most 25. They treat a `false` as confirming only when it has no `early` member and
+  arrives no sooner than min(requested timeout, 25) minus 2 s after the request was sent. A caching proxy could
+  replay an old body at once.
 - `true` means something differs: run an ordinary sync. A `true` that turns out to be wrong is harmless.
 - Clients send `serverId` whenever they have one, and run one wait at a time per device credential. Two waits with one
   credential would answer each other `false` early (latest wins), which the client counts toward its fallback (§4.6).
@@ -280,8 +283,9 @@ list the capability. Clients never follow redirects on this endpoint, as on ever
 - `Release(token)` removes the entry only if the device's entry is still that token. A superseded registration's
   release changes nothing, so an older wait's `finally` can't remove the newer one.
 
-So there is at most one held wait per enrolled, unrevoked device. There is no server-wide cap: every wait needs a
-device credential, and a single-person server has a handful of devices.
+So there is at most one held wait per enrolled, unrevoked device. As defence in depth (red-team finding RT-S2), the
+server also holds at most 64 waits at once: above that a new wait is answered at once with an early `false`, except
+when it replaces the same device's own wait.
 
 **The handler** (`SyncEndpoints.Wait`, mapped outside the `/v1/sync` group so it gets its own rate-limit policy). It
 never takes the WriteGate:
@@ -329,8 +333,9 @@ request does.
 **Level-triggered.** Each check reads the database. A signal sent before the waiter subscribed, a missed signal, or a
 code path that forgets to call `Notify()` costs at most one timeout (25 s), never a lost change.
 
-**Who calls `Notify()`.** Always immediately after the commit (or `SaveChangesAsync`) returns, with no awaited call
-that takes the request's cancellation token in between, so an aborted request can't skip it:
+**Who calls `Notify()`.** Always once the commit (or `SaveChangesAsync`) has been attempted, in a `finally` block,
+with no awaited call that takes the request's cancellation token in between. An aborted request or a later exception
+can't skip it. An extra notification costs one check per waiter; a missed one costs up to a wait cycle.
 
 | Path | Code |
 | --- | --- |
@@ -353,8 +358,7 @@ check per wait cycle, not one per write. A check is up to four indexed single-ro
 the vault row, the change at `after`, and the first change after `after`. The `JournalDb` scope lives for the
 request, but EF opens a pooled SQLite connection only per query, so a waiting request holds no database connection.
 
-Awaiting the signal with one linked cancellation token (`WaitAsync`) keeps a write burst from piling continuations
-onto long-lived tasks.
+A wait awaits the signal through `SyncSignal.WaitForSignal`, which leaves nothing attached to the shared signal however the wait ends (a write, the deadline, a disconnect, a replacement). Each wait's own `notified.WaitAsync` is cancelled on exit, which removes its continuation. An earlier `Task.WhenAny(notified, superseded).WaitAsync(token)` left one continuation per finished wait on the shared task until the next write; the red team found it (RT-S3), and a test now measures it.
 
 **Shutdown.** On `ApplicationStopping` every waiter answers `{changed: false, early: true}` at once, and so does a
 wait that arrives after stopping began. Container stops (10 s grace)
@@ -421,9 +425,9 @@ state machine directly; JournalProbe drives it with real requests.
 | Events (in) | Actions (out) |
 | --- | --- |
 | `syncFinished(outcome, progress, earliestRetry, quiet)` | `startWait(id, timeout)`, which always cancels any wait still in flight first |
-| `waitAnswered(id, answer, sentAt)`: answer is `changed`, `unchanged` or `failed` | `cancelWait` |
+| `waitEnded(id, result, sentAt)`: result is `changed`, `unchanged`, `unchanged(early)`, `failed`, or `cancelled` | `cancelWait` |
 | `stateChanged(canWait)`: the app's conditions 4 and 5 below, and the capability | `syncNow` |
-| `quietBroken` (the store is no longer quiet, seen on a tick or a check), `networkPathChanged`, `sleep`, `wake`, `becameActive`, `tick` | `syncAt(instant)` |
+| `quietBroken` (the store is no longer quiet, seen on a tick or a check), `clientReplaced`, `loopStarted`, `networkPathChanged`, `sleep`, `wake`, `becameActive`, `tick` | `syncAt(instant)` |
 | | `markSynced(sentAt)` (Last Synced), `publishAgentCopies` |
 
 `syncFinished`'s arguments:
@@ -445,7 +449,6 @@ reports the earliest one as a delay from now, which the watcher turns into an in
   waiting one) and when one releases it.
 - **`writes`** is advanced by a GRDB `TransactionObserver` after every commit that touched the `records`, `outbox`,
   `attachments` or `conflicts` tables, whatever code made the write. No call site can bypass it, including:
-  - re-encryption's direct outbox inserts;
   - merges that only set `dirty`;
   - review resolution and deletion;
   - an image added without a record change;
@@ -454,16 +457,21 @@ reports the earliest one as a delay from now, which the watcher turns into an in
   The observer's callbacks run on the `DatabaseQueue`'s dispatch queue, not on the store actor. So:
   - `writes` is a lock-protected counter (`OSAllocatedUnfairLock`), read by the actor and never part of actor state;
   - the observer is registered for the database's lifetime (`extent: .databaseLifetime`);
-  - it notes a relevant change in `databaseDidChange` and advances the counter only in `databaseDidCommit`;
+  - it notes a relevant change in `databaseDidChange`, then calls `stopObservingDatabaseChangesUntilNextTransaction()`
+    so imports and reconciliation don't cost a callback per row, and advances the counter only in `databaseDidCommit`;
   - `databaseDidRollback` clears the note.
 
 **The settled facts and the mark are read in one actor step.** As the engine's last action before it releases the
 gate, it calls `store.settledFacts()`. That call returns, together:
 
-- the `writes` value;
+- the `writes` value, read inside the same `db.read` as the facts below. Commits are serialized on the queue, so the
+  snapshot is consistent even if a write ever happened outside the actor;
 - the outbox operation IDs;
 - the images still to upload or verify;
-- whether reconciliation is pending.
+- whether reconciliation is pending;
+- whether an automatic rename is outstanding (`automaticRenames()` isn't empty). `numberDuplicateJournals` swallows a
+  failed rename push, and renames never sit in the outbox. An outstanding rename means **not settled**, so the device
+  polls and retries it at the next sync, as today.
 
 The engine classifies those IDs against its own `rejectedChanges` and `retries` to decide `settled`. Any write after
 that step, including a rename, move, delete, review resolution or image add that arrives while the sync still holds
@@ -488,7 +496,10 @@ A wait starts only when all of these hold. Otherwise the loop runs exactly as to
    - no image is waiting to upload or verify, and none is waiting to download, except ones waiting for a retry time;
    - no reconciliation is pending.
 
-   Records and images the server refused don't count, since they wait for an edit or Sync Now.
+   - **nothing refused**: no record or image the server refused, and no record held back by a refused image. While
+     anything is refused, the device polls as today. Refusals are rare and ask the person to act, and polling keeps
+     every edit to a refused item (through the editor or `commitMutation`: delete, move, restore, rename, an image
+     description) on today's path, where the next sync re-queues it.
 
    Records and images only **waiting for a retry time** (SyncEngine's `retries`, 15 s to 10 minutes) don't block
    waiting either. The report gives the earliest such delay, counting only entries still in the future and only for
@@ -501,18 +512,22 @@ A wait starts only when all of these hold. Otherwise the loop runs exactly as to
    | State | Classified as | Why |
    | --- | --- | --- |
    | Lost images (`lostImages`) | Settled | Never sent, and nothing waits for them |
-   | Records held back by a refused image | Refused | They wait for the image's next chance (a start or Sync Now) |
+   | Records held back by a refused image | Not settled | Treated as refused: the device polls |
+   | Outbox rows under review (beside a `conflicts` row), the rows `pending()` leaves out | Settled | Nothing is sent until the review is resolved, which writes `conflicts` and breaks quiet |
    | Records held back by an image waiting for a retry | Waiting for a retry time | Scheduled |
-   | An outbox row `takeForSending` returns nil for | Settled | Nothing to send |
+   | An outbox row whose record no longer exists, or that waits only for a lost image | Settled | Nothing can be sent (a row waiting for a refused or retrying image is classified by that image, above) |
+   | An automatic rename outstanding (its push failed or was refused) | Not settled | Polls; the next sync retries it, as today |
 3. **Quiet.** `quietPosition(since:)` with that sync's mark returns a position. This is level-based:
-   - it is checked before every wait starts, before any answer is used, and on the loop's 1-second tick, where a
-     failed check cancels a wait in flight (`quietBroken`).
+   - it is checked before every wait starts and before any answer is used;
+   - the loop's 1-second tick uses a counter-only `isQuiet(mark)`, which reads no database, and a failed check cancels
+     a wait in flight (`quietBroken`).
 
    Typing that starts during a wait therefore returns the loop to its 3-second syncs with `waitingForWritingPause`,
    which send continuous writing at least every 30 s (`longestWritingWait`), as today.
 4. Not locked, no save failure, not replacing the library, and automatic sync isn't stopped. `automaticSyncStopped`
-   covers the Needs you, Server changed, No access and Update needed states. In the Temporary and Unexpected states the
-   existing backoff runs instead. There is no waiting while sync is stopped or retrying.
+   covers the Needs you, Server changed and No access states, and My Journal needing an update. The other Update or
+   fix needed cases, and the Temporary and Unexpected states, are sync failures: the last sync didn't succeed
+   (condition 2), so the existing backoff runs instead. There is no waiting while sync is stopped or retrying.
 5. Waiting isn't turned off by the fallback (below).
 
 When a condition stops holding, the wait in flight is cancelled at once. App Lock on the Mac, for example, locks
@@ -524,16 +539,27 @@ runs with `nextSyncDelay` until one of its own syncs is settled again, and that 
 is no other path back to waiting.
 
 Nothing the app does after a successful idle sync may write to the observed tables. Otherwise no device would ever
-wait. §7.2 item 10 and §7.4 check that an idle app reaches waiting after one sync.
+wait. That covers `refresh()`, `refreshPendingItems()`, `removeSupersededLibraries` and the agent publisher. Each gets
+a code comment saying so, and §7.2 item 10 and §7.4 check that an idle app reaches waiting after one sync.
+
+**Loop restarts.** The watcher's state outlives the loop (it's in `SyncTiming`). When the loop starts, for example on
+returning from the background, it sends `loopStarted`. That clears any wait still marked in flight, because the old
+loop's cancelled task may never report `waitEnded`. The restarted loop syncs at once, as today.
 
 #### A wait
 
 The app reads the position and identity with `quietPosition(since:)`, in one atomic store call. It happens outside
 the sync gate, so a wait never blocks Sync Now, writing or quitting. The app then calls
-`ServerClient.waitForChange(after:applied:serverID:timeout: 25)` in a child task tagged with the wait's ID.
+`ServerClient.waitForChange(after:applied:serverID:timeout: 20)` in a child task tagged with the wait's ID.
+
+The client asks for **20 s**, below the server's 25-second maximum. Caddy serves HTTP/3 by default, and the shipped
+HTTPS deployment publishes UDP 443 (deploy/compose.https.yaml). A held request over QUIC depends on QUIC idle timeouts
+(30 s by default in quic-go, which Caddy uses) and UDP NAT mappings, which are often about 30 s. 20 s leaves a 10 s
+margin there and under every HTTP proxy listed, at the cost of 3 waits a minute instead of 2.4.
 
 - **Its own `URLSession`**, configured like the existing ones (`ServerClient.init`): ephemeral, `urlCache = nil` and
-  the `NoRedirects` delegate. Only the timeouts differ: 40 s per request and 45 s per resource. A 3xx is `failed`,
+  the `NoRedirects` delegate. Only the timeouts differ: 30 s per request (20 s held plus 10 s) and 35 s per resource,
+  so a wait black-holed by a NAT or QUIC timeout is noticed within 30 s. A 3xx is `failed`,
   and the bearer token is never sent anywhere else. The 20-second idle timeout of ordinary requests is unchanged.
 - **Its own response handling**, not `ServerClient.request`'s mapping. A wait's 401 doesn't go through `refusal`, a 429
   isn't a `ServerRateLimited` (so it never sets `syncTiming.retryAfter`), and a 404 or 405 isn't
@@ -558,15 +584,12 @@ Anything else is discarded. It doesn't run a sync by itself, doesn't update Last
 
 #### Answers
 
-- **`unchanged`, confirming.** It is confirming when it has no `early` member and arrives at least the requested
-  timeout minus 2 s after the wait was sent (§4.2). The device was settled, and nothing changed locally, so the server confirmed there was nothing to
-  exchange.
+- **`unchanged`, confirming.** It is confirming when it has no `early` member and arrives at least min(requested
+  timeout, 25) minus 2 s after the wait was sent (§4.2). The device was settled with nothing refused, and nothing
+  changed locally, so the server confirmed there was nothing to exchange.
   - `markSynced(sentAt)` updates Last Synced with the time the wait was sent, since every check the server made was at
     or after that time. A wait answer is applied only when it is later than the date shown. Ordinary syncs keep
     today's `synced()`, so Sync Now's check (`lastSynced != before`) is unaffected by clock steps.
-  - Refused items don't prevent this, just as today's `sync()` calls `synced()` when a refused entry or image stays
-    behind. Any edit to one is a write, so the store is no longer quiet, the answer is discarded, and the loop's next
-    sync sends it.
   - `publishAgentCopies` calls `requestPublishing()`. It costs nothing when nothing changed: `publishAll` returns early
     unless the fingerprint changed or the agents list is older than `listLifetime`. An agent copy that failed is then
     retried as often as today.
@@ -580,14 +603,20 @@ Anything else is discarded. It doesn't run a sync by itself, doesn't update Last
 - **`failed`**: `syncNow`. The ordinary sync classifies any real problem into the existing health states and backoff.
   It also forgets the reused status, so a downgraded server is noticed at once.
 
-**Every wait ends with an event.** The app reports `waitEnded(id, result)` for every wait task, whatever ended it:
+**Every wait ends with one event.** The app reports `waitEnded(id, result, sentAt)` for every wait task, whatever
+ended it:
 
 - An answer is handled as above.
 - A cancellation the watcher asked for (`cancelWait`, or `startWait` replacing it) needs nothing more.
-- Any other cancellation becomes `syncNow`, without a strike. One example is `ServerClient.deinit` cancelling its
-  session's tasks when `configureSync` replaces the client.
+- Any other cancellation becomes `syncNow`, without a strike.
 
-The watcher also keeps its own deadline for each wait in flight: the 45 s resource timeout plus 5 s. If no event has
+When `configureSync` replaces the client, the app sends `clientReplaced`; the watcher cancels its wait itself and asks
+for a sync. It doesn't rely on the old client's `deinit`, which can't run while the wait task still holds the client.
+
+The watcher also keeps its own deadline for each wait in flight: the 35 s resource timeout plus 5 s.
+
+**Only the running loop carries out actions.** Events that arrive after the loop's task has ended are dropped, so the
+loop's own cancellation (iOS entering the background) never triggers a sync; `loopStarted` handles the stale wait. If no event has
 arrived by then, it treats the wait as `failed`. A wait can't leave the watcher stuck.
 
 A sync the watcher asks for but `AppModel.sync()` declines (`declined`) counts neither as a sync failure (the loop's
@@ -632,7 +661,9 @@ An on-time `unchanged`, or a `changed` whose sync made progress, resets the coun
 
 These cancel the wait and lead to an ordinary sync, but are never strikes:
 
-- a network path change (`NWPathMonitor` reports any change, not just a return);
+- a network path change: the path's status or its set of available interfaces changes, debounced by 1 s. This is new
+  beside `NetworkReturn`, which reports only a return. A path change also resets the strike count and ends a fallback
+  period, so a commuting phone's flaps don't keep it polling;
 - the Mac going to sleep (the wait is cancelled) and waking (the ordinary sync runs);
 - the app becoming active.
 
@@ -681,6 +712,10 @@ A fault that keeps recurring can then be told apart: a client bug or a server bu
 - **Other proxies**: anything with a response or idle timeout of 30 s or more works. Behind a shorter one, waits fail
   and the client falls back to polling (§4.6). docs/self-hosting gets one sentence: the server holds sync requests for
   up to 25 seconds; set proxy timeouts to at least 30 seconds.
+- **HTTP/3**: Caddy advertises it, and the shipped HTTPS deployment publishes UDP 443, so URLSession may use QUIC. The
+  20-second client wait keeps a 10 s margin under quic-go's default 30-second idle timeout and common UDP NAT
+  mappings. It's verified through the pinned Caddy image with UDP enabled (§7.3). If QUIC idle handling still cuts
+  waits somewhere, they fail and the client polls. That is accepted: it is safe, and only the saving is lost there.
 - **HTTP/2**: the wait session multiplexes on one connection per session; ordinary requests use their own session's
   connection. Under HTTP/1.1 a wait holds one of URLSession's few connections per host (4 on iOS, 6 on macOS), which ordinary requests don't
   share.
@@ -696,7 +731,7 @@ A fault that keeps recurring can then be told apart: a client bug or a server bu
 | Short-receipt push accepted at a cursor at or below one already seen | (lost changes) | Reconciliation, as today |
 | Server stops listing a capability (downgrade) | Ignores the flag; no endpoint | Full receipts accepted; the wait fails, the sync re-reads status and waiting stops |
 | Wait cut by a proxy (502/504) or connection reset | Slot released on abort | Ordinary sync; after 3 in a row, polling for an hour |
-| Half-open connection | Slot released when Kestrel notices, superseded by the next wait, or at the timeout | Request timeout (40 s); ordinary sync |
+| Half-open connection | Slot released when Kestrel notices, superseded by the next wait, or at the timeout | Request timeout (30 s); ordinary sync |
 | Server restart | Waiters answered `{changed: false, early: true}` on shutdown | The next wait reaches the new server, or fails and leads to an ordinary sync |
 | Restore or reset (restart) | As restart | The ordinary sync classifies it, as today |
 | Server rolled back below the device's position | Continuity check: `true` | Sync gets 409 `server_changed`; reconciliation, as today |
@@ -705,7 +740,7 @@ A fault that keeps recurring can then be told apart: a client bug or a server bu
 | Encryption turned on elsewhere | 401 to others; `true` to the requester | Ordinary sync; Needs you, as today |
 | Server answers `true` or `false` instantly, forever | (faulty or hostile) | At most one request per 3 s; `true` without progress falls back after 3 |
 | Second wait from the same device | Older one answered `{changed: false, early: true}` | No refusal; one wait per 3 s anyway |
-| `Notify()` missing on some path | Level check at the next wait | Change seen within 25 s, or by the safety sync |
+| `Notify()` missing on some path | Level check at the next wait | Change seen within one wait (20 s), or by the safety sync |
 | The wait rate limit | 429 | `failed`, never `retryAfter`; ordinary sync; counts toward the fallback |
 | Network change, Mac sleep or wake, app becoming active | — | Wait restarted after an ordinary sync; not counted |
 | Locked, background, stopped state, save failure | — | No wait; a wait in flight is cancelled at once; loop as today |
@@ -713,9 +748,9 @@ A fault that keeps recurring can then be told apart: a client bug or a server bu
 | A device revoked from outside the process reaches its deadline | Final check: 401 | Ordinary sync; No access, as today |
 | An image or record waiting for a retry time | — | Waiting continues; an ordinary sync runs at the retry time (future times of items still queued or missing only) |
 | Typing starts during a wait | — | Wait cancelled; the loop's 3 s syncs send the writing at least every 30 s, as today |
-| A refused entry or image stays behind | — | Waiting continues; on-time `false` answers keep Last Synced current, as today's syncs do |
+| A refused entry or image stays behind | — | No waiting: the device polls and updates Last Synced as today |
 | Non-confirming `false` answers (`early: true` or too soon: shutdown, a shared credential, a caching proxy, a hostile server) | — | Last Synced not updated; each is a strike toward the fallback |
-| An edit to a refused entry, or any non-editor change (rename, move, review resolution, merge, re-encryption), during a wait | — | A write to an observed table: the store isn't quiet, the wait is cancelled, an ordinary sync sends it |
+| Any non-editor change (rename, move, delete, review resolution, merge) during a wait | — | A write to an observed table: the store isn't quiet, the wait is cancelled, an ordinary sync sends it |
 
 ## 6. Expected traffic
 
@@ -724,10 +759,10 @@ HTTP/2 header compression and TCP acknowledgements, is about 0.6–1.5 KB.
 
 | Foreground, nothing changing | Today | With waiting |
 | --- | --- | --- |
-| Requests per minute, active app | 20 empty pages, about 1 status, an agents list every 10 min: **about 21** | 2.4 waits, plus a safety sync every 10 min (about 3 requests): **about 2.7** |
-| Bytes per hour, active app | about 0.8–2 MB | about 0.1–0.25 MB (**about 85–90 % less**) |
-| Radio wake-ups per minute (iOS) | about 20 | about 2.4 |
-| Mac, another app active | about 3 requests/min; changes arrive within 30 s | about 2.7 requests/min; changes usually arrive within seconds (App Nap can stretch the 3 s floor) |
+| Requests per minute, active app | 20 empty pages, about 1 status, an agents list every 10 min: **about 21** | 3 waits, plus a safety sync every 10 min (about 3 requests): **about 3.3** |
+| Bytes per hour, active app | about 0.8–2 MB | about 0.12–0.3 MB (**about 85 % less**) |
+| Radio wake-ups per minute (iOS) | about 20 | about 3 |
+| Mac, another app active | about 3 requests/min; changes arrive within 30 s | about 3.3 requests/min; changes usually arrive within seconds (App Nap can stretch the 3 s floor) |
 | Delay before a change from another device shows | 0–3 s | Under 1 s, plus that sync's own time (3 s at most when a previous request started within 3 s) |
 | Worst case against a faulty server | — | One request per 3 s (today's rate) until the fallback |
 
@@ -806,6 +841,8 @@ Waiting:
      leftover retry entries (an operation removed by a conflict, an image no longer missing, a past time) schedule
      nothing;
    - `quietBroken` cancels a held wait, and continuous typing is then sent within 30 s;
+   - a failed automatic rename push leaves the sync unsettled: the device polls and retries it instead of waiting;
+   - `loopStarted` clears a wait still marked in flight, and the restarted loop syncs at once;
    - a wait task cancelled from outside (the client replaced) leads to a sync without a strike; a wait with no event
      by its watcher deadline is treated as `failed`;
    - the safety sync runs at the latest at the watcher deadline of the wait in flight;
@@ -835,17 +872,22 @@ Waiting:
      - a journal rename, move and delete (`commitMutation`);
      - resolving a review;
      - a merge that only sets `dirty`;
-     - re-encryption's direct outbox inserts;
      - deleting an entry;
      - adding an image without a record change;
    - a `commitMutation` write (a rename) committed after `settledFacts()` but before the gate is released breaks
      quiet;
    - a sync handed the gate by `endSynchronization` breaks quiet;
-   - a rolled-back transaction doesn't advance `writes`.
-9. End to end with a fake server holding a wait, and a refused entry present:
-   - editing that entry during the wait is sent;
-   - renaming a journal during the wait is sent;
-   - in both cases, Last Synced isn't updated before the change is sent.
+   - a rolled-back transaction doesn't advance `writes`;
+   - re-encryption writes to a copy through another `DatabaseQueue`, which the observer doesn't see. After the switch
+     the app's store is another object, so an answer from a wait on the old store is discarded by the "same store
+     object" check.
+   - a write to a refused record after the refused re-queue pass but before `settledFacts()`: the sync isn't settled
+     (something is refused), so the device polls and the next sync re-queues the edit.
+9. End to end with a fake server holding a wait:
+   - a refused entry or image makes the device poll instead of wait, and editing, deleting or moving the refused entry
+     is re-queued at the next poll;
+   - renaming a journal during a held wait is sent, and Last Synced isn't updated before it is;
+   - an entry under review doesn't stop waiting.
 10. An idle app, with the real `AppModel.sync()` path, reaches waiting after one sync. Nothing it does after a
     successful sync (list refresh, pending count, agent publishing, removing superseded libraries) writes to the
     observed tables.
@@ -854,8 +896,8 @@ Waiting:
 
 1. **Two devices**: A waits, B pushes; A's wait returns, A syncs and has B's change within 1 s. Then B revokes A: A's
    wait gets 401 and A's sync reports No access.
-2. **Mixed versions.** Before implementation, copy the current server and JournalCore sources to the scratchpad and
-   build them as the baseline. The repository isn't under version control, so a copy is the only baseline.
+2. **Mixed versions.** The baseline is the shipped build 9: a git worktree of commit 9c6c83d ("Build 9"), which
+   contains the server, JournalCore and JournalProbe, built separately from the working tree.
    - Baseline probe with the new server: full receipts, no waits, the existing probes (`test-sync.sh`,
      `test-sync-health.sh`) all pass.
    - New probe with the baseline server: no flag sent, no waits, polling; the same probes pass.
@@ -868,14 +910,16 @@ Waiting:
    receipt; the server log has exactly one change per operation; the client's store matches the server's.
 5. **Fault proxy** (a small Python script on loopback, in scripts/):
    - one that answers 504 to held requests after 10 s: the client falls back to polling after 3;
-   - one that stops forwarding without closing (half-open): the wait times out within 45 s and sync continues;
+   - one that stops forwarding without closing (half-open): the wait times out within 35 s and sync continues;
    - one that resets mid-wait;
    - one that buffers whole responses: waits survive it;
    - one that answers every wait `true` at once: at most one request per 3 s, then the fallback.
    - one that replays a cached `false` at once (a proxy ignoring `no-store`): Last Synced isn't updated by it, and the
      client falls back to polling.
-6. **Through Caddy with HTTP/2**: reuse `scripts/test-https-deployment.py`'s disposable Caddy setup. Waits are held,
-   woken and completed. A cancelled wait is either released on the server or replaced by the next one (latest wins).
+6. **Through Caddy with HTTP/2 and HTTP/3**: reuse `scripts/test-https-deployment.py`'s disposable Caddy setup, with UDP
+   443 published as in deploy/compose.https.yaml. A URLSession client that has seen Caddy's `Alt-Svc` header holds
+   waits over QUIC for the full 20 s, idle; they are woken and completed, over several cycles. The protocol is
+   checked, not assumed (`URLSessionTaskMetrics`). A cancelled wait is either released on the server or replaced by the next one (latest wins).
    Tailscale Serve, if a disposable tailnet is available, gets the same check (§4.7). That includes whether it passes
    a client's cancellation on to Kestrel; if it doesn't, latest wins covers it.
 7. **Many devices**: 20 device credentials waiting, one writer pushing 100 changes. Every device converges; server
@@ -885,13 +929,15 @@ Waiting:
 
 A loopback counting proxy records requests and bytes in each direction:
 
-- 10 idle minutes, run by JournalProbe with the real `ChangeWatcher` and loop timings: baseline client and server,
-  then new.
-- A writing session of 60 pushes of a 50,000-word entry and of a normal entry.
+- **10 idle minutes with the real app loop.** The Release app on the iOS simulator, through the counting proxy: the
+  baseline build with the baseline server, then the new ones. It runs the real `synchronizeAutomatically`, so pacing
+  between the loop and the watcher is measured, not replicated. Last Synced keeps reading "Just now". After an
+  automatic rename, the first wait answers `true` at once (the rename doesn't move the cursor); that is expected
+  progress, not a strike.
+- **A writing session** of 60 pushes of a 50,000-word entry and of a normal entry, run by JournalProbe.
 
-The results replace the estimates in §6 and are added to docs/performance.md. The Release app on the iOS simulator
-confirms the request rate once: an idle minute shows waits instead of pages, and Last Synced keeps reading "Just now".
-The owner's Mac and devices aren't used.
+The results replace the estimates in §6 and are added to docs/performance.md. The owner's Mac and devices aren't
+used.
 
 ### 7.5 Red team brief
 
@@ -921,6 +967,8 @@ request storm or a stuck client, or resource exhaustion. Suggested attacks:
   The goal is a request storm, a stuck client, a wrong health state, or a Last Synced that claims a sync that didn't
   happen.
 - Information exposure: anything in a wait response or log beyond one boolean.
+- An aborted Revoke request whose commit landed but whose `Notify()` was skipped: the revoked device must get 401 at
+  the deadline check, never a confirming `false`.
 
 ## 8. Changes outside the code
 
@@ -929,7 +977,13 @@ request storm or a stuck client, or resource exhaustion. Suggested attacks:
   - the receipt form under Sync and conflicts;
   - GET /sync/wait, with its parameters, the confirming and early `false`, and the rule that a confirming `false` is
     held until the timeout;
-  - its limits under Rate limits.
+  - its limits under Rate limits;
+  - what every client must do:
+    - run one wait per credential;
+    - never treat an early or too-fast `false` as proof;
+    - turn any `true` or failure into an ordinary sync;
+    - keep a periodic full sync;
+    - honor the proxy-timeout guidance.
   No new error codes.
 - protocol/fixtures: a short receipt and its digest for another client to check against.
 - docs/self-hosting: the proxy-timeout sentence (§4.7).
@@ -938,8 +992,112 @@ request storm or a stuck client, or resource exhaustion. Suggested attacks:
 
 ## 9. Decisions from review
 
-- The longest wait is 25 s (round 1).
+- The longest wait the server holds is 25 s (round 1). The client asks for 20 s, for HTTP/3 and NAT margin (round 8).
 - The wait checks continuity on every check (round 1 asked for once at entry; round 2 noted encryption turn-on
   deletes the log without a restart, so it's repeated; one indexed row read).
 - The Mac waits while another app is active, and falls back to 30-second polling.
 - The safety sync runs every 10 minutes.
+- Both the `early` member and the client's timing check guard against a non-confirming `false`. Both exist only so
+  that Last Synced never claims a check that didn't happen: `early` for honest servers, timing for caching proxies and
+  faulty servers. Keep both (round 9).
+- Last Synced keeps today's meaning: "the last time this device and the server confirmed nothing more to exchange
+  right now". Records waiting for a retry time, or tied to a lost image, don't prevent it, as they don't today
+  (round 9 question; owner may revisit).
+
+## Implementation (2026-10-02)
+
+Implemented as revision 9 describes, with the review-approved behavior. Where the code differs from the text above, this section applies.
+
+**Files.**
+
+- Server:
+  - `Features/SyncSignal.cs` (signal and waiter registry);
+  - `SyncEndpoints.cs` (short receipts, `Wait`, the shared continuity check `HasAppliedChange`);
+  - notifications in `AccountEndpoints.Revoke`, `PairingEndpoints.Cancel` and `EncryptionEndpoints`;
+  - the `SyncWait` rate-limit policy;
+  - the capabilities `sync-short-receipt` and `sync-wait`.
+- JournalCore:
+  - `SyncWaiting.swift`: the quiet mark, the write observer, `settledFacts()`, `waitForChange` and wait answers;
+  - `ChangeWatcher.swift`: the state machine;
+  - `ServerClient.receipt(_:for:)`;
+  - in `SyncEngine`: the settled classification, report fields, `waitForChange(from:)` and `forgetStatus()`.
+- App:
+  - `SyncSchedule.swift`: watcher glue in the automatic-sync loop, and `SyncActivity.syncedByWait(at:)`;
+  - `AppModel.sync()` reports every synchronization to the watcher;
+  - `configureSync()` resets the watcher;
+  - `NetworkReturn` reports path changes.
+- Probes and scripts:
+  - `JournalProbe` `wait*` modes;
+  - `scripts/test-sync-efficiency.sh`;
+  - `scripts/sync-fault-proxy.py`;
+  - `scripts/measure-idle-traffic.sh`, which runs `IdleTrafficMeasurement` in the measurement bundle.
+
+**Differences from the text.**
+
+- **Continuity in the wait.** The payload digest is compared once, when a wait arrives. On every later check, the
+  change at `after` must still exist with that record and revision. The digest can't change without a restart, and
+  reading a 4 MiB payload on every wake would cost more than it protects.
+- **Path changes** aren't debounced separately. Each one cancels the wait, and the resulting synchronization keeps
+  the 3-second floor.
+- **Fallback polls keep the floor.** The `cached-false` fault test found that after the third strike, the loop's
+  first poll could follow the last wait within 0.25 s. Polls now also wait for `ChangeWatcher.allowsRequest(at:)`.
+  That floor counts from the last wait only. Counting from the last synchronization delayed today's immediate sync
+  when the network returns, which an existing test caught.
+- **Waits are released by every synchronization `AppModel.sync()` runs.** That includes Sync Now and writing
+  pauses, not only the loop's own. Any settled one re-arms the watcher with its own quiet mark, which is just as
+  safe.
+- **The store's quiet state** is one `QuietState` value: the generation, the write counter and the last facts'
+  count.
+- **A wait that arrives after shutdown began** answers early. This takes the same branch as held waits, but isn't
+  tested separately: the in-process test server is disposed once the host stops.
+
+**Measured** ([docs/performance.md](../performance.md#sync-traffic-short-receipts-and-waiting-for-changes)):
+
+- **Idle foreground traffic** fell from 20.6 to 3.0 requests a minute, and from about 1.0 to 0.14 MB of HTTP an
+  hour (86 % less). This replaces the estimates in §6.
+- **Each accepted push** now downloads 475 bytes, instead of 558,717 for a 50,000-word entry or 6,482 for a
+  500-word one.
+
+**Tests run:**
+
+- server unit tests (157);
+- JournalCore (234), with mutation spot checks;
+- Mac unit tests (245, team-signed);
+- `scripts/test-sync-efficiency.sh`, with real servers:
+  - every fault mode: cut, half-open, reset, buffer, instant `true`, cached `false`, lost push answer;
+  - 20 waiting devices;
+  - mixed versions both ways against a worktree of build 9;
+- `test-sync.sh`, `test-sync-health.sh` and `test-local-server.sh`;
+- the backend and hygiene lanes, strict lint and formatting.
+
+**Not done:**
+
+- **Caddy with HTTP/2 and HTTP/3 (§7.3.6).** Caddy isn't installed on this Mac and Docker wasn't running, so the run
+  through a real Caddy is still open.
+- **Tailscale Serve and Funnel** remain an owner check (§4.7).
+
+**Red team fixes (2026-10-02).** Neither red team could lose, duplicate or overwrite data. Each fix below has a test that fails without it.
+
+- **RT-S1, forwarded addresses.** Documented in docs/self-hosting and protocol/README.md: `TrustedProxies` lists only the immediate proxy, at an address nothing else connects from, and the proxy replaces a client's X-Forwarded-For.
+  - No code guard was added. The server can't tell a trusted proxy from another program at the same address.
+  - The only header-based check, refusing several entries, would neither stop a single forged entry nor help the Tailscale example (127.0.0.1 in a namespace only tailscaled and the server share).
+  - Behavior is unchanged, so there is no new test.
+- **RT-S2, capacity.** At most 64 waits are held across all devices (`Journal:SyncWaitCapacity`, for tests). Beyond that, a new wait is answered `{changed: false, early: true}` at once, which the client counts as a strike without a health state. Replacing a device's own wait is never refused.
+- **RT-C1, the floor.**
+  - Every synchronization reports `syncStarted` to the watcher, so the floor also counts from Sync Now, writing pauses and other paths.
+  - Any synchronization that ran clears the loop's `watcherSyncDue`.
+- **RT-C2, cancelled waits.**
+  - A cancelled wait task does nothing after reading its position.
+  - A late `quietBroken` names its wait and is ignored unless that is still the current wait.
+  - The watcher deadline and the confirming time count from when the request was sent.
+  - Last Synced takes the sent time from the watcher's own record of the wait.
+- **RT-C3, stale state.**
+  - A quiet mark carries its store instance's epoch and never applies to another store.
+  - A watcher ignores synchronizations that started before it was created (a reset for another library or connection).
+- **RT-S3, continuations on the signal.** Confirmed: 50,000 finished waits without a write left about 9.5 MB reachable from the shared signal. Fixed with `SyncSignal.WaitForSignal` (§4.3). A test ends 1,000 waits by timeout or disconnect without a write and counts how many are still attached to the signal after collection (fewer than 10 pass); the earlier pattern leaves about 500.
+- **RT-S4, logging settings.** The server's content root is now its own folder, or the bundle's `Contents/Resources` for the Mac app's embedded server, whatever directory it is started from. Previously `appsettings.json` was missed, and every request was logged with its query string. Tests:
+  - a server process started from another directory logs no request;
+  - the Mac bundle's settings folder is found.
+- **The legacy receipt test** now checks that the stored row changed, and that the stored text is returned to retries asking for no, full and short receipts. The client's handling of a full receipt is covered by `SyncReceiptVectorTests` and the receipt decoding tests.
+- **Caddy.** Docker Desktop's engine answered 503 even after a restart, so the run through Caddy is still open.
+

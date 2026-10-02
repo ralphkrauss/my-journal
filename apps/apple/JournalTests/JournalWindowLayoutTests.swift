@@ -74,6 +74,42 @@
             XCTAssertGreaterThanOrEqual(host.controller.detailHost.view.frame.width, 439)
         }
 
+        /// Sync Status appears only when the person must act, in a place the toolbar keeps for it while the library
+        /// syncs: nothing else moves, and while it isn't shown its place can't be reached or seen.
+        func testSyncStatusAppearsWithoutMovingOtherItems() async throws {
+            let host = LayoutWindow(columns: WindowColumns())
+            defer { host.close() }
+            host.state.syncs = true
+            try await host.waitFor(.all)
+            try await host.waitForItem("syncStatus")
+            let slot = try XCTUnwrap(host.item("syncStatus"))
+            let button = try XCTUnwrap(slot.view?.subviews.first as? NSButton)
+            XCTAssertTrue(button.isHidden)
+            XCTAssertFalse(button.canBecomeKeyView, "An empty place isn't in the keyboard loop")
+            XCTAssertEqual(slot.menuFormRepresentation?.isHidden, true, "Nor in the overflow menu")
+            XCTAssertFalse(slot.isBordered, "Nor drawn: no glass around an empty place")
+            let before = host.frames(of: ["formatting", "editorOnly", "search"])
+            XCTAssertGreaterThan(slot.view?.frame.width ?? 0, 20)
+
+            host.state.syncStatus = .init(message: "The server isn’t set up.", action: "Set Up Server Again…")
+            try await host.settle()
+            XCTAssertFalse(button.isHidden)
+            XCTAssertTrue(slot.isBordered)
+            XCTAssertEqual(slot.menuFormRepresentation?.isHidden, false)
+            for menu in [(button as? MenuToolbarButton)?.statusMenu, slot.menuFormRepresentation?.submenu] {
+                let menu = try XCTUnwrap(menu)
+                menu.delegate?.menuNeedsUpdate?(menu)
+                XCTAssertEqual(
+                    menu.items.map(\.title), ["The server isn’t set up.", "Set Up Server Again…", "Sync Settings…"])
+            }
+            XCTAssertEqual(host.frames(of: ["formatting", "editorOnly", "search"]), before)
+
+            host.state.syncStatus = nil
+            try await host.settle()
+            XCTAssertTrue(button.isHidden)
+            XCTAssertEqual(host.frames(of: ["formatting", "editorOnly", "search"]), before)
+        }
+
         /// Toolbars that share an identifier stay identical across windows; each window changes only its own.
         func testWindowsKeepTheirOwnToolbars() async throws {
             let first = LayoutWindow(columns: WindowColumns())
@@ -93,6 +129,8 @@
     @MainActor
     private final class LayoutState: ObservableObject {
         @Published var columns: WindowColumns
+        @Published var syncs = false
+        @Published var syncStatus: JournalToolbarConfiguration.SyncStatus?
         init(columns: WindowColumns) { self.columns = columns }
     }
 
@@ -111,6 +149,8 @@
         private var configuration: JournalToolbarConfiguration {
             var configuration = JournalToolbarConfiguration()
             configuration.editorOnly = state.columns.editorOnly
+            configuration.syncs = state.syncs
+            configuration.syncStatus = state.syncStatus
             configuration.toggleEditorOnly = { [state] in state.columns.toggleEditorOnly() }
             return configuration
         }
@@ -145,6 +185,32 @@
         }
 
         var identifiers: [String] { window.toolbar?.items.map(\.itemIdentifier.rawValue) ?? [] }
+
+        func item(_ identifier: String) -> NSToolbarItem? {
+            window.toolbar?.items.first { $0.itemIdentifier.rawValue == identifier }
+        }
+
+        /// Where the items' views are in the window, by identifier; items without a view show as zero.
+        func frames(of identifiers: [String]) -> [String: NSRect] {
+            Dictionary(
+                uniqueKeysWithValues: identifiers.map { identifier in
+                    let view = item(identifier)?.view
+                    return (identifier, view.map { $0.convert($0.bounds, to: nil) } ?? .zero)
+                })
+        }
+
+        func waitForItem(_ identifier: String) async throws {
+            for _ in 0..<100 where item(identifier) == nil { try await Task.sleep(nanoseconds: 50_000_000) }
+            try await settle()
+        }
+
+        /// Lets the window apply a change and finish laying out its toolbar.
+        func settle() async throws {
+            for _ in 0..<6 {
+                try await Task.sleep(nanoseconds: 50_000_000)
+                window.layoutIfNeeded()
+            }
+        }
 
         /// The toolbar's items between its tracking separators.
         var sections: (sidebar: [String], list: [String], editor: [String]) {

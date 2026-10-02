@@ -20,6 +20,7 @@ public static class RateLimits
     public const string DeviceLookup = "device-lookup";
     public const string Password = "password";
     public const string Sync = "sync";
+    public const string SyncWait = "sync-wait";
     public const string OAuthMetadata = "oauth-metadata";
     public const string OAuthRegister = "oauth-register";
     public const string OAuthAuthorize = "oauth-authorize";
@@ -65,6 +66,9 @@ public static class RateLimits
                 : Window("oauth-status-unknown:" + ClientAddress(context), 60);
         });
         options.AddPolicy(OAuthToken, context => Window("oauth-token:" + ClientAddress(context), 60));
+        // A client waits for changes at most once every 3 s. The limiter runs before authorization, so requests
+        // without a valid credential count against their address.
+        options.AddPolicy(SyncWait, context => Window(DeviceAuthentication.DeviceId(context) is { } device ? "sync-wait:" + device : "sync-wait-address:" + ClientAddress(context), 60));
         options.AddPolicy(Sync, context => DeviceAuthentication.DeviceId(context) is { } device
             ? RateLimitPartition.GetConcurrencyLimiter("device:" + device, _ => new ConcurrencyLimiterOptions { PermitLimit = 8, QueueLimit = 32, QueueProcessingOrder = QueueProcessingOrder.OldestFirst })
             : Window(ClientAddress(context), 60));

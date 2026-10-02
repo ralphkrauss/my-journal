@@ -18,6 +18,7 @@
     <None Include="../../../protocol/fixtures/encryption-v1.json" Link="encryption-v1.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../protocol/fixtures/encryption-v2.json" Link="encryption-v2.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../protocol/fixtures/agent-copy-v1.json" Link="agent-copy-v1.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../protocol/fixtures/sync-receipts-v1.json" Link="sync-receipts-v1.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

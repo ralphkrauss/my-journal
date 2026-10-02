@@ -149,6 +149,8 @@ final class AppModel: ObservableObject {
     /// Why the last synchronization failed, as one of the states in docs/design/sync-health-and-recovery.md; nil
     /// once it succeeds.
     @Published var syncHealth: SyncHealth?
+    /// Changes have waited more than a day while sync fails (`updateSyncLongWait`): Sync Status asks for attention.
+    @Published var syncLongWait = false
     @Published var connection: SyncConnection? {
         didSet { syncActivity.connectionChanged(connection) }
     }
@@ -577,6 +579,7 @@ final class AppModel: ObservableObject {
         // A new library or connection starts from a clean sync state; what was wrong with the previous one no
         // longer applies (docs/design/sync-health-and-recovery.md §2).
         resetSyncHealth()
+        resetWatcher()
         guard let store, let connection,
             let client = try? ServerClient(address: connection.address, token: connection.token)
         else {
@@ -592,7 +595,18 @@ final class AppModel: ObservableObject {
     /// `retryingRefused` also sends records and images the server refused before, as Sync Now and Try Again do.
     /// `waitingForWritingPause` leaves an entry being written until writing pauses, as automatic sync does.
     @discardableResult func sync(retryingRefused: Bool = false, waitingForWritingPause: Bool = false) async -> Bool {
+        // The change watcher learns how every synchronization ended (docs/design/sync-protocol-efficiency.md §4.6).
+        if syncTiming.watcher.waiting { handleWatcher(.quietBroken()) }
+        var finished = ChangeWatcher.Finished(outcome: .declined, startedAt: .now, finishedAt: .now)
+        defer {
+            finished.finishedAt = .now
+            handleWatcher(.syncFinished(finished))
+            // Any synchronization that ran does what one the watcher asked for would.
+            if finished.outcome != .declined { syncTiming.watcherSyncDue = false }
+        }
         guard !locked, !replacingVault, !saveFailure, let store, let syncEngine else { return false }
+        // The floor between requests counts from every synchronization, not only the loop's.
+        handleWatcher(.syncStarted)
         var report: SyncReport?
         var failure: Error?
         let request = SyncEngine.Request(
@@ -620,6 +634,7 @@ final class AppModel: ObservableObject {
         let problem = health.map { $0.message(host: connectionHost) } ?? report?.problem
         if syncError != problem { syncError = problem }
         if syncFailed != (failure != nil) { syncFailed = failure != nil }
+        updateSyncLongWait()
         await refreshPendingItems()
         if failure == nil {
             syncActivity.synced()
@@ -627,6 +642,11 @@ final class AppModel: ObservableObject {
         }
         // Agents read what has synced, so their copies follow each successful sync.
         if failure == nil, let agentCopies { await agentCopies.requestPublishing() }
+        finished.outcome = failure != nil ? .failed : report?.settled == true ? .settled : .unsettled
+        finished.mark = report?.quietMark
+        finished.position = report?.position
+        finished.earliestRetry = report?.earliestRetry.map { .milliseconds(Int64($0 * 1000)) }
+        finished.waitingSupported = report?.waitingSupported == true
         return failure == nil
     }
     /// Locks at once when App Lock is on, before anything else can be shown, and returns whether it did. Writing is

@@ -31,7 +31,7 @@ actor MergeServer: SyncServer {
             changes: page, cursor: page.last?.cursor ?? position, hasMore: newer.count > page.count,
             serverId: identity, serverIdCursor: 0)
     }
-    func push(_ pending: PendingChange, serverID: String?) throws -> ServerClient.PushResult {
+    func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) throws -> ServerClient.PushResult {
         if let remaining = pushesBeforeFailure {
             guard remaining > 0 else { throw URLError(.notConnectedToInternet) }
             pushesBeforeFailure = remaining - 1

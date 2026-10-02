@@ -54,7 +54,7 @@ private actor HealthServer: SyncServer {
             serverId: pageServerID ?? serverID,
             serverIdCursor: 0)
     }
-    func push(_ pending: PendingChange, serverID: String?) throws -> ServerClient.PushResult {
+    func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) throws -> ServerClient.PushResult {
         pushes.append(pending.recordID)
         if let failure = pushFailures[pending.recordID] { throw failure }
         let change = RemoteChange(

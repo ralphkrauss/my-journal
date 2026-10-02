@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
 
 var command = MaintenanceCommand.Parse(args);
-var builder = WebApplication.CreateBuilder(command.ConfigurationArgs);
+// appsettings.json (logging levels included) is read from the server's own folder, whatever directory it was started
+// from: the packaged launcher and the Mac app's embedded server don't set one.
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = command.ConfigurationArgs, ContentRootPath = ContentRoot.For(AppContext.BaseDirectory) });
 if (command.Name is not null || command.Invalid)
 {
     // Maintenance output goes to stdout; its log events go to stderr.
@@ -54,6 +56,7 @@ if (!OperatingSystem.IsWindows())
 
 builder.Services.AddSingleton(paths);
 builder.Services.AddSingleton<WriteGate>();
+builder.Services.AddSingleton(new SyncSignal(builder.Configuration.GetValue("Journal:SyncWaitCapacity", SyncSignal.DefaultCapacity)));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<AuditLog>();
 builder.Services.AddSingleton<RecoveryAttempts>();

@@ -55,15 +55,10 @@ extension RootView {
             .disabled(!model.canEdit || previewUnavailable)
         }
     #endif
-    /// Sync Status stays quiet while syncing normally or retrying by itself, and shows while items wait or the
-    /// person must act (docs/design/sync-health-and-recovery.md §4.2).
-    var showsSyncStatus: Bool {
-        model.connection != nil && (model.pendingSync || model.syncNeedsAttention)
-    }
+    /// Sync Status shows only when the person must act (AppModel.showsSyncStatus), always with the exclamation mark.
     var syncStatusMessage: String { model.syncError ?? "Saved on this device. Waiting to sync." }
-    var syncStatusSymbol: String { model.syncStatusSymbol() }
     @ViewBuilder var syncMenu: some View {
-        if showsSyncStatus {
+        if model.showsSyncStatus {
             Menu {
                 Text(syncStatusMessage)
                 let action = model.syncStatusAction
@@ -72,7 +67,7 @@ extension RootView {
                 }
                 Button("Sync Settings…") { model.openSyncSettings() }
             } label: {
-                Label("Sync Status", systemImage: syncStatusSymbol)
+                Label("Sync Status", systemImage: "exclamationmark.icloud")
             }.iconHelp("Sync Status")
         }
     }

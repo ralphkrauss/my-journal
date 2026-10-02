@@ -188,7 +188,7 @@ public static class PairingEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> Cancel(Guid id, PollPairing request, JournalDb db, WriteGate gate, AuditLog audit, HttpContext http)
+    private static async Task<IResult> Cancel(Guid id, PollPairing request, JournalDb db, WriteGate gate, SyncSignal signal, AuditLog audit, HttpContext http)
     {
         var ct = http.RequestAborted;
         var tokenHash = await db.PairRequests.AsNoTracking().Where(x => x.Id == id).Select(x => x.PollTokenHash).SingleOrDefaultAsync(ct);
@@ -209,7 +209,15 @@ public static class PairingEndpoints
             audit.PairingCancelled(device.Id);
         }
         db.PairRequests.Remove(pair);
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        finally
+        {
+            // A device that collected its grant may be waiting for changes; it is refused now.
+            signal.Notify();
+        }
         return Results.NoContent();
     }
 

@@ -28,11 +28,13 @@ arguments=(-project apps/apple/JournalMeasurements.xcodeproj -derivedDataPath "$
 case "$platform" in
   mac)
     xcodebuild "${arguments[@]}" -scheme JournalMacMeasured -destination 'platform=macOS' \
+      -only-testing:JournalMacMeasurements/HeavyLibraryMeasurement \
       CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=${JOURNAL_MAC_SIGNING_IDENTITY:--}" test | tee "$output/test.log"
     ;;
   ios)
     simulator="$(scripts/prepare-simulator.sh)"
     xcodebuild "${arguments[@]}" -scheme JournalIOSMeasured -destination "platform=iOS Simulator,id=$simulator" \
+      -only-testing:JournalIOSMeasurements/HeavyLibraryMeasurement \
       CODE_SIGN_IDENTITY=- test | tee "$output/test.log"
     ;;
   *)

@@ -4,18 +4,25 @@ import Foundation
 protocol SyncServer: Sendable {
     func status() async throws -> ServerStatus
     func changes(after: Int64, limit: Int, applied: LoggedChange?) async throws -> SyncPage
-    func push(_ pending: PendingChange, serverID: String?) async throws -> ServerClient.PushResult
+    func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) async throws -> ServerClient.PushResult
     func upload(_ bytes: Data, id: UUID) async throws
     func hasAttachment(_ id: UUID) async throws -> Bool?
     func downloadAttachment(_ id: UUID) async throws -> Data
     /// How the server stores journals, from its recovery format; nil when it can't say.
     func contentProtection() async throws -> ContentProtection?
+    /// Waits for the server's log to move past `position` (capability `sync-wait`). Throws only on cancellation.
+    func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer
 }
 extension SyncServer {
     /// A server that can't say how it stores journals.
     func contentProtection() async throws -> ContentProtection? { nil }
+    /// A server that can't hold a wait.
+    func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer { .failed }
 }
 extension ServerClient: SyncServer {
+    func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer {
+        try await waitForChange(position, digest: digest, timeout: Self.waitSeconds)
+    }
     func contentProtection() async throws -> ContentProtection? {
         try await recoveryParameters().contentProtection
     }
@@ -27,6 +34,18 @@ public struct SyncReport: Sendable {
     public let problem: String?
     /// Images still to download, which the next synchronization continues with.
     public var imagesToDownload = 0
+    /// Nothing is left to send, upload, download, reconcile or rename, apart from items waiting for a retry time,
+    /// and nothing is refused: the device may wait for changes instead of polling
+    /// (docs/design/sync-protocol-efficiency.md §4.6).
+    public var settled = false
+    /// The soonest an item waiting for a retry time may be sent, from now.
+    public var earliestRetry: TimeInterval?
+    /// The store's state when this synchronization released it, for `JournalStore.quietPosition(since:)`.
+    public var quietMark: QuietMark?
+    /// Where this device is in the server's log afterwards.
+    public var position: QuietPosition?
+    /// The server holds waits for changes (capability `sync-wait`).
+    public var waitingSupported = false
 }
 
 public actor SyncEngine {
@@ -54,6 +73,12 @@ public actor SyncEngine {
     /// The server also confirms that change's payload (capability `sync-continuity-digest`).
     private var confirmsDigest = false
     static let continuityDigestFeature = "sync-continuity-digest"
+    /// The server answers a push with a short receipt when asked (capability `sync-short-receipt`).
+    private var shortReceipts = false
+    /// The server holds waits for changes (capability `sync-wait`).
+    static let waitFeature = "sync-wait"
+    /// Queued records this synchronization left only because they wait for a retry time or for images.
+    private var waitingRecords = Set<UUID>()
     private let now: @Sendable () -> Date
     /// The server database changed during this synchronization; start again with its new identity.
     private struct ServerChanged: Error {}
@@ -114,8 +139,8 @@ public actor SyncEngine {
         // Throws only when cancelled before this synchronization took the gate, so it isn't released here.
         try await store.beginSynchronization()
         do {
-            let report = try await synchronizeAgainIfServerChanged(request)
-            await store.endSynchronization()
+            var report = try await synchronizeAgainIfServerChanged(request)
+            report.quietMark = await store.endSynchronization()
             return report
         } catch {
             await store.endSynchronization()
@@ -204,6 +229,8 @@ public actor SyncEngine {
         let serverID = status.serverId
         confirmsContinuity = status.supports(Self.continuityFeature)
         confirmsDigest = status.supports(Self.continuityDigestFeature)
+        shortReceipts = status.supports(ServerClient.shortReceiptFeature)
+        waitingRecords = []
         var received = Set<UUID>()
         try await confirmSameProtection(serverID: serverID)
         if try await store.needsReconciliation(serverID: serverID) {
@@ -238,7 +265,33 @@ public actor SyncEngine {
         if let failure = uploads.failure ?? pushed.failure { throw failure }
         var report = SyncReport(problem: problem())
         report.imagesToDownload = missingImages.filter { !isWaiting($0) }.count
+        report.waitingSupported = status.supports(Self.waitFeature)
+        // The last step before the gate is released: anything written after this read breaks the quiet mark.
+        let facts = try await store.settledFacts()
+        report.position = facts.position
+        settle(&report, facts)
         return report
+    }
+    /// Whether nothing is left that the next synchronization would do, except at a retry time: nothing refused,
+    /// nothing queued that isn't waiting for a retry time or for images, no image to transfer that isn't waiting for
+    /// a retry time or lost, no reconciliation and no automatic rename outstanding.
+    private func settle(_ report: inout SyncReport, _ facts: SettledFacts) {
+        let refused = !rejectedChanges.isEmpty || !rejectedImages.isEmpty
+        let records = facts.queuedOperations.subtracting(waitingRecords)
+        let images = facts.imagesToUpload.subtracting(lostImages).filter { !isWaiting($0) }
+        report.settled =
+            !refused && records.isEmpty && images.isEmpty && report.imagesToDownload == 0 && !facts.reconciling
+            && !facts.renameOutstanding
+        let waiting = facts.queuedOperations.union(facts.imagesToUpload).union(missingImages)
+        let soonest = waiting.compactMap { retries[$0]?.after }.filter { $0 > now() }.min()
+        report.earliestRetry = soonest.map { $0.timeIntervalSince(now()) }
+    }
+    /// Forgets the status read last, so the next synchronization reads it again; after a failed wait, a server
+    /// that stopped offering a capability is noticed at once.
+    public func forgetStatus() { statusRead = nil }
+    /// Waits for the server's log to move past `position`. Throws only on cancellation.
+    public func waitForChange(from position: QuietPosition) async throws -> WaitAnswer {
+        try await server.waitForChange(position, digest: confirmsDigest)
     }
     /// A library never synchronizes with a server that stores journals another way. When another device turned on
     /// encryption, the server took a new identity and kept this device's access only if it turned encryption on; a
@@ -280,11 +333,17 @@ public actor SyncEngine {
         var received = Set<UUID>()
         for queued in records {
             try Task.checkCancellation()
-            guard let pending = try await store.takeForSending(queued),
-                try await isReady(pending, waitingFor: images)
-            else { continue }
+            guard let pending = try await store.takeForSending(queued) else {
+                // Nothing can be sent until its images are on the server.
+                waitingRecords.insert(queued.operationId)
+                continue
+            }
+            guard try await isReady(pending, waitingFor: images) else {
+                if rejectedChanges[pending.operationId] == nil { waitingRecords.insert(pending.operationId) }
+                continue
+            }
             do {
-                switch try await server.push(pending, serverID: serverID) {
+                switch try await server.push(pending, serverID: serverID, shortReceipt: shortReceipts) {
                 case .accepted(let receipt):
                     // Every new change follows the ones already seen. An earlier position means the server lost
                     // changes this device saw, such as after restoring a copy of its data: compare everything.
@@ -423,7 +482,9 @@ public actor SyncEngine {
             for rename in renames {
                 try Task.checkCancellation()
                 let result: ServerClient.PushResult
-                do { result = try await server.push(rename.change, serverID: serverID) } catch {
+                do {
+                    result = try await server.push(rename.change, serverID: serverID, shortReceipt: shortReceipts)
+                } catch {
                     // A rename that can't be sent now is worked out again at the next synchronization; everything
                     // else was already sent and read.
                     if error is CancellationError || error is ServerChanged { throw error }

@@ -44,18 +44,29 @@ extension AppModel {
         return syncHealth.kind != .temporary
     }
 
-    /// Sync Status's symbol: the exclamation mark when the person must act or changes have waited a day.
-    func syncStatusSymbol(now: Date = Date()) -> String {
-        syncNeedsAttention || syncWaitedLong(now: now) ? "exclamationmark.icloud" : "icloud"
+    /// Sync Status shows only when the person must act, or when sync has kept failing while changes waited more
+    /// than a day. Syncing normally and retrying by itself stay out of sight, so writing never changes the toolbar
+    /// (docs/design/sync-health-and-recovery.md §4.2, as amended on 2026-10-02).
+    var showsSyncStatus: Bool {
+        connection != nil && (syncNeedsAttention || syncLongWait)
     }
 
-    /// Changes have waited more than about a day, measured from the last successful sync: Sync Status then shows
-    /// the exclamation mark whatever the state (docs/design/sync-health-and-recovery.md §2, Long waits).
+    /// Changes have waited more than about a day while sync fails, measured from the last successful sync, or from
+    /// the first failure when there was none (docs/design/sync-health-and-recovery.md §2, Long waits). Waiting alone
+    /// isn't enough: at launch, changes from days ago wait only until the first sync.
     func syncWaitedLong(now: Date = Date()) -> Bool {
-        guard pendingSync, let lastSynced = syncActivity.lastSynced else { return false }
-        return now.timeIntervalSince(lastSynced) > Self.longSyncWait
+        guard pendingSync, syncFailed, let since = syncActivity.lastSynced ?? syncTiming.failingSince else {
+            return false
+        }
+        return now.timeIntervalSince(since) > Self.longSyncWait
     }
     static let longSyncWait: TimeInterval = 24 * 60 * 60
+
+    /// Checks the long wait after each sync, which also runs when the app becomes active.
+    func updateSyncLongWait(now: Date = Date()) {
+        let waited = syncWaitedLong(now: now)
+        if syncLongWait != waited { syncLongWait = waited }
+    }
 
     /// Automatic sync waits for the person: retrying can't help in this state.
     var automaticSyncStopped: Bool { syncHealth?.stopsAutomaticSync == true }
@@ -68,6 +79,11 @@ extension AppModel {
         if encryption.turnedOnElsewhere != signIn { encryption.turnedOnElsewhere = signIn }
         syncTiming.retryAfter = (failure as? ServerRateLimited)?.retryAfter
         if health?.stopsAutomaticSync == true { syncTiming.stoppedCheckAt = Date() }
+        if health == nil {
+            syncTiming.failingSince = nil
+        } else if syncTiming.failingSince == nil {
+            syncTiming.failingSince = Date()
+        }
     }
 
     /// Sync Settings… in Sync Status: Settings at Sync, where the state is explained and fixed.
@@ -87,6 +103,8 @@ extension AppModel {
         if syncFailed { syncFailed = false }
         syncTiming.stoppedCheckAt = nil
         syncTiming.retryAfter = nil
+        syncTiming.failingSince = nil
+        if syncLongWait { syncLongWait = false }
     }
 
     /// Reads how many items wait for the server, for Settings > Sync.
@@ -144,19 +162,27 @@ extension AppModel {
     private var satisfied = true
     /// The network came back since this was last read.
     private(set) var returned = false
+    /// The path's status and interfaces as last reported; any change ends a wait for the server's changes.
+    private var path: String?
+    var onPathChange: (@MainActor () -> Void)?
 
     init() {
         monitor.pathUpdateHandler = { [weak self] path in
             let available = path.status == .satisfied
-            Task { @MainActor in self?.update(available: available) }
+            let description = "\(path.status) " + path.availableInterfaces.map(\.name).joined(separator: ",")
+            Task { @MainActor in self?.update(available: available, path: description) }
         }
         monitor.start(queue: DispatchQueue(label: "NetworkReturn"))
     }
     deinit { monitor.cancel() }
 
-    func update(available: Bool) {
+    func update(available: Bool, path description: String? = nil) {
         if available && !satisfied { returned = true }
         satisfied = available
+        if let description {
+            if let previous = path, previous != description { onPathChange?() }
+            path = description
+        }
     }
     /// Whether the network returned since the last call.
     func take() -> Bool {

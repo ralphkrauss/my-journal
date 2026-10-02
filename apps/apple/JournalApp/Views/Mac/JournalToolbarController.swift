@@ -4,9 +4,9 @@
 
     /// What the journal window's toolbar shows, and what its items do. Built by `RootView` on every update.
     struct JournalToolbarConfiguration {
+        /// What Sync Status shows when the person must act (sync-health-and-recovery.md §4.2).
         struct SyncStatus: Equatable {
             let message: String
-            let failing: Bool
             /// The sync state's single action, such as Try Again or Connect Again… (sync-health-and-recovery.md).
             let action: String
         }
@@ -19,6 +19,8 @@
         var sourceMode = false
         var previewUnavailable = false
         var hasEntryActions = false
+        /// The library syncs with a server, so the toolbar keeps Sync Status's place whether or not it shows.
+        var syncs = false
         var syncStatus: SyncStatus?
         var searchPrompt = ""
         var query = ""
@@ -65,6 +67,11 @@
         private let entryMenu = MenuActionTarget()
         private let journalMenu = MenuActionTarget()
         private let editorOnlyButton = NSButton()
+        private let syncStatusButton = MenuToolbarButton()
+        /// Sync Status's place, as wide as its button whether or not that shows, so it appearing or leaving never moves
+        /// another item.
+        private let syncStatusSlot = NSView()
+        private let syncStatusOverflow = NSMenuItem(title: "Sync Status", action: nil, keyEquivalent: "")
         private var searchPending = false
         private var uninstalling = false
 
@@ -87,6 +94,7 @@
             editorOnlyButton.setAccessibilityLabel("Editor Only")
             editorOnlyButton.target = self
             editorOnlyButton.action = #selector(toggleEditorOnly)
+            configureSyncStatus()
             formattingPopover.button.target = self
             formattingPopover.button.action = #selector(showFormatting)
             formattingPopover.didClose = { [weak self] _ in self?.configuration.formattingDidClose() }
@@ -172,7 +180,8 @@
             if listDividerShown { layout.append(("listSeparator", .listSeparator)) }
             layout += [("newEntry", .newEntry), ("leadingSpace", .flexibleSpace)]
             layout += [("formatting", .formatting), ("insertImage", .insertImage), ("trailingSpace", .flexibleSpace)]
-            if configuration.syncStatus != nil { layout.append(("syncStatus", .syncStatus)) }
+            // A space keeps Sync Status apart from Editor Only's group, as a status of its own.
+            if configuration.syncs { layout += [("syncStatus", .syncStatus), ("syncSpace", .space)] }
             layout += [("editorOnly", .editorOnly), ("sourceMode", .sourceMode), ("entryActions", .entryActions)]
             layout.append(("search", .search))
             return layout
@@ -194,6 +203,7 @@
             switch identifier {
             case .toggleSidebar: return "toggleSidebar"
             case .sidebarTrackingSeparator: return "sidebarSeparator"
+            case .space: return "syncSpace"
             default: return identifier.rawValue
             }
         }
@@ -236,10 +246,7 @@
             let editorOnlyHelp = configuration.editorOnly ? "Show Sidebar and List (⇧⌘D)" : "Show Editor Only (⇧⌘D)"
             editorOnlyButton.toolTip = editorOnlyHelp
             items[.editorOnly]?.toolTip = editorOnlyHelp
-            if let item = items[.syncStatus], let status = configuration.syncStatus {
-                let symbol = status.failing ? "exclamationmark.icloud" : "icloud"
-                item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Sync Status")
-            }
+            showSyncStatus(configuration.syncStatus != nil)
             if searchField.stringValue != configuration.query { searchField.stringValue = configuration.query }
             searchField.placeholderString = configuration.searchPrompt
             searchField.setAccessibilityLabel(configuration.searchPrompt)
@@ -308,7 +315,16 @@
             case .insertImage:
                 return button(identifier, "Insert Image", symbol: "photo", action: #selector(insertImage))
             case .syncStatus:
-                return menu(identifier, "Sync Status", symbol: "icloud")
+                let item = NSToolbarItem(itemIdentifier: identifier)
+                item.label = "Sync Status"
+                item.paletteLabel = "Sync Status"
+                item.view = syncStatusSlot
+                // Without a border, an empty place draws no glass; it gets one while the button shows.
+                item.isBordered = false
+                item.menuFormRepresentation = syncStatusOverflow
+                // Gives way first when the window is too narrow for every item.
+                item.visibilityPriority = .low
+                return item
             case .editorOnly:
                 let item = NSToolbarItem(itemIdentifier: identifier)
                 item.label = "Editor Only"
@@ -368,6 +384,52 @@
             return host
         }
 
+        private func configureSyncStatus() {
+            let title = "Sync Status"
+            syncStatusButton.bezelStyle = .toolbar
+            syncStatusButton.setButtonType(.momentaryPushIn)
+            syncStatusButton.image = NSImage(
+                systemSymbolName: "exclamationmark.icloud", accessibilityDescription: title)
+            syncStatusButton.imagePosition = .imageOnly
+            syncStatusButton.toolTip = title
+            syncStatusButton.setAccessibilityLabel(title)
+            syncStatusButton.setAccessibilityRole(.menuButton)
+            let menu = NSMenu(title: title)
+            menu.autoenablesItems = false
+            menu.delegate = self
+            syncStatusButton.statusMenu = menu
+            let overflow = NSMenu(title: title)
+            overflow.autoenablesItems = false
+            overflow.delegate = self
+            syncStatusOverflow.submenu = overflow
+            syncStatusButton.translatesAutoresizingMaskIntoConstraints = false
+            syncStatusSlot.addSubview(syncStatusButton)
+            NSLayoutConstraint.activate([
+                syncStatusButton.leadingAnchor.constraint(equalTo: syncStatusSlot.leadingAnchor),
+                syncStatusButton.trailingAnchor.constraint(equalTo: syncStatusSlot.trailingAnchor),
+                syncStatusButton.topAnchor.constraint(equalTo: syncStatusSlot.topAnchor),
+                syncStatusButton.bottomAnchor.constraint(equalTo: syncStatusSlot.bottomAnchor),
+            ])
+            syncStatusButton.isHidden = true
+            syncStatusOverflow.isHidden = true
+        }
+
+        /// Shows or hides Sync Status's button in its place. It fades in, unless Reduce Motion is on.
+        private func showSyncStatus(_ shown: Bool) {
+            syncStatusOverflow.isHidden = !shown
+            if let item = items[.syncStatus], item.isBordered != shown { item.isBordered = shown }
+            guard syncStatusButton.isHidden == shown else { return }
+            syncStatusButton.isHidden = !shown
+            guard shown, syncStatusSlot.window != nil,
+                !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            else { return }
+            syncStatusButton.alphaValue = 0
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.2
+                syncStatusButton.animator().alphaValue = 1
+            }
+        }
+
         @objc private func syncAction() { configuration.syncAction() }
         @objc private func syncSettings() { configuration.syncSettings() }
     }
@@ -378,7 +440,7 @@
         func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
             [
                 .newJournal, .toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, .journalActions,
-                .listSeparator, .newEntry, .formatting, .insertImage,
+                .listSeparator, .newEntry, .formatting, .insertImage, .space,
                 .syncStatus, .editorOnly,
                 .sourceMode, .entryActions, .search,
             ]
@@ -409,7 +471,9 @@
                 entryMenu.fill(menu, with: configuration.entryActions())
             } else if menu === items[.journalActions].flatMap({ ($0 as? NSMenuToolbarItem)?.menu }) {
                 journalMenu.fill(menu, with: configuration.journalActions())
-            } else if let status = configuration.syncStatus {
+            } else if menu === syncStatusButton.statusMenu || menu === syncStatusOverflow.submenu,
+                let status = configuration.syncStatus
+            {
                 menu.removeAllItems()
                 let message = NSMenuItem(title: status.message, action: nil, keyEquivalent: "")
                 message.isEnabled = false
@@ -427,6 +491,27 @@
     extension JournalToolbarController: NSSearchFieldDelegate {
         func controlTextDidChange(_ notification: Notification) {
             configuration.setQuery(searchField.stringValue)
+        }
+    }
+
+    /// A toolbar button whose menu opens as the mouse goes down, as a menu toolbar item's does, or when pressed from
+    /// the keyboard or with VoiceOver.
+    final class MenuToolbarButton: NSButton {
+        var statusMenu: NSMenu?
+
+        override func mouseDown(with event: NSEvent) {
+            guard isEnabled else { return }
+            showMenu()
+        }
+
+        override func performClick(_ sender: Any?) { showMenu() }
+
+        private func showMenu() {
+            guard let statusMenu else { return }
+            highlight(true)
+            defer { highlight(false) }
+            let below = NSPoint(x: 0, y: isFlipped ? bounds.maxY + 4 : bounds.minY - 4)
+            statusMenu.popUp(positioning: nil, at: below, in: self)
         }
     }
 

@@ -1,0 +1,40 @@
+{
+  "corpusVersion": 1,
+  "pending": {
+    "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a60",
+    "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    "baseRevision": 6,
+    "kind": "entry",
+    "payload": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFC"
+  },
+  "fullReceipt": {
+    "cursor": 4812,
+    "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    "revision": 7,
+    "kind": "entry",
+    "payload": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFC",
+    "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+    "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+  },
+  "shortReceipt": {
+    "cursor": 4812,
+    "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    "revision": 7,
+    "kind": "entry",
+    "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+    "modifiedAt": "2026-10-02T09:14:03.1234567+00:00",
+    "payloadDigest": "a2704eb25fd38ca6a8e269184bf042c0820e9ded7d0c7036e9db5b5ca1b3fee7"
+  },
+  "waitAnswers": {
+    "changed": {
+      "changed": true
+    },
+    "confirming": {
+      "changed": false
+    },
+    "early": {
+      "changed": false,
+      "early": true
+    }
+  }
+}

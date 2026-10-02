@@ -40,10 +40,9 @@
             configuration.sourceMode = editor.sourceMode
             configuration.previewUnavailable = model.draft?.document.requiresMarkdownSource == true
             configuration.hasEntryActions = model.draft.map { $0.kind != "journal" } ?? false
-            if showsSyncStatus {
-                configuration.syncStatus = .init(
-                    message: syncStatusMessage, failing: syncStatusSymbol == "exclamationmark.icloud",
-                    action: model.syncStatusAction.title)
+            configuration.syncs = model.connection != nil
+            if model.showsSyncStatus {
+                configuration.syncStatus = .init(message: syncStatusMessage, action: model.syncStatusAction.title)
             }
             configuration.searchPrompt = searchPrompt
             configuration.query = model.query

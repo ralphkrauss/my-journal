@@ -141,6 +141,37 @@ Results from 2026-09-21, iOS simulator on an Apple silicon Mac, Release build:
 
 The durations include XCTest launch overhead, automated typing and accessibility queries. They are not render or query latency, and a simulator says nothing about physical devices. The fixture has no attachments, conflicts or history.
 
+## Sync traffic: short receipts and waiting for changes
+
+Measured on 2026-10-02 for [sync-protocol-efficiency.md](design/sync-protocol-efficiency.md). A counting proxy on loopback, `scripts/sync-fault-proxy.py` in `pass` mode, sits in front of a disposable server. It counts HTTP/1.1 request and response bytes, headers and bodies. That excludes TLS, TCP and HTTP/2 header compression, so real figures over the network differ by a constant factor.
+
+**Idle traffic.** `scripts/measure-idle-traffic.sh` runs the Release iOS app on a simulator created for the run (an iPhone 17, deleted afterwards). A library of 20 entries sets up the server, synchronizes, then runs automatic sync for 10 minutes with My Journal the active app and nothing changing.
+
+- Before: the same app against the build 9 server, which offers neither capability, so the app polls exactly as build 9 does.
+- After: the new server.
+
+| 10 idle minutes, active app | Before (polling) | After (waiting) |
+| --- | --- | --- |
+| Requests per minute | 20.7 (19.7 empty pages, 0.9 status, 0.1 agents list) | 3.0 (2.9 waits, 0.1 pages) |
+| HTTP bytes per minute | 16,856 | 2,308 (**86 % less**) |
+| HTTP bytes per hour | about 1.0 MB | about 0.14 MB |
+
+After the run, the app was still waiting, and Last Synced was under a minute old.
+
+**Writing.** JournalProbe (`wait-push-bytes`) sends 61 revisions of an entry through the proxy, one at a time.
+
+- With the new server, it asks for short receipts.
+- With the build 9 server, receipts are full.
+
+| Downloaded per accepted push | Before (full receipt) | After (short receipt) |
+| --- | --- | --- |
+| 50,000-word entry | 558,717 bytes | 475 bytes |
+| 500-word entry | 6,482 bytes | 475 bytes |
+
+Uploads are unchanged: each revision still sends the whole encrypted record (32.6 MB for 61 revisions of the 50,000-word entry).
+
+**Many devices.** `scripts/test-sync-efficiency.sh` has 20 devices waiting on one Debug server process on the Mac while another device writes 100 changes. All of them received every change. Peak resident memory was 286 MiB, with no container limit. That is not comparable with the container figures above.
+
 ## Not yet measured
 
 Physical iPhones and iPads, Intel Macs, the oldest supported OS versions, slow storage and several devices syncing at once. The heavy-library measurements above cover many images, conflicts and history, but only in the synthetic shape described there.

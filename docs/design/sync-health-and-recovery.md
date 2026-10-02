@@ -42,10 +42,11 @@ It also shows in Sync Status: the toolbar cloud button on the Mac, and the entry
 | Something unexpected | "Couldn’t sync because of an unexpected problem. Your changes are saved on this device." | Try Again |
 | This device's own data can't be read | "My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup." | Try Again |
 
-- **Quiet.** While syncing normally or retrying by itself, Sync Status shows a plain cloud, and only while changes are
-  waiting.
+- **Quiet.** While syncing normally or retrying by itself, Sync Status doesn't show, however many changes wait
+  (amended 2026-10-02, [quiet-sync-and-title-alignment.md](quiet-sync-and-title-alignment.md); before, a plain cloud
+  showed while changes waited).
 - **Problems.** It shows a cloud with an exclamation mark when the person must act, or when changes have waited more
-  than about a day.
+  than about a day while sync fails.
 - **Automatic retries stop** where retrying can't help: a server that isn't set up, restored or replaced; this device
   removed; sign-in needed; My Journal needing an update.
 
@@ -169,8 +170,9 @@ connection states. They keep today's behavior and copy.
 
 Writing never waits for any of this.
 
-**Long waits.** When changes have waited for more than about 24 hours, Sync Status uses `exclamationmark.icloud` in
-any state, with the same message. This isn't a new state. The wait is measured from Last Synced while items wait
+**Long waits.** When changes have waited for more than about 24 hours while sync fails, Sync Status shows with
+`exclamationmark.icloud` in any state, with the same message (amended 2026-10-02: only while the last sync failed, and
+measured from the first failure when this connection hasn't synced yet). This isn't a new state. The wait is measured from Last Synced while items wait
 (implementation note: outbox rows carry no time, and a last successful sync more than a day old with items waiting
 means they have waited at least that long or sync has been failing that long; both deserve the mark).
 
@@ -289,12 +291,16 @@ own server ("This Mac") gets the classification and copy but keeps its controls.
 
 ### 4.2 Toolbar and Sync Status: quiet, pointing to Settings
 
-**When it shows:** while items are waiting, or when the state isn't Syncing normally or Temporary.
+**Amended 2026-10-02 (owner decision, [quiet-sync-and-title-alignment.md](quiet-sync-and-title-alignment.md)):**
+Sync Status shows only when the person must act: when the state isn't Syncing normally or Temporary, for a refused
+record or image, or after a long wait (2). Changes waiting alone never show it, so writing never changes the toolbar.
+The icon is always `exclamationmark.icloud`. On the Mac the toolbar keeps its place while the library syncs, so it
+appearing never moves another item.
 
-**Icon:**
+~~**When it shows:** while items are waiting, or when the state isn't Syncing normally or Temporary.~~
 
-- `icloud` for Syncing normally and Temporary;
-- `exclamationmark.icloud` for the other states, and after a long wait (2).
+~~**Icon:** `icloud` for Syncing normally and Temporary; `exclamationmark.icloud` for the other states, and after a long
+wait (2).~~
 
 The help text is "Sync Status".
 
@@ -418,8 +424,8 @@ same library by identity. The guide says so.
   - Sync Now sends one;
   - becoming active checks once, at most every 10 minutes;
   - a network change triggers a sync at once in Temporary.
-- **Long wait** (app test): an outbox row older than 24 hours shows the exclamation symbol with the state's own
-  message.
+- **Long wait** (app test): changes waiting more than 24 hours while sync fails show Sync Status with the state's own
+  message; waiting alone doesn't (amended 2026-10-02).
 - **The action opens the right step** (app test):
   - Set Up Server Again… goes to the setup-code step;
   - Connect Again… goes to sign-in;

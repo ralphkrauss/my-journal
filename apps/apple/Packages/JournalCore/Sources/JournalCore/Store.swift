@@ -52,6 +52,8 @@ public actor JournalStore {
     var receivedChanges = 0
     var synchronizing = false
     var synchronizationWaiters: [SynchronizationWaiter] = []
+    /// What the quiet mark is made of (SyncWaiting.swift).
+    var quiet = QuietState()
     /// Records as last decoded from their stored payloads, reused while a payload is unchanged, so reading the journals
     /// again doesn't decrypt and parse every entry. Only in memory, and only while the journals are open: locking
     /// clears it (`forgetDecodedRecords()`). The same content is in the app's memory while unlocked anyway.
@@ -94,6 +96,7 @@ public actor JournalStore {
         guard try !db.read({ try migrator.hasBeenSuperseded($0) }) else { throw JournalError.newerVersion }
         try db.writeWithoutTransaction { _ = try String.fetchOne($0, sql: "PRAGMA journal_mode = WAL") }
         try migrator.migrate(db)
+        db.add(transactionObserver: SyncedTableWrites(counter: quiet.writes), extent: .databaseLifetime)
         try db.write { database in
             let stored = try String.fetchOne(
                 database, sql: "SELECT value FROM settings WHERE key = 'content-protection'")

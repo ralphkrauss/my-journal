@@ -150,8 +150,11 @@ private final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
 }
 public final class ServerClient: Sendable {
     public let address: URL
-    private let token: String?
+    let token: String?
     private let session: URLSession
+    /// Waits for changes: held by the server for up to 20 s, so a longer idle timeout than other requests, otherwise
+    /// configured like them (no cache, no redirects).
+    let waitSession: URLSession
     /// Images can take longer than other requests on a slow connection, as long as data keeps arriving.
     private let transferSession: URLSession
     /// The most a response to a small request may contain.
@@ -180,10 +183,16 @@ public final class ServerClient: Sendable {
         transfers.timeoutIntervalForResource = 15 * 60
         transfers.urlCache = nil
         transferSession = URLSession(configuration: transfers, delegate: NoRedirects(), delegateQueue: nil)
+        let waits = URLSessionConfiguration.ephemeral
+        waits.timeoutIntervalForRequest = TimeInterval(Self.waitSeconds + 10)
+        waits.timeoutIntervalForResource = TimeInterval(Self.waitSeconds + 15)
+        waits.urlCache = nil
+        waitSession = URLSession(configuration: waits, delegate: NoRedirects(), delegateQueue: nil)
     }
     deinit {
         session.invalidateAndCancel()
         transferSession.invalidateAndCancel()
+        waitSession.invalidateAndCancel()
     }
     func request(
         _ path: String, method: String = "GET", body: Data? = nil, binary: Bool = false,
@@ -448,29 +457,84 @@ public final class ServerClient: Sendable {
         /// The server database is not the one this device last synchronized with.
         case serverChanged
     }
-    public func push(_ pending: PendingChange, serverID: String? = nil) async throws -> PushResult {
+    /// Servers with this capability answer an accepted push with a short receipt when asked.
+    public static let shortReceiptFeature = "sync-short-receipt"
+    /// Sends a queued change. With `shortReceipt` (only to servers with that capability), the server leaves the
+    /// payload out of its receipt; the receipt returned here is complete either way.
+    public func push(_ pending: PendingChange, serverID: String? = nil, shortReceipt: Bool = false) async throws
+        -> PushResult
+    {
         struct Body: Encodable {
             let operationId: UUID
             let baseRevision: Int64
             let kind: String
             let payload: String
             let serverId: String?
+            let shortReceipt: Bool?
         }
         let (data, status) = try await request(
             "/v1/sync/\(pending.recordID.uuidString.lowercased())", method: "PUT",
             body: json(
                 Body(
                     operationId: pending.operationId, baseRevision: pending.baseRevision, kind: pending.kind,
-                    payload: pending.payload, serverId: serverID)), limit: Self.pushResponseLimit,
-            transfer: pending.payload.utf8.count > Self.largeRecord)
+                    payload: pending.payload, serverId: serverID, shortReceipt: shortReceipt ? true : nil)),
+            limit: Self.pushResponseLimit, transfer: pending.payload.utf8.count > Self.largeRecord)
         switch status {
-        case 200: return .accepted(try JournalCoding.decoder().decode(RemoteChange.self, from: data))
+        case 200: return .accepted(try Self.receipt(data, for: pending))
         case 409: return try Self.pushConflict(data, pending: pending)
         // Rejected before anything was stored, for example as too large or not a valid record.
         case 413: throw SyncRejection(reason: .tooLarge)
         case 400: throw SyncRejection(reason: .invalid)
         default: throw Self.syncFailure(status: status)
         }
+    }
+    /// The change an accepted push wrote. A full receipt is returned as it is; acknowledging it checks it as today. A
+    /// short receipt, or one with both a payload and its digest, must name this record, kind and next revision and
+    /// carry the digest of exactly the payload sent; the change is then completed with that payload. Anything else is
+    /// `invalidData`, and nothing is acknowledged (docs/design/sync-protocol-efficiency.md §3.3).
+    static func receipt(_ data: Data, for pending: PendingChange) throws -> RemoteChange {
+        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            ReceiptLog.rejected(short: false, check: "shape")
+            throw JournalError.invalidData
+        }
+        let hasPayload = object.keys.contains("payload")
+        guard object.keys.contains("payloadDigest") else {
+            guard hasPayload else {
+                ReceiptLog.rejected(short: false, check: "shape")
+                throw JournalError.invalidData
+            }
+            return try JournalCoding.decoder().decode(RemoteChange.self, from: data)
+        }
+        struct Short: Decodable {
+            var cursor: Int64
+            var recordId: UUID
+            var revision: Int64
+            var kind: String
+            var deviceId: UUID
+            var modifiedAt: Date
+            var payloadDigest: String
+            var payload: String?
+        }
+        let short: Short
+        do { short = try JournalCoding.decoder().decode(Short.self, from: data) } catch {
+            ReceiptLog.rejected(short: true, check: "shape")
+            throw JournalError.invalidData
+        }
+        let failed: String? =
+            if short.recordId != pending.recordID { "record" } else if short.kind != pending.kind {
+                "kind"
+            } else if short.revision != pending.baseRevision + 1 {
+                "revision"
+            } else if short.payloadDigest != JournalStore.payloadDigest(pending.payload) {
+                "digest"
+            } else if hasPayload && short.payload != pending.payload { "payload" } else { nil }
+        if let failed {
+            ReceiptLog.rejected(short: true, check: failed)
+            throw JournalError.invalidData
+        }
+        return RemoteChange(
+            cursor: short.cursor, recordId: short.recordId, revision: short.revision, kind: short.kind,
+            payload: pending.payload, deviceId: short.deviceId, modifiedAt: short.modifiedAt)
     }
     /// A sync request the server answered with an error it doesn't explain: a server error is temporary, and a
     /// server without the endpoint needs an update.

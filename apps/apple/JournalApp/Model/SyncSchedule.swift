@@ -2,6 +2,10 @@ import CryptoKit
 import Foundation
 import JournalCore
 
+#if os(macOS)
+    import AppKit
+#endif
+
 /// When synchronizations run apart from the regular pace.
 @MainActor final class SyncTiming {
     /// The synchronization that sends writing once it paused.
@@ -12,8 +16,23 @@ import JournalCore
     var retryAfter: TimeInterval?
     /// When a state in which automatic sync stops was last checked; becoming active checks again after a while.
     var stoppedCheckAt: Date?
+    /// When sync started failing, for the long wait of a library that hasn't synced yet; nil once a sync succeeds.
+    var failingSince: Date?
     /// The network came back: a waiting retry runs at once.
     lazy var networkReturn = NetworkReturn()
+    /// Decides when to wait for the server's changes instead of polling (docs/design/sync-protocol-efficiency.md
+    /// §4.6). It outlives the loop, so a loop restarted on returning to the foreground keeps its fallback state.
+    var watcher = ChangeWatcher(now: .now)
+    /// The wait running.
+    var waitTask: Task<Void, Never>?
+    /// Only the running loop carries out the watcher's actions.
+    var loopRunning = false
+    /// The watcher asked for a synchronization; the loop runs it.
+    var watcherSyncDue = false
+    #if os(macOS)
+        /// Sleep and wake observers, added once.
+        var sleepObservers: [NSObjectProtocol] = []
+    #endif
 }
 
 extension AppModel {
@@ -47,9 +66,12 @@ extension AppModel {
         {
             syncTiming.stoppedCheckAt = nil
         }
+        startWatching()
+        defer { stopWatching() }
         while !Task.isCancelled {
             if locked {
                 wasLocked = true
+                handleWatcher(.conditions(allowWaiting: false))
             } else {
                 // A sync that succeeded meanwhile, such as Sync Now, ends the wait; so does the network returning.
                 let networkReturned = syncTiming.networkReturn.take()
@@ -59,10 +81,22 @@ extension AppModel {
                     nextAttempt = .distantPast
                 }
                 // Returning to My Journal shows what changed elsewhere meanwhile at once.
-                if applicationActive && !wasActive && failures == 0 { nextAttempt = .distantPast }
+                if applicationActive && !wasActive {
+                    if failures == 0 { nextAttempt = .distantPast }
+                    handleWatcher(.becameActive)
+                }
                 wasActive = applicationActive
+                handleWatcher(.conditions(allowWaiting: !replacingVault && !saveFailure && !automaticSyncStopped))
+                await checkQuiet()
+                handleWatcher(.tick)
+                // While the watcher waits for changes, it decides when to sync; otherwise the usual pace applies.
+                let due =
+                    syncTiming.watcher.ownsSchedule
+                    ? syncTiming.watcherSyncDue
+                    : Date() >= nextAttempt && syncTiming.watcher.allowsRequest(at: .now)
                 // While a save or library change is pending, sync() does nothing; that isn't a failed attempt.
-                if Date() >= nextAttempt, !replacingVault, !saveFailure, !waitsForPerson {
+                if due, !replacingVault, !saveFailure, !waitsForPerson {
+                    syncTiming.watcherSyncDue = false
                     // A record or image that can't sync sets syncError while the rest succeeds; that isn't a failure.
                     failures = await sync(waitingForWritingPause: true) ? 0 : failures + 1
                     nextAttempt = Date().addingTimeInterval(nextSyncDelay(afterFailures: failures))
@@ -70,6 +104,95 @@ extension AppModel {
             }
             do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
         }
+    }
+
+    /// Reports an event to the change watcher and, while the loop runs, carries out what it asks.
+    func handleWatcher(_ event: ChangeWatcher.Event) {
+        let actions = syncTiming.watcher.handle(event, at: .now)
+        guard syncTiming.loopRunning else { return }
+        for action in actions { perform(action) }
+    }
+
+    private func perform(_ action: ChangeWatcher.Action) {
+        switch action {
+        case .startWait(let id, let mark): startWait(id: id, mark: mark)
+        case .cancelWait:
+            syncTiming.waitTask?.cancel()
+            syncTiming.waitTask = nil
+        case .syncNow: syncTiming.watcherSyncDue = true
+        case .markSynced(let sent): syncActivity.syncedByWait(at: sent)
+        case .publishAgentCopies:
+            if let agentCopies { Task { await agentCopies.requestPublishing() } }
+        case .forgetStatus:
+            if let syncEngine { Task { await syncEngine.forgetStatus() } }
+        }
+    }
+
+    /// Waits for the server's changes from the store's position, while nothing synchronized or was written since the
+    /// settled synchronization. An answer counts only while that is still true and the library is the same.
+    private func startWait(id: Int, mark: QuietMark) {
+        syncTiming.waitTask?.cancel()
+        guard let store, let syncEngine else { return handleWatcher(.quietBroken(waitID: id)) }
+        syncTiming.waitTask = Task { [weak self] in
+            let position = try? await store.quietPosition(since: mark)
+            // A cancelled wait does nothing more; the watcher has moved on.
+            guard !Task.isCancelled else { return }
+            guard let position else {
+                self?.handleWatcher(.quietBroken(waitID: id))
+                return
+            }
+            self?.handleWatcher(.waitSent(id: id, position: position, at: Date()))
+            guard !Task.isCancelled else { return }
+            let answer: WaitAnswer?
+            do { answer = try await syncEngine.waitForChange(from: position) } catch {
+                // Cancelled by the watcher: it already moved on. Cancelled otherwise: reported, without a strike.
+                guard !Task.isCancelled else { return }
+                answer = nil
+            }
+            guard !Task.isCancelled, let self else { return }
+            guard self.store === store, await store.isQuiet(mark), !Task.isCancelled else {
+                if !Task.isCancelled { self.handleWatcher(.quietBroken(waitID: id)) }
+                return
+            }
+            self.handleWatcher(.waitEnded(id: id, answer: answer))
+        }
+    }
+
+    /// Ends a wait whose settled state no longer holds: another synchronization ran or something was written.
+    private func checkQuiet() async {
+        guard let mark = syncTiming.watcher.quietMark else { return }
+        guard let store, await store.isQuiet(mark) else { return handleWatcher(.quietBroken()) }
+    }
+
+    private func startWatching() {
+        syncTiming.loopRunning = true
+        handleWatcher(.loopStarted)
+        syncTiming.networkReturn.onPathChange = { [weak self] in self?.handleWatcher(.networkPathChanged) }
+        #if os(macOS)
+            guard syncTiming.sleepObservers.isEmpty else { return }
+            let center = NSWorkspace.shared.notificationCenter
+            syncTiming.sleepObservers = [
+                center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) {
+                    [weak self] _ in MainActor.assumeIsolated { self?.handleWatcher(.sleep) }
+                },
+                center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) {
+                    [weak self] _ in MainActor.assumeIsolated { self?.handleWatcher(.wake) }
+                },
+            ]
+        #endif
+    }
+
+    private func stopWatching() {
+        syncTiming.loopRunning = false
+        syncTiming.waitTask?.cancel()
+        syncTiming.waitTask = nil
+    }
+
+    /// Starts the watcher afresh for a library or connection, ending any wait for the previous one.
+    func resetWatcher() {
+        syncTiming.waitTask?.cancel()
+        syncTiming.waitTask = nil
+        syncTiming.watcher = ChangeWatcher(now: .now)
     }
 
     /// Automatic sync waits for the person, unless this state wasn't checked since the app became active.
@@ -171,6 +294,13 @@ extension AppModel {
             lastSynced = nil
             defaults.removeObject(forKey: storageKey)
         }
+    }
+
+    /// A wait confirmed that nothing was left to exchange, as of when it was sent. It never moves Last Synced back,
+    /// whatever order answers and clocks come in.
+    func syncedByWait(at date: Date) {
+        guard lastSynced.map({ date > $0 }) ?? true else { return }
+        synced(at: date)
     }
 
     /// A synchronization completed, including one that left a refused entry or image behind.

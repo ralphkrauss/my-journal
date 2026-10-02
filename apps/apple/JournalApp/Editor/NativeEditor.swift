@@ -1,6 +1,21 @@
 import JournalCore
 import SwiftUI
 
+/// Where an entry's text starts in the editor. The title starts its first letter where the body's starts
+/// (docs/design/quiet-sync-and-title-alignment.md).
+enum EntryTextInset {
+    /// The body's text container inset at each side.
+    #if os(macOS)
+        static let body: CGFloat = 4
+    #else
+        static let body: CGFloat = 0
+    #endif
+    /// The body's line fragment padding: the text system's usual 5 points.
+    static let linePadding: CGFloat = 5
+    /// From the editor's edge to the body's first letter.
+    static var text: CGFloat { body + linePadding }
+}
+
 #if os(macOS)
     import AppKit
 
@@ -29,7 +44,8 @@ import SwiftUI
             view.importsGraphics = false
             view.allowsUndo = true
             view.drawsBackground = false
-            view.textContainerInset = NSSize(width: 4, height: 8)
+            view.textContainerInset = NSSize(width: EntryTextInset.body, height: 8)
+            view.textContainer?.lineFragmentPadding = EntryTextInset.linePadding
             view.isVerticallyResizable = true
             view.isHorizontallyResizable = false
             view.autoresizingMask = [.width]
@@ -471,7 +487,9 @@ import SwiftUI
             let view = container.editor
             view.backgroundColor = .clear
             view.isScrollEnabled = true
-            view.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: 24, right: 0)
+            view.textContainerInset = UIEdgeInsets(
+                top: 8, left: EntryTextInset.body, bottom: 24, right: EntryTextInset.body)
+            view.textContainer.lineFragmentPadding = EntryTextInset.linePadding
             view.adjustsFontForContentSizeCategory = true
             view.accessibilityLabel = "Entry text"
             view.delegate = context.coordinator

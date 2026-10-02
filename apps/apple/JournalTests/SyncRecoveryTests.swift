@@ -299,25 +299,48 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertGreaterThan(server.requests.count, afterFirst, "The network returning ends the 6 second wait")
     }
 
-    func testChangesWaitingMoreThanADayAreFlagged() async throws {
+    /// Changes that wait while sync works, or while it retries by itself, stay out of sight. Sync failing while
+    /// changes wait more than a day asks for attention, measured from the last sync, or from the first failure when
+    /// none succeeded yet.
+    func testChangesWaitingMoreThanADayWhileSyncFailsAreFlagged() async throws {
         let model = try await library(address: "http://127.0.0.1:9")
-        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        await model.sync()
+        XCTAssertEqual(model.syncHealth?.kind, .temporary)
         model.pendingSync = true
+        let failedAt = try XCTUnwrap(model.syncTiming.failingSince)
+        XCTAssertNil(model.syncActivity.lastSynced)
+        model.updateSyncLongWait(now: failedAt.addingTimeInterval(3600))
+        XCTAssertFalse(model.showsSyncStatus, "Retrying by itself")
+        model.updateSyncLongWait(now: failedAt.addingTimeInterval(24 * 3600 + 60))
+        XCTAssertTrue(model.showsSyncStatus, "Never synced, failing for more than a day")
+
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
         model.syncActivity.synced(at: now.addingTimeInterval(-(23 * 3600 + 59 * 60)))
-        XCTAssertFalse(model.syncWaitedLong(now: now), "23 hours 59 minutes isn't a day yet")
-        XCTAssertEqual(model.syncStatusSymbol(now: now), "icloud")
+        model.updateSyncLongWait(now: now)
+        XCTAssertFalse(model.showsSyncStatus, "23 hours 59 minutes isn't a day yet")
         model.syncActivity.synced(at: now.addingTimeInterval(-(24 * 3600 + 60)))
-        XCTAssertTrue(model.syncWaitedLong(now: now))
-        XCTAssertEqual(model.syncStatusSymbol(now: now), "exclamationmark.icloud")
+        model.updateSyncLongWait(now: now)
+        XCTAssertTrue(model.showsSyncStatus)
+        XCTAssertFalse(model.syncNeedsAttention, "Flagged for the wait, not for the state")
         model.pendingSync = false
-        XCTAssertFalse(model.syncWaitedLong(now: now), "Nothing waits, so nothing is flagged")
-        XCTAssertEqual(model.syncStatusSymbol(now: now), "icloud")
+        model.updateSyncLongWait(now: now)
+        XCTAssertFalse(model.showsSyncStatus, "Nothing waits, so nothing is flagged")
+
+        // At launch, changes from days ago wait only until the first sync: no failure, no flag.
+        model.pendingSync = true
+        model.recordSyncHealth(nil, failure: nil)
+        model.syncError = nil
+        model.syncFailed = false
+        model.updateSyncLongWait(now: now)
+        XCTAssertNil(model.syncTiming.failingSince)
+        XCTAssertFalse(model.showsSyncStatus)
     }
 
-    /// Temporary problems and syncing normally stay quiet; every other state, and a record the server refused, asks
-    /// for attention with the exclamation mark.
+    /// Syncing normally and Temporary problems stay out of sight, however many changes wait; every other state, and a
+    /// record the server refused, shows Sync Status.
     func testOnlyStatesThatNeedThePersonAskForAttention() async throws {
         let model = try await library(address: "http://127.0.0.1:9")
+        model.pendingSync = true
         let states: [SyncHealth] = [
             .offline, .unreachable, .unavailable, .signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved,
             .appUpdateNeeded, .serverUpdateNeeded, .certificateInvalid, .notJournalServer, .localDataUnreadable,
@@ -328,13 +351,17 @@ final class SyncRecoveryTests: XCTestCase {
             model.syncError = state.message()
             let quiet = [.offline, .unreachable, .unavailable].contains(state)
             XCTAssertEqual(model.syncNeedsAttention, !quiet, "\(state)")
-            XCTAssertEqual(model.syncStatusSymbol(), quiet ? "icloud" : "exclamationmark.icloud", "\(state)")
+            XCTAssertEqual(model.showsSyncStatus, !quiet, "\(state)")
         }
         model.syncHealth = nil
         model.syncError = nil
         XCTAssertFalse(model.syncNeedsAttention, "Syncing normally")
+        XCTAssertFalse(model.showsSyncStatus, "Changes waiting while syncing normally")
         model.syncError = "Your server didn’t accept “Notes”. It’s saved on this device. Edit it to try again."
         XCTAssertTrue(model.syncNeedsAttention, "A refused record")
+        XCTAssertTrue(model.showsSyncStatus)
+        model.connection = nil
+        XCTAssertFalse(model.showsSyncStatus, "Without a server there's nothing to sync")
     }
 
     /// The action follows the state the last sync found, and nothing else: after Sign In… was offered, a reset server
@@ -390,7 +417,7 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertEqual(model.syncStatusAction, .syncNow)
         XCTAssertFalse(model.encryption.offersSignIn)
         XCTAssertFalse(model.syncNeedsAttention)
-        XCTAssertEqual(model.syncStatusSymbol(), "icloud")
+        XCTAssertFalse(model.showsSyncStatus)
     }
 
     func testStopSyncingKeepsTheLibraryAndGivesUpAccess() async throws {

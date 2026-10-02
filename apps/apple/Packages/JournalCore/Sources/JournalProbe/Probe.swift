@@ -122,6 +122,7 @@ struct Probe {
         if try await runEncryptionSwitchProbe() { return true }
         if try await runHealthCases() { return true }
         if try await runHealthProbe() { return true }
+        if try await runWaitProbe() { return true }
         return try await runMergeProbe()
     }
     private static func verifyDeviceOrigins(_ client: ServerClient, setUp: UUID, paired: UUID) async throws {
