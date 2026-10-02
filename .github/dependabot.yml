@@ -1,0 +1,33 @@
+version: 2
+updates:
+  # NuGet discovers the solution and projects only in the configured directory.
+  - package-ecosystem: nuget
+    directory: /server
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: swift
+    directory: /apps/apple/Packages/JournalCore
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: docker
+    directory: /server
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: docker
+    directory: /deploy
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: docker-compose
+    directory: /deploy
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

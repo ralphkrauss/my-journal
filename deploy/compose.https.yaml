@@ -1,0 +1,70 @@
+# Separate deployment: do not combine with compose.yaml (which publishes a backend port).
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: caddy.Dockerfile
+    environment:
+      JOURNAL_DOMAIN: ${JOURNAL_DOMAIN:?Set JOURNAL_DOMAIN to your server DNS name}
+    ports:
+      - "80:8080"
+      - "443:8443"
+      - "443:8443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - proxy-data:/data
+      - proxy-config:/config
+    networks:
+      - edge
+      - backend
+    depends_on:
+      journal:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+  journal:
+    image: ${JOURNAL_IMAGE:-journal-server:local}
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    environment:
+      # Caddy replaces X-Forwarded-For with the client address it saw. Trust it only from the internal
+      # backend network, whose other members are the proxy and the Docker host, so rate limits apply
+      # per client instead of to everyone behind the proxy.
+      Journal__TrustedProxies: ${JOURNAL_BACKEND_SUBNET:-172.16.231.0/28}
+      # The HTTPS address agents connect to; it names the MCP endpoint and its OAuth issuer.
+      Journal__PublicUrl: https://${JOURNAL_DOMAIN}
+      # The backend network is internal, so the server can't fetch agents' client metadata documents; agents
+      # register instead.
+      Journal__ClientMetadataDocuments: "false"
+    volumes:
+      - journal-data:/data
+    networks:
+      - backend
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+networks:
+  edge:
+  backend:
+    internal: true
+    # A fixed private range outside Docker's default address pools, so the trusted proxy range above is
+    # exact. Set JOURNAL_BACKEND_SUBNET if it overlaps a network on this host.
+    ipam:
+      config:
+        - subnet: ${JOURNAL_BACKEND_SUBNET:-172.16.231.0/28}
+volumes:
+  journal-data:
+  proxy-data:
+  proxy-config:

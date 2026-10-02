@@ -1,0 +1,55 @@
+**/.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+bin/
+obj/
+artifacts/
+TestResults/
+*.trx
+.env
+.env.*
+*.sqlite*
+*.db*
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/
+*.xcresult
+*.xcarchive
+*.ipa
+*.dmg
+*.dSYM.zip
+apps/apple/Generated/
+__pycache__/
+.ruff_cache/
+mise.local.toml
+.mise.local.toml
+.vscode/
+.idea/
+
+# Signing and notarization material
+*.p12
+*.p8
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+ExportOptions*.plist
+
+# Master password of the App Store screenshot library (design/app-store/seed-library.sh)
+design/app-store/.seed-password
+
+# Raw App Store captures (design/app-store/make_screenshots.py input); the composed set in docs/app-store/screenshots is committed
+design/screenshots/raw/
+
+# Journal archives, logs and private keys
+*.journalarchive
+*.log
+*.pem
+*.key
+
+# Local AI agent and editor state
+.claude/
+.codex/
+.cursor/
+*.swp

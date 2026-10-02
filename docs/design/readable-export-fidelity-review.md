@@ -1,0 +1,11 @@
+# Readable export fidelity review
+
+## Independent proposal review — 2026-09-21
+
+**Approved for implementation.** Read `readable-export-fidelity.md` and the current EntryExport.swift implementation. The source confirms that only paragraphs currently preserve whitespace, while escaped text in titles, headings and list items is subject to ordinary HTML whitespace collapse. Extending `white-space: pre-wrap` to h1/h2/h3/p/li addresses that inconsistent rendering without changing document text or structure. Inherited `overflow-wrap: anywhere` is an appropriate narrow-window fallback for long words and link labels; it allows visual wrapping without inserting characters into exported content.
+
+The correction keeps standard semantic HTML, selectable text, familiar system fonts, native browser zoom, embedded images and the existing no-script document. It does not require new application UI, copy, controls or a custom layout system. Keep whitespace preservation scoped to those content elements rather than the entire body, so serialization newlines between tags do not create unintended document spacing. Retain list markers/indentation, inline strong/emphasis/underline/link semantics, exact escaped text, image alt text, URL restrictions and the existing content security policy.
+
+The proposed actual-browser verification is necessary: include repeated spaces and embedded newlines in the title, both heading levels, a paragraph and both list kinds, plus a long linked run and image. Inspect narrow and wide views for correct whitespace, readable markers and wrapping, with complete text retained and no horizontal document overflow. A DOM/style assertion alone cannot establish visual fidelity. Existing unsafe-markup and unknown-field export checks remain relevant, while no test is needed merely to mirror a CSS declaration.
+
+No material design concern or proposal revision is required. This is approval of the bounded HTML presentation change, not a broader portability audit or a claim that every allowed image format renders in every browser. No production source was changed, no tests rerun and no rendered export inspected in this initial review. Actual rendered inspection remains pending, with screen-reader behavior explicitly unverified.

@@ -1,0 +1,9 @@
+# Document format changes during conflict review
+
+2026-09-21. Test-only acceptance of the existing [reviewed unsupported-format UI](unsupported-conflict-review.md); no frontend or production change.
+
+`EntryConflictUITests.testNewerFormatArrivingDuringReviewPreventsStaleResolution` opens a normal review, then writes a higher remote conflict revision with an unknown `futureLayout` object through a separate disposable store. Tapping the old Keep Both causes the existing update guidance to replace the obsolete choices. Version selection and all destructive resolution actions are absent; Export Archive remains enabled. The test cancels, relaunches, reopens the same guidance, cancels again, and compares exact baseline items/history/conflict plus exact remote portable JSON and image bytes.
+
+The selected native test passed in 23.680 seconds: `/tmp/journal-changed-format-test.log`, result bundle `artifacts/changed-format-review/Acceptance.xcresult`. The primary agent inspected both actual captures in `artifacts/changed-format-review/evidence`: BE637C32-A3E4-4144-8511-6948A3713992.png (transition) and E0EC50DA-AE7B-4420-AD80-A1408CB40B00.png (after relaunch). Both show readable update guidance, Export Archive and Cancel, with no obsolete resolution actions or clipping at this size. This is not a new independent design verdict. The existing screen/design is unchanged.
+
+The test protects against stale consent discarding features introduced by another client. It runs in the existing normal iOS UI suite used by the prepared Integration workflow, not as an additional test scheme. Limits: normal text/light appearance, one unknown-field fixture, injected record arrival rather than live network timing, no actual archive delivery from this screen, no VoiceOver or live Mac claim. Existing tests separately cover initially unsupported conflicts.

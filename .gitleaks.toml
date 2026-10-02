@@ -1,0 +1,60 @@
+title = "Journal source secret scanning"
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated dependencies, build output, and deliberately local test journals are not source."
+paths = ['''(^|/)(\.git|\.build|artifacts|bin|obj|DerivedData|__pycache__)/''']
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Exact public synthetic keys in the version 1 compatibility corpus; see protocol/fixtures/README.md."
+condition = "AND"
+paths = ['''(^|/)protocol/fixtures/encryption-v1\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^9f15a4703fff17624dbc7dce7b4cdcd4d4abb8cd6299f305d79e171fb0f2137f$''',
+  '''^AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=$''',
+  '''^M2nQ7ADUSGv0NDWsrAY\+i/sVx/5yY77c05Qv\+xr3aEc=$''',
+]
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Exact public synthetic values in the recovery v2-v4, pairing and record compatibility corpus; see protocol/fixtures/README.md."
+condition = "AND"
+paths = ['''(^|/)protocol/fixtures/encryption-v2\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^ICBjb3JyZWN0IGhvcnNlLCBjYWbDqSDwn4y/ICA=$''',
+  '''^MPuyCk2V242/KfQJfX2lWbCVIv2w\+z/V6KzLyr\+BUBQ=$''',
+  '''^a168233f04892f718c8465538fe7d3ab229175ea3aed4be68e39a4cfe7166f9f$''',
+  '''^QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=$''',
+  '''^YGFiY2RlZmdoaWprvfliWnIrUWuIOx9fDPEbjemPcE97drLqSNDQymh8tX/DlgeyF5MyBuIri6WRwDn5$''',
+  '''^gIGCg4SFhoeIiYqLX4hK7hwy1ViSHhFm\+7ycumaLG8wZaM8MWEjvmedbYEAebLGekRy9UMEvmxa53ZNV$''',
+  '''^XasIfmJKikt54X\+Lg4AO5m87sSkmGLb9HC\+LJ/\+I4Os=$''',
+  '''^FRL8eQkIGTBDVHZ9BA2mpMALK82T6IyC0o3PvVveQYE=$''',
+  '''^dwdtCnMYpX08FsFyUbJmRd9ML4frwJkqsXf7pR25LCo=$''',
+  '''^Sl2dW6TOLeFyjjv0gDUPJeB\+IclH0Z4zdvCbPB4WF0I=$''',
+  '''^vgCRI\+lGXzJvoQbkYsvhW0RgZLNlcVSR\+/WdzqI3DRg=$''',
+  '''^0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0$''',
+  '''^331ab04caa328927f706627b812f4139f9ec42a6d61f17e468a70c41a48d8f67$''',
+  '''^jFUsDCS0vI/BPhspVU3rlhNNwf\+5zQFsGYSxZu7mvyU=$''',
+  '''^0f4039a01f96794a8053ebc10bbc4912ba11c661bca3aebc1938c7552585eebd$''',
+  '''^0NHS09TV1tfY2drbHnq2ChYPLWM8OZbZCDnwtXddEdMq15xzZMF5mf\+VuUINGPpCxuBZrARJUiInRZXq$''',
+  '''^5Tr3WDGlKFHiDldrr/5VqhdXdwN3zIoLXC6S0ZfWckM=$''',
+  '''^9219f33a1995e9bf266618fe23d8982b005442ca9bea7006e322bf8f0fe60fee$''',
+  '''^4OHi4\+Tl5ufo6errqqOl2x6iZACzN7EsBMxPpIuzR4l3PObpfqLML1eP28u4n0Or1nEXLf1QeLbAhorK$''',
+]
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Exact public synthetic keys in the agent access copy corpus; see protocol/fixtures/README.md."
+condition = "AND"
+paths = ['''(^|/)protocol/fixtures/agent-copy-v1\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^3G\+jpA8Fl1tu\+CWhoF/BICs7OlYLfVlCm44Aw6los9o=$''',
+  '''^G8HTpMzBm\+WkQB5zqOC2Sdh6bMD94mHiaM9LH9gaaFI=$''',
+  '''^MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=$''',
+  '''^REREREREREREREREO8fMCt88fikBTj\+kpkDDKlOBMkpBUwXBmVm31/QEo7uXb2kAIxn5CTi4SPsahMaQ$''',
+]

@@ -1,0 +1,171 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Timeouts are estimates until the first hosted run is measured: local UI tests take 18-109 s each (about 50 s
+# typical) on an M-series Mac, and the hosted macOS runner has 3 vCPUs. Then set each to about 1.5x the observed time.
+jobs:
+  hygiene:
+    name: Hygiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked shellcheck shfmt actionlint gitleaks ruff
+      - run: scripts/check.sh hygiene
+      - name: Scan commit history for secrets
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          range=HEAD
+          if [[ -n "$BASE_REF" ]]; then range="origin/$BASE_REF..HEAD"; fi
+          gitleaks git --log-opts="$range" --redact --no-banner --config .gitleaks.toml
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - run: scripts/check.sh backend
+      - run: python3 scripts/test-https-deployment.py
+      - run: docker compose -f deploy/compose.yaml up --build --wait --wait-timeout 120
+      - if: always()
+        run: docker compose -f deploy/compose.yaml down
+
+  apple:
+    name: Apple
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked swiftlint xcodegen
+      - run: scripts/check.sh apple
+      - if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: apple-test-results
+          path: artifacts/DerivedData/Logs/Test
+          if-no-files-found: ignore
+          retention-days: 7
+
+  integration:
+    name: Integration
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+      - run: scripts/test-sync.sh
+        env:
+          JOURNAL_TEST_RESULTS: artifacts/ci/sync
+      - run: scripts/test-local-server.sh
+        env:
+          JOURNAL_TEST_RESULTS: artifacts/ci/local-server
+      - if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: integration-test-results
+          path: artifacts/ci
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ios-ui:
+    name: iOS UI
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      JOURNAL_TEST_RESULTS: artifacts/ci/ios-ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+      - name: Unit and UI tests with a disposable server
+        run: scripts/test-native-pairing.sh
+      - if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ios-ui-test-results
+          path: artifacts/ci/ios-ui
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ios-accessibility:
+    name: iOS Accessibility
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      JOURNAL_TEST_RESULTS: artifacts/ci/ios-accessibility
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+      - name: Recovery flows at the largest text size in dark mode
+        run: scripts/test-native-accessibility.sh
+      - if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ios-accessibility-test-results
+          path: artifacts/ci/ios-accessibility
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+package_dir="$(cd "$(dirname "$0")" && pwd)"
+if [[ -z "${Journal__DataDirectory:-}" ]]; then
+  case "$(uname -s)" in
+    Darwin) export Journal__DataDirectory="$HOME/Library/Application Support/Journal Server" ;;
+    *) export Journal__DataDirectory="${XDG_DATA_HOME:-$HOME/.local/share}/journal-server" ;;
+  esac
+fi
+export ASPNETCORE_URLS="${ASPNETCORE_URLS:-http://127.0.0.1:8080}"
+export DOTNET_EnableDiagnostics=0
+exec "$package_dir/Journal.Api" "$@"

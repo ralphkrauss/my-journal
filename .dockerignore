@@ -1,0 +1,9 @@
+.git
+**/.build
+**/bin
+**/obj
+artifacts
+.env
+apps
+!apps/apple/JournalApp/Resources/ThirdPartyNotices.txt
+docs

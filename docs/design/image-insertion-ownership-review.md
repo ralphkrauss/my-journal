@@ -1,0 +1,75 @@
+# Image insertion ownership review
+
+## Independent proposal review — 2026-09-21
+
+**Revision required before implementation: ownership must not revive after returning to the same entry.** Inspected `image-insertion-ownership.md`, RootView's existing file-import completion, and the existing native formatting-session guard. The proposed capture-before-presentation, captured range and pre/post-storage checks address the observed retargeting gap without new UI. Quiet abandonment after navigation, edits, lock or replacement is appropriate for a delayed attachment operation. Preserving original successful insertion/Undo and retaining orphaned bytes for normal housekeeping avoids content rollback hazards.
+
+The proposal currently relies in part on the existing formatting closure, which captures item ID, document equality and range. That is insufficient for A → B → A when A remains unchanged: the old closure becomes valid again. Similar identity-only checks can miss lock → unlock or store replacement → original store. The promised cancellation must remain permanent once ownership is lost, even if values later match.
+
+### Required ownership revision
+
+Use a monotonic session/generation or permanently invalidated token for the originating editor/model lifetime. Capture it with the store, entry/document and native range. Invalidate on entry departure, loss of editability/lock, vault replacement and editor disappearance/rebinding; do not revive it when the same item or document returns. The native closure should also bind to the original native view identity, not whichever view a surviving coordinator later references. It should reject stale generations before changing selection or performing the command.
+
+RootView's picker session and task cancellation must invalidate the captured token, including replacement and dismissal/disappearance. Capture the exact token in the callback task so an older picker completion cannot borrow a newer session. The session predicate must apply before reading/storing, after storage and after the renderer yield, and to any published error. User cancellation must remain quiet. Native paste/drop needs equivalent irreversible ownership across model lock/store transitions; preserving a current item-ID guard alone does not provide that. Strengthening the shared formatting session for entry/view lifetime is appropriate if existing link-formatting behavior is preserved.
+
+A successful insertion should use the captured native range even if the caret later moves within the unchanged originating document, as the proposal explicitly specifies. Edits to the document during import cause quiet cancellation. This is a reasonable conservative policy; do not overwrite newer content or silently adjust a saved range against changed text.
+
+### Verification and limits
+
+Include a meaningful A → B → A stale-session case, and lock/replacement invalidation that cannot revive after recovery, alongside success at the captured selection and changed-document rejection. Check entry documents after post-storage rejection and cancellation; unattached stored bytes are permitted, references in either entry are not. Existing image loading and native Undo checks should remain. No new controls/copy/layout are proposed, so no mockup is necessary. Actual picker completion, cancellation and native paste/drop interaction remain separate visual/live evidence; this review performed no tests or production edits.
+
+Re-review the revised lifecycle contract before implementation. The required change is ownership scope, not additional user-facing UI.
+
+## Revised lifecycle proposal — 2026-09-21
+
+**Approved with the receipt-time boundary below.** Re-read the added irreversible ownership section. Synchronously renewing a model generation on selection/draft-document/lock/replacement/store transitions, together with native view/entry/editability/document generations, closes the specified return-to-same-value revival paths. Explicit picker cancellation/consumption and identity-aware task cleanup prevent an old completion from borrowing or clearing a new session. Advancing only an accepted formatting closure's captured generation preserves consecutive native formatting while leaving competing older closures stale.
+
+Capture ownership at native receipt before scheduling its asynchronous Task, or validate the captured receipt session before calling `imageHandler`. If `addImage` first captures model context only when that Task eventually starts, navigation could already have changed the current entry/store: the stale native closure would prevent insertion later, but bytes could have been written to the wrong originating context. Validate the origin token before storage as well as after suspension. Model generation captured by the picker already satisfies this boundary when checked before invoking addImage.
+
+No further interaction redesign is required. Implement within this revised contract, then inspect focused source/native-store evidence, including transient lifecycle changes and ordinary consecutive formatting. Approval does not imply live picker or paste/drop acceptance.
+
+## Initial implementation review — 2026-09-21
+
+**Generation safeguards accepted; picker presentation binding still requires correction.** Inspected model generation setters/addImage guards, `ImageInsertionSession`, RootView wiring, both native coordinator session paths, focused test source and `/tmp/journal-image-session-apple-final.log`. The inspected log records Mac isolation passing in 0.079 seconds and model/native image-session verification passing in 0.005 seconds, with `TEST SUCCEEDED`. No reviewer reruns or live picker evidence are claimed.
+
+The model generation changes synchronously and survives return-to-same-value transitions. Native handlers and range closures are captured before Task scheduling; Root's handler captures the model generation and rejects stale calls before storage. Native generations invalidate view rebinding, entry/editability/document transitions and real document edits. Accepted closures advance their own generation, preserving consecutive formatting. The session checks ownership before addImage and after its renderer yield, then consumes before command invocation. These mechanisms address the reviewed model/native lifetime problem.
+
+The session test drives entry/document changes, lock/unlock, store-away/back and explicit cancellation before import, asserting no pending attachments or draft mutation, then demonstrates successful insertion into the real native binding, exact stored bytes and one-shot consumption. The native test rejects an old formatting closure after returning to the original entry and accepts two consecutive commands from a current closure. These tests do not force post-storage adversarial scheduling, exercise an actual native picker result, or verify every captured insertion range; those limits remain explicit.
+
+### P2 — bind picker result to its presentation
+
+The inspected `.fileImporter` completion reads `imageInsertion` when the result arrives. An old canceled picker completion could therefore acquire a newer session, then read/store the old result and invoke that newer captured range. Capturing the result-time session inside the Task does not fix its origin. Bind the completion to the session for that specific presentation and reject stale completion before assigning the task handle. An explicit capture list fixes Swift closure reads, but a modifier rebuilt while a native presentation is completing still needs a lifecycle guarantee; a session-keyed presenter retaining its own session/completion, or serialized presentation/dismissal ownership, gives the required boundary without relying on undocumented callback replacement behavior. No new visible UI is needed.
+
+Old task cleanup already compares session identity, which is useful once the callback itself has presentation ownership. Await that focused correction before final implementation acceptance. Post-storage cancellation remains source-inspected rather than adversarially executed.
+
+## Picker presentation correction — 2026-09-21
+
+**P2 closed by focused source inspection.** `ImagePickerPresenter` retains an immutable session, captures that session in its file-import completion, and is mounted with the session object's identity. Root receives that explicit originating session and checks both root-session identity and current ownership before assigning a task handle. A delayed result from an old presenter therefore cannot acquire a new session or overwrite its task. Native paste/drop tasks additionally check their captured coordinator generation and surviving view before invoking the previously captured model handler, closing the pre-storage editor-disappearance/rebinding boundary.
+
+No remaining source finding arose in this correction pass. The new Apple lane and actual picker open/cancel/reopen route were still pending, so source acceptance does not claim those results or live picker completion behavior. Earlier focused native/store evidence and post-storage scheduling limits remain as recorded.
+
+## Normal actual picker presentation — 2026-09-21
+
+**Presentation/cancel/reopen accepted only; successful file selection remains unverified.** Inspected `/tmp/journal-image-session-normal.log`, the EntryActions cancellation helper and both normal picker captures, `artifacts/image-session-normal/D227E8D5-6D7C-4858-BED9-35485087C835.png` and `81837BAE-632E-4E15-98EE-B9D5A171D80E.png`. The log records six focused iOS native tests passing (isolation, image presentation/composition/undo and image-import/session state), then EntryActions passing in 58.030 seconds, with `TEST SUCCEEDED`. No reviewer reruns occurred.
+
+Both frames show the native Recents picker with a visible close control, search and native navigation. Its content area reports “Content Unavailable” and an unknown folder-display error. This is not evidence of usable file browsing or successful attachment selection, nor is it enough to assign the provider error to Journal. The helper opens, captures and cancels twice, verifies return to the writing body with its text intact and no Journal error alert, then continues the existing route. Thus it establishes that the session-keyed presenter actually presents and supports quiet cancellation/reopening without losing writing. It does not execute a result URL, late-completion race or post-storage cancellation through the system picker. Largest presentation and live Mac remain unreviewed at this point.
+
+## Largest actual picker presentation — 2026-09-21
+
+**The same limited presentation/cancel/reopen route is accepted at largest text.** Inspected `/tmp/journal-image-session-large.log` (EntryActions pass in 60.364 seconds, `TEST SUCCEEDED`) and both picker frames, `artifacts/image-session-large/87C67F55-99E1-4CAE-8C52-C6F26486573C.png` and `BBB91628-3AC6-452B-B7F4-97CFEF53495E.png`. The dark system picker retains its visible close control and wraps its unavailable-content message at the enlarged text size. Its Try Again label is partly behind the bottom navigation surface; retry reachability is not established by this cancellation-only route and receives no acceptance claim.
+
+Recents still reports an unknown folder-display error. The passing route supports opening, quiet cancellation, reopening and continued preserved writing only. It does not establish browsing, selecting or importing a real file, picker retry behavior, delayed cross-presentation completions or live Mac interaction. No new Journal-specific visual defect is demonstrated by these system-error frames, and no reviewer reruns occurred. Source/native-store acceptance remains separately bounded above; this review does not approve the complete file-import workflow.
+
+## Successful local-file selection and relaunch — 2026-09-21
+
+**Accepted for the demonstrated normal iOS local PNG import.** Inspected `JournalFileTests/ImageFileImportUITests.swift`, `/tmp/journal-file-import.log` (32.905-second pass, `TEST SUCCEEDED`) and all three supplied captures in `artifacts/native-file-import/evidence`: picker `49135506-7064-4F41-BBEF-12E172745125.png`, imported entry `99CCBD07-1B90-44ED-A72C-B64B88FBE5BD.png`, and relaunched entry `49993DF7-39CB-4EFC-A287-64B8DEAC652A.png`. No production change or reviewer rerun accompanies this evidence.
+
+The test navigates the real system picker through Browse → On My iPhone, selects the staged file, returns to Journal, opens/cancels Image Descriptions and relaunches. The picker capture shows a single blue PNG thumbnail in the working local provider. The entry captures show the small blue image and intact “Before image” text both immediately and after relaunch, with familiar native chrome. The image appears before the text in this fixture; the test does not claim to specify an arbitrary caret location or require insertion after that phrase. The small visible square is consistent with the supplied 16×16 image, not a loading-placeholder finding.
+
+The store assertions establish exactly one image block with image/png metadata, exact original attachment bytes and preserved entry text. This extends the prior presentation-only evidence to actual successful local file selection, storage, rendering and persistence for this fixture. It does not establish largest-text file selection, cloud/third-party providers, Recents recovery, arbitrary caret placement, paste/drop, live Mac, failures or adversarial scheduling. The parent reports staging/cleanup of the one synthetic file and an empty staging location afterward; those cleanup operations were not independently inspected in this review. Earlier cancellation, ownership and wider accessibility limits remain separately recorded.
+
+## Largest dark local-file import — 2026-09-21
+
+**Accepted for the same local PNG fixture at largest text in dark appearance.** Independently inspected `/tmp/journal-file-import-large.log` (33.535-second pass, `TEST SUCCEEDED`) and all three captures in `artifacts/native-file-import-large/evidence`: picker `2FE6CA25-C9C4-4BF1-80DF-204DE59A2218.png`, imported entry `90B08FE6-A3AE-44E8-A950-8B69FF8E9F94.png`, and relaunch `ED6CF671-5EDC-49D2-B27E-3DAC75FB9693.png`. The same previously inspected test executes local selection and verifies one PNG block, exact attachment bytes and preserved text after relaunch. No app source change or reviewer rerun is claimed.
+
+The local picker visibly exposes the blue image thumbnail and its wrapped/truncated generated filename, with usable navigation and close controls. The entry shows the small blue image and full enlarged “Before image” text without overlap, both above the keyboard after insertion and after relaunch without the keyboard. No actionable visual deviation is evident for this fixture. This closes the largest-text successful local-selection evidence gap while retaining the earlier limitations for arbitrary insertion ranges, other providers, Recents recovery, paste/drop, adversarial scheduling, VoiceOver and live Mac.

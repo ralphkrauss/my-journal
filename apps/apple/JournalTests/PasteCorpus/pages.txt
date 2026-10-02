@@ -1,0 +1,6 @@
+Project Brief
+Goals
+We want fewer meetings and clearer notes. Underlined, struck and Times words.
+	3	Third point
+	4	Fourth point
+Small print

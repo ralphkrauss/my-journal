@@ -1,0 +1,49 @@
+# App Store screenshot capture (docs/app-store/screenshots-plan.md). Kept out of Journal.xcodeproj so the checks and
+# CI never run it; design/app-store/capture-ios.sh and capture-mac.sh generate JournalScreenshots.xcodeproj from
+# this spec.
+include:
+  - project.yml
+name: JournalScreenshots
+targets:
+  JournalScreenshotUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.4"
+    sources:
+      - JournalScreenshots/iOS
+      - JournalUITests/NavigationTestSupport.swift
+    dependencies:
+      - target: JournalIOS
+      - package: JournalCore
+        product: JournalCore
+  # Hosted in the Mac app, so it arranges the app's own windows and captures them from inside the app.
+  JournalMacScreenshots:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources: [JournalScreenshots/Mac]
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/Contents/MacOS/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalMac
+      - package: JournalCore
+        product: JournalCore
+schemes:
+  JournalScreenshots:
+    build:
+      targets:
+        JournalIOS: all
+    test:
+      targets: [JournalScreenshotUITests]
+  JournalMacScreenshots:
+    build:
+      targets:
+        JournalMac: all
+    test:
+      targets: [JournalMacScreenshots]
+      # English (U.S.) dates and times, as on the iPhone and iPad captures.
+      commandLineArguments:
+        "-AppleLanguages (en-US)": true
+        "-AppleLocale en_US": true

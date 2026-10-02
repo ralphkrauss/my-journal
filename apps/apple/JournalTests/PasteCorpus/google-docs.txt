@@ -1,0 +1,12 @@
+Weekly review
+Shipped the sync fix and wrote the notes.
+
+Next week
+Plan Q4
+Draft budget
+Hire a designer
+
+Review PRs
+Ship beta
+
+Written in a hurry.

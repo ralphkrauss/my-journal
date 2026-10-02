@@ -1,0 +1,13 @@
+Weekend plans
+Saturday
+	•	Farmers market
+	•	Call Mum
+	⁃	Bring the tote bag
+	⁃	Bike tyres
+	1	Clean the kitchen
+	2	Water the plants
+	▫	Book the train
+	✓	Pay the rent
+Body text after the list.
+ssh home.local
+uptime

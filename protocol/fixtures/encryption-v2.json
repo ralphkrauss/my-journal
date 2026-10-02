@@ -1,0 +1,120 @@
+{
+  "corpusVersion": 2,
+  "purpose": "Public synthetic interoperability fixtures for recovery formats 2-4, password normalization, pairing and current records. Never use these keys, passwords, codes, tokens or nonces for real data.",
+  "recovery": {
+    "password": "  correct horse, café 🌿  ",
+    "passwordUTF8": "ICBjb3JyZWN0IGhvcnNlLCBjYWbDqSDwn4y/ICA=",
+    "salt": "MDEyMzQ1Njc4OTo7PD0+Pw==",
+    "iterations": 600000,
+    "derivedKey": "MPuyCk2V242/KfQJfX2lWbCVIv2w+z/V6KzLyr+BUBQ=",
+    "recoverySecret": "a168233f04892f718c8465538fe7d3ab229175ea3aed4be68e39a4cfe7166f9f",
+    "recoveryHash": "06e6966066df5ab365eac7c1c2f5842dcbd14711afaa4c3fdabc5de8c33ce154",
+    "vaultKey": "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+    "envelopes": [
+      {
+        "context": "journal:v2:recovery",
+        "envelope": {
+          "salt": "MDEyMzQ1Njc4OTo7PD0+Pw==",
+          "wrappedKey": "YGFiY2RlZmdoaWprvfliWnIrUWuIOx9fDPEbjemPcE97drLqSNDQymh8tX/DlgeyF5MyBuIri6WRwDn5",
+          "iterations": 600000,
+          "formatVersion": 2
+        }
+      },
+      {
+        "context": "journal:v3:recovery",
+        "envelope": {
+          "salt": "MDEyMzQ1Njc4OTo7PD0+Pw==",
+          "wrappedKey": "gIGCg4SFhoeIiYqLX4hK7hwy1ViSHhFm+7ycumaLG8wZaM8MWEjvmedbYEAebLGekRy9UMEvmxa53ZNV",
+          "iterations": 600000,
+          "formatVersion": 3
+        }
+      }
+    ]
+  },
+  "normalization": {
+    "password": "  Café crème brûlée Å  ",
+    "typedUTF8": "ICBDYWZlzIEgY3JlzIBtZSBicnXMgmxlzIFlIOKEqyAg",
+    "normalizedUTF8": "ICBDYWbDqSBjcsOobWUgYnLDu2zDqWUgw4UgIA==",
+    "salt": "wMHCw8TFxsfIycrLzM3Ozw==",
+    "iterations": 600000,
+    "normalized": {
+      "derivedKey": "jFUsDCS0vI/BPhspVU3rlhNNwf+5zQFsGYSxZu7mvyU=",
+      "recoverySecret": "0f4039a01f96794a8053ebc10bbc4912ba11c661bca3aebc1938c7552585eebd",
+      "recoveryHash": "189e38520596517efa28bd276c91354eb86fa0990dfc2f6cc37bacb57ccb4c4a",
+      "envelope": {
+        "salt": "wMHCw8TFxsfIycrLzM3Ozw==",
+        "wrappedKey": "0NHS09TV1tfY2drbHnq2ChYPLWM8OZbZCDnwtXddEdMq15xzZMF5mf+VuUINGPpCxuBZrARJUiInRZXq",
+        "iterations": 600000,
+        "formatVersion": 2
+      }
+    },
+    "exact": {
+      "derivedKey": "5Tr3WDGlKFHiDldrr/5VqhdXdwN3zIoLXC6S0ZfWckM=",
+      "recoverySecret": "9219f33a1995e9bf266618fe23d8982b005442ca9bea7006e322bf8f0fe60fee",
+      "recoveryHash": "d7ffccce9d85b0964a0ab91cf889dd7992e0eb9942794f6fcd2062f0a05cba68",
+      "envelope": {
+        "salt": "wMHCw8TFxsfIycrLzM3Ozw==",
+        "wrappedKey": "4OHi4+Tl5ufo6errqqOl2x6iZACzN7EsBMxPpIuzR4l3PObpfqLML1eP28u4n0Or1nEXLf1QeLbAhorK",
+        "iterations": 600000,
+        "formatVersion": 2
+      }
+    }
+  },
+  "passwordless": {
+    "envelope": {
+      "salt": "",
+      "wrappedKey": "",
+      "iterations": 0,
+      "formatVersion": 4
+    },
+    "recoveryCode": "8e1d3c5b7a9f2e4d6c8b0a1f3e5d7c9b8a6f4e2d0c1b3a5f7e9d8c6b4a2f0e1d",
+    "recoveryHash": "3c080379174b9e9e7e0bfc5e9b35d0dbb777888e8a23d4cd26f152bf1ab59d17"
+  },
+  "pairing": {
+    "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    "devicePrivateKey": "XasIfmJKikt54X+Lg4AO5m87sSkmGLb9HC+LJ/+I4Os=",
+    "devicePublicKey": "3p7bfXt9wbTTW2HC7OQ1Nz+DQ8hbeGdNrfx+FG+IK08=",
+    "keyCommitment": "FRL8eQkIGTBDVHZ9BA2mpMALK82T6IyC0o3PvVveQYE=",
+    "approverPrivateKey": "dwdtCnMYpX08FsFyUbJmRd9ML4frwJkqsXf7pR25LCo=",
+    "approverPublicKey": "hSDwCYkwp1R0i33ctD73Wg2/Og0mOBr066SpjqqbTmo=",
+    "checkCode": "469218",
+    "sharedSecret": "Sl2dW6TOLeFyjjv0gDUPJeB+IclH0Z4zdvCbPB4WF0I=",
+    "grantKey": "vgCRI+lGXzJvoQbkYsvhW0RgZLNlcVSR+/WdzqI3DRg=",
+    "context": "journal:v1:pairing:3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    "grantPlaintext": "eyJtYXN0ZXJLZXkiOiJRRUZDUTBSRlJrZElTVXBMVEUxT1QxQlJVbE5VVlZaWFdGbGFXMXhkWGw4PSIsInJlY292ZXJ5VmVyc2lvbiI6MiwidG9rZW4iOiIwZjFlMmQzYzRiNWE2OTc4ODc5NmE1YjRjM2QyZTFmMDBmMWUyZDNjNGI1YTY5Nzg4Nzk2YTViNGMzZDJlMWYwIn0=",
+    "grant": {
+      "masterKey": "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+      "recoveryVersion": 2,
+      "token": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"
+    },
+    "deviceTokenHash": "331ab04caa328927f706627b812f4139f9ec42a6d61f17e468a70c41a48d8f67",
+    "encryptedGrant": "hSDwCYkwp1R0i33ctD73Wg2/Og0mOBr066SpjqqbTmpwcXJzdHV2d3h5entJtbSm7WwjUseT/B+zcYaOqtRndwHNpiDpqeliXlJU37hLk76tQE8xtKQhjxqZ2SfLmDdAt24IYIb6ZEamoHyV/isb0XTXrnbAbgGSEzV15RuirdJOZukDjK8JX7aVNSUHVSfB2w7X/NWKOsnaXu41L8SYuRKC7Ihw1e8EResa76bAks+OKcHtCMroYmzImrcAUi9DaclZI9HRePzPChcSnX8H/LmPLdMQ4Zk="
+  },
+  "content": {
+    "key": "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+    "record": {
+      "id": "5f0c4d1e-2a3b-4c5d-8e6f-708192a3b4c5",
+      "kind": "entry",
+      "context": "journal:v1:record:entry:5f0c4d1e-2a3b-4c5d-8e6f-708192a3b4c5",
+      "plaintext": "eyJkYXRlIjoiMjAyNi0wOS0yMFQxMjowMDowMFoiLCJkZWxldGVkV2l0aEpvdXJuYWwiOmZhbHNlLCJkb2N1bWVudCI6eyJtYXJrZG93biI6IkEgKipxdWlldCoqIGRheS4g8J+Mv1xuXG4hW0hhcmJvdXIgYXQgZHVza10oYXR0YWNobWVudHNcL2Q2ZTVmNGEzLWIyYzEtNGQwZS05ZjhhLTdiNmM1ZDRlM2YyMSlcbiIsIm1ldGFkYXRhIjp7ImJsb2NrSURzIjpbIjlBOEI3QzZELTVFNEYtNEEzQi04QzJELTFFMEY5QThCN0M2RCIsIjFBMkIzQzRELTVFNkYtNEE3Qi05QzhELTBFMUYyQTNCNEM1RCJdLCJpbWFnZVR5cGVzIjp7ImQ2ZTVmNGEzLWIyYzEtNGQwZS05ZjhhLTdiNmM1ZDRlM2YyMSI6ImltYWdlXC9wbmcifSwic2VnbWVudExlbmd0aHMiOlsyMyw2OV19LCJ2ZXJzaW9uIjoyfSwiaWQiOiI1RjBDNEQxRS0yQTNCLTRDNUQtOEU2Ri03MDgxOTJBM0I0QzUiLCJqb3VybmFsSUQiOiIwQjFDMkQzRS00RjUwLTQ2MTctODgyOS0zQTRCNUM2RDdFOEYiLCJraW5kIjoiZW50cnkiLCJtb2RpZmllZEF0IjoiMjAyNi0wOS0yMVQwODozMDowMFoiLCJ0aXRsZSI6IkNhZsOpIOKAlCDml6XoqJgifQ==",
+      "combined": "kJGSk5SVlpeYmZqbDRXqX6W3Bp+D16LcxGPGlMjl5+f140ZTddJFcqxsQkBilMPxzoVke9eh2vFQBdMo07jSTvptcj8tk1IuCiNzC9mjvOkSsicZb4XY3X52kgQkoCbNgUjsLLVeGGYvJ3CN+ZVPzilHJzko2qVtQY+LtwzIKQivCGpD/m35CcdyX2AXXGV6mkywxCMnXXXqT/C0EQD4SpP6EYyjMZreuNKr7/ZcIVVh6KBOAMIHSMvuNzmZ8zew9QBww9qJWYohKWjmmtjK1iHAG+C2bjixoU4LmCyPmwx3RJFQnK+yNezM3tA/fRWHeR6NU9SHn6q25ckhVujDVl/WmBNh533S/PqNofbpZcjYKv6szAOEJy5VRklR7tWsZQM/2SsbD+zAp9D3NI41E4kjuRCSIwyM6ivKqbZ5QqNgWovLY0JvhZgyLWD6RE2MSIuMo9QmjEPw3HRwIp4IW21iFpQuyD2IJpxHWvOI7Ti57NrhnQpVw+gbXUbZzY3BvhB1TcrIV+YLHTrDOGF9TBuvqzj1qIlafqYAkT0eGsg/PA1myqzA2xo/ZrTryr+8LSQ8xodil9FJoiawixUBE/lknX4Isb45fhcLL6bEw6vLHomOSjKm9uA8R5KwmCuPiOfhjG1sKvrZ6lfJIWf8629EiawcKzuCfKd/SqS3dDZneAug2nWaWg/dtgXA12SA+gMisTnWzm4fU1qc3DVYRzeAj1QI8sSEgiBUyLnVK2g0t+Ciiz1jeofksgFTkR6s59ErF59lxh0xRRNHSk0=",
+      "expected": {
+        "journalID": "0b1c2d3e-4f50-4617-8829-3a4b5c6d7e8f",
+        "title": "Café — 日記",
+        "date": "2026-09-20T12:00:00Z",
+        "modifiedAt": "2026-09-21T08:30:00Z",
+        "documentVersion": 2,
+        "markdown": "A **quiet** day. 🌿\n\n![Harbour at dusk](attachments/d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f21)\n",
+        "imageTypes": {
+          "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f21": "image/png"
+        }
+      }
+    },
+    "attachment": {
+      "id": "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f21",
+      "context": "journal:v1:attachment:d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f21",
+      "plaintext": "AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/Q==",
+      "combined": "sLGys7S1tre4ubq7AgWJiNBf8oQayw7V3MN19v9NzWUVQI/CkqMJVvjFi+0AvgwdE6QnE/cF2KK8at1TfFDy66IukCJ3XBLVQplkJn+Q0Vx1Mf3LrfgwB+wD9Ic="
+    }
+  }
+}

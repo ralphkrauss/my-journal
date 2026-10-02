@@ -1,0 +1,34 @@
+{
+  "formatVersion": 1,
+  "purpose": "Public synthetic interoperability fixtures. Never use these keys or nonces for real data.",
+  "recovery": {
+    "phrase": "  café-012345-abcdef-678901-234567-89abcd-ef0123-456789\n",
+    "salt": "ICEiIyQlJicoKSorLC0uLw==",
+    "iterations": 600000,
+    "derivedKey": "M2nQ7ADUSGv0NDWsrAY+i/sVx/5yY77c05Qv+xr3aEc=",
+    "authenticationSecret": "9f15a4703fff17624dbc7dce7b4cdcd4d4abb8cd6299f305d79e171fb0f2137f"
+  },
+  "envelopes": [
+    {
+      "name": "record",
+      "key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "plaintext": "eyJpZCI6ImFhYWFhYWFhLWJiYmItNGNjYy04ZGRkLWVlZWVlZWVlZWVlZSIsImtpbmQiOiJlbnRyeSIsImpvdXJuYWxJRCI6IjExMTExMTExLTIyMjItNDMzMy04NDQ0LTU1NTU1NTU1NTU1NSIsInRpdGxlIjoiQ2Fmw6kg4oCUIOaXpeiomCIsImRvY3VtZW50Ijp7InZlcnNpb24iOjEsImJsb2NrcyI6W3siaWQiOiI5OTk5OTk5OS04ODg4LTQ3NzctODY2Ni01NTU1NTU1NTU1NTUiLCJraW5kIjoicGFyYWdyYXBoIiwicnVucyI6W3sidGV4dCI6IkEgcXVpZXQgZGF5LiDwn4y/IiwiYm9sZCI6dHJ1ZSwiaXRhbGljIjpmYWxzZSwidW5kZXJsaW5lIjpmYWxzZX1dfV19LCJkYXRlIjoiMjAyNi0wOS0yMFQxMjowMDowMFoiLCJtb2RpZmllZEF0IjoiMjAyNi0wOS0yMFQxMjowMDowMFoiLCJkZWxldGVkV2l0aEpvdXJuYWwiOmZhbHNlfQ==",
+      "context": "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "combined": "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo="
+    },
+    {
+      "name": "attachment",
+      "key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "plaintext": "AAF/gP7/",
+      "context": "journal:v1:attachment:01234567-89ab-4cde-8fab-0123456789ab",
+      "combined": "QEFCQ0RFRkdISUpL4rjRo9jDpWA8bfjyCosMwu8KrwKMog=="
+    },
+    {
+      "name": "recovery",
+      "key": "M2nQ7ADUSGv0NDWsrAY+i/sVx/5yY77c05Qv+xr3aEc=",
+      "plaintext": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "context": "journal:v1:recovery",
+      "combined": "UFFSU1RVVldYWVpb2SoSOQ4Z4acrTpsRqi7dS+81hCbObpq/Up/NUBsJ40IRrFeU3RA28TKIG7RRiwHt"
+    }
+  ]
+}

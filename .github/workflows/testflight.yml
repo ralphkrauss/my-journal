@@ -1,0 +1,188 @@
+name: TestFlight
+
+# Prepared, not yet run. Dispatch manually from main once Quality and Dependency Audit have passed on that commit.
+# Uploads the iPhone and iPad app and the Mac app, which one purchase covers. Each archive is built without signing
+# credentials; the export signs it with the App Store distribution identity and profile and uploads it to App Store
+# Connect. See docs/release-operations.md for the environment, secrets and variables.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    uses: ./.github/workflows/dependency-audit.yml
+
+  ios:
+    name: Upload iPhone and iPad app
+    needs: audit
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: testflight
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      IOS_TEAM_ID: ${{ vars.IOS_TEAM_ID }}
+      IOS_PROFILE_NAME: ${{ vars.IOS_PROFILE_NAME }}
+      IOS_SIGNING_IDENTITY: ${{ vars.IOS_SIGNING_IDENTITY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require main, a protected environment and passing checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          [[ "$GITHUB_REF" == refs/heads/main ]] || {
+            echo 'Dispatch TestFlight uploads from main.' >&2
+            exit 1
+          }
+          scripts/require-protected-environment.sh testflight
+          python3 scripts/require-successful-checks.py "$SOURCE_SHA"
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+          cache: false
+      # Each upload of a version needs a higher build number. This workflow is the only CI uploader; the offset
+      # variable lifts the numbers above any build uploaded another way.
+      - name: Archive without signing credentials
+        env:
+          BUILD_NUMBER_OFFSET: ${{ vars.IOS_BUILD_NUMBER_OFFSET }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          offset="${BUILD_NUMBER_OFFSET:-0}"
+          [[ "$offset" =~ ^[0-9]+$ ]] || {
+            echo 'IOS_BUILD_NUMBER_OFFSET must be a whole number.' >&2
+            exit 1
+          }
+          build_number="$((RUN_NUMBER + offset)).$RUN_ATTEMPT"
+          JOURNAL_BUILD_NUMBER="$build_number" scripts/archive-ios.sh artifacts/testflight
+          printf '### iPhone and iPad upload\n\nBuild number: %s\n' "$build_number" >>"$GITHUB_STEP_SUMMARY"
+      - name: Install temporary signing and upload credentials
+        env:
+          IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+        run: scripts/ci-app-store-signing.sh ios
+      - name: Sign and upload
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          credentials="$RUNNER_TEMP/journal-ios-signing"
+          ASC_API_KEY_PATH="$credentials/AuthKey_$ASC_API_KEY_ID.p8" scripts/upload-app-store.sh \
+            "artifacts/testflight/My Journal.xcarchive" "$credentials/ExportOptions.plist" artifacts/testflight-export
+      - name: Remove temporary signing and upload material
+        if: always()
+        run: |
+          cleanup_status=0
+          if [[ -f "$RUNNER_TEMP/journal-ios-signing/release.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/journal-ios-signing/release.keychain-db" || cleanup_status=1
+          fi
+          rm -f "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles/journal-release.mobileprovision" || cleanup_status=1
+          rm -rf "$RUNNER_TEMP/journal-ios-signing" || cleanup_status=1
+          exit "$cleanup_status"
+
+  mac:
+    name: Upload Mac app
+    needs: audit
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: testflight
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      MAC_TEAM_ID: ${{ vars.MAC_TEAM_ID }}
+      MAC_PROFILE_NAME: ${{ vars.MAC_PROFILE_NAME }}
+      MAC_SIGNING_IDENTITY: ${{ vars.MAC_SIGNING_IDENTITY }}
+      MAC_INSTALLER_IDENTITY: ${{ vars.MAC_INSTALLER_IDENTITY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require main, a protected environment and passing checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          [[ "$GITHUB_REF" == refs/heads/main ]] || {
+            echo 'Dispatch TestFlight uploads from main.' >&2
+            exit 1
+          }
+          scripts/require-protected-environment.sh testflight
+          python3 scripts/require-successful-checks.py "$SOURCE_SHA"
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+          cache: false
+      # The Mac's build numbers are counted separately from iOS; the same scheme keeps them rising.
+      - name: Archive without signing credentials
+        env:
+          BUILD_NUMBER_OFFSET: ${{ vars.MAC_BUILD_NUMBER_OFFSET }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          offset="${BUILD_NUMBER_OFFSET:-0}"
+          [[ "$offset" =~ ^[0-9]+$ ]] || {
+            echo 'MAC_BUILD_NUMBER_OFFSET must be a whole number.' >&2
+            exit 1
+          }
+          build_number="$((RUN_NUMBER + offset)).$RUN_ATTEMPT"
+          version="$(sed -n 's/^ *MARKETING_VERSION: "\(.*\)"$/\1/p' apps/apple/project.yml)"
+          JOURNAL_SIGNING_TEAM="$MAC_TEAM_ID" JOURNAL_BUILD_NUMBER="$build_number" JOURNAL_VERSION="$version" \
+            scripts/archive-mac.sh artifacts/testflight
+          printf '### Mac upload\n\nBuild number: %s\n' "$build_number" >>"$GITHUB_STEP_SUMMARY"
+      - name: Install temporary signing and upload credentials
+        env:
+          MAC_CERTIFICATE_P12: ${{ secrets.MAC_CERTIFICATE_P12 }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          MAC_INSTALLER_CERTIFICATE_P12: ${{ secrets.MAC_INSTALLER_CERTIFICATE_P12 }}
+          MAC_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
+          MAC_PROVISIONING_PROFILE: ${{ secrets.MAC_PROVISIONING_PROFILE }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+        run: scripts/ci-app-store-signing.sh macos
+      - name: Sign and upload
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          credentials="$RUNNER_TEMP/journal-macos-signing"
+          ASC_API_KEY_PATH="$credentials/AuthKey_$ASC_API_KEY_ID.p8" scripts/upload-app-store.sh \
+            "artifacts/testflight/My Journal.xcarchive" "$credentials/ExportOptions.plist" artifacts/testflight-export
+      - name: Remove temporary signing and upload material
+        if: always()
+        run: |
+          cleanup_status=0
+          if [[ -f "$RUNNER_TEMP/journal-macos-signing/release.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/journal-macos-signing/release.keychain-db" || cleanup_status=1
+          fi
+          rm -f "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles/journal-release.provisionprofile" || cleanup_status=1
+          rm -rf "$RUNNER_TEMP/journal-macos-signing" || cleanup_status=1
+          exit "$cleanup_status"

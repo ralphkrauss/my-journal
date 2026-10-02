@@ -1,0 +1,87 @@
+# Architecture
+
+My Journal is local-first. Each device keeps a complete copy of the user's journals and works without a network. A server is optional and only relays encrypted records between the user's own devices. The [protocol](../protocol/README.md) is the contract between clients and the server; this page explains how the pieces fit together.
+
+## Components
+
+| Component | Location | Role |
+| --- | --- | --- |
+| Mac and iOS apps | `apps/apple/JournalApp` | One SwiftUI source tree with AppKit and UIKit text editing. The Xcode project is generated from `apps/apple/project.yml`. |
+| JournalCore | `apps/apple/Packages/JournalCore` | Swift package without UI code: document model, Markdown, encryption, local storage, sync, archives and agent access. |
+| Server | `server/src/Journal.Api` | ASP.NET Core Minimal API with EF Core and SQLite. It stores revisions and attachments and never needs the vault key. |
+| Protocol | `protocol/` | Language-independent contracts and interoperability fixtures for record encryption, sync, pairing, recovery, archives, lifecycle and agent access. |
+| Deployment | `deploy/`, `packaging/`, `server/Dockerfile` | Compose files for local, Tailscale and public HTTPS hosting; the non-root container image; standalone server packages. |
+
+Test and tooling code: the JournalCore executables `JournalProbe` (a synthetic sync client used by `scripts/test-sync.sh`) and `JournalMeasure` (opt-in store measurement), and the app test folders in `apps/apple`: `JournalTests` (Mac and iOS unit tests), `JournalUITests` (iOS UI tests), `JournalServerTests` (bundled server lifecycle), `JournalSandboxTests` (the sandboxed Mac app's keychain, run by `scripts/test-mac-sandbox.sh`), `JournalFileTests` (opt-in Files picker acceptance) and `JournalMeasurements` (opt-in measurement).
+
+## Data on a device
+
+A device stores one library in a directory under Application Support (`PrivateJournal`). The Mac app runs in the App Sandbox, so on the Mac that is inside its container, `~/Library/Containers/io.github.ralphkrauss.myjournal/Data/Library/Application Support/PrivateJournal`; `MacResources/container-migration.plist` moves a library from the old unsandboxed location when the container is created. Setting `JOURNAL_DATA_DIR` selects another directory (on the Mac, one inside the container), which is how development builds and UI tests stay away from real data.
+
+- `journal.sqlite` (GRDB) holds records, an outbox of pending operations, unresolved conflicts, version history and settings. Every record payload is a portable JSON record, encrypted with the vault key unless the library was created without encryption.
+- `attachments/` holds image files, encrypted the same way.
+- The vault key and the device's server credentials are kept in the Keychain. App Lock only gates the interface with the system's device owner authentication (`DeviceAuthentication.swift`); it is not an encryption key. On iPhone and iPad, while App Lock is on, `PrivacyCover` covers every window, including sheets and alerts, whenever the app isn't active, so the app switcher never shows journal content.
+- `configuration.json` points to the current library folder and its Keychain entry and holds the recovery envelope and App Lock settings. Connecting to a server or importing an archive builds a new library folder; the configuration then lists the previous folder and Keychain items, and `SupersededLibraries.swift` removes them once the new library has been read and, when connected, synchronized, retrying after the next launch if needed.
+- Images being added pass through `ImportedImage.prepare`, which removes location metadata before the image is stored.
+
+A record is a journal, an entry or a template. Entry bodies are Markdown (document version 2) with a little metadata for paragraph identity and image types. Older version-1 block documents stay readable. Records a client does not understand are kept unchanged and shown read-only, never rewritten.
+
+Deleting moves items to Recently Deleted. Deleting a journal hides its entries through the parent, so restoring the journal brings back exactly the entries that were deleted with it. Delete Permanently replaces the record with a content-free deletion marker that syncs to other devices; an edit made offline elsewhere becomes a conflict for review instead of disappearing. Older server revisions and backups still contain the earlier encrypted versions. See [journal lifecycle](../protocol/journal-lifecycle.md) and [permanent deletion](../protocol/permanent-deletion.md).
+
+## Sync
+
+Sync is optional. The server keeps an append-only log of immutable record revisions and immutable attachments.
+
+1. Each local change is written to the outbox in the same transaction as the record. A save names the stored version it was edited from; if the record changed in the meantime, for example through sync, the save keeps both versions as a conflict instead of overwriting.
+2. `SyncEngine` uploads missing attachments first, then pushes each pending operation with its base revision. A record waits while an image it uses isn't on the server yet. Operation IDs make retries safe: a repeated operation returns the original receipt.
+3. If the server has a newer revision, the push is rejected and the remote version is stored as a conflict. The local version stays in place until the user resolves it (keep one version or keep both). Nothing is overwritten silently.
+4. A record or image the server refuses, for example as too large, stays on the device with an explanation and doesn't hold up the rest; it is sent again once edited, or when the person chooses Sync Now or Try Again. Other failures of one item wait before it is tried again, from 15 seconds up to 10 minutes.
+5. The engine then pages through changes after its cursor, even when sending failed. Each page is authenticated and committed with its cursor in one transaction. A record that authenticates but this version can't read is kept unchanged and read-only, and doesn't stop the log. Images the changes use are downloaded afterwards; one that is unavailable is tried again later.
+6. If the server was restored from a backup, its identity changes. The client re-reads the log, uploads what the server lost and turns differing edits into conflicts. It does the same when the server's data was rolled back some other way: with each page request, and once before sending anything, it names the change it last read, with a digest of its payload (`sync-continuity`, `sync-continuity-digest`), and the server refuses if that change isn't at the client's cursor. Before sending, it also confirms its newest accepted write when it hasn't read past it yet. A push accepted at a cursor the client has already seen also starts this comparison. A change at a revision the client already has, but with another version than the one it last sent or received there (`server_versions`), means the server lost a version it accepted; the two become a conflict for review.
+
+Only one sync runs per library at a time; a request that arrives during a pass runs after it. While the app is open, unlocked and active it syncs every 3 seconds, and every 30 seconds while another app is active, such as with the Mac window behind others; becoming active syncs at once (`SyncSchedule.swift`). A pass that has nothing to send reuses the server status read in the last minute, so it is a single request for new changes, and a change this device sent isn't downloaded again when nothing came before it on the server. An entry being written is sent once writing pauses for 2 seconds (or after 30 seconds of continuous writing), as one revision, and at once when the entry is left, the app locks or goes to the background, or quits. A new device reads all records first and downloads images over the following passes, the open entry's first. After a failed pass the wait doubles, up to 5 minutes, and a successful pass, including Sync Now, or unlocking returns to the usual pace. Automatic sync pauses while the app is locked or in the background.
+
+Devices join by pairing: the new device shows a code, a connected device approves it, and both show a six-digit check code that the person confirms on each device (Approve, then Connect) before the new device uses anything it received. A device can also recover access with the master password (or, for a library without encryption, a one-time code from the server administrator).
+
+## Encryption
+
+With encryption on (the default), records and attachments are encrypted on the device with AES-256-GCM under a random 256-bit vault key. The vault key is wrapped with a key derived from the master password (PBKDF2-HMAC-SHA256) and the wrapped key is stored on the server so another device can recover it. The server sees record IDs and kinds, sizes, revisions, timing and device names, but no journal names, titles, text or images; [SECURITY.md](../SECURITY.md#what-the-server-can-see) lists exactly what it sees. Libraries created without encryption store readable JSON; device authentication still applies.
+
+The formats, key derivation and pairing construction are specified in [protocol/README.md](../protocol/README.md), with test vectors in `protocol/fixtures/`. [SECURITY.md](../SECURITY.md) describes the threat model and its limits.
+
+## Server
+
+The server is organized by feature (`Features/AccountEndpoints.cs`, `SyncEndpoints.cs`, `PairingEndpoints.cs`, `AttachmentEndpoints.cs`). It supports one owner and one running instance on local storage. Device tokens are stored only as SHA-256 hashes, and device authentication runs before a request body is read. Writes pass through a shared write gate so that a revoked device cannot commit a queued write. Requests are rate-limited per device when authenticated and per client address otherwise; trusted reverse proxies and accepted host names are configured in `Security/NetworkPolicy.cs`. Every error is a problem details response with a stable `code` (`Features/Problems.cs`). EF Core migrations run at startup (`Data/DatabaseStartup.cs`): the server first copies an existing database to `journal.pre-migration.db`, and refuses to start on a database migrated by a newer version. Security-relevant events, such as enrollment, revocation and restores, are logged without secrets or content (`Security/AuditLog.cs`).
+
+The same executable provides maintenance commands: `--backup`, `--restore`, `--recovery-code` and `--health-check`. See [self-hosting](self-hosting/README.md) and the [server backup format](../protocol/server-backup.md).
+
+On macOS 14 and later, the Mac app can run a bundled copy of the server (`JournalServer.app` inside the app) for the user's other devices. The server is signed to inherit the app's sandbox, so only the app can start it; `scripts/embed-mac-server.sh` adds it to a built app. `LocalServerController` starts and stops it and keeps its settings in `local-server.json` next to the library. It records the running server in `local-server-process.json`; at launch it stops a server whose app is no longer running, and quitting stops the server, forcing it after a grace period. The app also passes its process ID as `Journal__ParentProcessId`, and `Hosting/ParentProcessWatchdog.cs` shuts the server down once that process has ended, even if the app couldn't stop it. The server's output, including security events, goes to `local-server.log` next to the library.
+
+## Backups
+
+Export Archive writes a `.journalarchive` package: a SQLite snapshot plus the original image files, with an authenticated inventory for encrypted libraries. Import Archive restores into an empty device or adds the journals to an existing library. See [archive format](../protocol/archive.md). Server backups are separate and are made with `--backup`.
+
+## Agent access
+
+The sync server is also a remote MCP server with OAuth 2.1 authorization. An agent's authorization request appears on the owner's devices, which approve it with the number its page shows and choose its journals. For each agent, a device keeps a copy of those journals on the server, encrypted under a key only the agent's tokens unlock, and updates it after each sync that changed something, uploading only items that changed (`AgentCopyPublisher`). The server answers the three read-only tools from that copy. See [agent access through MCP](../protocol/agent-access-server.md).
+
+## Swift code map
+
+- **`AppModel`** (`JournalApp/Model/AppModel.swift`) is the `@MainActor` observable model for the whole app. Features live in focused `extension AppModel` files in the same folder (`JournalOperations`, `EntryDeletionOperations`, `HistoryOperations`, `PasswordOperations` and so on). Views call the model; they do not open the store.
+- **`JournalStore`** (`JournalCore/Store.swift`) is an actor that owns the SQLite database. Each mutation is one transaction, and saves re-read the stored record before writing.
+- **`SyncEngine`** is an actor that runs one sync at a time against a `JournalStore` and an immutable `ServerClient`.
+- **`AgentCopyPublisher`** in JournalCore approves agents, changes their settings and keeps their copies current; `ServerAgentsController` in the app drives Settings > Agent Access.
+- **Session and generation guards.** Locking, unlocking, importing or replacing a library changes `vaultSessionID`; saves and image insertion use generation counters. Code that awaits checks that the session, generation and store are still the ones it started with before applying a result. Keep this pattern for any new asynchronous work that touches the store or the draft.
+- **Editor pipeline.** An entry's Markdown is parsed (swift-markdown) into blocks, rendered as attributed text in an `NSTextView` or `UITextView`, and written back to Markdown when the text changes. Paragraphs the user did not edit keep their original source. Constructs the rich view cannot edit are kept exactly and can be edited in source view. Undo keeps the Markdown snapshot alongside the attributed text.
+
+## Compatibility rules
+
+Some formats are shared with other devices, older app versions and future clients. Changing them needs a versioned protocol change, fixtures and migration tests:
+
+- the portable record JSON and the Markdown document format;
+- record and attachment encryption, AAD strings, key derivation and recovery envelope versions;
+- the sync, pairing and recovery wire format;
+- the archive and server backup formats;
+- bundle identifiers, the Keychain access group and the `org.privatejournal.archive` file type, which existing installations depend on.
+
+Unknown fields and newer formats must be preserved, not dropped.

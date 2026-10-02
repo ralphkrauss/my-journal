@@ -1,0 +1,37 @@
+{
+  "frames": {
+    "01": {
+      "headline": "A calm place to write",
+      "subline": "Clean and simple, with everything you need."
+    },
+    "02": {
+      "headline": "Encrypted by default",
+      "subline": "No account, no company server, no tracking."
+    },
+    "03": {
+      "headline": "Sync through your own server",
+      "subline": "Your Mac, a home server, or none at all."
+    },
+    "04-mac": {
+      "headline": "Insights from your own writing",
+      "subline": "Let your own AI agent read the journals you choose."
+    },
+    "04": {
+      "headline": "Find it again",
+      "subline": "Search, Version History and Recently Deleted."
+    },
+    "05": {
+      "headline": "Separate journals, simple templates",
+      "subline": "Keep personal and work apart. Start from a template."
+    },
+    "06": {
+      "headline": "At home on iPhone, iPad and Mac",
+      "subline": "Follows your appearance and accessibility settings."
+    }
+  },
+  "agent": {
+    "caption": "Asked in your agent",
+    "question": "What patterns do you see in my September entries?",
+    "answer": "Two habits keep coming back: walks, often in the evening after dinner, and keeping evenings free. At work, you prefer short meetings and writing decisions down first."
+  }
+}

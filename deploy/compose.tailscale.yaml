@@ -1,0 +1,62 @@
+# Use instead of compose.yaml: docker compose -f deploy/compose.tailscale.yaml up -d --build
+services:
+  tailscale:
+    image: tailscale/tailscale:v1.102.4@sha256:2667499ed87ae29218f292556ba062918402dd5e92e93637af14867e4df12dd3
+    hostname: ${JOURNAL_HOSTNAME:-journal}
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - ./tailscale-serve.json:/config/serve.json:ro
+    restart: unless-stopped
+  journal:
+    image: ${JOURNAL_IMAGE:-journal-server:local}
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    network_mode: service:tailscale
+    depends_on:
+      - tailscale
+    environment:
+      ASPNETCORE_URLS: http://127.0.0.1:8080
+      # Only Tailscale Serve connects over this shared loopback. It replaces X-Forwarded-For with the
+      # tailnet client address, so rate limits apply per client. The loopback-only address also limits
+      # accepted host names to loopback and *.ts.net (see AllowedHosts in the self-hosting docs).
+      Journal__TrustedProxies: 127.0.0.1
+      # The HTTPS address devices use (https://<JOURNAL_HOSTNAME>.<tailnet>.ts.net); setup-code shows it.
+      JOURNAL_URL: ${JOURNAL_URL:-}
+    volumes:
+      - journal-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+  # Optional: lets apps on this local network find the server (docker compose --profile lan up -d). It publishes
+  # the server's existence, this host's name and JOURNAL_URL with Bonjour; see SECURITY.md.
+  lan:
+    profiles: [lan]
+    image: journal-lan:local
+    build:
+      context: lan
+    network_mode: host
+    environment:
+      JOURNAL_URL: ${JOURNAL_URL:-}
+    read_only: true
+    tmpfs:
+      - /run:size=1m,mode=1777
+      - /etc/avahi/services:size=1m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+volumes:
+  journal-data:
+  tailscale-state:

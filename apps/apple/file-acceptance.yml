@@ -1,0 +1,23 @@
+include:
+  - project.yml
+name: JournalFileAcceptance
+targets:
+  JournalFileUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.4"
+    sources: [JournalFileTests]
+    dependencies:
+      - target: JournalIOS
+      - package: JournalCore
+        product: JournalCore
+schemes:
+  JournalFileImport:
+    build:
+      targets:
+        JournalIOS: all
+    test:
+      targets: [JournalFileUITests]
+      environmentVariables:
+        JOURNAL_IMPORT_NAME: "$(JOURNAL_IMPORT_NAME)"
+        JOURNAL_IMPORT_BYTES: "$(JOURNAL_IMPORT_BYTES)"

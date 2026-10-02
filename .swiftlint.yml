@@ -1,0 +1,52 @@
+# Formatting is owned by swift-format. These rules target correctness and maintainability.
+only_rules:
+  - custom_rules
+  - force_cast
+  - force_try
+  - force_unwrapping
+  - unused_closure_parameter
+  - duplicate_conditions
+  - duplicate_enum_cases
+  - duplicate_imports
+  - identical_operands
+  - redundant_nil_coalescing
+  - unavailable_function
+  - unhandled_throwing_task
+  - blanket_disable_command
+  - weak_delegate
+  - cyclomatic_complexity
+  - function_body_length
+  - file_length
+included:
+  - apps/apple/JournalApp
+  - apps/apple/JournalServerTests
+  - apps/apple/JournalSandboxTests
+  - apps/apple/JournalTests
+  - apps/apple/JournalUITests
+  - apps/apple/JournalMeasurements
+  - apps/apple/JournalScreenshots
+  - apps/apple/JournalFileTests
+  - apps/apple/Packages/JournalCore/Sources
+  - apps/apple/Packages/JournalCore/Tests
+excluded:
+  - apps/apple/Packages/JournalCore/.build
+cyclomatic_complexity:
+  warning: 15
+  error: 20
+  ignores_case_statements: true
+function_body_length:
+  warning: 100
+  error: 120
+file_length:
+  warning: 900
+  error: 1000
+  ignore_comment_only_lines: true
+custom_rules:
+  one_statement_per_line:
+    name: One Statement Per Line
+    regex: ';'
+    match_kinds:
+      - identifier
+      - keyword
+    message: Put each statement on its own line so control flow is easy to review.
+    severity: error

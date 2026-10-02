@@ -1,0 +1,11 @@
+# Archive preview lifecycle counts
+
+The import preview must describe where restored entries will appear. This extends archives.md revision 2 without changing navigation or the commit flow.
+
+Use one atomic JournalLifecycleSnapshot from the inspected archive. Classify each current entry exactly once with the same location(of:) rules as the normal app. Count entries in journals, Recently Deleted (including inherited parent deletion and legacy markers), and Unavailable (missing, unsupported or conflicted parent). An independently conflicted entry remains in its parent's location; conflict copies and historical versions are preserved but are not additional entries.
+
+Keep the existing journal-name list and native scrollable sheet. Below names show “N entries in journals” (singular: “1 entry in journals”), “N in Recently Deleted”, and, only when nonzero, “N in Unavailable”. Add this secondary sentence only when unavailable entries exist: “These entries are preserved. You can review them in Unavailable after importing.” All counts are disjoint; the first is the live count. Keep the first two zero counts visible, matching the existing preview. Use system text styles and semantic secondary color for supplementary rows, with wrapping and no fixed height. VoiceOver reads the full count and category; do not encode category through color alone. Journal names use “Untitled Journal” for blank titles.
+
+Recovery-key, loading, error, cancellation, lock and final-action copy otherwise remain as previously reviewed. Publish prepared archive and preview together only after snapshot loading succeeds and the operation is still unlocked/uncancelled. On inspection failure or cancellation discard the owned inspection copy; never leave a prepared archive paired with an incomplete preview. Keep Continue available for retry after failure. Existing additive unsupported-content refusal remains unchanged; the preview is not a guarantee that a newer-format archive can be remapped.
+
+Verification: meaningful real archive fixture with inherited deletion, independent deletion, legacy markers, unavailable parents and historical/conflict records; assert exactly-once classification and total current-entry count. Inspect actual native preview at normal and largest text/dark settings. No new navigation, icons or custom controls.

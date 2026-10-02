@@ -1,0 +1,14 @@
+# Packing list
+
+- [ ] Passport
+- [x] Charger
+- Socks *(wool)*
+
+1. Book taxi
+2. Check in
+
+> Travel light.
+
+```
+flight = "BA 389"
+```

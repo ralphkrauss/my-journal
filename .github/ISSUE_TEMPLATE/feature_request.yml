@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest an improvement or a new feature.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues are public. Don't include journal text, setup codes, recovery codes, recovery keys, passwords, agent connection files or tokens.
+
+        Interface changes need a written design and an independent review before implementation (see CONTRIBUTING.md). Describe the need here; the design can follow.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe what you are trying to do and what gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Which part of My Journal?
+      multiple: true
+      options:
+        - Mac app
+        - iPhone app
+        - iPad app
+        - Server or self-hosting
+        - Agent access
+        - Documentation
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: This request contains no journal content, setup or recovery codes, recovery keys, passwords, connection files or tokens.
+          required: true

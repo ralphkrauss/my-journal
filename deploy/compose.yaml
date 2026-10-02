@@ -1,0 +1,45 @@
+services:
+  journal:
+    image: ${JOURNAL_IMAGE:-journal-server:local}
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${JOURNAL_PORT:-8080}:8080"
+    environment:
+      # The port is published on host loopback only; other host names would come from DNS rebinding.
+      # Add the host name a reverse proxy on this host forwards, if it keeps its own.
+      AllowedHosts: ${JOURNAL_ALLOWED_HOSTS:-localhost;127.0.0.1;[::1];*.ts.net}
+      # The HTTPS address devices use; setup-code shows it with the code.
+      JOURNAL_URL: ${JOURNAL_URL:-}
+    volumes:
+      - journal-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+  # Optional: lets apps on this local network find the server (docker compose --profile lan up -d). It publishes
+  # the server's existence, this host's name and JOURNAL_URL with Bonjour; see SECURITY.md.
+  lan:
+    profiles: [lan]
+    image: journal-lan:local
+    build:
+      context: lan
+    network_mode: host
+    environment:
+      JOURNAL_URL: ${JOURNAL_URL:-}
+    read_only: true
+    tmpfs:
+      - /run:size=1m,mode=1777
+      - /etc/avahi/services:size=1m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+volumes:
+  journal-data:

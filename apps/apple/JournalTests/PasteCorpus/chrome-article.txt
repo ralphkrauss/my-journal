@@ -1,0 +1,21 @@
+Learning to rest
+
+By Sam Lee · 4 min read
+
+Most of us treat rest as a reward. It works better as a habit. Here is what helped me, with notes from a 2024 study.
+
+What changed
+
+Short walks after lunch
+No email after 7 pm
+Phone in another room
+Reading on paper
+Pick one habit
+Keep it for two weeks
+Rest is not idleness.
+
+To check your screen time, run defaults read in Terminal:
+
+let minutes = 30
+print(minutes)
+Thanks for reading.

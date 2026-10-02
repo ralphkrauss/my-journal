@@ -1,0 +1,226 @@
+name: Journal
+options:
+  bundleIdPrefix: org.privatejournal
+  deploymentTarget:
+    macOS: "14.0"
+    iOS: "16.0"
+packages:
+  JournalCore:
+    path: Packages/JournalCore
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    CLANG_WARN_DOCUMENTATION_COMMENTS: YES
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: YES
+    CODE_SIGN_STYLE: Automatic
+targets:
+  JournalMac:
+    type: application
+    platform: macOS
+    info:
+      path: Generated/JournalMac-Info.plist
+      properties:
+        LSApplicationCategoryType: public.app-category.lifestyle
+        ITSAppUsesNonExemptEncryption: false
+        NSLocalNetworkUsageDescription: Find and sync with your server on your local network.
+        NSBonjourServices: [_myjournal._tcp]
+        CFBundleName: My Journal
+        CFBundleDisplayName: My Journal
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: org.privatejournal.archive
+            UTTypeDescription: Journal Archive
+            UTTypeConformsTo: [com.apple.package]
+            UTTypeTagSpecification:
+              public.filename-extension: journalarchive
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Journal Archive
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.privatejournal.archive]
+    sources:
+      - JournalApp
+      # The first sandboxed launch moves an existing library into the app's container.
+      - path: MacResources/container-migration.plist
+        buildPhase: resources
+    dependencies:
+      - package: JournalCore
+        product: JournalCore
+    settings:
+      base:
+        # Installs as My Journal.app, apart from Apple's Journal; the Swift module keeps its name.
+        PRODUCT_NAME: My Journal
+        PRODUCT_MODULE_NAME: Journal
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.ralphkrauss.myjournal
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Builds signed with the team's provisioning profile use JournalMac-Development.entitlements, which adds
+        # the data protection keychain (scripts/build-mac-development.sh). Set only this target's entitlements.
+        JOURNAL_MAC_ENTITLEMENTS: Signing/JournalMac.entitlements
+        CODE_SIGN_ENTITLEMENTS: $(JOURNAL_MAC_ENTITLEMENTS)
+  JournalIOS:
+    type: application
+    platform: iOS
+    info:
+      path: Generated/JournalIOS-Info.plist
+      properties:
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        NSFaceIDUsageDescription: Unlock your journals and confirm adding a device.
+        NSCameraUsageDescription: Take photos for your entries and scan codes to connect your devices.
+        NSLocalNetworkUsageDescription: Find and sync with your server on your local network.
+        NSBonjourServices: [_myjournal._tcp]
+        UILaunchScreen: {}
+        CFBundleName: My Journal
+        CFBundleDisplayName: My Journal
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        LSSupportsOpeningDocumentsInPlace: true
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: org.privatejournal.archive
+            UTTypeDescription: Journal Archive
+            UTTypeConformsTo: [com.apple.package]
+            UTTypeTagSpecification:
+              public.filename-extension: journalarchive
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Journal Archive
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.privatejournal.archive]
+    sources: [JournalApp]
+    dependencies:
+      - package: JournalCore
+        product: JournalCore
+    settings:
+      base:
+        # Installs as My Journal.app, apart from Apple's Journal; the Swift module keeps its name.
+        PRODUCT_NAME: My Journal
+        PRODUCT_MODULE_NAME: Journal
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.ralphkrauss.myjournal
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  JournalMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources: [JournalTests]
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/Contents/MacOS/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalMac
+      - package: JournalCore
+        product: JournalCore
+  JournalMacServerTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources: [JournalServerTests]
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/Contents/MacOS/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalMac
+      - package: JournalCore
+        product: JournalCore
+  JournalMacSandboxTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources: [JournalSandboxTests]
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/Contents/MacOS/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalMac
+      - package: JournalCore
+        product: JournalCore
+  JournalIOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [JournalTests]
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalIOS
+      - package: JournalCore
+        product: JournalCore
+  JournalIOSUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.4"
+    sources: [JournalUITests]
+    dependencies:
+      - target: JournalIOS
+      - package: JournalCore
+        product: JournalCore
+schemes:
+  # Xcode's Organizer lists archives by these archive names.
+  My Journal (Mac):
+    build:
+      targets:
+        JournalMac: all
+    test:
+      targets: [JournalMacTests]
+    archive:
+      customArchiveName: My Journal
+  My Journal (iOS):
+    build:
+      targets:
+        JournalIOS: all
+    test:
+      targets: [JournalIOSTests, JournalIOSUITests]
+      environmentVariables:
+        JOURNAL_TEST_SERVER: "$(JOURNAL_TEST_SERVER)"
+        JOURNAL_TEST_SETUP_CODE: "$(JOURNAL_TEST_SETUP_CODE)"
+        JOURNAL_TEST_ENCRYPTED_SETUP_SERVER: "$(JOURNAL_TEST_ENCRYPTED_SETUP_SERVER)"
+        JOURNAL_TEST_ENCRYPTED_SETUP_CODE: "$(JOURNAL_TEST_ENCRYPTED_SETUP_CODE)"
+        JOURNAL_TEST_PLAIN_SETUP_SERVER: "$(JOURNAL_TEST_PLAIN_SETUP_SERVER)"
+        JOURNAL_TEST_PLAIN_SETUP_CODE: "$(JOURNAL_TEST_PLAIN_SETUP_CODE)"
+        JOURNAL_TEST_AGENT_SERVER: "$(JOURNAL_TEST_AGENT_SERVER)"
+        JOURNAL_TEST_AGENT_CODE: "$(JOURNAL_TEST_AGENT_CODE)"
+        JOURNAL_TEST_MERGE_SERVER: "$(JOURNAL_TEST_MERGE_SERVER)"
+        JOURNAL_TEST_MERGE_CODE: "$(JOURNAL_TEST_MERGE_CODE)"
+        JOURNAL_TEST_HEALTH_SERVER: "$(JOURNAL_TEST_HEALTH_SERVER)"
+        JOURNAL_TEST_HEALTH_CONTROL: "$(JOURNAL_TEST_HEALTH_CONTROL)"
+    archive:
+      customArchiveName: My Journal
+  # A team-signed, sandboxed app with the bundled server (scripts/test-mac-sandbox.sh).
+  JournalMacSandbox:
+    build:
+      targets:
+        JournalMac: all
+    test:
+      targets: [JournalMacSandboxTests, JournalMacServerTests]
+      environmentVariables:
+        JOURNAL_LOCAL_SERVER_EXECUTABLE: "$(JOURNAL_LOCAL_SERVER_EXECUTABLE)"
+  JournalLocalServer:
+    build:
+      targets:
+        JournalMac: all
+    test:
+      targets: [JournalMacServerTests]
+      environmentVariables:
+        JOURNAL_LOCAL_SERVER_EXECUTABLE: "$(JOURNAL_LOCAL_SERVER_EXECUTABLE)"

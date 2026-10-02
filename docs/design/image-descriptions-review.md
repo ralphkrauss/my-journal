@@ -1,0 +1,35 @@
+# Image descriptions proposal review
+
+Date: 2026-09-20. Independent preimplementation review of `image-descriptions.md`, with limited context inspection of the portable block model, existing export, and owned mutation coordinator. No image-description implementation, renders, or new test results reviewed.
+
+## Outcome
+
+The native More action and scrollable per-image form are appropriate: writing remains primary, repeated attachments retain distinct block descriptions, and optional descriptions avoid an intrusive insertion prompt. The explanatory copy is concise and the distinction between saved entry export and unsaved local fields is useful. **Request two bounded preservation clarifications before implementation.** They do not require a different layout.
+
+1. **Specify atomic validation and patching against the current stored entry.** “Flushes … revalidates … Save through the existing … coordinator” does not establish whether validation and write share a transaction. A separate read/check followed by saving a captured full document can still overwrite a sync update. Require one store transaction that checks current permissions/support/conflict/lifecycle eligibility, matches the captured image block identities and their relevant attachment/media/description metadata, and patches only intended description fields into the current record. Preserve current body, unrelated block metadata, IDs, attachment references, and other record fields. Define whether additions/reordering also require Reload Images; rejecting any changed ordered image roster is a clear, conservative choice consistent with the proposal. A subsequent competing update must use the normal conflict-preserving mechanism. The model's precommit draft flush must not replace newer unrelated stored content; use existing revision/conflict protection or reject if that cannot be guaranteed.
+
+2. **Keep local description recovery available when saving becomes ineligible.** The initial disabled action is insufficient if a journal becomes deleted/unavailable, an entry becomes conflicted/unsupported, or the selected entry changes while the sheet is open. Revalidate at commit and preserve local fields with actionable failure and Copy Descriptions for ordinary stale/ineligible states. Do not silently close and discard dirty fields solely because refreshed model selection changes. If the user deliberately navigates away, explicitly cancel through the sheet or prevent that competing navigation while the form is open. Lock is the stated exception: close and clear sensitive sheet state immediately, cancel before commit where possible, and reconcile any committed patch before lifecycle flush. Missing attachment bytes alone must remain eligible for description editing.
+
+Record these rules in the proposal and re-review before implementing the store/model path. The ordinary layout and copy need no separate redesign.
+
+## Native interaction and accessibility conditions
+
+- Make Cancel explicit alongside Done on both platforms; the opening paragraph currently names only Done, although later copy specifies Cancel/Escape. Done applies once, Cancel discards only sheet fields, and busy state disables both dismissal routes. Define swipe/window dismissal so dirty fields do not vanish through an ambiguous gesture; disabling interactive dismissal while dirty is sufficient without adding a routine confirmation to Cancel.
+- A thumbnail should expose an image ordinal and the current local description, while the field exposes a stable label such as “Image 2 description.” Keep document-order navigation and do not confuse repeated uses of the same attachment. Image Unavailable should be announced as missing preview data, not an inability to save its description.
+- Keep Copy Descriptions available during save errors and stale review. Copy only on explicit action; label the copied text by image ordinal so repeated/empty fields are understandable. Clear sheet-held text/previews on lock, but do not clear or alter the user's system clipboard merely because it contains an explicitly copied description.
+- On a committed patch with refresh failure, show an explicit saved message, Done, and no Try Again mutation. On a precommit save failure, retain local fields, Try Again, and Copy Descriptions; avoid claiming Export Entry includes these fields.
+- Announce actionable errors and saving state without color-only cues. Preserve focus in the field after validation failure; do not focus the first field automatically or force a destructive Reload confirmation action as default.
+
+## Verification
+
+Prioritize a real-store regression that interleaves a body edit or image metadata change with description saving: unrelated body survives and stale image metadata is rejected atomically. Also cover repeated attachment uses with different block descriptions, supported missing-byte references, conflict/deleted-parent ineligibility, and lock after commit before model reconciliation. A native conversion/reopen test should prove descriptions persist without recreating other block identities. These tests protect distinct plausible failures; no layout-getter tests are needed.
+
+Inspect the actual native form, dark appearance, large text, a missing preview, and keyboard/VoiceOver traversal. Default-state screenshots alone cannot verify announcement order or keyboard focus. Offscreen Mac evidence must retain its established limits while the desktop is locked. The separate recovery large-text E2E investigation is outside this proposal review.
+
+## Revision re-review — 2026-09-20
+
+**Approved for implementation and subsequent source/UI verification.** The appended Review revisions are authoritative over the earlier sentence saying captured-entry changes close the sheet. They now retain local fields and Copy Descriptions for selection/eligibility changes, require explicit confirmed Reload Images to discard them, and reserve immediate clearing/dismissal for lock. Explicit Cancel/Done and disabled dirty interactive dismissal resolve the native dismissal ambiguity.
+
+The atomic latest-record patch, complete ordered image roster/original metadata comparison, preservation of unrelated body/record fields, and canonical owned reconciliation resolve the write-scope concern. Missing bytes remain editable preserved references. Implementation must enforce conflict freedom on the target entry itself as well as its parent journal; the proposal's initial conflicted-content prohibition applies inside the transaction, not merely to the menu or parent check. For templates, check the template itself. This is a narrow clarification of the accepted access rule, not a further interaction revision.
+
+No additional proposal round is required. In source review, verify the final-draft save gate cannot erase newer stored body content before the atomic patch, and ensure committed updates reconcile through lock. Approval does not establish implementation correctness or native accessibility: the focused persistence/concurrency tests and actual form inspection described above remain required evidence.

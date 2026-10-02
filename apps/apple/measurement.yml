@@ -1,0 +1,72 @@
+include:
+  - project.yml
+name: JournalMeasurements
+targets:
+  JournalPopulatedUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.4"
+    sources:
+      - path: JournalMeasurements
+        excludes: ["App/**"]
+    dependencies:
+      - target: JournalIOS
+      - package: JournalCore
+        product: JournalCore
+  JournalMacMeasurements:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - JournalMeasurements/App
+      - JournalTests/FakeJournalServer.swift
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/Contents/MacOS/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalMac
+      - package: JournalCore
+        product: JournalCore
+  JournalIOSMeasurements:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - JournalMeasurements/App
+      - JournalTests/FakeJournalServer.swift
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/My Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: JournalIOS
+      - package: JournalCore
+        product: JournalCore
+schemes:
+  JournalPopulated:
+    build:
+      targets:
+        JournalIOS: all
+    test:
+      config: Release
+      targets: [JournalPopulatedUITests]
+  JournalMacMeasured:
+    build:
+      targets:
+        JournalMac: all
+    test:
+      config: Release
+      targets: [JournalMacMeasurements]
+      environmentVariables:
+        JOURNAL_MEASURE_FIXTURE: "$(JOURNAL_MEASURE_FIXTURE)"
+        JOURNAL_MEASURE_STEPS: "$(JOURNAL_MEASURE_STEPS)"
+  JournalIOSMeasured:
+    build:
+      targets:
+        JournalIOS: all
+    test:
+      config: Release
+      targets: [JournalIOSMeasurements]
+      environmentVariables:
+        JOURNAL_MEASURE_FIXTURE: "$(JOURNAL_MEASURE_FIXTURE)"
+        JOURNAL_MEASURE_STEPS: "$(JOURNAL_MEASURE_STEPS)"

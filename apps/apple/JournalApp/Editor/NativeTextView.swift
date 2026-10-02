@@ -1,0 +1,368 @@
+import SwiftUI
+import UniformTypeIdentifiers
+
+#if os(macOS)
+    import AppKit
+    final class JournalTextView: NSTextView {
+        /// Controls shown over empty space in the text, such as “Use a Template…”, which VoiceOver reaches from here.
+        var accessoryViews: [NSView] = []
+        override func accessibilityChildren() -> [Any]? {
+            let accessories = accessoryViews.filter { !$0.isHidden }
+            guard !accessories.isEmpty else { return super.accessibilityChildren() }
+            return accessories + (super.accessibilityChildren() ?? [])
+        }
+        /// Closes the Formatting popover when it's shown; false when there's none.
+        var cancelFormatting: (() -> Bool)?
+        /// Escape closes the Formatting popover while the text keeps focus, unless an input method is composing.
+        override func cancelOperation(_ sender: Any?) {
+            if !hasMarkedText(), cancelFormatting?() == true { return }
+            super.cancelOperation(sender)
+        }
+        override func layout() {
+            super.layout()
+            layoutChanged?()
+        }
+        override func drawBackground(in rect: NSRect) {
+            super.drawBackground(in: rect)
+            guard let storage = textStorage, let layout = layoutManager, let container = textContainer else { return }
+            let shapes = BlockDecorations.shapes(
+                storage: storage, layout: layout, container: container, origin: textContainerOrigin, visible: rect,
+                blockWidth: max(40, bounds.width - 20))
+            BlockDecorations.draw(shapes, scale: window?.backingScaleFactor ?? 2)
+        }
+        var receiveMarkdown: ((String) -> Void)?
+        /// Text pasted or dropped from another app.
+        var receiveFragment: ((PastedFragment) -> Void)?
+        var receiveImages: (([PastedImages.Source]) -> Void)?
+        /// The entry's Markdown for a selection, so copying, cutting and dragging within the journal keep images,
+        /// tables and lists.
+        var selectionMarkdown: ((NSRange) -> String?)?
+        var compositionEnded: (() -> Void)?
+        var layoutChanged: (() -> Void)?
+        override func unmarkText() {
+            super.unmarkText()
+            compositionEnded?()
+        }
+        override var writablePasteboardTypes: [NSPasteboard.PasteboardType] {
+            [.journalMarkdown] + super.writablePasteboardTypes
+        }
+        override var readablePasteboardTypes: [NSPasteboard.PasteboardType] {
+            [.journalMarkdown] + super.readablePasteboardTypes + PastedImages.readableImageTypes + [.fileURL]
+        }
+        /// Drops read the first of these types the drag offers.
+        override var acceptableDragTypes: [NSPasteboard.PasteboardType] {
+            let own: [NSPasteboard.PasteboardType] = [.journalMarkdown, .fileURL] + PastedImages.readableImageTypes
+            return own + super.acceptableDragTypes.filter { !own.contains($0) }
+        }
+        override func writeSelection(to pboard: NSPasteboard, type: NSPasteboard.PasteboardType) -> Bool {
+            let ranges = selectedRanges.map(\.rangeValue)
+            guard ranges.count == 1, let range = ranges.first, range.length > 0 else {
+                return type != .journalMarkdown && super.writeSelection(to: pboard, type: type)
+            }
+            if type == .journalMarkdown {
+                guard let markdown = selectionMarkdown?(range) else { return false }
+                return pboard.setString(markdown, forType: type)
+            }
+            // Text views still name plain text by its original pasteboard type.
+            if type == .string || type == NSPasteboard.PasteboardType("NSStringPboardType") {
+                // A table's Markdown is the most useful plain text for it; pictures have no text at all.
+                let plain =
+                    RichText.tableSelectionMarkdown(attributedString(), range: range)
+                    ?? (string as NSString).substring(with: range).replacingOccurrences(of: "\u{FFFC}", with: "")
+                return pboard.setString(plain, forType: .string)
+            }
+            return super.writeSelection(to: pboard, type: type)
+        }
+        override func paste(_ sender: Any?) {
+            if !pasteJournalContent(from: NSPasteboard.general) { super.paste(sender) }
+        }
+        /// Pastes the journal's own content or pictures; false when the pasteboard holds text, which the text view
+        /// reads itself.
+        func pasteJournalContent(from board: NSPasteboard) -> Bool {
+            if let markdown = board.string(forType: .journalMarkdown) {
+                receiveMarkdown?(markdown)
+                return true
+            }
+            let images = PastedImages.images(on: board)
+            if !images.isEmpty {
+                receiveImages?(images)
+                return true
+            }
+            return false
+        }
+        /// Drops, and pastes of a type the text view reads itself, arrive here.
+        override func readSelection(from pboard: NSPasteboard, type: NSPasteboard.PasteboardType) -> Bool {
+            if type == .journalMarkdown, let markdown = pboard.string(forType: type) {
+                receiveMarkdown?(markdown)
+                return true
+            }
+            // Text from another app becomes the entry's own blocks, with its lists, headings, quotes and code. The
+            // text view never reads it itself, which could load what a web page refers to.
+            if PastedRichText.readsText(of: type) {
+                if let fragment = PastedRichText.fragment(on: pboard, type: type) { receiveFragment?(fragment) }
+                return true
+            }
+            if type == .fileURL || PastedImages.readableImageTypes.contains(type) {
+                let images = PastedImages.images(on: pboard)
+                if !images.isEmpty {
+                    receiveImages?(images)
+                    return true
+                }
+                if type != .fileURL { return false }
+            }
+            return super.readSelection(from: pboard, type: type)
+        }
+        override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+            let board = sender.draggingPasteboard
+            let images = board.availableType(from: [.journalMarkdown]) == nil ? PastedImages.images(on: board) : []
+            guard !images.isEmpty, isEditable else { return super.performDragOperation(sender) }
+            // Every dropped picture goes where it was dropped, in order.
+            let point = convert(sender.draggingLocation, from: nil)
+            setSelectedRange(NSRange(location: characterIndexForInsertion(at: point), length: 0))
+            receiveImages?(images)
+            return true
+        }
+    }
+#else
+    import UIKit
+    final class JournalTextView: UITextView, FormattingPanelClosing {
+        /// Controls over empty text, such as the placeholder's “use a template”: a tap there is theirs, so the text
+        /// view neither raises the keyboard nor moves the caret first.
+        var gestureExclusions: [UIView] = []
+        override init(frame: CGRect, textContainer: NSTextContainer?) {
+            super.init(frame: frame, textContainer: textContainer)
+            addGestureRecognizer(tapBelowText)
+        }
+        required init?(coder: NSCoder) { nil }
+        override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            let point = gestureRecognizer.location(in: self)
+            if gestureExclusions.contains(where: { !$0.isHidden && $0.frame.contains(point) }) { return false }
+            if gestureRecognizer === tapBelowText { return continuesAtEnd(after: point) }
+            // UIKit would take a tap below the text as a tap on the last word.
+            if gestureRecognizer is UITapGestureRecognizer, continuesAtEnd(after: point) { return false }
+            return super.gestureRecognizerShouldBegin(gestureRecognizer)
+        }
+
+        /// A tap in the empty space below the text continues the entry at its end, as in Notes. UIKit takes it as a
+        /// tap on the last word, which selects that word when it's misspelled, so the next letter typed replaced it.
+        private lazy var tapBelowText = UITapGestureRecognizer(target: self, action: #selector(continueAtEnd(_:)))
+        /// Whether a tap at `point` is below the text and should put the caret at the end.
+        private func continuesAtEnd(after point: CGPoint) -> Bool {
+            guard isEditable, markedTextRange == nil else { return false }
+            let textBottom = layoutManager.usedRect(for: textContainer).maxY + textContainerInset.top
+            return point.y > textBottom
+        }
+        @objc private func continueAtEnd(_ tap: UITapGestureRecognizer) {
+            let end = NSRange(location: textStorage.length, length: 0)
+            if !isFirstResponder { guard becomeFirstResponder() else { return } }
+            selectedRange = end
+        }
+        /// Shows the Format panel in place of the keyboard while it's open.
+        weak var formattingActions: EditorActions?
+        override var inputView: UIView? {
+            get { formattingActions?.formattingInputView ?? super.inputView }
+            set { super.inputView = newValue }
+        }
+        func closeFormattingPanel() {
+            if markedTextRange == nil { formattingActions?.closeFormatting?(true) }
+        }
+        var keyboardFormatting: ((EditorCommand) -> Void)?
+        var keyboardStructure: ((StructuredKeyboard.Key) -> Bool)?
+        /// Whether the entry shows its Markdown source, where structural keys keep their usual meaning.
+        var showsSource: (() -> Bool)?
+        override var keyCommands: [UIKeyCommand]? {
+            // While an input method composes text, its keys belong to the composition.
+            guard markedTextRange == nil else { return super.keyCommands }
+            var result = KeyboardFormatting.commands(action: #selector(applyFormatKey(_:)))
+            if let escape = formattingActions?.formattingEscapeCommand() { result.append(escape) }
+            if showsSource?() != true {
+                for (input, flags, key) in [
+                    ("\t", UIKeyModifierFlags(), StructuredKeyboard.Key.indent),
+                    ("\t", .shift, .outdent), (UIKeyCommand.inputDownArrow, [], .down),
+                ] {
+                    if StructuredKeyboard.edit(
+                        key, text: textStorage, selection: selectedRange, size: font?.pointSize ?? 17) != nil
+                    {
+                        result.append(
+                            UIKeyCommand(input: input, modifierFlags: flags, action: #selector(applyStructuralKey(_:))))
+                    }
+                }
+            }
+            return result + (super.keyCommands ?? [])
+        }
+        @objc private func applyStructuralKey(_ key: UIKeyCommand) {
+            _ = keyboardStructure?(
+                key.input == UIKeyCommand.inputDownArrow
+                    ? .down : key.modifierFlags.contains(.shift) ? .outdent : .indent)
+        }
+        @objc private func applyFormatKey(_ key: UIKeyCommand) {
+            if let command = KeyboardFormatting.command(for: key) {
+                keyboardFormatting?(command)
+            }
+        }
+
+        /// TextKit adds paragraph spacing to a paragraph's last line, which made the caret reach into the next
+        /// paragraph. The caret spans the font's ascender and descender on the line's baseline instead.
+        override func caretRect(for position: UITextPosition) -> CGRect {
+            let rect = super.caretRect(for: position)
+            let offset = offset(from: beginningOfDocument, to: position)
+            guard !rect.isNull, !rect.isInfinite, textStorage.length > 0,
+                let (font, glyph) = caretFont(at: offset)
+            else { return rect }
+            let height = ceil(font.ascender - font.descender)
+            guard rect.height > height + 1 else { return rect }
+            // The system caret starts at the top of the line fragment; the glyph location is the baseline within it.
+            let baseline = rect.minY + layoutManager.location(forGlyphAt: glyph).y
+            return CGRect(x: rect.minX, y: baseline - ceil(font.ascender), width: rect.width, height: height)
+        }
+        /// The font the caret sits in: the character before it on the same line, else the one after it.
+        private func caretFont(at offset: Int) -> (UIFont, Int)? {
+            let text = textStorage.string as NSString
+            let index: Int
+            if offset > 0, offset <= text.length, text.character(at: offset - 1) != 0x0A {
+                index = offset - 1
+            } else if offset < text.length {
+                // At the start of a line, including an empty one whose only character is its line break.
+                index = offset
+            } else {
+                return nil
+            }
+            guard text.character(at: index) != 0xFFFC,
+                let font = textStorage.attribute(.font, at: index, effectiveRange: nil) as? UIFont
+            else { return nil }
+            return (font, layoutManager.glyphIndexForCharacter(at: index))
+        }
+
+        private let decorations = BlockDecorationView()
+        /// A layout change resigns the keyboard just before removing the view; remember where the writing was.
+        private var resigned: (selection: NSRange, time: Date)?
+        /// Declines the keyboard UIKit offers when the title inside this view gives it up to Done.
+        @discardableResult override func becomeFirstResponder() -> Bool {
+            if formattingActions?.endingEditing == true { return false }
+            return super.becomeFirstResponder()
+        }
+        @discardableResult override func resignFirstResponder() -> Bool {
+            let wasWriting = isFirstResponder && window != nil
+            let selection = selectedRange
+            let resigned = super.resignFirstResponder()
+            if resigned, wasWriting { self.resigned = (selection, Date()) }
+            return resigned
+        }
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            if decorations.superview !== self {
+                decorations.host = self
+                insertSubview(decorations, at: 0)
+            }
+            // Covers only the visible area; redrawn as the text scrolls or changes.
+            decorations.frame = CGRect(origin: contentOffset, size: bounds.size)
+            decorations.setNeedsDisplay()
+            containerLayoutChanged?()
+            layoutChanged?()
+        }
+        /// Reports the selection when the view leaves its window while it holds the keyboard.
+        var leftWhileWriting: ((NSRange) -> Void)?
+        var enteredWindow: (() -> Void)?
+        override func willMove(toWindow newWindow: UIWindow?) {
+            if newWindow == nil {
+                if isFirstResponder {
+                    leftWhileWriting?(selectedRange)
+                } else if let resigned, Date().timeIntervalSince(resigned.time) < 0.5 {
+                    leftWhileWriting?(resigned.selection)
+                }
+                resigned = nil
+                // Leaving while focused may never report the end of editing.
+                formattingActions?.forget(self)
+            }
+            super.willMove(toWindow: newWindow)
+        }
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            if window != nil {
+                formattingActions?.forgetDeparted()
+                enteredWindow?()
+            }
+        }
+        var containerLayoutChanged: (() -> Void)?
+        var containerInteractionBegan: (() -> Void)?
+        var receiveMarkdown: ((String) -> Void)?
+        /// Text pasted from another app.
+        var receiveFragment: ((PastedFragment) -> Void)?
+        var receiveImages: (([PastedImages.Source]) -> Void)?
+        /// The entry's Markdown for a selection, so copying and cutting within the journal keep images, tables and
+        /// lists.
+        var selectionMarkdown: ((NSRange) -> String?)?
+        var compositionEnded: (() -> Void)?
+        var layoutChanged: (() -> Void)?
+        override func unmarkText() {
+            super.unmarkText()
+            compositionEnded?()
+        }
+        override func copy(_ sender: Any?) {
+            guard let item = pasteboardItem() else {
+                super.copy(sender)
+                return
+            }
+            UIPasteboard.general.setItems([item])
+        }
+        override func cut(_ sender: Any?) {
+            guard let item = pasteboardItem() else {
+                super.cut(sender)
+                return
+            }
+            super.cut(sender)
+            UIPasteboard.general.setItems([item])
+        }
+        /// The selection as the entry's Markdown, formatted text for other apps and plain text.
+        private func pasteboardItem() -> [String: Any]? {
+            let range = selectedRange
+            guard range.length > 0, NSMaxRange(range) <= textStorage.length,
+                let markdown = selectionMarkdown?(range)
+            else { return nil }
+            let selected = textStorage.attributedSubstring(from: range)
+            var item: [String: Any] = [
+                PastedImages.markdownType: Data(markdown.utf8),
+                // A table's Markdown is the most useful plain text for it; pictures have no text at all.
+                UTType.utf8PlainText.identifier: RichText.tableSelectionMarkdown(textStorage, range: range)
+                    ?? selected.string.replacingOccurrences(of: "\u{FFFC}", with: ""),
+            ]
+            if let rtf = try? selected.data(
+                from: NSRange(location: 0, length: selected.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
+            {
+                item[UTType.rtf.identifier] = rtf
+            }
+            return item
+        }
+        override func paste(_ sender: Any?) {
+            if !pasteJournalContent(from: UIPasteboard.general) { super.paste(sender) }
+        }
+        override func pasteAndMatchStyle(_ sender: Any?) {
+            guard let fragment = UIPasteboard.general.string.flatMap({ PastedRichText.fragment(plain: $0) }) else {
+                super.pasteAndMatchStyle(sender)
+                return
+            }
+            receiveFragment?(fragment)
+        }
+        /// Pastes the journal's own content, pictures, or text from another app; false when the pasteboard holds
+        /// nothing the entry can take.
+        func pasteJournalContent(from board: UIPasteboard) -> Bool {
+            if let data = board.data(forPasteboardType: PastedImages.markdownType),
+                let markdown = String(data: data, encoding: .utf8)
+            {
+                receiveMarkdown?(markdown)
+                return true
+            }
+            let images = PastedImages.images(on: board)
+            if !images.isEmpty {
+                receiveImages?(images)
+                return true
+            }
+            // Text from another app becomes the entry's own blocks, with its lists, headings, quotes and code. The
+            // text view never reads it itself, which could load what a web page refers to.
+            guard PastedRichText.hasText(on: board) else { return false }
+            if let fragment = PastedRichText.fragment(on: board) { receiveFragment?(fragment) }
+            return true
+        }
+    }
+#endif

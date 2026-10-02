@@ -1,0 +1,29 @@
+# Normalize text to LF in the repository and in every checkout.
+* text=auto eol=lf
+
+# Scripts must keep LF endings or they fail to run.
+*.sh text eol=lf
+*.py text eol=lf
+.githooks/* text eol=lf
+packaging/journal-server text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.heic binary
+*.icns binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.p12 binary
+
+# Generated files, collapsed in diffs
+server/src/Journal.Api/Data/Migrations/*.cs linguist-generated=true
+**/packages.lock.json linguist-generated=true
+**/Package.resolved linguist-generated=true
+mise.lock linguist-generated=true
+
+# Design records are documentation, not source
+docs/design/** linguist-documentation=true

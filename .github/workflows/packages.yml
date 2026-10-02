@@ -1,0 +1,119 @@
+name: Package Builds
+
+# Unsigned development packages on request. Signed release packages come from the Release workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  mac:
+    name: Mac package (${{ matrix.architecture }})
+    runs-on: macos-26
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [arm64, x86_64]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      PACKAGE_ARCH: ${{ matrix.architecture }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+      - run: scripts/package-mac.sh "$PACKAGE_ARCH" artifacts/package
+      - name: Smoke test native server package
+        if: matrix.architecture == 'arm64'
+        run: python3 scripts/test-packaged-server.py "artifacts/package/My Journal.app/Contents/Helpers/JournalServer.app"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Journal-macOS-${{ matrix.architecture }}-development
+          path: |
+            artifacts/package/*.dmg
+            artifacts/package/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  server:
+    name: Server package (${{ matrix.runtime }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - runtime: linux-x64
+            runner: ubuntu-24.04
+            platform: linux/amd64
+          - runtime: linux-arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    env:
+      PACKAGE_RUNTIME: ${{ matrix.runtime }}
+      PACKAGE_PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - run: scripts/package-server.sh "$PACKAGE_RUNTIME" artifacts/server
+      - name: Smoke test native server package
+        run: |
+          python3 scripts/test-packaged-server.py artifacts/server
+          scripts/test-packaged-container.sh artifacts/server "$PACKAGE_PLATFORM"
+      - name: Create portable archive
+        run: |
+          tar -czf "artifacts/journal-server-$PACKAGE_RUNTIME.tar.gz" -C artifacts/server .
+          cd artifacts
+          sha256sum "journal-server-$PACKAGE_RUNTIME.tar.gz" > SHA256SUMS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: journal-server-${{ matrix.runtime }}
+          path: |
+            artifacts/*.tar.gz
+            artifacts/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS device archive
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.11
+          install_args: --locked xcodegen
+      - run: scripts/archive-ios.sh artifacts/ios
+      - name: Preserve archive metadata
+        run: |
+          ditto -c -k --keepParent "artifacts/ios/My Journal.xcarchive" artifacts/Journal-iOS-development.zip
+          cd artifacts
+          shasum -a 256 Journal-iOS-development.zip > SHA256SUMS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Journal-iOS-development-archive
+          path: |
+            artifacts/Journal-iOS-development.zip
+            artifacts/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14

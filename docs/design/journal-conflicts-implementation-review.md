@@ -1,0 +1,41 @@
+# Journal metadata conflict implementation review
+
+Date: 2026-09-20. Independent source review of `JournalConflictView.swift`, `JournalHistoryView.swift`, `JournalSettingsView.swift`, refactored archive export controls, `AppModel.resolveJournalConflict`, and `JournalStore.resolve`, against the approved conflict proposal. No implementation edits, rendered artifacts, or independently executed tests in this pass.
+
+## Findings
+
+1. **P2 — Reconcile an active child when the chosen journal version is deleted.** `resolveJournalConflict` updates the draft only if its ID equals the resolved journal ID. The ordinary draft is an entry. Choosing a journal version whose Location is Recently Deleted can leave its active child selected/editable while the parent disappears from live journals. This conflicts with the displayed lifecycle choice and can strand subsequent writing. After the prerequisite save and successful resolution, reconcile the active child/editor with the effective parent state: retain content but remove it from ordinary editable navigation when its parent is deleted/unavailable. Coordinate this with the shared inherited-visibility work; do not expose parent-deletion conflict resolution as complete while readers still disagree. Verify a selected child, remote deleted-parent choice, lock, and relaunch.
+2. **P2 — Inline conflict errors are labeled but not announced.** The approved design requires error announcements; `accessibilityLabel("Error: …")` describes the element when visited but does not itself notify VoiceOver that stale-change/save/reload feedback appeared. Add the native announcement/accessibility focus behavior used in the move flow, without shifting focus away from a confirmation unexpectedly. Verify the actual spoken result. Error text should remain selectable as the rest of the metadata is.
+3. **P2 — History-load failure has no retry.** `JournalHistoryView` shows a raw error with Done, and its one-shot task provides no Reload/Try Again. A transient read failure requires dismissing and finding the same journal again. Provide a native retry in the sheet, retain the journal identity, and distinguish a failed load from No Earlier Versions. This can reuse the existing loading path without adding navigation.
+4. **P3 — Version History is added to every journal even without history.** `reviewActions` always renders Version History…, whereas the approved proposal limits it to journals with stored conflict history. This adds persistent empty-view actions to ordinary Settings. Show the action when history exists, and limit the interim Deleted Journals section to records with a conflict/history action until the separate restoration detail is available. Do not present deleted names as though this screen already offers the full recovery workflow.
+
+## Source matches
+
+The sheet uses captured conflict state and freezes its segment while confirmation is open. Confirmation identifies This Device/Other Device and the edit date/time; Details preserves recorded identity without inventing a device name. Metadata fields distinguish Blank Entry and Unavailable Template, wrap in a scroll view, and remain selectable. There is no journal Keep Both action. Unsupported versions expose archive export directly, with a separate failed-draft entry export and correct copy that does not equate entry export with successful saving.
+
+Core resolution compares both local/remote captured snapshots plus remote revision, rejects unsupported originals and journal Keep Both, stores both originals transactionally, and returns the chosen record. Model owns mutation through reconciliation, lifecycle flush waits for that task, and post-commit refresh failure returns a separate display outcome rather than inviting another resolution. Archive export controls retain cancellation/lock handling and an active-sheet native file exporter. These are positive source observations, not proof of runtime lifecycle/accessibility behavior.
+
+## Outcome and limits
+
+Resolve the active-child visibility and recovery/accessibility findings before calling the metadata flow complete. Parent lifecycle remains dependent on the shared protocol/reader work already gated in its review. No rendered approval is given here. Actual iOS/offscreen Mac inspection, selected version confirmation, stale/reload behavior, unsupported nested exports, history failures, long fields, keyboard/VoiceOver, and lock around commit remain unverified by this reviewer.
+
+## Source correction and offscreen Mac render recheck — 2026-09-20
+
+Viewed `artifacts/journal-metadata-mac-previews/409FDDEC-86FC-45F3-ABC8-04B7B75387A4.png`, an **offscreen native Mac render** of the local version at normal text size in light appearance. The version selector, edit time, Name/Default Template/Location summary, Keep Version action, and separate Cancel area fit without clipping or overlap. The field hierarchy is readable and the content is appropriately sparse. **This limited rendered state matches the approved visual design.** It is not an interactive desktop screenshot, and does not establish enabled/focus behavior or VoiceOver output.
+
+Source recheck resolves the four findings for this bounded metadata flow:
+
+1. A committed deleted-parent choice now clears its saved active child/editor and the affected journal selection, including while locked. The entry remains in the store; later lifecycle flush cannot reapply an editable child selection from this resolution. The real-model regression checks the final unsaved entry edit, actual resolution commit held before reconciliation, lock/unlock, stored history, and relaunch with retained entry data but no active editor. This is meaningful coverage of the identified boundary. The parent reports passing Apple tests; this reviewer read the test but did not execute it.
+2. Error changes now invoke the native announcement helper, and conflict/history error text is selectable. Actual spoken feedback remains unverified.
+3. History offers Try Again through an identified reload task, retaining the journal identity and separate loading/error/empty states.
+4. A distinct query supplies journal-history IDs; settings shows History only for those journals, and the interim Deleted Journals section is restricted to records with a conflict/history action.
+
+**No demonstrated material blocker remains from these four findings in the dedicated metadata resolution path.** This does not establish complete inherited-lifecycle integration across every reader or recovery collection; that work remains separately gated. Remote Details, confirmation, history, unsupported export, stale/error states, large text, dark mode, actual iOS interaction, and interactive Mac/VoiceOver remain outside this render's evidence.
+
+## Simulator-hosted iOS render and final refinement check — 2026-09-20
+
+Viewed `artifacts/journal-metadata-ios-previews/E6B75F44-A0F2-4FAB-84B1-278A65535BB4.png`. This is an **iOS simulator-hosted native render attached by the lifecycle test**, not a screenshot of an E2E tapping through this conflict sheet. The normal-size light-mode local-version state has a readable native navigation title/Cancel action, selected segment, edit time, labeled metadata, and a clear Keep Version action. No clipping or overlap is visible. This limited rendered state matches the approved design.
+
+Source recheck confirms that the sheet initializes from the captured ConflictVersion instead of an opening async reload; confirmation actions capture the snapshot and choice outside the button closure. Explicit reload owns loading state and disables controls, and error announcements are suppressed while locked. These changes strengthen the reviewed stale-choice and privacy behavior without changing scope. No new material finding arose from the render or these refinements.
+
+The parent reports passing actual pairing and writing/settings/move/reopen/export E2Es; those do not establish interactive operation of this metadata-conflict sheet. Version switching, confirmation tapping, stale/unsupported/error/history flows, large text, VoiceOver, and interactive Mac QA remain outside the supplied evidence. Full lifecycle-reader integration and direct journal-history restoration remain separate unfinished work.

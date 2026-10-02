@@ -1,0 +1,59 @@
+{
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "srgb:0.99608,0.99216,0.97647,1.00000",
+          "srgb:0.99216,0.95294,0.91373,1.00000"
+        ]
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "srgb:0.12157,0.20000,0.37255,1.00000",
+          "srgb:0.05098,0.09412,0.20392,1.00000"
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "Lettering",
+      "layers": [
+        {
+          "name": "Lettering",
+          "image-name": "lettering.png",
+          "glass": false,
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.96471,0.94118,0.89804,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ]
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0.5
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

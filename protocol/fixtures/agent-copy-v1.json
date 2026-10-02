@@ -1,0 +1,31 @@
+{
+  "copyKey" : "ERERERERERERERERERERERERERERERERERERERERERE=",
+  "corpusVersion" : 1,
+  "encryptionKey" : "3G+jpA8Fl1tu+CWhoF/BICs7OlYLfVlCm44Aw6los9o=",
+  "grantId" : "5f6c2a8e-3b1d-4c7a-9e0f-1a2b3c4d5e6f",
+  "item" : {
+    "combined" : "IiIiIiIiIiIiIiIiQL3+FvBCse5KBfm+GmIYCS1bllgANj77UNcfSzE63r2k5RwZGIPxFmBnUA4muUNyzYThUlCyr1vrPihjRKeEiuxCTZ028fBaaDLZUG4mJtEbCfU0nERy7BRu9UJc50q9Q68Uw5L/vf+PjSzQak36bjGUuAkcE6JN233MgJ+BiNLyazvbxukpEAUP7o7Vsd9x/NhYPCtIf3SCIsAtBzQiHbNPAeivSxAi5B3nb9ushlSsL5JX8q+G4IRblVbui0YCbO4F9ezRYSZpy1fSZmVnP0QgPHji4SDC4oS+/vpUeeYSpZpz",
+    "context" : "journal:v1:agent-copy:5f6c2a8e-3b1d-4c7a-9e0f-1a2b3c4d5e6f:3c3df8e9c3864793f7e005a20da7d7be",
+    "digest" : "c64dbc9f54ed1210654dcbfffb4f1444",
+    "itemId" : "3c3df8e9c3864793f7e005a20da7d7be",
+    "plaintext" : "eyJkYXRlIjoiMjAyNi0wOS0yMFQxMjowMDowMFoiLCJpZCI6IjNGMjUwNEUwLTRGODktNDFEMy05QTBDLTAzMDVFODJDMzMwMSIsImpvdXJuYWxJZCI6IjlDNUI5NEIxLTM1QUQtNDlCQi1CMTE4LThFOEZDMjRBQkY4MCIsImtpbmQiOiJlbnRyeSIsInRleHQiOiJTeW50aGV0aWMgZW50cnkgdGV4dCDigJQgbm90IHByaXZhdGUuIiwidGl0bGUiOiJGaXh0dXJlIGVudHJ5In0=",
+    "recordId" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+  },
+  "itemIdKey" : "G8HTpMzBm+WkQB5zqOC2Sdh6bMD94mHiaM9LH9gaaFI=",
+  "negative" : [
+    {
+      "context" : "journal:v1:agent-copy:00000000-0000-4000-8000-000000000001:3c3df8e9c3864793f7e005a20da7d7be",
+      "reason" : "another grant's position"
+    },
+    {
+      "context" : "journal:v1:agent-copy:5f6c2a8e-3b1d-4c7a-9e0f-1a2b3c4d5e6f:00000000000000000000000000000000",
+      "reason" : "another item's position"
+    }
+  ],
+  "note" : "Synthetic, public values for agent access through the server (protocol/agent-access-server.md). Never use them to protect real data.",
+  "wrap" : {
+    "context" : "journal:v1:agent-grant:5f6c2a8e-3b1d-4c7a-9e0f-1a2b3c4d5e6f",
+    "secret" : "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
+    "wrappedKey" : "REREREREREREREREO8fMCt88fikBTj+kpkDDKlOBMkpBUwXBmVm31/QEo7uXb2kAIxn5CTi4SPsahMaQ"
+  }
+}

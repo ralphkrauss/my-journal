@@ -1,0 +1,9 @@
+# Archive actions at accessibility text sizes
+
+Actual full-sheet evidence artifacts/archive-ui-large/843DA44F-253C-43E4-A5B6-BCE1196CFE56.png shows the existing horizontal Cancel/Restore row compressing Restore Journals into broken fragments. The passing tap test does not make this acceptable.
+
+At standard text sizes retain the current horizontal Cancel / progress / primary action row. At accessibility Dynamic Type sizes use a vertical, leading-aligned action group inside the existing ScrollView: operation progress when busy, the primary action at full available width, then Cancel. Use the existing native prominent button style for primary, plain native Cancel, unchanged strings (Continue / Restore Journals / Import as New Journals), and unchanged busy/commit disabling. Labels wrap vertically at their natural size; do not scale down text or cap Dynamic Type. The primary text has full available width and natural multiline height. No new confirmation, navigation, icon or explanatory copy. Done on completion remains unchanged.
+
+Keyboard submission and recovery focus remain unchanged. VoiceOver follows visible progress, primary, Cancel order at accessibility sizes. The whole group remains scrollable so both actions can be reached; Cancel remains disabled during commit. Native macOS keeps the standard layout because its text sizing does not select an accessibility Dynamic Type category.
+
+Strengthen the existing end-to-end test so an action's complete frame, not merely a hittable fragment, must be inside the visible scroll viewport before capturing/tapping it. Inspect actual full-sheet normal and dark/largest results for full labels and reachable cancellation/restore. Also scroll the wrong-key explanation into view for error-state evidence before returning to the key field and retrying. No production testing shortcuts or new test case.
