@@ -519,7 +519,7 @@ enum EntryTextInset {
         private func continueInterruptedWriting(_ view: JournalTextView, coordinator: Coordinator) {
             let resume: @MainActor @Sendable () -> Void = { [weak view, weak actions, weak coordinator] in
                 guard let view, view.window != nil, let actions, let interrupted = actions.interruptedWriting,
-                    interrupted.itemID == coordinator?.parent.itemID
+                    interrupted.itemID == coordinator?.parent.itemID, interrupted.visit == actions.entryVisit
                 else { return }
                 actions.interruptedWriting = nil
                 // Only an editor that replaces the previous one at once continues; a later visit does not.
@@ -530,8 +530,8 @@ enum EntryTextInset {
                     location: location, length: min(interrupted.selection.length, length - location))
             }
             view.leftWhileWriting = { [weak actions, weak coordinator] selection in
-                guard let actions, let id = coordinator?.parent.itemID else { return }
-                actions.interruptedWriting = (id, selection, Date())
+                guard let actions, let coordinator else { return }
+                actions.interruptedWriting = (coordinator.parent.itemID, selection, Date(), coordinator.writingVisit)
                 DispatchQueue.main.async { [weak actions] in actions?.continueWriting?() }
             }
             view.enteredWindow = { [weak actions] in
@@ -554,6 +554,8 @@ enum EntryTextInset {
                 didSet { if oldValue !== view { sessionGeneration = UUID() } }
             }
             var sessionGeneration = UUID()
+            /// The entry visit writing last began in; interrupted writing continues only within it.
+            var writingVisit = 0
             var rendered: JournalDocument?
             var lastID: UUID?
             var appearance: ColorScheme?
@@ -824,6 +826,7 @@ enum EntryTextInset {
                 parent.actions.formattingSelectionChanged()
             }
             func textViewDidBeginEditing(_ textView: UITextView) {
+                writingVisit = parent.actions.entryVisit
                 parent.actions.setEditing(true, by: textView)
                 view?.containerInteractionBegan?()
             }

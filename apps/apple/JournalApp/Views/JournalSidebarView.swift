@@ -104,6 +104,7 @@ struct JournalSidebarView: View {
         }
         .listStyle(.sidebar)
         #if os(macOS)
+            .modifier(SidebarTopEdgeEffectHidden())
             // The sidebar's empty area; New Journal is also in the toolbar and the File menu.
             .contextMenu(forSelectionType: JournalDestination.self) { selection in
                 if selection.isEmpty { Button("New Journal…", action: newJournal) }
@@ -205,3 +206,19 @@ extension AppModel {
         ]
     }
 }
+
+#if os(macOS)
+    /// Without the top edge effect, New Journal and Toggle Sidebar follow the window's appearance, as over an AppKit
+    /// sidebar. With it, macOS 26 samples the rows beneath and, after a switch to dark, keeps a stale light sample until
+    /// the sidebar scrolls: black icons on a dark sidebar (docs/design/mac-window-appkit.md §8). Earlier systems have
+    /// no edge effect.
+    private struct SidebarTopEdgeEffectHidden: ViewModifier {
+        func body(content: Content) -> some View {
+            if #available(macOS 26, *) {
+                content.scrollEdgeEffectHidden(true, for: .top)
+            } else {
+                content
+            }
+        }
+    }
+#endif

@@ -10,7 +10,7 @@ final class WritingWorkflowUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         let recovery = app.secureTextFields["Recovery Key"]
         recovery.tap()
         recovery.typeText(fixture.phrase)
@@ -18,18 +18,18 @@ final class WritingWorkflowUITests: XCTestCase {
         NavigationTestSupport.openEntry(fixture.source.title, journal: "Work", app: app)
         createDefaultTemplate(app, journalID: fixture.work.id)
         let create = app.buttons["New Entry"].firstMatch
-        XCTAssertTrue(create.waitForExistence(timeout: 15))
+        XCTAssertTrue(create.waitToAppear(timeout: 15))
         create.tap()
         let title = NavigationTestSupport.title(app)
         let body = app.textViews["Entry text"]
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        XCTAssertTrue((body.value as? String ?? "").contains("What did I finish?"))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
+        assertEventually((body.value as? String ?? "").contains("What did I finish?"))
         capture(app, "New work entry from default template")
         title.tap()
         title.typeText("Monday review")
         NavigationTestSupport.dismissKeyboardTips(app)
         // Typed rather than tapped by its position, which a keyboard tip over the keys turned into a letter key.
-        XCTAssertTrue(app.keyboards.buttons["Next:"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.keyboards.buttons["Next:"].waitToAppear(timeout: 5))
         title.typeText("\n")
         app.typeText("Orchid project shipped.\n")
         XCTAssertTrue((body.value as? String ?? "").contains("Orchid project shipped."))
@@ -37,22 +37,22 @@ final class WritingWorkflowUITests: XCTestCase {
         backToEntries(app)
         search("Orchid", app: app)
         let workRow = app.staticTexts["Monday review"].firstMatch
-        XCTAssertTrue(workRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(workRow.waitToAppear(timeout: 5))
         XCTAssertFalse(app.staticTexts["Garden notes"].exists)
         capture(app, "Body search limited to Work")
         dismissSearch(app)
         selectJournal("Personal", app: app)
         search("Orchid", app: app)
         let personalRow = app.staticTexts["Garden notes"].firstMatch
-        XCTAssertTrue(personalRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(personalRow.waitToAppear(timeout: 5))
         XCTAssertFalse(workRow.exists)
         capture(app, "Same search limited to Personal")
         dismissSearch(app)
         selectJournal("Work", app: app)
-        XCTAssertTrue(workRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(workRow.waitToAppear(timeout: 5))
         workRow.tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
-        XCTAssertTrue((body.value as? String ?? "").contains("Orchid project shipped."))
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
+        assertEventually((body.value as? String ?? "").contains("Orchid project shipped."))
         app.terminate()
         app.launch()
         NavigationTestSupport.openEntry("Monday review", journal: "Work", app: app)
@@ -93,7 +93,7 @@ final class WritingWorkflowUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
@@ -106,13 +106,13 @@ final class WritingWorkflowUITests: XCTestCase {
         backToEntries(app)
         app.buttons["New Entry"].firstMatch.tap()
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
         title.tap()
         title.press(forDuration: 1)
         try tapEditAction("Paste", app: app)
         let pasted = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "value == %@", pastedTitle), object: title)
-        XCTAssertEqual(XCTWaiter.wait(for: [pasted], timeout: 5), .completed)
+        XCTAssertEqual(Waiting.wait(for: pasted, timeout: 5), .completed)
         capture(app, "Multiline title pasted through the native menu")
         XCTAssertTrue(app.keyboards.buttons["Next:"].exists)
         // Return, as the Next key sends it; the on-screen key is hidden once the simulator has seen a hardware
@@ -128,11 +128,11 @@ final class WritingWorkflowUITests: XCTestCase {
         app.launch()
         NavigationTestSupport.selectCollection("Work", app: app)
         let row = app.staticTexts[pastedTitle].firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(row.waitToAppear(timeout: 10))
         row.tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
-        XCTAssertEqual(title.value as? String, pastedTitle)
-        XCTAssertEqual(body.value as? String, "Orchid delivery completed.")
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
+        assertEventually(title.value as? String, equals: pastedTitle)
+        assertEventually(body.value as? String, equals: "Orchid delivery completed.")
         capture(app, "Pasted title and body retained after relaunch")
         app.terminate()
         let store = try JournalStore(directory: directory, key: fixture.key)
@@ -149,7 +149,7 @@ final class WritingWorkflowUITests: XCTestCase {
     @MainActor private func tapEditAction(_ name: String, app: XCUIApplication) throws {
         let action = app.descendants(matching: .any).matching(identifier: name).firstMatch
         for _ in 0..<8 {
-            if action.waitForExistence(timeout: 1), action.isHittable {
+            if action.waitToAppear(timeout: 1), action.isHittable {
                 action.tap()
                 return
             }
@@ -172,14 +172,14 @@ final class WritingWorkflowUITests: XCTestCase {
         }
         capture(app, "Complete template cancellation action")
         cancel.tap()
-        XCTAssertTrue(alert.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(alert.waitToDisappear(timeout: 5))
         let reopened = openTemplateAlert(app)
         capture(app, "Save existing prompts as a template")
         reopened.buttons["Save"].tap()
-        XCTAssertTrue(reopened.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(reopened.waitToDisappear(timeout: 5))
         NavigationTestSupport.showJournals(app)
         let journal = app.buttons["Journal row " + journalID.uuidString]
-        XCTAssertTrue(journal.waitForExistence(timeout: 5))
+        XCTAssertTrue(journal.waitToAppear(timeout: 5))
         journal.press(forDuration: 1)
         app.buttons["Default Template"].tap()
         app.buttons["Daily review"].tap()
@@ -199,21 +199,22 @@ final class WritingWorkflowUITests: XCTestCase {
         XCTAssertTrue(saveTemplate.isHittable)
         saveTemplate.tap()
         let alert = app.alerts["Save as Template"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5))
-        XCTAssertEqual(alert.textFields["Name"].value as? String, "Daily review")
+        XCTAssertTrue(alert.waitToAppear(timeout: 5))
+        assertEventually(alert.textFields["Name"].value as? String, equals: "Daily review")
         return alert
     }
 
     /// Done ends editing from the title as it does from the body: no checkmark, no keyboard, and the reading bar.
-    /// The body used to take the keyboard from the title, and leaving an entry while its title had focus left the
-    /// checkmark behind for good (docs/design/sync-now-and-done.md).
+    /// The body used to take the keyboard from the title, leaving an entry while its title had focus left the
+    /// checkmark behind for good, and an entry reopened soon after leaving it while writing continued the writing
+    /// (docs/design/sync-now-and-done.md).
     @MainActor func testDoneEndsEditingFromTitleAndAfterLeavingAFocusedTitle() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
         defer { app.terminate() }
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
         app.buttons["Continue Without Encryption"].tap()
         NavigationTestSupport.selectCollection("Default", app: app)
@@ -221,67 +222,78 @@ final class WritingWorkflowUITests: XCTestCase {
         let title = NavigationTestSupport.title(app)
         let body = app.textViews["Entry text"]
         let done = app.buttons["Finish Editing"]
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
         // A new entry starts in its title.
         app.typeText("Morning pages")
-        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        XCTAssertTrue(done.waitToAppear(timeout: 5))
         done.tap()
         assertReading(app, body: body)
 
         body.tap()
         app.typeText("First line")
         title.tap()
-        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        XCTAssertTrue(done.waitToAppear(timeout: 5))
         let back = app.navigationBars.buttons.matching(
             NSPredicate(format: "identifier == %@ OR label == %@", "BackButton", "Back")
         ).firstMatch
-        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        XCTAssertTrue(back.waitToAppear(timeout: 5))
         back.tap()
         let row = app.staticTexts["Morning pages"].firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.waitToAppear(timeout: 5))
         row.tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
+        // Absence over time: XCTest's own wait, which first looks after a second.
         XCTAssertFalse(done.waitForExistence(timeout: 2), "Reopening the entry doesn't show the checkmark.")
         assertReading(app, body: body)
 
         body.tap()
         app.typeText(" and more")
-        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        XCTAssertTrue(done.waitToAppear(timeout: 5))
         done.tap()
+        assertReading(app, body: body)
+
+        // Back straight from writing in the body, then reopening at once, opens the entry for reading as well.
+        body.tap()
+        app.typeText(" and back")
+        back.tap()
+        XCTAssertTrue(row.waitToAppear(timeout: 5))
+        row.tap()
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
+        XCTAssertFalse(done.waitForExistence(timeout: 2), "Reopening the entry doesn't continue writing.")
         assertReading(app, body: body)
     }
 
     /// Reading: no checkmark or keyboard, the body doesn't have focus, and the reading bar's Insert Image is shown.
     @MainActor private func assertReading(_ app: XCUIApplication, body: XCUIElement) {
-        XCTAssertTrue(app.buttons["Finish Editing"].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
-        XCTAssertEqual(body.value(forKey: "hasKeyboardFocus") as? Bool, false)
+        XCTAssertTrue(app.buttons["Finish Editing"].waitToDisappear(timeout: 5))
+        XCTAssertTrue(app.keyboards.firstMatch.waitToDisappear(timeout: 5))
+        assertEventually(body.value(forKey: "hasKeyboardFocus") as? Bool, equals: false)
         let insertImage = app.buttons["Insert Image"].firstMatch
-        XCTAssertTrue(insertImage.waitForExistence(timeout: 5))
-        XCTAssertTrue(insertImage.isHittable)
+        XCTAssertTrue(insertImage.waitToAppear(timeout: 5))
+        assertEventually(insertImage.isHittable)
     }
 
     @MainActor private func backToEntries(_ app: XCUIApplication) {
         if app.buttons["Finish Editing"].isHittable { app.buttons["Finish Editing"].tap() }
         if !app.searchFields.firstMatch.isHittable { app.navigationBars.buttons.element(boundBy: 0).tap() }
-        XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.searchFields.firstMatch.waitToAppear(timeout: 5))
     }
 
     @MainActor private func selectJournal(_ name: String, app: XCUIApplication) {
         NavigationTestSupport.selectCollection(name, app: app)
-        XCTAssertTrue(app.searchFields["Search " + name].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.searchFields["Search " + name].waitToAppear(timeout: 5))
     }
 
     @MainActor private func dismissSearch(_ app: XCUIApplication) {
         let close = app.buttons["close"]
         if close.exists { close.tap() } else { app.buttons["Cancel"].firstMatch.tap() }
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.keyboards.firstMatch.waitToDisappear(timeout: 5))
     }
 
     @MainActor private func search(_ query: String, app: XCUIApplication) {
         let field = app.searchFields.firstMatch
         if !field.isHittable { app.swipeDown() }
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitToAppear(timeout: 5))
         field.tap()
         field.typeText(query)
     }

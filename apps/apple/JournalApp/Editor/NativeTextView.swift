@@ -294,6 +294,9 @@ import UniformTypeIdentifiers
         var selectionMarkdown: ((NSRange) -> String?)?
         var compositionEnded: (() -> Void)?
         var layoutChanged: (() -> Void)?
+        /// Where Copy, Cut and Paste go: the general pasteboard, or a private one in tests, which the simulator doesn't
+        /// share with the Mac and which never asks to allow pasting.
+        var pasteboard = UIPasteboard.general
         override func unmarkText() {
             super.unmarkText()
             compositionEnded?()
@@ -303,7 +306,7 @@ import UniformTypeIdentifiers
                 super.copy(sender)
                 return
             }
-            UIPasteboard.general.setItems([item])
+            pasteboard.setItems([item])
         }
         override func cut(_ sender: Any?) {
             guard let item = pasteboardItem() else {
@@ -311,7 +314,7 @@ import UniformTypeIdentifiers
                 return
             }
             super.cut(sender)
-            UIPasteboard.general.setItems([item])
+            pasteboard.setItems([item])
         }
         /// The selection as the entry's Markdown, formatted text for other apps and plain text.
         private func pasteboardItem() -> [String: Any]? {
@@ -335,10 +338,10 @@ import UniformTypeIdentifiers
             return item
         }
         override func paste(_ sender: Any?) {
-            if !pasteJournalContent(from: UIPasteboard.general) { super.paste(sender) }
+            if !pasteJournalContent(from: pasteboard) { super.paste(sender) }
         }
         override func pasteAndMatchStyle(_ sender: Any?) {
-            guard let fragment = UIPasteboard.general.string.flatMap({ PastedRichText.fragment(plain: $0) }) else {
+            guard let fragment = pasteboard.string.flatMap({ PastedRichText.fragment(plain: $0) }) else {
                 super.pasteAndMatchStyle(sender)
                 return
             }

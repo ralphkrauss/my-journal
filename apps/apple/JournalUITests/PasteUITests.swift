@@ -52,13 +52,13 @@ final class PasteUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
         app.buttons["Continue Without Encryption"].tap()
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
         app.typeText("Trip\n")
         let body = app.textViews["Entry text"]
         app.typeText(text)
@@ -74,18 +74,18 @@ final class PasteUITests: XCTestCase {
     @MainActor private func paste(into body: XCUIElement, app: XCUIApplication) {
         body.typeKey("v", modifierFlags: .command)
         let allow = app.alerts.buttons["Allow Paste"]
-        if allow.waitForExistence(timeout: 1) { allow.tap() }
+        if allow.waitToAppear(timeout: 1) { allow.tap() }
     }
 
     @MainActor private func wait(for body: XCUIElement, toEqual text: String) -> Bool {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", text), object: body)
-        return XCTWaiter.wait(for: [expectation], timeout: 5) == .completed
+        return Waiting.wait(for: expectation, timeout: 5) == .completed
     }
 
     @MainActor private func wait(for body: XCUIElement, toContain text: String) -> Bool {
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "value CONTAINS %@", text), object: body)
-        return XCTWaiter.wait(for: [expectation], timeout: 5) == .completed
+        return Waiting.wait(for: expectation, timeout: 5) == .completed
     }
 
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {

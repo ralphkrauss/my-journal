@@ -13,23 +13,23 @@ final class DeletionConflictUITests: XCTestCase {
         NavigationTestSupport.openSettings(app)
         app.buttons["Sync"].firstMatch.tap()
         let review = app.buttons["Review Changes for An offline reflection"]
-        XCTAssertTrue(review.waitForExistence(timeout: 10))
+        XCTAssertTrue(review.waitToAppear(timeout: 10))
         try reveal(review, in: app)
         review.tap()
         let keepDeletion = app.buttons["Keep Deletion…"]
-        XCTAssertTrue(keepDeletion.waitForExistence(timeout: 10))
+        XCTAssertTrue(keepDeletion.waitToAppear(timeout: 10))
         try reveal(keepDeletion, in: app)
         capture(app, "Keep deletion is an explicit conflict choice")
         keepDeletion.tap()
         let delete = app.buttons["Delete Permanently"]
-        XCTAssertTrue(delete.waitForExistence(timeout: 10))
+        XCTAssertTrue(delete.waitToAppear(timeout: 10))
         capture(app, "Edited entry destructive confirmation identity")
         app.buttons["Cancel"].firstMatch.tap()
-        XCTAssertTrue(keepDeletion.waitForExistence(timeout: 10))
+        XCTAssertTrue(keepDeletion.waitToAppear(timeout: 10))
         XCTAssertTrue(app.buttons["Keep Entry…"].exists)
         try reveal(keepDeletion, in: app)
         keepDeletion.tap()
-        XCTAssertTrue(delete.waitForExistence(timeout: 10))
+        XCTAssertTrue(delete.waitToAppear(timeout: 10))
         let confirmation = app.scrollViews.containing(.button, identifier: "Delete Permanently").firstMatch
         let identity = confirmation.staticTexts["An offline reflection"]
         try reveal(identity, in: app, container: confirmation)
@@ -48,8 +48,8 @@ final class DeletionConflictUITests: XCTestCase {
         try reveal(delete, in: app, container: confirmation)
         capture(app, "Explicit permanent conflict deletion action")
         delete.tap()
-        XCTAssertTrue(delete.waitForNonExistence(timeout: 10))
-        XCTAssertTrue(review.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(delete.waitToDisappear(timeout: 10))
+        XCTAssertTrue(review.waitToDisappear(timeout: 10))
         app.terminate()
         app.launch()
         NavigationTestSupport.showJournals(app)
@@ -88,11 +88,11 @@ final class DeletionConflictUITests: XCTestCase {
             NavigationTestSupport.openSettings(app)
             app.buttons["Sync"].firstMatch.tap()
             let review = app.buttons["Review Changes for Deleted Entry"]
-            XCTAssertTrue(review.waitForExistence(timeout: 10))
+            XCTAssertTrue(review.waitToAppear(timeout: 10))
             try reveal(review, in: app)
             review.tap()
             let explanation = app.staticTexts["Both versions show this entry as deleted."]
-            XCTAssertTrue(explanation.waitForExistence(timeout: 10))
+            XCTAssertTrue(explanation.waitToAppear(timeout: 10))
             try reveal(explanation, in: app)
             capture(app, "Both deletion versions agree")
             XCTAssertFalse(app.buttons["Keep Entry…"].exists)
@@ -101,7 +101,7 @@ final class DeletionConflictUITests: XCTestCase {
             try reveal(keep, in: app)
             keep.tap()
             let identity = app.staticTexts["Deletion to Keep"]
-            XCTAssertTrue(identity.waitForExistence(timeout: 10))
+            XCTAssertTrue(identity.waitToAppear(timeout: 10))
             try reveal(identity, in: app)
             capture(app, "Captured deletion event in second confirmation")
             let scope = app.staticTexts[
@@ -113,10 +113,10 @@ final class DeletionConflictUITests: XCTestCase {
                 try reveal(delete, in: app)
                 capture(app, "Explicit two-marker history purge")
                 delete.tap()
-                XCTAssertTrue(review.waitForNonExistence(timeout: 10))
+                XCTAssertTrue(review.waitToDisappear(timeout: 10))
             } else {
                 app.buttons["Cancel"].firstMatch.tap()
-                XCTAssertTrue(keep.waitForExistence(timeout: 10))
+                XCTAssertTrue(keep.waitToAppear(timeout: 10))
             }
             app.terminate()
             let config = try JournalCoding.decoder().decode(
@@ -158,12 +158,12 @@ final class DeletionConflictUITests: XCTestCase {
         NavigationTestSupport.openSettings(app)
         app.buttons["Sync"].firstMatch.tap()
         let review = app.buttons["Review Changes for An offline reflection"]
-        XCTAssertTrue(review.waitForExistence(timeout: 10))
+        XCTAssertTrue(review.waitToAppear(timeout: 10))
         try reveal(review, in: app)
         capture(app, "Hidden deletion conflict in Sync settings")
         review.tap()
         let copy = app.buttons[asCopy ? "Keep Entry as Copy…" : "Keep Entry…"]
-        XCTAssertTrue(copy.waitForExistence(timeout: 10))
+        XCTAssertTrue(copy.waitToAppear(timeout: 10))
         capture(app, "Deletion conflict version metadata")
         let preview = app.textViews["Entry text"]
         try reveal(preview, in: app)
@@ -193,13 +193,13 @@ final class DeletionConflictUITests: XCTestCase {
         try reveal(keep, in: app)
         capture(app, "Chosen recovery destination")
         keep.tap()
-        XCTAssertTrue(copy.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(copy.waitToDisappear(timeout: 10))
         app.terminate()
         app.launch()
         NavigationTestSupport.openEntry("An offline reflection", journal: "All Entries", app: app)
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 15))
-        XCTAssertEqual(title.value as? String, "An offline reflection")
+        XCTAssertTrue(title.waitToAppear(timeout: 15))
+        assertEventually(title.value as? String, equals: "An offline reflection")
         XCTAssertTrue(
             (app.textViews["Entry text"].value as? String ?? "").contains("Keep every word from the offline edit."))
         capture(app, "Recovered entry after relaunch")
@@ -242,11 +242,11 @@ final class DeletionConflictUITests: XCTestCase {
         NavigationTestSupport.openSettings(app)
         app.buttons["Sync"].firstMatch.tap()
         let review = app.buttons["Review Changes for Work reflections"]
-        XCTAssertTrue(review.waitForExistence(timeout: 10))
+        XCTAssertTrue(review.waitToAppear(timeout: 10))
         try reveal(review, in: app)
         review.tap()
         let keep = app.buttons["Keep Journal"]
-        XCTAssertTrue(keep.waitForExistence(timeout: 10))
+        XCTAssertTrue(keep.waitToAppear(timeout: 10))
         let name = app.staticTexts["Work reflections"].firstMatch
         try reveal(name, in: app)
         capture(app, "Journal conflict edited name")
@@ -259,8 +259,8 @@ final class DeletionConflictUITests: XCTestCase {
         try reveal(keep, in: app)
         capture(app, "Explicit Keep Journal choice")
         keep.tap()
-        XCTAssertTrue(keep.waitForNonExistence(timeout: 10))
-        XCTAssertTrue(review.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(keep.waitToDisappear(timeout: 10))
+        XCTAssertTrue(review.waitToDisappear(timeout: 10))
         app.terminate()
         app.launch()
         NavigationTestSupport.showJournals(app)
@@ -339,17 +339,17 @@ final class DeletionConflictUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_DATA_DIR"] = destination.path
         app.launch()
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 15))
         app.open(archive)
         let recovery = app.secureTextFields["Password or Recovery Key"]
-        XCTAssertTrue(recovery.waitForExistence(timeout: 10))
+        XCTAssertTrue(recovery.waitToAppear(timeout: 10))
         recovery.tap()
         recovery.typeText(phrase + "\n")
         let restore = app.buttons["Restore Journals"]
-        XCTAssertTrue(restore.waitForExistence(timeout: 15))
+        XCTAssertTrue(restore.waitToAppear(timeout: 15))
         try reveal(restore, in: app)
         restore.tap()
-        XCTAssertTrue(app.staticTexts["Journals Restored"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["Journals Restored"].waitToAppear(timeout: 15))
         app.buttons["Done"].tap()
         return app
     }

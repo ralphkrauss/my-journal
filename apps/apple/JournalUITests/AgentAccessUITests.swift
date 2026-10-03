@@ -21,7 +21,7 @@ final class AgentAccessUITests: XCTestCase {
         NavigationTestSupport.openSettings(app)
         app.buttons["Agent Access"].tap()
         let mcpAddress = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "\(address)/mcp")).firstMatch
-        XCTAssertTrue(mcpAddress.waitForExistence(timeout: 15))
+        XCTAssertTrue(mcpAddress.waitToAppear(timeout: 15))
         attachScreen(app, name: "Agent Access, no agents")
 
         // The request appears without the owner doing anything; a wrong number declines it.
@@ -30,19 +30,19 @@ final class AgentAccessUITests: XCTestCase {
             NSPredicate(format: "label BEGINSWITH %@", "UI Test Agent, returns to 127.0.0.1")
         )
         .firstMatch
-        XCTAssertTrue(request.waitForExistence(timeout: 10))
+        XCTAssertTrue(request.waitToAppear(timeout: 10))
         attachScreen(app, name: "Request appears")
         request.tap()
         let sheet = app.navigationBars["Allow Access"]
-        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
+        XCTAssertTrue(sheet.waitToAppear(timeout: 5))
         let number = app.textFields["Number Shown on the Page"]
-        XCTAssertTrue(number.waitForExistence(timeout: 5))
+        XCTAssertTrue(number.waitToAppear(timeout: 5))
         XCTAssertFalse(sheet.buttons["Allow"].isEnabled, "The number and journals come first.")
         number.typeText(declined.number == 99 ? "10" : String(declined.number + 1))
         app.buttons["All Journals"].tap()
         attachScreen(app, name: "Allow Access, wrong number")
         sheet.buttons["Allow"].tap()
-        XCTAssertTrue(app.alerts["Numbers Don’t Match"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.alerts["Numbers Don’t Match"].waitToAppear(timeout: 10))
         attachScreen(app, name: "Numbers don't match")
         app.alerts.buttons["OK"].tap()
         let declinedStatus = try await declined.status()
@@ -50,16 +50,16 @@ final class AgentAccessUITests: XCTestCase {
 
         // The next request, with the right number and every journal.
         let client = try await AuthorizationClient.start(server: address)
-        XCTAssertTrue(request.waitForExistence(timeout: 10))
+        XCTAssertTrue(request.waitToAppear(timeout: 10))
         request.tap()
-        XCTAssertTrue(number.waitForExistence(timeout: 5))
+        XCTAssertTrue(number.waitToAppear(timeout: 5))
         number.typeText(String(client.number))
         app.buttons["All Journals"].tap()
         attachScreen(app, name: "Allow Access, All Journals")
         sheet.buttons["Allow"].tap()
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "UI Test Agent, All Journals"))
             .firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 15))
+        XCTAssertTrue(row.waitToAppear(timeout: 15))
         XCTAssertFalse(sheet.exists)
         attachScreen(app, name: "Agent connecting")
         let pageStatus = try await client.status()
@@ -68,7 +68,7 @@ final class AgentAccessUITests: XCTestCase {
         // Afterwards, the agent reads one chosen journal instead; the change stays.
         row.tap()
         let selected = app.buttons["Selected Journals"]
-        XCTAssertTrue(selected.waitForExistence(timeout: 5))
+        XCTAssertTrue(selected.waitToAppear(timeout: 5))
         attachScreen(app, name: "Agent detail, All Journals")
         selected.tap()
         let journal = app.switches.firstMatch
@@ -80,7 +80,7 @@ final class AgentAccessUITests: XCTestCase {
             .firstMatch
         app.navigationBars["UI Test Agent"].buttons.firstMatch.tap()
         XCTAssertTrue(
-            saved.waitForNonExistence(timeout: 10), "The list shows the journal it reads now instead of All Journals.")
+            saved.waitToDisappear(timeout: 10), "The list shows the journal it reads now instead of All Journals.")
         attachScreen(app, name: "Agent Access with an agent")
 
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "UI Test Agent")).firstMatch.tap()
@@ -88,7 +88,7 @@ final class AgentAccessUITests: XCTestCase {
         for _ in 0..<6 where !revoke.isHittable { app.swipeUp() }
         let revokeFrame = revoke.frame
         revoke.tap()
-        XCTAssertTrue(app.staticTexts["Revoke access for UI Test Agent?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Revoke access for UI Test Agent?"].waitToAppear(timeout: 5))
         attachScreen(app, name: "Revoke confirmation")
         // The dialog's button, not the one that opened it.
         let confirm = try XCTUnwrap(
@@ -100,34 +100,35 @@ final class AgentAccessUITests: XCTestCase {
             XCTAssertLessThan(gap, 150, "The confirmation is \(Int(gap)) pt from Revoke Access.")
         }
         confirm.tap()
-        XCTAssertTrue(row.waitForNonExistence(timeout: 15))
-        let revoked = try await client.status()
+        XCTAssertTrue(row.waitToDisappear(timeout: 15))
+        // The row goes as the app sends the revocation, so the server can answer a moment later.
+        let revoked = try await client.status(becoming: "declined", within: 10)
         XCTAssertEqual(revoked, "declined")
     }
 
     @MainActor private func setUpServerWithoutEncryption(address: String, code: String, app: XCUIApplication) {
         let connect = app.buttons["Connect to a Server…"]
-        XCTAssertTrue(connect.waitForExistence(timeout: 15))
+        XCTAssertTrue(connect.waitToAppear(timeout: 15))
         connect.tap()
         let field = app.textFields["Server Address"]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitToAppear(timeout: 5))
         field.tap()
         field.typeText(address)
         app.navigationBars["Connect to a Server"].buttons["Continue"].tap()
         let setUp = app.navigationBars["Set Up Server"]
-        XCTAssertTrue(setUp.waitForExistence(timeout: 10))
+        XCTAssertTrue(setUp.waitToAppear(timeout: 10))
         app.textFields["Setup Code"].tap()
         app.textFields["Setup Code"].typeText(code)
         setUp.buttons["Continue"].tap()
         let protect = app.navigationBars["Protect Your Journals"]
-        XCTAssertTrue(protect.waitForExistence(timeout: 10))
+        XCTAssertTrue(protect.waitToAppear(timeout: 10))
         let plain = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Don’t Encrypt")).firstMatch
         for _ in 0..<5 where !plain.isHittable { app.swipeUp() }
         plain.tap()
         protect.buttons["Set Up"].tap()
-        XCTAssertTrue(app.staticTexts["Server Is Ready"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["Server Is Ready"].waitToAppear(timeout: 30))
         app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitToAppear(timeout: 10))
     }
 
     @MainActor private func attachScreen(_ app: XCUIApplication, name: String) {
@@ -180,5 +181,16 @@ private struct AuthorizationClient {
         let (data, _) = try await URLSession.shared.data(from: url)
         let body = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         return try XCTUnwrap(body["status"] as? String)
+    }
+
+    /// The status once it is `expected`, or the last one seen when `seconds` pass first.
+    func status(becoming expected: String, within seconds: TimeInterval) async throws -> String {
+        let deadline = Date().addingTimeInterval(seconds)
+        var current = try await status()
+        while current != expected, Date() < deadline {
+            try await Task.sleep(for: .milliseconds(200))
+            current = try await status()
+        }
+        return current
     }
 }

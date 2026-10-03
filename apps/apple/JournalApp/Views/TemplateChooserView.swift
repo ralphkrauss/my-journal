@@ -95,6 +95,7 @@ struct TemplateChooserView: View {
             search = ""
             selected = nil
             error = nil
+            busy = false
         }
         .onValueChange(of: choices) { updated in
             if let selected, !updated.contains(where: { $0.id == selected }) {
@@ -201,8 +202,14 @@ struct TemplateChooserView: View {
         busy = true
         Task {
             await model.newEntry(template: template)
-            busy = false
-            if let failure = model.error { error = failure } else { finish() }
+            if let failure = model.error {
+                busy = false
+                error = failure
+            } else {
+                // Still busy as it closes: the search field, enabled again, brought its keyboard back, and the sheet
+                // rose with it for a moment before closing.
+                finish()
+            }
         }
     }
 }

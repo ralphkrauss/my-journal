@@ -27,7 +27,7 @@ final class RotationUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         app.launchEnvironment["JOURNAL_DATA_DIR"] = root.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(phrase)
         app.buttons["Unlock"].tap()
@@ -39,7 +39,7 @@ final class RotationUITests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         let landscape = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in app.frame.width > app.frame.height }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [landscape], timeout: 5), .completed)
+        XCTAssertEqual(Waiting.wait(for: landscape, timeout: 5), .completed)
         XCTAssertEqual(body.value as? String, "Before rotation. ")
         app.typeText("After rotation.")
         capture(app, "Landscape writing with keyboard")
@@ -56,7 +56,7 @@ final class RotationUITests: XCTestCase {
         XCTAssertLessThanOrEqual(title.frame.maxY, body.frame.maxY - 4)
         capture(app, "Complete title after scrolling upward")
         title.tap()
-        XCTAssertTrue(app.keyboards.buttons["Next:"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.keyboards.buttons["Next:"].waitToAppear(timeout: 5))
         // Return, as the Next key sends it; the on-screen key is hidden once the simulator has seen a hardware
         // keyboard, which an earlier test's key presses cause.
         title.typeText("\n")
@@ -65,7 +65,7 @@ final class RotationUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         let portrait = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in app.frame.height > app.frame.width }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [portrait], timeout: 5), .completed)
+        XCTAssertEqual(Waiting.wait(for: portrait, timeout: 5), .completed)
         let expected = "Before rotation. After rotation. Again."
         XCTAssertEqual(body.value as? String, expected)
         XCTAssertEqual(NavigationTestSupport.title(app).value as? String, entry.title)

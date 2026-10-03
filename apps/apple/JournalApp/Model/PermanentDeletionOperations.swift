@@ -13,6 +13,17 @@ extension AppModel {
         let store = try await deletionStoreAfterSaving()
         return try await commitDeletionMutation { try await store.permanentlyDelete(confirmation) }
     }
+    /// Takes the item's row out of the lists in the same update as Delete in the confirmation, so it leaves as a
+    /// deleted entry's row does, rather than staying until the deletion is stored and the library read again.
+    func removePermanentlyDeletedFromLists(_ confirmation: PermanentDeletionConfirmation) {
+        hideInLists(confirmation.plan.recordID)
+    }
+    /// Permanently deletes an item that `removePermanentlyDeletedFromLists` took out of the lists. When the deletion
+    /// isn't stored, the row comes back.
+    func permanentlyDeleteListed(_ confirmation: PermanentDeletionConfirmation) async throws -> Bool {
+        defer { showInLists(confirmation.plan.recordID) }
+        return try await permanentlyDelete(confirmation)
+    }
     func prepareDeletionConflict(_ id: UUID) async throws -> DeletionConflictConfirmation {
         let store = try await deletionStoreAfterSaving()
         let confirmation = try await store.prepareDeletionConflict(id)

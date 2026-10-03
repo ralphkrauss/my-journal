@@ -1,6 +1,7 @@
 #!/bin/bash
 # Runs the iOS test scheme against a disposable server. JOURNAL_TEST_RESULTS keeps the result bundle and server log
-# in a chosen new directory; JOURNAL_SIMULATOR_ID selects the simulator (see prepare-simulator.sh).
+# in a chosen new directory; JOURNAL_SIMULATOR_ID selects the simulator (see prepare-simulator.sh);
+# JOURNAL_DERIVED_DATA builds somewhere other than artifacts/DerivedData.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 fixture_dir="$(mktemp -d -t journal-ui-pairing)"
@@ -30,9 +31,18 @@ fi
 # scripts/test-sync-recovery-ui.sh and skip themselves here.
 own_lane=(-skip-testing:JournalIOSUITests/SyncRecoveryUITests)
 server_pids=()
+# Stops the servers and removes their disposable data; the results, which may share the folder, stay.
 stop_servers() {
   local pid
   for pid in ${server_pids[@]+"${server_pids[@]}"}; do kill "$pid" 2>/dev/null || true; done
+  local tries
+  for pid in ${server_pids[@]+"${server_pids[@]}"}; do
+    tries=100
+    while kill -0 "$pid" 2>/dev/null && ((tries-- > 0)); do sleep 0.1; done
+  done
+  rm -rf "$fixture_dir/server" "$fixture_dir/encrypted-setup" "$fixture_dir/plain-setup" "$fixture_dir/agent" \
+    "$fixture_dir/merge"
+  if [[ "$results" != "$fixture_dir" ]]; then rmdir "$fixture_dir" 2>/dev/null || true; fi
 }
 trap stop_servers EXIT
 dotnet build server/src/Journal.Api -v quiet -p:RestoreLockedMode=true
@@ -70,10 +80,12 @@ merge_address="$started_address" merge_code="$started_code"
 scripts/generate-apple.sh
 # Debug, explicitly: the tests reach these servers and the fake ones over loopback HTTP, which only Debug builds
 # accept (PairingInvite.origin); a Release build refuses them by design.
+# A test that hangs, such as on a system prompt nobody can answer, fails after five minutes instead of an hour.
 xcodebuild -project apps/apple/Journal.xcodeproj -scheme 'My Journal (iOS)' -configuration Debug \
   -destination "platform=iOS Simulator,id=$simulator_id" \
-  -derivedDataPath artifacts/DerivedData \
+  -derivedDataPath "${JOURNAL_DERIVED_DATA:-artifacts/DerivedData}" \
   -resultBundlePath "$results/Pairing.xcresult" \
+  -test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
   -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- JOURNAL_TEST_SERVER="$address" JOURNAL_TEST_SETUP_CODE="$setup_code" \
   JOURNAL_TEST_ENCRYPTED_SETUP_SERVER="$encrypted_address" JOURNAL_TEST_ENCRYPTED_SETUP_CODE="$encrypted_code" \
   JOURNAL_TEST_PLAIN_SETUP_SERVER="$plain_address" JOURNAL_TEST_PLAIN_SETUP_CODE="$plain_code" \

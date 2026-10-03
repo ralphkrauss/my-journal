@@ -13,11 +13,9 @@
             let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 402, height: 874))
             window.rootViewController = host
             window.makeKeyAndVisible()
-            let previousPasteboard = UIPasteboard.general.items
-            defer {
-                UIPasteboard.general.items = previousPasteboard
-                window.isHidden = true
-            }
+            // The title pastes as UIKit does, from the general pasteboard. Reading what was there before could ask to
+            // allow pasting, when the simulator has copied the Mac's clipboard in, so it's only written.
+            defer { window.isHidden = true }
             await Task.yield()
             host.view.layoutIfNeeded()
             let title = try XCTUnwrap(findTitle(in: host.view))

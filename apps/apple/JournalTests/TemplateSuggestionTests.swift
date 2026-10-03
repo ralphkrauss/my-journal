@@ -3,6 +3,11 @@ import XCTest
 
 @testable import Journal
 
+#if os(iOS)
+    import SwiftUI
+    import UIKit
+#endif
+
 /// “Use a Template…” in an empty entry and New Entry from Template on the Templates screen
 /// (docs/design/new-entry-template-suggestion.md). A template must never replace writing.
 @MainActor
@@ -246,3 +251,61 @@ final class TemplateSuggestionTests: XCTestCase {
         try await store.apply([change], cursor: revision)
     }
 }
+
+#if os(iOS)
+    extension TemplateSuggestionTests {
+        /// Once a template is chosen, the chooser stays out of use until it has closed. It was usable again as soon as
+        /// the entry was filled: its search field took the keyboard back, and the closing sheet rose with it, as if the
+        /// chooser opened again for a moment.
+        func testTheChooserStaysOutOfUseWhileItCloses() async throws {
+            let (model, _) = try await startedModel()
+            await model.newEntry(blank: true)
+            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 402, height: 874))
+            window.windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+            let root = UIViewController()
+            window.rootViewController = root
+            window.makeKeyAndVisible()
+            defer { window.isHidden = true }
+            let chooser = UIHostingController(
+                rootView: TemplateChooserView(journalID: model.newEntryJournal?.id).environmentObject(model))
+            root.present(chooser, animated: false)
+            var found: UISearchBar?
+            for _ in 0..<200 where found?.searchTextField.isFirstResponder != true {
+                try await Task.sleep(for: .milliseconds(10))
+                found = searchBar(in: chooser.view)
+            }
+            let bar = try XCTUnwrap(found)
+            XCTAssertTrue(usable(bar, in: chooser.view))
+            // Down arrow highlights the first template; Return creates the entry from it.
+            bar.perform(NSSelectorFromString("moveDown"))
+            bar.delegate?.searchBarSearchButtonClicked?(bar)
+            var seen: [Bool] = []
+            for _ in 0..<300 where chooser.presentingViewController != nil {
+                seen.append(usable(bar, in: chooser.view))
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            XCTAssertNil(chooser.presentingViewController, "The chooser closes.")
+            XCTAssertNotEqual(model.draft?.document.markdown ?? "", "", "The entry is filled from the template.")
+            let outOfUse = try XCTUnwrap(seen.firstIndex(of: false), "The chooser goes out of use: \(seen)")
+            XCTAssertFalse(seen[outOfUse...].contains(true), "The chooser became usable again as it closed: \(seen)")
+        }
+
+        private func searchBar(in view: UIView) -> UISearchBar? {
+            if let bar = view as? UISearchBar { return bar }
+            for child in view.subviews {
+                if let bar = searchBar(in: child) { return bar }
+            }
+            return nil
+        }
+
+        /// Whether touches reach the search field: no view between it and the chooser turns them away.
+        private func usable(_ bar: UISearchBar, in container: UIView) -> Bool {
+            var view: UIView? = bar.searchTextField
+            while let current = view, current !== container {
+                if !current.isUserInteractionEnabled { return false }
+                view = current.superview
+            }
+            return true
+        }
+    }
+#endif

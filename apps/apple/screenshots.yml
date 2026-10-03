@@ -12,6 +12,7 @@ targets:
     sources:
       - JournalScreenshots/iOS
       - JournalUITests/NavigationTestSupport.swift
+      - JournalUITests/Waiting.swift
     dependencies:
       - target: JournalIOS
       - package: JournalCore

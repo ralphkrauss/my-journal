@@ -12,16 +12,16 @@ final class ArchiveUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_DATA_DIR"] = destination.path
         app.launch()
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 15))
         app.open(fixture.archive)
         let recovery = app.secureTextFields["Password or Recovery Key"]
-        XCTAssertTrue(recovery.waitForExistence(timeout: 10))
+        XCTAssertTrue(recovery.waitToAppear(timeout: 10))
         recovery.tap()
         recovery.typeText("wrong")
         recovery.typeText("\n")
         let failure = app.staticTexts[
             "This archive couldn’t be opened. Check the password or recovery key and try again."]
-        XCTAssertTrue(failure.waitForExistence(timeout: 10))
+        XCTAssertTrue(failure.waitToAppear(timeout: 10))
         try reveal(failure, in: app)
         capture(app, "Archive recovery key retry")
         try reveal(recovery, in: app)
@@ -29,7 +29,7 @@ final class ArchiveUITests: XCTestCase {
         recovery.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5))
         recovery.typeText(fixture.phrase + "\n")
         let live = app.staticTexts["1 entry in journals"]
-        XCTAssertTrue(live.waitForExistence(timeout: 15))
+        XCTAssertTrue(live.waitToAppear(timeout: 15))
         XCTAssertTrue(app.staticTexts["2 in Recently Deleted"].exists)
         let unavailable = app.staticTexts["1 in Unavailable"]
         try reveal(unavailable, in: app)
@@ -45,20 +45,20 @@ final class ArchiveUITests: XCTestCase {
         let cancel = app.buttons["Cancel"]
         try reveal(cancel, in: app)
         cancel.tap()
-        XCTAssertTrue(app.staticTexts["Import Archive"].waitForNonExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Import Archive"].waitToDisappear(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.open(fixture.archive)
-        XCTAssertTrue(recovery.waitForExistence(timeout: 10))
+        XCTAssertTrue(recovery.waitToAppear(timeout: 10))
         recovery.tap()
         recovery.typeText(fixture.phrase + "\n")
-        XCTAssertTrue(live.waitForExistence(timeout: 15))
+        XCTAssertTrue(live.waitToAppear(timeout: 15))
         try reveal(restore, in: app)
         restore.tap()
-        XCTAssertTrue(app.staticTexts["Journals Restored"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["Journals Restored"].waitToAppear(timeout: 15))
         app.buttons["Done"].tap()
         app.terminate()
         app.launch()
-        XCTAssertTrue(app.buttons["Entry Actions"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Entry Actions"].firstMatch.waitToAppear(timeout: 15))
         try reviewAdditiveImport(app, fixture: fixture)
         app.terminate()
         let config = try JournalCoding.decoder().decode(
@@ -81,13 +81,56 @@ final class ArchiveUITests: XCTestCase {
         try await store.close()
     }
 
+    /// An archive opened while App Lock keeps the journals locked opens once they're unlocked, even after a cancelled
+    /// Face ID request. It was refused with “Unlock My Journal before opening an archive.”, or dropped.
+    @MainActor func testArchiveOpenedWhileLockedOpensAfterUnlocking() async throws {
+        continueAfterFailure = false
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("LockedArchive-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fixture = try await seed(root)
+        let app = XCUIApplication()
+        defer { app.terminate() }
+        app.launchEnvironment["JOURNAL_DATA_DIR"] = root.appendingPathComponent("destination").path
+        // The test build answers Face ID, here when App Lock is turned on.
+        app.launchEnvironment["JOURNAL_UI_TEST_DEVICE_AUTH"] = "success"
+        app.launch()
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 15))
+        app.buttons["Start a Journal"].tap()
+        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
+        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.openSettings(app)
+        app.buttons["Privacy"].tap()
+        let appLock = app.switches["Require Face ID"]
+        XCTAssertTrue(appLock.waitToAppear(timeout: 10))
+        appLock.switches.firstMatch.tap()
+        XCTAssertTrue(app.buttons["Lock My Journal"].waitToAppear(timeout: 10))
+        // Opening the archive starts My Journal again, as opening it from Files does when the app isn't running. It
+        // asks for Face ID at once; that request is cancelled, the next one succeeds.
+        app.launchEnvironment["JOURNAL_UI_TEST_DEVICE_AUTH"] = "cancel,success"
+        app.open(fixture.archive)
+        let unlock = app.buttons["Unlock with Face ID"]
+        XCTAssertTrue(unlock.waitToAppear(timeout: 15))
+        assertEventually(unlock.isEnabled)
+        XCTAssertFalse(app.staticTexts["Unlock My Journal before opening an archive."].exists)
+        capture(app, "Locked with an archive waiting")
+        unlock.tap()
+        let recovery = app.secureTextFields["Password or Recovery Key"]
+        XCTAssertTrue(recovery.waitToAppear(timeout: 10), "The archive opens once the journals are unlocked.")
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+        capture(app, "Archive opened after unlocking")
+        let cancel = app.buttons["Cancel"]
+        try reveal(cancel, in: app)
+        cancel.tap()
+        XCTAssertTrue(app.staticTexts["Import Archive"].waitToDisappear(timeout: 10))
+    }
+
     @MainActor private func reviewAdditiveImport(_ app: XCUIApplication, fixture: Fixture) throws {
         app.open(fixture.archive)
         let recovery = app.secureTextFields["Password or Recovery Key"]
-        XCTAssertTrue(recovery.waitForExistence(timeout: 10))
+        XCTAssertTrue(recovery.waitToAppear(timeout: 10))
         recovery.tap()
         recovery.typeText(fixture.phrase + "\n")
-        XCTAssertTrue(app.staticTexts["1 entry in journals"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["1 entry in journals"].waitToAppear(timeout: 15))
         let importAction = app.buttons["Import as New Journals"]
         try reveal(importAction, in: app)
         capture(app, "Additive archive import action")
@@ -95,8 +138,8 @@ final class ArchiveUITests: XCTestCase {
         try reveal(cancel, in: app)
         capture(app, "Additive archive cancel action")
         cancel.tap()
-        XCTAssertTrue(app.staticTexts["Import Archive"].waitForNonExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["Entry Actions"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Import Archive"].waitToDisappear(timeout: 10))
+        XCTAssertTrue(app.buttons["Entry Actions"].firstMatch.waitToAppear(timeout: 10))
     }
 
     private struct Configuration: Decodable { let storageFolder: String }

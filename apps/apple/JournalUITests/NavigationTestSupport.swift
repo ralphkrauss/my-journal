@@ -4,10 +4,10 @@ import XCTest
 enum NavigationTestSupport {
     static func createPasswordJournal(_ app: XCUIApplication) {
         let encrypt = app.buttons["Use Encryption"]
-        XCTAssertTrue(encrypt.waitForExistence(timeout: 10))
+        XCTAssertTrue(encrypt.waitToAppear(timeout: 10))
         encrypt.tap()
         let password = app.secureTextFields["Master Password"]
-        XCTAssertTrue(password.waitForExistence(timeout: 10))
+        XCTAssertTrue(password.waitToAppear(timeout: 10))
         password.tap()
         password.typeText("Native UI fixture password")
         let verify = app.secureTextFields["Verify"]
@@ -22,9 +22,9 @@ enum NavigationTestSupport {
     static func dismissKeyboardTips(_ app: XCUIApplication) {
         let proceed = app.buttons["Continue"].firstMatch
         for _ in 0..<3 {
-            guard proceed.waitForExistence(timeout: 2) else { return }
+            guard proceed.waitToAppear(timeout: 2) else { return }
             proceed.tap()
-            XCTAssertTrue(proceed.waitForNonExistence(timeout: 5))
+            XCTAssertTrue(proceed.waitToDisappear(timeout: 5))
         }
     }
 
@@ -54,11 +54,13 @@ enum NavigationTestSupport {
                     list.exists || (sidebar.exists && sidebar.isHittable)
                         || (back.exists && back.isHittable)
                 }, object: app)
+            // XCTest's own wait, which first looks after a second: just after launching or unlocking, the app can
+            // still be restoring the last journal or entry, and a look at once would act on the screen it is leaving.
             XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 10), .completed)
             if list.exists { return }
             if sidebar.exists, sidebar.isHittable { sidebar.tap() } else if back.exists, back.isHittable { back.tap() }
         }
-        XCTAssertTrue(list.waitForExistence(timeout: 10))
+        XCTAssertTrue(list.waitToAppear(timeout: 10))
     }
     static func selectCollection(_ name: String, app: XCUIApplication) {
         showJournals(app)
@@ -73,8 +75,8 @@ enum NavigationTestSupport {
             if row.exists, row.isHittable { break }
             list.swipeUp()
         }
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
-        XCTAssertTrue(row.isHittable)
+        XCTAssertTrue(row.waitToAppear(timeout: 10))
+        assertEventually(row.isHittable)
         row.tap()
     }
     static func readingButton(_ name: String, app: XCUIApplication) -> XCUIElement {
@@ -90,37 +92,43 @@ enum NavigationTestSupport {
                 controls.swipeRight()
             }
         }
-        XCTAssertTrue(button.waitForExistence(timeout: 5))
-        XCTAssertTrue(button.isHittable)
+        XCTAssertTrue(button.waitToAppear(timeout: 5))
+        assertEventually(button.isHittable)
         return button
     }
     /// New Entry lives with the entries list; on iPhone that means going back from the editor first.
     static func newEntryFromList(_ app: XCUIApplication) {
         let create = app.buttons["New Entry"].firstMatch
+        let back = app.navigationBars.buttons.matching(
+            NSPredicate(format: "identifier == %@ OR label == %@", "BackButton", "Back")
+        ).firstMatch
+        // The list can still be arriving (after Start a Journal, say), with New Entry not there or not yet usable.
+        let editor = title(app)
+        XCTAssertTrue(
+            Waiting.until(timeout: 10) {
+                (create.exists && create.isHittable) || editor.exists || (!create.exists && back.exists)
+            })
         if !(create.exists && create.isHittable) {
-            let back = app.navigationBars.buttons.matching(
-                NSPredicate(format: "identifier == %@ OR label == %@", "BackButton", "Back")
-            ).firstMatch
-            XCTAssertTrue(back.waitForExistence(timeout: 5))
+            XCTAssertTrue(back.waitToAppear(timeout: 5))
             back.tap()
         }
-        XCTAssertTrue(create.waitForExistence(timeout: 5))
+        XCTAssertTrue(create.waitToAppear(timeout: 5))
         create.tap()
     }
     /// A new entry, then “Use a Template…” in it, which opens the template chooser.
     static func openTemplateChooserInNewEntry(_ app: XCUIApplication) {
         newEntryFromList(app)
         let suggestion = app.buttons["Use a Template"].firstMatch
-        XCTAssertTrue(suggestion.waitForExistence(timeout: 10))
+        XCTAssertTrue(suggestion.waitToAppear(timeout: 10))
         suggestion.tap()
-        XCTAssertTrue(app.searchFields["Search Templates"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.searchFields["Search Templates"].waitToAppear(timeout: 5))
     }
     static func openEntry(_ title: String, journal: String, app: XCUIApplication) {
         selectCollection(journal, app: app)
         let row = app.staticTexts[title].firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(row.waitToAppear(timeout: 10))
         row.tap()
-        XCTAssertTrue(Self.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(Self.title(app).waitToAppear(timeout: 10))
     }
     static func openSettings(_ app: XCUIApplication) {
         showJournals(app)
@@ -129,7 +137,7 @@ enum NavigationTestSupport {
             if settings.exists, settings.isHittable { break }
             app.collectionViews["Journals"].swipeUp()
         }
-        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        XCTAssertTrue(settings.waitToAppear(timeout: 5))
         settings.tap()
     }
 }

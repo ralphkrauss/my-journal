@@ -4,6 +4,8 @@ import SwiftUI
 struct DeletedJournalView: View {
     @EnvironmentObject var model: AppModel
     let journal: JournalItem
+    /// Called as Delete Permanently is confirmed, so an iPhone can go back to the list at once.
+    var leave: (UUID) -> Void = { _ in }
     @State private var restoring = false
     @State private var reviewing: ConflictVersion?
     @State private var history = false
@@ -33,7 +35,7 @@ struct DeletedJournalView: View {
                     .disabled(model.replacingVault)
             }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
         }
-        .permanentDeletionPrompt($permanentDeletionRequest)
+        .permanentDeletionPrompt($permanentDeletionRequest, leave: leave)
         .sheet(isPresented: $restoring) { JournalLifecycleView(journalID: journal.id, restoring: true) }
         .sheet(item: $reviewing) { JournalConflictView(conflict: $0) }
         .sheet(isPresented: $history) { JournalHistoryView(journalID: journal.id) }

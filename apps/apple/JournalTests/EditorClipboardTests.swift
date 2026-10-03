@@ -38,6 +38,10 @@ import XCTest
             XCTAssertFalse(board.string(forType: .string)?.contains("\u{FFFC}") ?? true)
             XCTAssertTrue(target.view.readSelection(from: board))
         #else
+            let board = UIPasteboard.withUniqueName()
+            defer { UIPasteboard.remove(withName: board.name) }
+            source.view.pasteboard = board
+            target.view.pasteboard = board
             source.view.cut(nil)
             XCTAssertEqual(source.document.text, "")
             target.view.paste(nil)

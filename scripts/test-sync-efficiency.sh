@@ -62,8 +62,10 @@ start_proxy() {
   cat "$log"
   exit 1
 }
+# The flags of scripts/check.sh core, so both share one build of JournalCore instead of rebuilding it in turn.
 probe_at() {
-  swift run --jobs 2 --package-path "$1/apps/apple/Packages/JournalCore" --force-resolved-versions JournalProbe "${@:2}"
+  swift run --jobs 2 --package-path "$1/apps/apple/Packages/JournalCore" --force-resolved-versions \
+    -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors JournalProbe "${@:2}"
 }
 probe() { probe_at . "$@"; }
 

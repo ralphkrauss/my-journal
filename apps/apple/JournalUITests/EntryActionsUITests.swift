@@ -9,14 +9,14 @@ final class EntryActionsUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
         defer { app.terminate() }
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
         app.buttons["Continue Without Encryption"].tap()
         NavigationTestSupport.selectCollection("Default", app: app)
         for title in ["First", "Second", "Third"] {
             if app.buttons["Finish Editing"].exists { app.buttons["Finish Editing"].tap() }
             NavigationTestSupport.newEntryFromList(app)
-            XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 5))
+            XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 5))
             app.typeText(title)
             app.textViews["Entry text"].tap()
             app.typeText("Text")
@@ -27,15 +27,15 @@ final class EntryActionsUITests: XCTestCase {
         ).firstMatch
         if back.exists, back.isHittable { back.tap() }
         func row(_ title: String) -> XCUIElement { app.cells.containing(.staticText, identifier: title).firstMatch }
-        XCTAssertTrue(row("Second").waitForExistence(timeout: 5))
+        XCTAssertTrue(row("Second").waitToAppear(timeout: 5))
         row("Second").swipeLeft()
         app.buttons["Delete"].firstMatch.tap()
-        XCTAssertTrue(row("Second").waitForNonExistence(timeout: 5))
+        XCTAssertTrue(row("Second").waitToDisappear(timeout: 5))
         let third = row("Third")
         third.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).press(
             forDuration: 0.05, thenDragTo: third.coordinate(withNormalizedOffset: CGVector(dx: -0.3, dy: 0.5)),
             withVelocity: .fast, thenHoldForDuration: 0)
-        XCTAssertTrue(third.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(third.waitToDisappear(timeout: 5))
         XCTAssertEqual(app.state, .runningForeground)
         XCTAssertTrue(row("First").exists)
     }
@@ -44,14 +44,14 @@ final class EntryActionsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
         NavigationTestSupport.createPasswordJournal(app)
         let create = app.buttons["New Entry"].firstMatch
-        XCTAssertTrue(create.waitForExistence(timeout: 10))
+        XCTAssertTrue(create.waitToAppear(timeout: 10))
         create.tap()
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
         app.typeText("A quiet writing surface for the things I want to remember")
         NavigationTestSupport.dismissKeyboardTips(app)
         XCTAssertEqual(title.value as? String, "A quiet writing surface for the things I want to remember")
@@ -75,7 +75,7 @@ final class EntryActionsUITests: XCTestCase {
         capture(app, "End of the long title")
         // The title's Return key reads Next. It's typed rather than tapped by its position, which a keyboard tip
         // over the keys turned into a tap on a letter key.
-        XCTAssertTrue(app.keyboards.buttons["Next:"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.keyboards.buttons["Next:"].waitToAppear(timeout: 5))
         app.typeText("\n")
         let body = app.textViews["Entry text"]
         app.typeText("A useful reflection")
@@ -86,12 +86,12 @@ final class EntryActionsUITests: XCTestCase {
         checkImagePickerCancellation(app, body: body)
         XCTAssertFalse(app.datePickers.firstMatch.exists)
         app.buttons["Formatting"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Heading 1"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Heading 1"].waitToAppear(timeout: 5))
         capture(app, "Visual formatting on iPhone")
         // Close sits in the sheet's header, reachable without scrolling.
         let close = app.buttons["Close"].firstMatch
-        XCTAssertTrue(close.waitForExistence(timeout: 5))
-        XCTAssertTrue(close.isHittable)
+        XCTAssertTrue(close.waitToAppear(timeout: 5))
+        assertEventually(close.isHittable)
         capture(app, "Reachable formatting dismissal")
         close.tap()
         app.buttons["Formatting"].firstMatch.tap()
@@ -101,29 +101,29 @@ final class EntryActionsUITests: XCTestCase {
         app.buttons["Change Date…"].tap()
         // Cancel and Save sit in the sheet's navigation bar, as in other iOS sheets.
         let dateSheet = app.navigationBars["Change Date"]
-        XCTAssertTrue(dateSheet.waitForExistence(timeout: 5))
+        XCTAssertTrue(dateSheet.waitToAppear(timeout: 5))
         XCTAssertTrue(dateSheet.buttons["Save"].exists)
         capture(app, "Contextual date sheet")
         dateSheet.buttons["Cancel"].tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.waitToAppear(timeout: 5))
         capture(app, "Quiet editor")
         app.terminate()
         app.launch()
         NavigationTestSupport.openEntry(
             "A quiet writing surface for the things I want to remember", journal: "All Entries", app: app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        XCTAssertEqual(title.value as? String, "A quiet writing surface for the things I want to remember")
-        XCTAssertTrue((body.value as? String ?? "").contains("A useful reflection"))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
+        assertEventually(title.value as? String, equals: "A quiet writing surface for the things I want to remember")
+        assertEventually((body.value as? String ?? "").contains("A useful reflection"))
         let row = app.staticTexts["A quiet writing surface for the things I want to remember"].firstMatch
         if !row.isHittable { app.navigationBars.buttons.element(boundBy: 0).tap() }
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.waitToAppear(timeout: 5))
         row.press(forDuration: 1)
-        XCTAssertTrue(app.buttons["Change Date…"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Change Date…"].waitToAppear(timeout: 5))
         capture(app, "Entry context menu")
         app.buttons["Change Date…"].tap()
-        XCTAssertTrue(dateSheet.waitForExistence(timeout: 5))
+        XCTAssertTrue(dateSheet.waitToAppear(timeout: 5))
         dateSheet.buttons["Save"].tap()
-        XCTAssertTrue(dateSheet.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(dateSheet.waitToDisappear(timeout: 5))
     }
     @MainActor private func checkImagePickerCancellation(_ app: XCUIApplication, body: XCUIElement) {
         // Cancelling either picker, the photo library or the file browser, leaves the writing untouched.
@@ -132,14 +132,14 @@ final class EntryActionsUITests: XCTestCase {
             NavigationTestSupport.dismissKeyboardTips(app)
             app.buttons["Insert Image"].firstMatch.tap()
             let choice = app.buttons[source]
-            XCTAssertTrue(choice.waitForExistence(timeout: 5))
+            XCTAssertTrue(choice.waitToAppear(timeout: 5))
             choice.tap()
             let cancel = app.buttons["Cancel"].firstMatch
-            XCTAssertTrue(cancel.waitForExistence(timeout: 10))
+            XCTAssertTrue(cancel.waitToAppear(timeout: 10))
             capture(app, "Native image picker: \(source)")
             cancel.tap()
-            XCTAssertTrue(body.waitForExistence(timeout: 5))
-            XCTAssertTrue((body.value as? String ?? "").contains("A useful reflection"))
+            XCTAssertTrue(body.waitToAppear(timeout: 5))
+            assertEventually((body.value as? String ?? "").contains("A useful reflection"))
             XCTAssertFalse(app.alerts["Journal"].exists)
         }
     }

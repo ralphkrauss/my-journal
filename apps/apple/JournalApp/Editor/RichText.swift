@@ -48,8 +48,16 @@ final class EditorActions: ObservableObject {
         var formattingInputView: UIView?
         var owningWindow: (() -> UIWindow?)?
         /// Writing that was under way when its editor was replaced (such as a rotation into the split view), so the
-        /// replacement editor continues at the same place with the keyboard up.
-        var interruptedWriting: (itemID: UUID, selection: NSRange, time: Date)?
+        /// replacement editor continues at the same place with the keyboard up. Only in the visit the writing began
+        /// in: an entry opened again, however soon, opens for reading.
+        var interruptedWriting: (itemID: UUID, selection: NSRange, time: Date, visit: Int)?
+        /// Counts the person's moves between entries: going Back, choosing or opening one. A layout change isn't one.
+        private(set) var entryVisit = 0
+        /// The person left the open entry or opened another, so writing interrupted before doesn't continue.
+        func entryVisitEnded() {
+            entryVisit += 1
+            interruptedWriting = nil
+        }
         /// Offers interrupted writing to the most recently shown editor.
         var continueWriting: (() -> Void)?
     #endif
@@ -115,22 +123,30 @@ final class EditorActions: ObservableObject {
         #endif
     }
     #if os(iOS)
-        /// Set while Done ends editing. UIKit offers the keyboard to the enclosing text view when the title gives it
-        /// up; the body declines it meanwhile. Tapping the body or Return in the title still moves focus.
+        /// Set while Done ends editing, or a focused title is about to leave the screen. UIKit offers the keyboard to
+        /// the enclosing text view when the title gives it up; the body declines it meanwhile. Tapping the body or
+        /// Return in the title still moves focus.
         private(set) var endingEditing = false
+        /// Runs `resign` with the body declining the keyboard.
+        func whileEndingEditing(_ resign: () -> Void) {
+            let wasEnding = endingEditing
+            endingEditing = true
+            resign()
+            endingEditing = wasEnding
+        }
         /// Done: ends editing in the title, the body or a table, so the entry returns to reading.
         func finishEditing() {
             let responders = focusedViews.values.compactMap { $0.view as? UIResponder }
             let focused = responders.first(where: { $0.isFirstResponder }) as? UIView
             let edited: UIView? = focused ?? focusedTextInput?() ?? responders.first as? UIView
-            endingEditing = true
-            for responder in responders where responder.isFirstResponder {
-                responder.resignFirstResponder()
+            whileEndingEditing {
+                for responder in responders where responder.isFirstResponder {
+                    responder.resignFirstResponder()
+                }
+                // A table cell is focused inside its grid, which is what registered.
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
-            // A table cell is focused inside its grid, which is what registered.
-            UIApplication.shared.sendAction(
-                #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            endingEditing = false
             focusedViews = [:]
             publishEditing()
             if let edited, edited.window != nil {

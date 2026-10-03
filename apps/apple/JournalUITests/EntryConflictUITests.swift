@@ -14,21 +14,21 @@ final class EntryConflictUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         let recovery = app.secureTextFields["Recovery Key"]
         recovery.tap()
         recovery.typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 15))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 15))
         for attempt in 0..<2 {
             app.buttons["Review Changes"].firstMatch.tap()
             let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-            XCTAssertTrue(versions.waitForExistence(timeout: 10))
+            XCTAssertTrue(versions.waitToAppear(timeout: 10))
             try selectVersion("Other Device", in: app)
             let remote = reviewScroll(app).textViews.matching(
                 NSPredicate(format: "label == %@ AND value CONTAINS %@", "Entry text", "Words from the other device")
             ).firstMatch
-            XCTAssertTrue(remote.waitForExistence(timeout: 10))
+            XCTAssertTrue(remote.waitToAppear(timeout: 10))
             XCTAssertTrue(app.staticTexts["In Home"].exists)
             capture(app, "Remote-only image in conflict review \(attempt)")
             if attempt == 0 {
@@ -40,21 +40,21 @@ final class EntryConflictUITests: XCTestCase {
             XCTAssertTrue(
                 reviewScroll(app).textViews.matching(
                     NSPredicate(format: "label == %@ AND value CONTAINS %@", "Entry text", "Words from this device")
-                ).firstMatch.waitForExistence(timeout: 5))
+                ).firstMatch.waitToAppear(timeout: 5))
             XCTAssertTrue(app.staticTexts["In Work"].exists)
             capture(app, "Local conflict version without remote image \(attempt)")
             try selectVersion("Other Device", in: app)
-            XCTAssertTrue(remote.waitForExistence(timeout: 5))
+            XCTAssertTrue(remote.waitToAppear(timeout: 5))
             if attempt == 0 {
                 app.buttons["Cancel"].firstMatch.tap()
-                XCTAssertTrue(versions.waitForNonExistence(timeout: 5))
+                XCTAssertTrue(versions.waitToDisappear(timeout: 5))
             } else {
                 let keepOne = app.buttons["Keep One Version"]
                 try reveal(keepOne, in: app)
                 capture(app, "Complete Keep One Version action")
                 keepOne.tap()
                 app.buttons["Keep Version from Other Device…"].tap()
-                XCTAssertTrue(app.buttons["Keep Version"].waitForExistence(timeout: 5))
+                XCTAssertTrue(app.buttons["Keep Version"].waitToAppear(timeout: 5))
                 capture(app, "Cancel keeping only the remote version")
                 let cancelButtons = app.buttons.matching(identifier: "Cancel")
                 cancelButtons.element(boundBy: cancelButtons.count - 1).tap()
@@ -62,12 +62,12 @@ final class EntryConflictUITests: XCTestCase {
                 try reveal(keepBoth, in: app)
                 capture(app, "Reachable Keep Both conflict action")
                 keepBoth.tap()
-                XCTAssertTrue(versions.waitForNonExistence(timeout: 10))
+                XCTAssertTrue(versions.waitToDisappear(timeout: 10))
             }
         }
         app.terminate()
         app.launch()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 15))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 15))
         XCTAssertFalse(app.buttons["Review Changes"].exists)
         capture(app, "Both conflict versions retained after relaunch")
         app.terminate()
@@ -93,19 +93,19 @@ final class EntryConflictUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        guard app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15) else {
+        guard app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15) else {
             throw InteractionError.unreachable
         }
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
-        guard app.buttons["Review Changes"].firstMatch.waitForExistence(timeout: 15) else {
+        guard app.buttons["Review Changes"].firstMatch.waitToAppear(timeout: 15) else {
             throw InteractionError.unreachable
         }
         capture(app, "Conflict notice in the writing surface")
         app.buttons["Review Changes"].firstMatch.tap()
         let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        guard versions.waitForExistence(timeout: 10) else { throw InteractionError.unreachable }
+        guard versions.waitToAppear(timeout: 10) else { throw InteractionError.unreachable }
         let updated = try await replaceRemote(fixture, directory: directory)
         let baselineStore = try JournalStore(directory: directory, key: fixture.key)
         let baselineEntries = try await baselineStore.items().filter { $0.kind == "entry" }
@@ -115,7 +115,7 @@ final class EntryConflictUITests: XCTestCase {
         try reveal(keepBoth, in: app)
         keepBoth.tap()
         let changed = app.staticTexts["These changes were updated. Review both versions again."]
-        guard changed.waitForExistence(timeout: 10) else {
+        guard changed.waitToAppear(timeout: 10) else {
             capture(app, "Stale conflict recovery failed")
             throw InteractionError.unreachable
         }
@@ -137,12 +137,12 @@ final class EntryConflictUITests: XCTestCase {
         let preview = reviewScroll(app).textViews.matching(
             NSPredicate(format: "label == %@ AND value CONTAINS %@", "Entry text", "Newer words arrived during review")
         ).firstMatch
-        guard preview.waitForExistence(timeout: 5) else { throw InteractionError.unreachable }
+        guard preview.waitToAppear(timeout: 5) else { throw InteractionError.unreachable }
         try reveal(preview, in: app)
         capture(app, "Newer remote version available before retry")
         try reveal(keepBoth, in: app)
         keepBoth.tap()
-        guard versions.waitForNonExistence(timeout: 10) else { throw InteractionError.unreachable }
+        guard versions.waitToDisappear(timeout: 10) else { throw InteractionError.unreachable }
         app.terminate()
         let store = try JournalStore(directory: directory, key: fixture.key)
         let entries = try await store.items().filter { $0.kind == "entry" }
@@ -166,14 +166,14 @@ final class EntryConflictUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
-        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitToAppear(timeout: 15))
         app.buttons["Review Changes"].firstMatch.tap()
         let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        XCTAssertTrue(versions.waitForExistence(timeout: 10))
+        XCTAssertTrue(versions.waitToAppear(timeout: 10))
 
         let peer = try JournalStore(directory: directory, key: fixture.key)
         let conflicts = try await peer.conflicts()
@@ -186,17 +186,17 @@ final class EntryConflictUITests: XCTestCase {
         let keepBoth = app.buttons["Keep Both"]
         try reveal(keepBoth, in: app)
         keepBoth.tap()
-        XCTAssertTrue(versions.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(versions.waitToDisappear(timeout: 10))
         XCTAssertFalse(keepBoth.exists)
         XCTAssertFalse(app.buttons["Keep One Version"].exists)
         let resolvedText = app.textViews.matching(
             NSPredicate(format: "label == %@ AND value CONTAINS %@", "Entry text", "Words from the other device")
         ).firstMatch
-        XCTAssertTrue(resolvedText.waitForExistence(timeout: 5))
+        XCTAssertTrue(resolvedText.waitToAppear(timeout: 5))
         capture(app, "Already resolved entry replaces obsolete review without replaying Keep Both")
         app.terminate()
         app.launch()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 15))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 15))
         XCTAssertFalse(app.buttons["Review Changes"].exists)
         app.terminate()
 
@@ -223,14 +223,14 @@ final class EntryConflictUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
-        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitToAppear(timeout: 15))
         app.buttons["Review Changes"].firstMatch.tap()
         let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        XCTAssertTrue(versions.waitForExistence(timeout: 10))
+        XCTAssertTrue(versions.waitToAppear(timeout: 10))
         let updated = try await replaceRemote(fixture, directory: directory)
         let baseline = try JournalStore(directory: directory, key: fixture.key)
         let baselineItems = try await baseline.items()
@@ -243,8 +243,8 @@ final class EntryConflictUITests: XCTestCase {
         try reveal(keepBoth, in: app)
         keepBoth.tap()
         let failed = app.staticTexts["Changes couldn’t be updated."]
-        XCTAssertTrue(failed.waitForExistence(timeout: 10))
-        XCTAssertTrue(failed.isHittable)
+        XCTAssertTrue(failed.waitToAppear(timeout: 10))
+        assertEventually(failed.isHittable)
         XCTAssertFalse(keepBoth.exists)
         XCTAssertFalse(app.buttons["Keep One Version"].exists)
         XCTAssertFalse(versions.exists)
@@ -252,23 +252,23 @@ final class EntryConflictUITests: XCTestCase {
         XCTAssertTrue(retry.isHittable)
         capture(app, "Failed refresh hides obsolete conflict choices and offers retry")
         retry.tap()
-        XCTAssertTrue(failed.waitForExistence(timeout: 10))
+        XCTAssertTrue(failed.waitToAppear(timeout: 10))
         XCTAssertFalse(keepBoth.exists)
         try setHistoryUnavailable(false, directory: directory)
         retry.tap()
-        XCTAssertTrue(versions.waitForExistence(timeout: 10))
+        XCTAssertTrue(versions.waitToAppear(timeout: 10))
         XCTAssertTrue(app.staticTexts["These changes were updated. Review both versions again."].exists)
         try selectVersion("Other Device", in: app)
         let current = reviewScroll(app).textViews.matching(
             NSPredicate(format: "label == %@ AND value CONTAINS %@", "Entry text", "Newer words arrived during review")
         ).firstMatch
-        XCTAssertTrue(current.waitForExistence(timeout: 5))
+        XCTAssertTrue(current.waitToAppear(timeout: 5))
         capture(app, "Retry exposes current versions without replaying the old choice")
         app.buttons["Cancel"].firstMatch.tap()
-        XCTAssertTrue(versions.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(versions.waitToDisappear(timeout: 5))
         app.terminate()
         app.launch()
-        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitToAppear(timeout: 15))
         app.terminate()
 
         let store = try JournalStore(directory: directory, key: fixture.key)
@@ -293,14 +293,14 @@ final class EntryConflictUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15))
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
-        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitToAppear(timeout: 15))
         app.buttons["Review Changes"].firstMatch.tap()
         let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        XCTAssertTrue(versions.waitForExistence(timeout: 10))
+        XCTAssertTrue(versions.waitToAppear(timeout: 10))
 
         var future = try XCTUnwrap(
             JSONSerialization.jsonObject(with: PortableRecord.encode(fixture.remote)) as? [String: Any])
@@ -324,19 +324,19 @@ final class EntryConflictUITests: XCTestCase {
         keepBoth.tap()
         let guidance = app.staticTexts["Update My Journal to review these changes."]
         for attempt in 0..<2 {
-            XCTAssertTrue(guidance.waitForExistence(timeout: 10))
-            XCTAssertTrue(app.buttons["Export Archive…"].isEnabled)
+            XCTAssertTrue(guidance.waitToAppear(timeout: 10))
+            assertEventually(app.buttons["Export Archive…"].isEnabled)
             XCTAssertFalse(versions.exists)
             for action in ["Keep Both", "Keep One Version", "Keep Entry", "Keep Deletion", "Delete Permanently"] {
                 XCTAssertFalse(app.buttons[action].exists)
             }
             capture(app, "Newer format replaces obsolete conflict choices \(attempt)")
             app.navigationBars["Review Changes"].buttons["Cancel"].tap()
-            XCTAssertTrue(guidance.waitForNonExistence(timeout: 5))
+            XCTAssertTrue(guidance.waitToDisappear(timeout: 5))
             app.terminate()
             if attempt == 0 {
                 app.launch()
-                XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitForExistence(timeout: 15))
+                XCTAssertTrue(app.buttons["Review Changes"].firstMatch.waitToAppear(timeout: 15))
                 app.buttons["Review Changes"].firstMatch.tap()
             }
         }
@@ -367,25 +367,25 @@ final class EntryConflictUITests: XCTestCase {
         defer { app.terminate() }
         unlock(app, phrase: fixture.phrase, directory: directory)
         let review = app.buttons["Review Changes"].firstMatch
-        XCTAssertTrue(review.waitForExistence(timeout: 15))
+        XCTAssertTrue(review.waitToAppear(timeout: 15))
         review.tap()
         let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        XCTAssertTrue(versions.waitForExistence(timeout: 10))
+        XCTAssertTrue(versions.waitToAppear(timeout: 10))
         let keepBoth = app.buttons["Keep Both"]
         try reveal(keepBoth, in: app)
         keepBoth.tap()
-        XCTAssertTrue(versions.waitForNonExistence(timeout: 10))
-        XCTAssertTrue(review.waitForNonExistence(timeout: 10), "The notice goes once the changes are resolved.")
+        XCTAssertTrue(versions.waitToDisappear(timeout: 10))
+        XCTAssertTrue(review.waitToDisappear(timeout: 10), "The notice goes once the changes are resolved.")
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 5), "The entry stays open.")
-        XCTAssertEqual(title.value as? String, "A reflection")
+        XCTAssertTrue(title.waitToAppear(timeout: 5), "The entry stays open.")
+        assertEventually(title.value as? String, equals: "A reflection")
         capture(app, "Entry after Keep Both")
         if UIDevice.current.userInterfaceIdiom != .pad {
             app.navigationBars.buttons.matching(identifier: "BackButton").firstMatch.tap()
         }
         let rows = app.staticTexts.matching(NSPredicate(format: "label == %@", "A reflection"))
         let both = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 2"), object: rows)
-        XCTAssertEqual(XCTWaiter.wait(for: [both], timeout: 10), .completed, "The list shows both versions.")
+        XCTAssertEqual(Waiting.wait(for: both, timeout: 10), .completed, "The list shows both versions.")
         let flagged = app.descendants(matching: .any).matching(
             NSPredicate(format: "label CONTAINS %@", "Changes need review"))
         XCTAssertEqual(flagged.count, 0, "Neither version waits for review.")
@@ -404,9 +404,9 @@ final class EntryConflictUITests: XCTestCase {
         defer { app.terminate() }
         unlock(app, phrase: fixture.phrase, directory: directory)
         let review = app.buttons["Review Changes"].firstMatch
-        XCTAssertTrue(review.waitForExistence(timeout: 15))
+        XCTAssertTrue(review.waitToAppear(timeout: 15))
         let body = app.textViews["Entry text"]
-        XCTAssertTrue(body.waitForExistence(timeout: 5))
+        XCTAssertTrue(body.waitToAppear(timeout: 5))
         for _ in 0..<4 { body.swipeUp() }
         capture(app, "Conflict notice in a scrolled entry")
         XCTAssertTrue(review.isHittable, "The notice is in view.")
@@ -418,7 +418,7 @@ final class EntryConflictUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
         let recovery = app.secureTextFields["Recovery Key"]
-        XCTAssertTrue(recovery.waitForExistence(timeout: 15))
+        XCTAssertTrue(recovery.waitToAppear(timeout: 15))
         recovery.tap()
         recovery.typeText(phrase)
         app.buttons["Unlock"].tap()

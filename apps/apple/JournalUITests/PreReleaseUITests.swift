@@ -12,47 +12,47 @@ final class PreReleaseUITests: XCTestCase {
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Templates", app: app)
         let template = app.staticTexts["Gratitude"].firstMatch
-        XCTAssertTrue(template.waitForExistence(timeout: 10))
+        XCTAssertTrue(template.waitToAppear(timeout: 10))
         template.press(forDuration: 1)
-        XCTAssertTrue(app.buttons["Delete Template"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Delete Template"].waitToAppear(timeout: 5))
         capture(app, "Template context menu")
         app.buttons["Delete Template"].tap()
-        XCTAssertTrue(template.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(template.waitToDisappear(timeout: 5))
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
-        XCTAssertTrue(app.staticTexts["Gratitude"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Gratitude"].firstMatch.waitToAppear(timeout: 10))
         XCTAssertTrue(app.staticTexts["Templates"].firstMatch.exists)
         XCTAssertTrue(app.staticTexts["Items stay here until you delete them permanently."].firstMatch.exists)
         capture(app, "Recently Deleted with a template")
         app.staticTexts["Gratitude"].firstMatch.tap()
         let notice = app.staticTexts["This template is in Recently Deleted."]
-        XCTAssertTrue(notice.waitForExistence(timeout: 10))
+        XCTAssertTrue(notice.waitToAppear(timeout: 10))
         capture(app, "Deleted template notice")
         app.buttons["Restore"].firstMatch.tap()
-        XCTAssertTrue(notice.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(notice.waitToDisappear(timeout: 10))
         capture(app, "Restored template")
         // Back leads to Templates, where the template is again.
         NavigationTestSupport.selectCollection("Templates", app: app)
-        XCTAssertTrue(app.staticTexts["Gratitude"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Gratitude"].firstMatch.waitToAppear(timeout: 10))
         app.staticTexts["Gratitude"].firstMatch.press(forDuration: 1)
         app.buttons["Delete Template"].tap()
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         let deleted = app.staticTexts["Gratitude"].firstMatch
-        XCTAssertTrue(deleted.waitForExistence(timeout: 10))
+        XCTAssertTrue(deleted.waitToAppear(timeout: 10))
         deleted.press(forDuration: 1)
-        XCTAssertTrue(app.buttons["Restore"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Restore"].waitToAppear(timeout: 5))
         app.buttons["Delete Permanently…"].tap()
         let alert = app.alerts["Delete “Gratitude” Permanently?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(alert.waitToAppear(timeout: 5))
         XCTAssertTrue(
             alert.staticTexts["You can’t undo this. Copies may remain in archives, backups, and server history."].exists
         )
         capture(app, "Delete template permanently")
         alert.buttons["Delete"].tap()
-        XCTAssertTrue(app.staticTexts["No Deleted Items"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["No Deleted Items"].waitToAppear(timeout: 10))
         app.terminate()
         app.launch()
         NavigationTestSupport.selectCollection("Templates", app: app)
-        XCTAssertTrue(app.staticTexts["Daily Reflection"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Daily Reflection"].firstMatch.waitToAppear(timeout: 10))
         XCTAssertFalse(app.staticTexts["Gratitude"].firstMatch.exists)
     }
 
@@ -63,20 +63,20 @@ final class PreReleaseUITests: XCTestCase {
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Templates", app: app)
         let template = app.staticTexts["Gratitude"].firstMatch
-        XCTAssertTrue(template.waitForExistence(timeout: 10))
+        XCTAssertTrue(template.waitToAppear(timeout: 10))
         template.press(forDuration: 1)
         let start = app.buttons["New Entry from Template"]
-        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        XCTAssertTrue(start.waitToAppear(timeout: 5))
         capture(app, "Template context menu with New Entry")
         start.tap()
         let body = app.textViews["Entry text"]
         let filled = NSPredicate(format: "value CONTAINS %@", "What am I grateful for")
         XCTAssertEqual(
-            XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: filled, object: body)], timeout: 10), .completed)
+            Waiting.wait(for: XCTNSPredicateExpectation(predicate: filled, object: body), timeout: 10), .completed)
         XCTAssertTrue(NavigationTestSupport.title(app).exists)
         if !isPad {
             app.navigationBars.buttons.element(boundBy: 0).tap()
-            XCTAssertTrue(app.navigationBars["Default"].waitForExistence(timeout: 5), "Back leads to the journal")
+            XCTAssertTrue(app.navigationBars["Default"].waitToAppear(timeout: 5), "Back leads to the journal")
         }
     }
 
@@ -87,12 +87,12 @@ final class PreReleaseUITests: XCTestCase {
             NavigationTestSupport.selectCollection("Templates", app: app)
             // Templates made together are listed in no fixed order, and at the largest text size only two fit.
             let template = app.staticTexts["Weekly Reflection"].firstMatch
-            for _ in 0..<4 where !template.waitForExistence(timeout: 3) { app.collectionViews.firstMatch.swipeUp() }
-            XCTAssertTrue(template.waitForExistence(timeout: 10))
+            for _ in 0..<4 where !template.waitToAppear(timeout: 3) { app.collectionViews.firstMatch.swipeUp() }
+            XCTAssertTrue(template.waitToAppear(timeout: 10))
             template.press(forDuration: 1)
             app.buttons["Delete Template"].tap()
             NavigationTestSupport.selectCollection("Recently Deleted", app: app)
-            XCTAssertTrue(app.staticTexts["Weekly Reflection"].firstMatch.waitForExistence(timeout: 10))
+            XCTAssertTrue(app.staticTexts["Weekly Reflection"].firstMatch.waitToAppear(timeout: 10))
             capture(app, "Recently Deleted with a template" + (dark ? ", dark" : ", largest text"))
             app.terminate()
         }
@@ -114,7 +114,7 @@ final class PreReleaseUITests: XCTestCase {
         capture(app, "Highlighted template")
         search.typeText("\n")
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
         XCTAssertTrue(
             (app.textViews["Entry text"].value as? String ?? "").contains("What am I grateful for"),
             "Return creates an entry from the highlighted template.")
@@ -152,7 +152,7 @@ final class PreReleaseUITests: XCTestCase {
         }
         search.typeText("grat")
         let gratitude = app.buttons["Gratitude"].firstMatch
-        XCTAssertTrue(gratitude.waitForExistence(timeout: 5))
+        XCTAssertTrue(gratitude.waitToAppear(timeout: 5))
         XCTAssertFalse(app.buttons["Workday Log"].exists)
         captureScreen("Template picker, landscape, filtered")
         XCTAssertTrue(gratitude.isHittable)
@@ -168,7 +168,7 @@ final class PreReleaseUITests: XCTestCase {
             let formatting = app.buttons["Formatting"].firstMatch
             let barBefore = formatting.frame.minY
             formatting.tap()
-            XCTAssertTrue(app.buttons["Heading 1"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["Heading 1"].waitToAppear(timeout: 5))
             // On iPad, Format is a popover beside the keyboard, and scrolls when the keyboard leaves it too little room.
             if !isPad {
                 // Exactly where the keyboard was: the bar above it, and the entry, stay put.
@@ -185,20 +185,20 @@ final class PreReleaseUITests: XCTestCase {
                 }
                 if !dark {
                     XCUIDevice.shared.orientation = .landscapeLeft
-                    XCTAssertTrue(app.buttons["Bold"].firstMatch.waitForExistence(timeout: 5))
+                    XCTAssertTrue(app.buttons["Bold"].firstMatch.waitToAppear(timeout: 5))
                     captureScreen("Format panel, landscape")
                     XCUIDevice.shared.orientation = .portrait
-                    XCTAssertTrue(app.buttons["Bold"].firstMatch.waitForExistence(timeout: 5))
+                    XCTAssertTrue(app.buttons["Bold"].firstMatch.waitToAppear(timeout: 5))
                 }
             }
             // The panel replaces the keyboard: the text keeps focus.
-            XCTAssertTrue(body.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
+            assertEventually(body.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
             capture(app, "Format sheet with the caret at the end" + (dark ? ", dark" : ""))
             app.buttons["Bold"].firstMatch.tap()
             capture(app, "Format sheet after Bold" + (dark ? ", dark" : ""))
             app.buttons["Close"].firstMatch.tap()
-            XCTAssertTrue(app.buttons["Heading 1"].waitForNonExistence(timeout: 5))
-            XCTAssertTrue((body.value as? String ?? "").contains("Line 30"))
+            XCTAssertTrue(app.buttons["Heading 1"].waitToDisappear(timeout: 5))
+            assertEventually((body.value as? String ?? "").contains("Line 30"))
             capture(app, "After closing Format" + (dark ? ", dark" : ""))
             app.terminate()
         }
@@ -211,7 +211,7 @@ final class PreReleaseUITests: XCTestCase {
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
         app.typeText("Styles\n")
         let body = app.textViews["Entry text"]
         app.typeText("alpha beta")
@@ -219,15 +219,15 @@ final class PreReleaseUITests: XCTestCase {
         body.typeKey(.leftArrow, modifierFlags: .command)
         body.typeKey(.rightArrow, modifierFlags: [.option, .shift])
         app.buttons["Formatting"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Bold"].firstMatch.waitForExistence(timeout: 2))
-        XCTAssertTrue(body.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
+        XCTAssertTrue(app.buttons["Bold"].firstMatch.waitToAppear(timeout: 2))
+        assertEventually(body.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
         capture(app, "Format panel in place of the keyboard")
         // Another word, chosen while the panel is open, is the one made bold.
         body.typeKey(.rightArrow, modifierFlags: .command)
         body.typeKey(.leftArrow, modifierFlags: [.option, .shift])
         if isPad {
             // On iPad, Format is a popover beside the text; moving the selection closes it, as a tap outside does.
-            XCTAssertTrue(app.buttons["Bold"].firstMatch.waitForNonExistence(timeout: 2))
+            XCTAssertTrue(app.buttons["Bold"].firstMatch.waitToDisappear(timeout: 2))
             app.buttons["Formatting"].firstMatch.tap()
         }
         app.buttons["Bold"].firstMatch.tap()
@@ -235,14 +235,14 @@ final class PreReleaseUITests: XCTestCase {
         if isPad { app.buttons["Close"].firstMatch.tap() }
         body.typeKey(.rightArrow, modifierFlags: .command)
         if !isPad { app.buttons["Close"].firstMatch.tap() }
-        XCTAssertTrue(app.buttons["Bold"].firstMatch.waitForNonExistence(timeout: 2))
-        XCTAssertTrue(body.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
+        XCTAssertTrue(app.buttons["Bold"].firstMatch.waitToDisappear(timeout: 2))
+        assertEventually(body.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
         app.typeText(" done")
         capture(app, "Keyboard back after Format")
         NavigationTestSupport.readingButton("View Source", app: app).tap()
         let shown = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in (body.value as? String ?? "").contains("**") }, object: nil)
-        XCTAssertEqual(XCTWaiter.wait(for: [shown], timeout: 5), .completed)
+        XCTAssertEqual(Waiting.wait(for: shown, timeout: 5), .completed)
         capture(app, "Source after Format")
         let source = body.value as? String ?? ""
         XCTAssertTrue(source.contains("**beta"), source)
@@ -255,25 +255,25 @@ final class PreReleaseUITests: XCTestCase {
         defer { app.terminate() }
         _ = writeLongEntry(app, lines: 3)
         app.buttons["Formatting"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Heading 1"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Close"].firstMatch.isHittable)
+        XCTAssertTrue(app.buttons["Heading 1"].waitToAppear(timeout: 5))
+        assertEventually(app.buttons["Close"].firstMatch.isHittable)
         capture(app, "Format sheet, largest text")
         let insert = app.buttons["Insert"].firstMatch
-        let rows = ["Heading 1", "Heading 2", "Paragraph", "Bulleted List", "Task List", "Block Quote"]
-        for _ in 0..<8 where !insert.isHittable {
-            // Swipe on a row that is still in view; the ones above scroll away.
-            guard let row = rows.map({ app.buttons[$0].firstMatch }).first(where: \.isHittable) else { break }
-            row.swipeUp()
-        }
+        // The panel's rows scroll. A swipe is made on the scroll view, slowly, so it travels across the panel: one
+        // made on a row only partly in view was too short to scroll, and became a tap that chose that row's
+        // style and closed the panel.
+        let rows = app.scrollViews.containing(NSPredicate(format: "label == %@", "Heading 1")).firstMatch
+        XCTAssertTrue(rows.waitToAppear(timeout: 5))
+        for _ in 0..<8 where !insert.isHittable { rows.swipeUp(velocity: .slow) }
         XCTAssertTrue(insert.isHittable)
         capture(app, "Format sheet, largest text, scrolled")
         // Opened again, it starts at the top, with Bold in view.
         app.buttons["Close"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Heading 1"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Heading 1"].waitToDisappear(timeout: 5))
         app.buttons["Formatting"].firstMatch.tap()
         let bold = app.buttons["Bold"].firstMatch
-        XCTAssertTrue(bold.waitForExistence(timeout: 5))
-        XCTAssertTrue(bold.isHittable, "Format opens at the top again.")
+        XCTAssertTrue(bold.waitToAppear(timeout: 5))
+        assertEventually(bold.isHittable, "Format opens at the top again.")
     }
 
     /// Item 4: Backspace at the start of a task removes the checkbox and keeps the line.
@@ -282,13 +282,13 @@ final class PreReleaseUITests: XCTestCase {
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
         app.typeText("Errands\n")
         let body = app.textViews["Entry text"]
         app.typeText("[] ")
         let task = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in (body.value as? String ?? "").contains("☐") }, object: nil)
-        XCTAssertEqual(XCTWaiter.wait(for: [task], timeout: 5), .completed, "[] starts a task.")
+        XCTAssertEqual(Waiting.wait(for: task, timeout: 5), .completed, "[] starts a task.")
         app.typeText("Buy milk\n")
         capture(app, "Second task, empty")
         app.typeText(XCUIKeyboardKey.delete.rawValue)
@@ -311,19 +311,19 @@ final class PreReleaseUITests: XCTestCase {
         body.typeKey(XCUIKeyboardKey.rightArrow, modifierFlags: [])
         body.typeKey("f", modifierFlags: [.command, .shift])
         let replace = app.descendants(matching: .any).matching(identifier: "Replace").firstMatch
-        XCTAssertTrue(replace.waitForExistence(timeout: 5), "⇧⌘F opens Find and Replace in the entry.")
-        XCTAssertEqual(body.value as? String, written)
+        XCTAssertTrue(replace.waitToAppear(timeout: 5), "⇧⌘F opens Find and Replace in the entry.")
+        assertEventually(body.value as? String, equals: written)
         capture(app, "Find and Replace from the keyboard")
         // Close Find and finish writing, then search the entries.
         app.buttons["Done"].firstMatch.tap()
-        XCTAssertTrue(replace.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(replace.waitToDisappear(timeout: 5))
         let finish = app.buttons["Finish Editing"].firstMatch
-        if finish.waitForExistence(timeout: 2) { finish.tap() }
+        if finish.waitToAppear(timeout: 2) { finish.tap() }
         app.typeKey("f", modifierFlags: [.command, .option])
         let search = app.searchFields["Search Default"]
-        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        XCTAssertTrue(search.waitToAppear(timeout: 5))
         app.typeText("Line 2")
-        XCTAssertEqual(search.value as? String, "Line 2", "⌥⌘F puts the typing in the entry search.")
+        assertEventually(search.value as? String, equals: "Line 2", "⌥⌘F puts the typing in the entry search.")
         XCTAssertEqual(body.value as? String, written, "The entry keeps its text.")
         capture(app, "Search Entries from the keyboard")
     }
@@ -336,33 +336,33 @@ final class PreReleaseUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
         defer { app.terminate() }
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
         NavigationTestSupport.createPasswordJournal(app)
-        XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitToAppear(timeout: 10))
         NavigationTestSupport.openSettings(app)
         app.buttons["Backup"].firstMatch.tap()
         let export = app.buttons["Export Archive…"].firstMatch
-        XCTAssertTrue(export.waitForExistence(timeout: 5))
+        XCTAssertTrue(export.waitToAppear(timeout: 5))
         export.tap()
         let field = app.secureTextFields["Master Password"]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitToAppear(timeout: 5))
         XCTAssertTrue(app.staticTexts["Check Your Password"].exists)
         capture(app, "Check Your Password")
         field.typeText("Not the fixture password")
         app.buttons["Check"].tap()
-        XCTAssertTrue(app.staticTexts["Wrong password. Try again."].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Wrong password. Try again."].waitToAppear(timeout: 10))
         capture(app, "Wrong password")
         field.tap()
         field.typeText("Native UI fixture password")
         app.buttons["Check"].tap()
-        XCTAssertTrue(field.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(field.waitToDisappear(timeout: 10))
         // The save dialog, which is closed without saving.
         let saveDialog = app.navigationBars["FullDocumentManagerViewControllerNavigationBar"]
-        XCTAssertTrue(saveDialog.waitForExistence(timeout: 15))
+        XCTAssertTrue(saveDialog.waitToAppear(timeout: 15))
         capture(app, "Save dialog after the check")
         let suggested = app.textFields.matching(NSPredicate(format: "value BEGINSWITH 'Journal Archive '")).firstMatch
-        XCTAssertTrue(suggested.waitForExistence(timeout: 5), "The save dialog suggests a readable name.")
+        XCTAssertTrue(suggested.waitToAppear(timeout: 5), "The save dialog suggests a readable name.")
         // iPad's save dialog has a close button; iPhone's is a sheet that closes with a swipe.
         let close = saveDialog.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "Cancel"])).firstMatch
         let sidebarClose = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "Cancel"])).firstMatch
@@ -373,9 +373,10 @@ final class PreReleaseUITests: XCTestCase {
         } else {
             saveDialog.swipeDown(velocity: .fast)
         }
-        XCTAssertTrue(saveDialog.waitForNonExistence(timeout: 10))
-        XCTAssertTrue(export.waitForExistence(timeout: 5))
+        XCTAssertTrue(saveDialog.waitToDisappear(timeout: 10))
+        XCTAssertTrue(export.waitToAppear(timeout: 5))
         export.tap()
+        // Absence over time: XCTest's own wait, which first looks after a second.
         XCTAssertFalse(field.waitForExistence(timeout: 5), "The check isn't asked for again.")
     }
 
@@ -389,9 +390,9 @@ final class PreReleaseUITests: XCTestCase {
         }
         if #available(iOS 17.0, *) { XCUIDevice.shared.appearance = dark ? .dark : .light }
         app.launch()
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
         app.buttons["Continue Without Encryption"].tap()
         return app
     }
@@ -399,7 +400,7 @@ final class PreReleaseUITests: XCTestCase {
     @MainActor private func writeLongEntry(_ app: XCUIApplication, lines: Int = 30) -> XCUIElement {
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
         app.typeText("A long entry\n")
         let body = app.textViews["Entry text"]
         app.typeText((1...lines).map { "Line \($0)" }.joined(separator: "\n"))

@@ -7,8 +7,8 @@ import os
 /// Apps entitled to the data protection keychain (every iOS app, and Mac builds signed with the team's provisioning
 /// profile) keep secrets there, where access follows the signing team instead of a per-build approval. A Mac build
 /// without that entitlement, such as a Developer ID release, keeps using the login keychain. A secret still in the
-/// login keychain is moved the first time it is read by an entitled build. Test processes use memory only, so they
-/// never touch a person's keychain.
+/// login keychain is moved the first time it is read by an entitled build (`MigratingSecretStore`). Test processes use
+/// memory only, so they never touch a person's keychain.
 public enum Keychain {
     static let store: SecretStore =
         NSClassFromString("XCTestCase") != nil
@@ -38,58 +38,118 @@ enum SecretStoreError: Error, Equatable {
 }
 
 /// Prefers the current store; reads fall back to the legacy one and move what they find.
+///
+/// Whether the current store can be used is learned from the keychain itself, not guessed: without the entitlement,
+/// a data protection keychain lookup only reports that nothing was found, while any change is refused with
+/// `errSecMissingEntitlement`. From the first refusal on, this process uses the legacy store alone.
+///
+/// A move copies the secret, reads the copy back, and only then removes the original. If anything before the
+/// removal fails, the original stays and the next read tries again. If only the removal fails (macOS lets just the
+/// build that created a login keychain item delete it), an identical original stays behind; reads keep preferring
+/// the current store and never look at it again, so it can't cause keychain prompts.
 struct MigratingSecretStore: SecretStore {
     let current: SecretStore
     let legacy: SecretStore?
+    private let currentRefused = OSAllocatedUnfairLock(initialState: false)
+    private let log = Logger(subsystem: "org.privatejournal", category: "keychain")
+
+    init(current: SecretStore, legacy: SecretStore?) {
+        self.current = current
+        self.legacy = legacy
+    }
 
     func read(_ account: String) throws -> Data? {
-        let currentAvailable: Bool
+        guard let legacy else { return try current.read(account) }
+        guard currentAvailable else { return try legacy.read(account) }
         do {
             if let data = try current.read(account) { return data }
-            currentAvailable = true
         } catch SecretStoreError.unavailable {
-            currentAvailable = false
+            markCurrentUnavailable()
+            return try legacy.read(account)
         }
-        guard let legacy, let data = try legacy.read(account) else { return nil }
-        if currentAvailable {
-            // Copy first and remove the old item only once the copy exists, so the secret is never lost.
-            try current.write(data, account: account)
-            try? legacy.remove(account)
-        }
+        guard let data = try legacy.read(account) else { return nil }
+        move(data, account: account, from: legacy)
         return data
     }
+
     func write(_ data: Data, account: String) throws {
-        do { try current.write(data, account: account) } catch SecretStoreError.unavailable {
-            guard let legacy else { throw SecretStoreError.unavailable }
-            try legacy.write(data, account: account)
+        if currentAvailable || legacy == nil {
+            do { return try current.write(data, account: account) } catch SecretStoreError.unavailable {
+                markCurrentUnavailable()
+            }
         }
+        guard let legacy else { throw SecretStoreError.unavailable }
+        try legacy.write(data, account: account)
     }
+
     func remove(_ account: String) throws {
         var removed = false
-        do {
-            try current.remove(account)
-            removed = true
-        } catch SecretStoreError.unavailable {}
+        if currentAvailable || legacy == nil {
+            do {
+                try current.remove(account)
+                removed = true
+            } catch SecretStoreError.unavailable {
+                markCurrentUnavailable()
+            }
+        }
         if let legacy {
             try legacy.remove(account)
             removed = true
         }
         if !removed { throw SecretStoreError.unavailable }
     }
+
+    private var currentAvailable: Bool { !currentRefused.withLock { $0 } }
+
+    private func markCurrentUnavailable() {
+        let first = currentRefused.withLock { refused -> Bool in
+            let first = !refused
+            refused = true
+            return first
+        }
+        if first { log.notice("The data protection keychain isn't available; using the login keychain.") }
+    }
+
+    /// Copies a legacy secret into the current store. Whatever fails, the caller still gets the secret, so a failed
+    /// move never locks anyone out.
+    private func move(_ data: Data, account: String, from legacy: SecretStore) {
+        do {
+            try current.write(data, account: account)
+            guard try current.read(account) == data else {
+                // The current store had nothing before this copy, so removing what it holds now loses nothing.
+                try? current.remove(account)
+                log.error("A secret copied to the data protection keychain didn't read back; the original stays.")
+                return
+            }
+        } catch SecretStoreError.unavailable {
+            markCurrentUnavailable()
+            return
+        } catch {
+            log.error(
+                "Couldn't copy a secret to the data protection keychain (\(Self.status(of: error), privacy: .public)).")
+            return
+        }
+        do { try legacy.remove(account) } catch {
+            log.notice(
+                "A moved secret's login keychain original stays (\(Self.status(of: error), privacy: .public)).")
+        }
+    }
+
+    private static func status(of error: Error) -> Int { (error as NSError).code }
 }
 
 struct SystemSecretStore: SecretStore {
     let dataProtection: Bool
 
-    private func query(_ account: String) -> [String: Any] {
-        var query: [String: Any] = [
+    /// Always names the keychain. In an entitled Mac app, a query that leaves it out also reaches the data protection
+    /// keychain: removing the login keychain original that way deleted the copy a move had just made.
+    func query(_ account: String) -> [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "org.privatejournal.vault",
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: account, kSecUseDataProtectionKeychain as String: dataProtection,
         ]
-        if dataProtection { query[kSecUseDataProtectionKeychain as String] = true }
-        return query
     }
-    private func check(_ status: OSStatus) throws {
+    static func check(_ status: OSStatus) throws {
         if status == errSecMissingEntitlement { throw SecretStoreError.unavailable }
         guard status == errSecSuccess else { throw NSError(domain: NSOSStatusErrorDomain, code: Int(status)) }
     }
@@ -100,7 +160,7 @@ struct SystemSecretStore: SecretStore {
         var result: CFTypeRef?
         let status = SecItemCopyMatching(request as CFDictionary, &result)
         if status == errSecItemNotFound { return nil }
-        try check(status)
+        try Self.check(status)
         return result as? Data
     }
     func write(_ data: Data, account: String) throws {
@@ -111,12 +171,12 @@ struct SystemSecretStore: SecretStore {
         if status == errSecItemNotFound {
             status = SecItemAdd(query(account).merging(attributes) { _, new in new } as CFDictionary, nil)
         }
-        try check(status)
+        try Self.check(status)
     }
     func remove(_ account: String) throws {
         let status = SecItemDelete(query(account) as CFDictionary)
         if status == errSecItemNotFound { return }
-        try check(status)
+        try Self.check(status)
     }
 }
 

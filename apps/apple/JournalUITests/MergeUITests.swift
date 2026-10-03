@@ -36,25 +36,25 @@ final class MergeUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_TEST_SCANNED_CODE"] = host.invite.text
         app.launch()
         let start = app.buttons["Start a Journal"]
-        XCTAssertTrue(start.waitForExistence(timeout: 15))
+        XCTAssertTrue(start.waitToAppear(timeout: 15))
         start.tap()
         NavigationTestSupport.createPasswordJournal(app)
         let create = app.buttons["New Entry"].firstMatch
-        XCTAssertTrue(create.waitForExistence(timeout: 10))
+        XCTAssertTrue(create.waitToAppear(timeout: 10))
         create.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
         app.typeText("Local note")
 
         NavigationTestSupport.openSettings(app)
         app.buttons["Sync"].tap()
         let connect = app.buttons["Connect to a Server…"]
-        XCTAssertTrue(connect.waitForExistence(timeout: 10))
+        XCTAssertTrue(connect.waitToAppear(timeout: 10))
         connect.tap()
         let scan = app.buttons["Scan Code"]
-        XCTAssertTrue(scan.waitForExistence(timeout: 5), "A device with journals can scan a code too.")
+        XCTAssertTrue(scan.waitToAppear(timeout: 5), "A device with journals can scan a code too.")
         scan.tap()
         let merge = app.navigationBars["Merge Journals"]
-        XCTAssertTrue(merge.waitForExistence(timeout: 10))
+        XCTAssertTrue(merge.waitToAppear(timeout: 10))
         let components = try XCTUnwrap(URLComponents(string: address))
         let serverHost = "\(components.host ?? ""):\(components.port ?? 0)"
         XCTAssertTrue(app.staticTexts["Merge only if \(serverHost) is your server."].exists)
@@ -62,7 +62,7 @@ final class MergeUITests: XCTestCase {
         XCTAssertNil(early, "Nothing is asked of the connected device before Merge.")
         capture(app, "Merge Journals")
         merge.buttons["Merge"].tap()
-        XCTAssertTrue(app.staticTexts["Finish on Your Other Device"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Finish on Your Other Device"].waitToAppear(timeout: 10))
 
         var candidate: PairingCandidate?
         for _ in 0..<30 where candidate == nil {
@@ -75,12 +75,12 @@ final class MergeUITests: XCTestCase {
         try await owner.approvePairing(approval, masterKey: key)
 
         // Both entries are in one "Default" journal.
-        XCTAssertTrue(app.buttons["Sync Now"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.buttons["Sync Now"].waitToAppear(timeout: 30))
         // Sync Now shows that it synced (docs/design/sync-now-and-done.md).
         app.buttons["Sync Now"].tap()
         capture(app, "Sync Now running")
         let synced = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Just now"))
-        XCTAssertTrue(synced.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(synced.firstMatch.waitToAppear(timeout: 10))
         capture(app, "Last synced after Sync Now")
         NavigationTestSupport.closeSettings(app)
         NavigationTestSupport.showJournals(app)
@@ -88,7 +88,7 @@ final class MergeUITests: XCTestCase {
             NSPredicate(format: "label == %@", "Default"))
         XCTAssertEqual(defaults.count, 1, "Same-name journals are combined.")
         NavigationTestSupport.selectCollection("Default", app: app)
-        XCTAssertTrue(app.staticTexts["Synced reflection"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Synced reflection"].waitToAppear(timeout: 10))
         XCTAssertTrue(app.staticTexts["Local note"].exists)
         capture(app, "Merged journal")
         try await SyncEngine(store: store, client: owner).synchronize()

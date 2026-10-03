@@ -24,7 +24,7 @@ final class AppLockUITests: XCTestCase {
         lock.tap()
         // Locking by hand doesn't ask at once, or Face ID would open the journal again.
         let unlock = app.buttons["Unlock with Face ID"]
-        XCTAssertTrue(unlock.waitForExistence(timeout: 10))
+        XCTAssertTrue(unlock.waitToAppear(timeout: 10))
         XCTAssertTrue(app.staticTexts["My Journal Is Locked"].exists)
         XCTAssertFalse(app.textViews["Entry text"].exists)
         capture(app, "Locked with Unlock with Face ID")
@@ -35,7 +35,7 @@ final class AppLockUITests: XCTestCase {
         app.terminate()
         app.launchEnvironment["JOURNAL_UI_TEST_DEVICE_AUTH"] = "cancel"
         app.launch()
-        XCTAssertTrue(unlock.waitForExistence(timeout: 15))
+        XCTAssertTrue(unlock.waitToAppear(timeout: 15))
         XCTAssertFalse(app.textViews["Entry text"].exists)
         XCTAssertFalse(app.staticTexts["My Journal couldn’t be unlocked. Try again."].exists)
         XCTAssertFalse(app.buttons["Use Recovery Key"].exists)
@@ -46,7 +46,7 @@ final class AppLockUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_UI_TEST_DEVICE_AUTH"] = "unavailable"
         app.launch()
         let problem = app.staticTexts["My Journal couldn’t be unlocked. Try again."]
-        XCTAssertTrue(problem.waitForExistence(timeout: 15))
+        XCTAssertTrue(problem.waitToAppear(timeout: 15))
         let recoverInstead = app.buttons["Use Recovery Key"]
         try reveal(recoverInstead, app: app, container: app.scrollViews.firstMatch)
         capture(app, "Unavailable device authentication offers the recovery key")
@@ -83,7 +83,7 @@ final class AppLockUITests: XCTestCase {
         app.launch()
         let explanation = app.staticTexts[
             "Your device key is unavailable. Use your recovery key to unlock your journals."]
-        guard explanation.waitForExistence(timeout: 15) else { throw NavigationFailure.unreachableAction }
+        guard explanation.waitToAppear(timeout: 15) else { throw NavigationFailure.unreachableAction }
         XCTAssertFalse(app.buttons["Unlock with Face ID"].exists, "Face ID can’t replace a missing key.")
         XCTAssertFalse(app.textViews["Entry title"].exists)
         try reveal(explanation, app: app, container: app.scrollViews.firstMatch)
@@ -121,11 +121,11 @@ final class AppLockUITests: XCTestCase {
         try openEntry(fixture.entry.title, app: app)
         app.buttons["Review Changes"].firstMatch.tap()
         let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        guard versions.waitForExistence(timeout: 10) else { throw NavigationFailure.unreachableAction }
+        guard versions.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
         capture(app, "Conflict review before background lock")
         XCUIDevice.shared.press(.home)
         app.activate()
-        guard app.staticTexts["My Journal Is Locked"].waitForExistence(timeout: 10) else {
+        guard app.staticTexts["My Journal Is Locked"].waitToAppear(timeout: 10) else {
             throw NavigationFailure.unreachableAction
         }
         XCTAssertFalse(versions.exists)
@@ -137,7 +137,7 @@ final class AppLockUITests: XCTestCase {
         unlock.tap()
         try openEntry(fixture.entry.title, app: app)
         app.buttons["Review Changes"].firstMatch.tap()
-        guard versions.waitForExistence(timeout: 10) else { throw NavigationFailure.unreachableAction }
+        guard versions.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
         capture(app, "Unresolved conflict available after unlocking")
         app.navigationBars["Review Changes"].buttons["Cancel"].tap()
         app.terminate()
@@ -164,17 +164,17 @@ final class AppLockUITests: XCTestCase {
         let journals = app.collectionViews["Journals"]
         let ready = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in editor.exists || row.exists || journals.exists }, object: nil)
-        guard XCTWaiter.wait(for: [ready], timeout: 15) == .completed else {
+        guard Waiting.wait(for: ready, timeout: 15) == .completed else {
             throw NavigationFailure.unreachableAction
         }
         // After leaving an entry for the list, unlocking or relaunching shows the list rather than the entry.
         if !editor.exists, !row.exists { NavigationTestSupport.selectCollection("All Entries", app: app) }
         if !editor.exists {
-            guard row.waitForExistence(timeout: 10) else { throw NavigationFailure.unreachableAction }
+            guard row.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
             row.tap()
         }
-        guard editor.waitForExistence(timeout: 10) else { throw NavigationFailure.unreachableAction }
-        XCTAssertEqual(editor.value as? String, title)
+        guard editor.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
+        assertEventually(editor.value as? String, equals: title)
     }
     /// Turns App Lock on from the open Settings; the test build answers the Face ID request.
     @MainActor private func turnOnAppLock(app: XCUIApplication) throws {
@@ -183,20 +183,20 @@ final class AppLockUITests: XCTestCase {
         try reveal(appLock, app: app)
         XCTAssertEqual(appLock.value as? String, "0")
         appLock.switches.firstMatch.tap()
-        guard app.buttons["Lock My Journal"].waitForExistence(timeout: 10) else {
+        guard app.buttons["Lock My Journal"].waitToAppear(timeout: 10) else {
             throw NavigationFailure.unreachableAction
         }
         XCTAssertEqual(appLock.value as? String, "1")
     }
     @MainActor private func type(_ value: String, into name: String, app: XCUIApplication) throws {
         let field = app.secureTextFields[name]
-        guard field.waitForExistence(timeout: 10) else { throw NavigationFailure.unreachableAction }
+        guard field.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
         field.tap()
         field.typeText(value)
     }
     @MainActor private func enter(_ name: String, value: String, app: XCUIApplication) throws {
         let field = app.secureTextFields[name]
-        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        XCTAssertTrue(field.waitToAppear(timeout: 10))
         if name == "Recovery Key" {
             try reveal(field, app: app, container: app.scrollViews.firstMatch)
         }

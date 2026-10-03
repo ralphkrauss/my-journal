@@ -9,7 +9,7 @@ final class JournalUITests: XCTestCase {
         app.launch()
         completeLocalSetup(app)
         let newEntry = app.buttons["New Entry"].firstMatch
-        XCTAssertTrue(newEntry.waitForExistence(timeout: 10))
+        XCTAssertTrue(newEntry.waitToAppear(timeout: 10))
         NavigationTestSupport.showJournals(app)
         app.buttons["New Journal"].tap()
         let createJournal = app.alerts["New Journal"]
@@ -19,7 +19,7 @@ final class JournalUITests: XCTestCase {
         NavigationTestSupport.selectCollection("Work", app: app)
         newEntry.tap()
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
         title.tap()
         title.typeText("A useful day")
         let editor = app.textViews["Entry text"]
@@ -34,15 +34,15 @@ final class JournalUITests: XCTestCase {
         XCTAssertEqual(app.textViews["Entry text"].value as? String, "Finished the prototype.\nA note for tomorrow.")
         app.buttons["Entry Actions"].firstMatch.tap()
         app.buttons["Move Entry…"].tap()
-        XCTAssertTrue(app.navigationBars["Move Entry"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Move Entry"].waitToAppear(timeout: 5))
         app.buttons["Default"].tap()
         let moveScreen = XCTAttachment(screenshot: app.screenshot())
         moveScreen.name = "Move entry destination"
         moveScreen.lifetime = .keepAlways
         add(moveScreen)
         app.buttons["Move"].tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 5))
-        XCTAssertEqual(NavigationTestSupport.title(app).value as? String, "A useful day")
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 5))
+        assertEventually(NavigationTestSupport.title(app).value as? String, equals: "A useful day")
         app.terminate()
         app.launch()
         NavigationTestSupport.openEntry("A useful day", journal: "All Entries", app: app)
@@ -60,19 +60,19 @@ final class JournalUITests: XCTestCase {
         completeLocalSetup(app)
         app.buttons["New Entry"].firstMatch.tap()
         let title = NavigationTestSupport.title(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
         title.tap()
         title.typeText("Keep this reflection")
         NavigationTestSupport.showJournals(app)
         app.staticTexts["Default"].firstMatch.press(forDuration: 1)
         app.buttons["Delete Journal…"].tap()
         let alert = app.alerts["Delete “Default”?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 10))
+        XCTAssertTrue(alert.waitToAppear(timeout: 10))
         XCTAssertTrue(alert.staticTexts["Its entry moves to Recently Deleted."].exists)
         attachScreen(app, name: "Delete last journal confirmation")
         alert.buttons["Delete"].tap()
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
-        XCTAssertTrue(app.staticTexts["Keep this reflection"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Keep this reflection"].waitToAppear(timeout: 5))
         attachScreen(app, name: "Deleted journal and entry")
         let trash = app.collectionViews.firstMatch
         scrollTo(app.staticTexts["Items stay here until you delete them permanently."], in: trash)
@@ -80,14 +80,14 @@ final class JournalUITests: XCTestCase {
         scrollTo(app.staticTexts["Default"].firstMatch, in: trash, upwards: false)
         app.staticTexts["Default"].firstMatch.tap()
         let restore = app.buttons["Restore Journal…"]
-        XCTAssertTrue(restore.waitForExistence(timeout: 5))
+        XCTAssertTrue(restore.waitToAppear(timeout: 5))
         restore.tap()
-        XCTAssertTrue(app.buttons["Restore Journal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Restore Journal"].waitToAppear(timeout: 5))
         attachScreen(app, name: "Restore journal confirmation")
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(restore.waitForExistence(timeout: 5))
+        XCTAssertTrue(restore.waitToAppear(timeout: 5))
         restore.tap()
-        XCTAssertTrue(app.buttons["Restore Journal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Restore Journal"].waitToAppear(timeout: 5))
         tapAfterScrolling(app.buttons["Restore Journal"], in: app.scrollViews.firstMatch)
         app.terminate()
         app.launch()
@@ -116,14 +116,14 @@ final class JournalUITests: XCTestCase {
     /// At the largest text sizes a button can be below the fold, where a list hasn't created it yet.
     @MainActor private func scrollToButton(_ label: String, below title: String, app: XCUIApplication) -> XCUIElement {
         let button = app.buttons[label]
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars[title].waitToAppear(timeout: 10))
         for _ in 0..<4 where !button.isHittable { app.swipeUp() }
-        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        XCTAssertTrue(button.waitToAppear(timeout: 5))
         return button
     }
     @MainActor private func completeLocalSetup(_ app: XCUIApplication) {
         let start = app.buttons["Start a Journal"]
-        XCTAssertTrue(start.waitForExistence(timeout: 15))
+        XCTAssertTrue(start.waitToAppear(timeout: 15))
         start.tap()
         NavigationTestSupport.createPasswordJournal(app)
     }
@@ -161,10 +161,10 @@ final class JournalUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
-        XCTAssertTrue(app.buttons["Connect to a Server…"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Connect to a Server…"].waitToAppear(timeout: 10))
         app.buttons["Connect to a Server…"].tap()
         let field = app.textFields["Server Address"]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitToAppear(timeout: 5))
         field.tap()
         field.typeText(address)
         app.buttons["Continue"].tap()
@@ -172,9 +172,9 @@ final class JournalUITests: XCTestCase {
         // The fixture library uses a recovery key, so the step asks for it by that name.
         scrollToButton("Use a Connected Device Instead…", below: "Enter Recovery Key", app: app).tap()
         let codeView = app.staticTexts["pairing-code"]
-        XCTAssertTrue(codeView.waitForExistence(timeout: 10))
+        XCTAssertTrue(codeView.waitToAppear(timeout: 10))
+        assertEventually((codeView.value as? String ?? codeView.label).filter(\.isNumber).count, equals: 9)
         let code = (codeView.value as? String ?? codeView.label).filter(\.isNumber)
-        XCTAssertEqual(code.count, 9)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Pairing code"
 
@@ -184,8 +184,8 @@ final class JournalUITests: XCTestCase {
         let approval = try await owner.preparePairingApproval(PairingChallenge(candidate))
         // As a person would, compare the new device's check code with the approving device's before sending the key.
         let shown = app.staticTexts["check-code"]
-        XCTAssertTrue(shown.waitForExistence(timeout: 10))
-        XCTAssertEqual((shown.value as? String ?? "").filter(\.isNumber), approval.checkCode)
+        XCTAssertTrue(shown.waitToAppear(timeout: 10))
+        assertEventually((shown.value as? String ?? "").filter(\.isNumber), equals: approval.checkCode)
         let check = XCTAttachment(screenshot: app.screenshot())
         check.name = "Check code on the new device"
         check.lifetime = .keepAlways
@@ -193,7 +193,7 @@ final class JournalUITests: XCTestCase {
         try await owner.approvePairing(approval, masterKey: key)
         // Approved on the other device, but nothing is accepted here until the person confirms the codes match.
         let connect = app.buttons["Connect"]
-        XCTAssertTrue(connect.waitForExistence(timeout: 10))
+        XCTAssertTrue(connect.waitToAppear(timeout: 10))
         XCTAssertTrue(app.staticTexts["Connect only if your other device shows the same code."].exists)
         try await Task.sleep(nanoseconds: 3_000_000_000)
         XCTAssertTrue(shown.exists, "Nothing is installed before Connect.")
@@ -204,8 +204,8 @@ final class JournalUITests: XCTestCase {
         connect.tap()
         let title = NavigationTestSupport.title(app)
         NavigationTestSupport.openEntry("Synced reflection", journal: "All Entries", app: app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        XCTAssertEqual(title.value as? String, "Synced reflection")
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
+        assertEventually(title.value as? String, equals: "Synced reflection")
         XCTAssertTrue(
             (app.textViews["Entry text"].value as? String ?? "").contains("Arrived privately from the other device."))
         let devices = try await owner.devices()
@@ -216,7 +216,7 @@ final class JournalUITests: XCTestCase {
         func row(_ text: String) -> XCUIElement {
             app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
         }
-        XCTAssertTrue(row("Fixture Mac").waitForExistence(timeout: 10))
+        XCTAssertTrue(row("Fixture Mac").waitToAppear(timeout: 10))
         XCTAssertTrue(row("This Device").exists)
         XCTAssertFalse(row(" · ").exists, "Device identifiers appear only to tell identical rows apart.")
         let list = XCTAttachment(screenshot: app.screenshot())
@@ -241,12 +241,12 @@ final class JournalUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launchEnvironment["JOURNAL_TEST_SCANNED_CODE"] = host.invite.text
         app.launch()
-        XCTAssertTrue(app.buttons["Connect to a Server…"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Connect to a Server…"].waitToAppear(timeout: 10))
         app.buttons["Connect to a Server…"].tap()
         let scan = app.buttons["Scan Code"]
-        XCTAssertTrue(scan.waitForExistence(timeout: 5))
+        XCTAssertTrue(scan.waitToAppear(timeout: 5))
         scan.tap()
-        XCTAssertTrue(app.staticTexts["Finish on Your Other Device"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Finish on Your Other Device"].waitToAppear(timeout: 10))
         attachScreen(app, name: "Scanned code waiting for the connected device")
         var candidate: PairingCandidate?
         for _ in 0..<30 where candidate == nil {
@@ -267,9 +267,9 @@ final class JournalUITests: XCTestCase {
         app.buttons["Entry Actions"].firstMatch.tap()
         tapAfterScrolling(app.buttons["Image Descriptions…"], in: app.collectionViews.firstMatch)
         let field = app.descendants(matching: .any).matching(identifier: "Image 1 description").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        XCTAssertTrue(field.waitToAppear(timeout: 10))
         scrollTo(field, in: app.scrollViews.firstMatch)
-        XCTAssertEqual(field.value as? String, "Original image")
+        assertEventually(field.value as? String, equals: "Original image")
         field.tap()
         field.typeText(" viewed from home")
         // Keep the gesture above the keyboard; a full-height swipe can hit predictive text.
@@ -289,15 +289,15 @@ final class JournalUITests: XCTestCase {
         layout.lifetime = .keepAlways
         add(layout)
         app.navigationBars["Image Descriptions"].buttons["Done"].tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 10))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
         app.terminate()
         app.launch()
         NavigationTestSupport.openEntry("Synced reflection", journal: "All Entries", app: app)
         app.buttons["Entry Actions"].firstMatch.tap()
         tapAfterScrolling(app.buttons["Image Descriptions…"], in: app.collectionViews.firstMatch)
-        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        XCTAssertTrue(field.waitToAppear(timeout: 10))
         scrollTo(field, in: app.scrollViews.firstMatch)
-        XCTAssertEqual(field.value as? String, editedDescription)
+        assertEventually(field.value as? String, equals: editedDescription)
         attachScreen(app, name: "Reopened image description")
         scrollTo(app.buttons["Copy Descriptions"], in: app.scrollViews.firstMatch)
         attachScreen(app, name: "Reachable Copy Descriptions")
@@ -315,8 +315,8 @@ final class JournalUITests: XCTestCase {
         app.buttons["Cancel"].tap()
         app.buttons["Entry Actions"].firstMatch.tap()
         tapAfterScrolling(app.buttons["Image Descriptions…"], in: app.collectionViews.firstMatch)
-        XCTAssertTrue(field.waitForExistence(timeout: 10))
-        XCTAssertEqual(field.value as? String, savedDescription)
+        XCTAssertTrue(field.waitToAppear(timeout: 10))
+        assertEventually(field.value as? String, equals: savedDescription)
         app.buttons["Cancel"].tap()
     }
 

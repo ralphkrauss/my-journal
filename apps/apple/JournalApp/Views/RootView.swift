@@ -47,6 +47,11 @@ struct RootView: View {
     /// Deletions are stored one after another, each without cancelling the last.
     @State private var deletionTask: Task<Void, Never>?
     @State private var archiveToImport: URL?
+    /// An archive opened before the journals could be shown: while the library opened, as when opening the archive
+    /// launched the app, or while it was locked. It opens once they are shown; a cancelled or failed unlock keeps it
+    /// waiting for the next one, until the person leaves the app.
+    @State private var pendingArchive: URL?
+    @Environment(\.scenePhase) private var scenePhase
     #if os(iOS)
         @State var searchPresented = false
         @State var journalsSearchPresented = false
@@ -182,6 +187,9 @@ struct RootView: View {
             .onValueChange(of: model.destination) { followModelDestination(to: $0) }
         #endif
         .onValueChange(of: model.selectedID) { _ in
+            #if os(iOS)
+                editor.entryVisitEnded()
+            #endif
             cancelImageImport()
             editor.sourceMode = model.draft?.document.requiresMarkdownSource ?? false
             if model.titleFocus != nil || !usesStackedNavigation, let id = model.selectedID,
@@ -199,17 +207,19 @@ struct RootView: View {
         }
         .onOpenURL { url in
             guard url.isFileURL, url.pathExtension.lowercased() == "journalarchive" else { return }
-            guard !model.locked, !model.replacingVault else {
-                model.error = "Unlock My Journal before opening an archive."
-                return
-            }
-            archiveToImport = url
+            pendingArchive = url
+            openPendingArchive()
         }
+        .onValueChange(of: model.loaded) { _ in openPendingArchive() }
+        .onValueChange(of: model.locked) { _ in openPendingArchive() }
+        .onValueChange(of: model.committingMutation) { _ in openPendingArchive() }
+        // Someone who gave up unlocking isn't shown the archive hours later.
+        .onValueChange(of: scenePhase) { if $0 == .background { pendingArchive = nil } }
         .sheet(isPresented: Binding(get: { archiveToImport != nil }, set: { if !$0 { archiveToImport = nil } })) {
             if let archiveToImport { ArchiveImportView(source: archiveToImport) }
         }
         .sheet(item: $imageDescriptionsEntry) { ImageDescriptionsView(entry: $0) }
-        .permanentDeletionPrompt($permanentDeletionRequest)
+        .permanentDeletionPrompt($permanentDeletionRequest, leave: leaveDeletedEntry)
         .sheet(item: $entryToDate) { EntryDateView(entry: $0) }
         .onDisappear {
             rowActionTask?.cancel()
@@ -225,6 +235,17 @@ struct RootView: View {
         #else
             .sheet(isPresented: $model.settingsPresented) { SettingsView() }
         #endif
+    }
+    /// Opens a waiting archive once the journals are shown, as after unlocking, and after a change being stored. While
+    /// connecting or turning on encryption replaces the journals, it can't be imported, and the person is told so.
+    private func openPendingArchive() {
+        guard let url = pendingArchive, model.loaded, !model.locked, !model.committingMutation else { return }
+        pendingArchive = nil
+        guard !model.replacingVault else {
+            model.error = "My Journal is updating your journals. Try again when it’s finished."
+            return
+        }
+        archiveToImport = url
     }
     @ViewBuilder private var mainNavigation: some View {
         #if os(macOS)
@@ -548,14 +569,17 @@ struct RootView: View {
             model.removeFromLists(id, selectingNext: selectingNext)
         }
         guard let removal else { return }
-        // On iPhone, the deleted entry's page goes back to the list while it still shows the entry.
-        if usesStackedNavigation, navigationPath.last == .entry(id) { navigationPath.removeLast() }
+        leaveDeletedEntry(id)
         let previous = deletionTask
         deletionTask = Task {
             await previous?.value
             guard let deleted = await model.deleteListed(removal) else { return }
             model.registerDeletionUndo(deleted, selectingNext: selectingNext, in: undoManager)
         }
+    }
+    /// On iPhone, a deleted entry's page goes back to the list while it still shows the entry.
+    private func leaveDeletedEntry(_ id: UUID) {
+        if usesStackedNavigation, navigationPath.last == .entry(id) { navigationPath.removeLast() }
     }
     private func journalName(for entry: JournalItem) -> String {
         let title = model.journals.first { $0.id == entry.journalID }?.title ?? ""
@@ -641,7 +665,7 @@ struct RootView: View {
     }
     @ViewBuilder private var detailContent: some View {
         if let item = model.draft, item.kind == "journal" {
-            DeletedJournalView(journal: item)
+            DeletedJournalView(journal: item, leave: leaveDeletedEntry)
         } else if let item = model.draft {
             GeometryReader { geometry in
                 VStack(alignment: .leading, spacing: 0) {

@@ -70,8 +70,10 @@ reset_server() {
   rm -rf "$data"
   start_server "$data"
 }
+# The flags of scripts/check.sh core, so both share one build of JournalCore instead of rebuilding it in turn.
 probe() {
-  swift run --jobs 2 --package-path apps/apple/Packages/JournalCore --force-resolved-versions JournalProbe "$@"
+  swift run --jobs 2 --package-path apps/apple/Packages/JournalCore --force-resolved-versions \
+    -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors JournalProbe "$@"
 }
 
 state="$task_dir/state"

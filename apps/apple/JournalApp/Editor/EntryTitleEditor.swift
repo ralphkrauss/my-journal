@@ -34,6 +34,9 @@
             view.applyInitialFocus()
         }
         static func dismantleUIView(_ view: TitleTextView, coordinator: Coordinator) {
+            // Possibly during a view update: forgetting publishes the end of editing after it, the delegate wouldn't.
+            view.delegate = nil
+            view.endFocusBeforeRemoval()
             view.editorActions?.forget(view)
         }
         func sizeThatFits(_ proposal: ProposedViewSize, uiView: TitleTextView, context: Context) -> CGSize? {
@@ -102,6 +105,14 @@
         override func willMove(toWindow newWindow: UIWindow?) {
             if newWindow == nil { editorActions?.forget(self) }
             super.willMove(toWindow: newWindow)
+        }
+        /// Going Back removes the title before the rest of its entry. UIKit would hand the keyboard of a focused title
+        /// to the enclosing body as it goes, and the body, leaving the screen focused, would take it for interrupted
+        /// writing and continue writing when the entry is opened again: the checkmark and keyboard return
+        /// (docs/design/sync-now-and-done.md). The title gives the keyboard up first, with the body declining it.
+        func endFocusBeforeRemoval() {
+            guard isFirstResponder, let editorActions else { return }
+            editorActions.whileEndingEditing { resignFirstResponder() }
         }
         override func didMoveToWindow() {
             super.didMoveToWindow()

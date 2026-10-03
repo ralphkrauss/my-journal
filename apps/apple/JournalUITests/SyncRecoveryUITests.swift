@@ -32,7 +32,7 @@ final class SyncRecoveryUITests: XCTestCase {
         let library = UUID().uuidString
         var app = launch(library)
         let start = app.buttons["Start a Journal"]
-        XCTAssertTrue(start.waitForExistence(timeout: 15))
+        XCTAssertTrue(start.waitToAppear(timeout: 15))
         start.tap()
         NavigationTestSupport.createPasswordJournal(app)
         writeEntry("First entry", app: app)
@@ -40,7 +40,7 @@ final class SyncRecoveryUITests: XCTestCase {
         tap(app.buttons["Connect to a Server…"])
         chooseServer(app)
         try setUpServer(app, password: true)
-        XCTAssertTrue(app.staticTexts["Last Synced"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["Last Synced"].waitToAppear(timeout: 30))
         capture(app, "1 Syncing normally")
 
         // Removed in Devices on another device: Connect Again signs in, with no Merge step.
@@ -93,7 +93,7 @@ final class SyncRecoveryUITests: XCTestCase {
         expectMessage(
             "Can’t reach the server right now. Your changes are saved on this device and will sync automatically.",
             app: app)
-        XCTAssertTrue(labeled("Not on Server Yet, 1 item", app: app).waitForExistence(timeout: 30))
+        XCTAssertTrue(labeled("Not on Server Yet, 1 item", app: app).waitToAppear(timeout: 30))
         capture(app, "5 Unreachable with a change waiting two days")
         try request("start")
         tap(app.buttons["Try Again"])
@@ -115,15 +115,15 @@ final class SyncRecoveryUITests: XCTestCase {
         // Stop Syncing keeps everything; connecting again joins by identity after Merge Journals asks.
         tap(app.buttons["Stop Syncing…"])
         let stop = app.buttons["Stop Syncing"]
-        XCTAssertTrue(stop.waitForExistence(timeout: 5))
+        XCTAssertTrue(stop.waitToAppear(timeout: 5))
         capture(app, "7 Stop Syncing")
         stop.tap()
-        XCTAssertTrue(app.staticTexts["Your journals are saved on this device."].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Your journals are saved on this device."].waitToAppear(timeout: 10))
         capture(app, "8 After Stop Syncing")
         tap(app.buttons["Connect to a Server…"])
         chooseServer(app)
         let merge = app.navigationBars["Merge Journals"]
-        XCTAssertTrue(merge.waitForExistence(timeout: 15))
+        XCTAssertTrue(merge.waitToAppear(timeout: 15))
         merge.buttons["Merge"].tap()
         signIn(app)
         expectSynced(app)
@@ -138,7 +138,7 @@ final class SyncRecoveryUITests: XCTestCase {
         try request("reset")
         let app = launch(UUID().uuidString)
         let start = app.buttons["Start a Journal"]
-        XCTAssertTrue(start.waitForExistence(timeout: 15))
+        XCTAssertTrue(start.waitToAppear(timeout: 15))
         start.tap()
         app.buttons["Continue Without Encryption"].tap()
         writeEntry("Before encryption", app: app)
@@ -146,7 +146,7 @@ final class SyncRecoveryUITests: XCTestCase {
         tap(app.buttons["Connect to a Server…"])
         chooseServer(app)
         try setUpServer(app, password: false)
-        XCTAssertTrue(app.staticTexts["Last Synced"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["Last Synced"].waitToAppear(timeout: 30))
 
         try request("recovery-code")
         let code = try String(contentsOf: try file("recovery-code"), encoding: .utf8)
@@ -227,9 +227,9 @@ final class SyncRecoveryUITests: XCTestCase {
         let title = NavigationTestSupport.title(app)
         let ready = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in create.exists || title.exists }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 15), .completed)
+        XCTAssertEqual(Waiting.wait(for: ready, timeout: 15), .completed)
         NavigationTestSupport.newEntryFromList(app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(title.waitToAppear(timeout: 10))
         app.typeText(text)
     }
     @MainActor private func openSyncSettings(_ app: XCUIApplication) {
@@ -238,7 +238,7 @@ final class SyncRecoveryUITests: XCTestCase {
     }
     @MainActor private func chooseServer(_ app: XCUIApplication) {
         let field = app.textFields["Server Address"]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitToAppear(timeout: 5))
         field.tap()
         field.typeText(address)
         app.navigationBars["Connect to a Server"].buttons["Continue"].tap()
@@ -246,7 +246,7 @@ final class SyncRecoveryUITests: XCTestCase {
     /// The setup-code step, then the library's password when it has one, through to Server Is Ready.
     @MainActor private func setUpServer(_ app: XCUIApplication, password usesPassword: Bool) throws {
         let setUp = app.navigationBars["Set Up Server"]
-        XCTAssertTrue(setUp.waitForExistence(timeout: 15))
+        XCTAssertTrue(setUp.waitToAppear(timeout: 15))
         let code = try String(contentsOf: try file("setup-code"), encoding: .utf8)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let field = app.textFields["Setup Code"]
@@ -255,7 +255,7 @@ final class SyncRecoveryUITests: XCTestCase {
         if usesPassword {
             setUp.buttons["Continue"].tap()
             let enter = app.navigationBars["Enter Master Password"]
-            XCTAssertTrue(enter.waitForExistence(timeout: 15))
+            XCTAssertTrue(enter.waitToAppear(timeout: 15))
             let phrase = app.secureTextFields["Master Password"]
             phrase.tap()
             phrase.typeText(password)
@@ -263,13 +263,13 @@ final class SyncRecoveryUITests: XCTestCase {
         } else {
             setUp.buttons["Set Up"].tap()
         }
-        XCTAssertTrue(app.staticTexts["Server Is Ready"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["Server Is Ready"].waitToAppear(timeout: 30))
         app.buttons["Done"].tap()
     }
     /// Connect to a Server, opened by an action, goes straight to signing in to this device's server.
     @MainActor private func signIn(_ app: XCUIApplication) {
         let enter = app.navigationBars["Enter Master Password"]
-        XCTAssertTrue(enter.waitForExistence(timeout: 20))
+        XCTAssertTrue(enter.waitToAppear(timeout: 20))
         let phrase = app.secureTextFields["Master Password"]
         phrase.tap()
         phrase.typeText(password)
@@ -281,14 +281,14 @@ final class SyncRecoveryUITests: XCTestCase {
         if let message = shownMessage {
             let gone = XCTNSPredicateExpectation(
                 predicate: NSPredicate(format: "exists == false"), object: app.staticTexts[message])
-            XCTAssertEqual(XCTWaiter.wait(for: [gone], timeout: 40), .completed, "Still: \(message)", line: line)
+            XCTAssertEqual(Waiting.wait(for: gone, timeout: 40), .completed, "Still: \(message)", line: line)
             shownMessage = nil
         }
-        XCTAssertTrue(app.buttons["Sync Now"].waitForExistence(timeout: 40), line: line)
-        XCTAssertTrue(labeled("Last Synced, Just now", app: app).waitForExistence(timeout: 10), line: line)
+        XCTAssertTrue(app.buttons["Sync Now"].waitToAppear(timeout: 40), line: line)
+        XCTAssertTrue(labeled("Last Synced, Just now", app: app).waitToAppear(timeout: 10), line: line)
         let waiting = labeled("Not on Server Yet", app: app)
         let sent = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: waiting)
-        if XCTWaiter.wait(for: [sent], timeout: 15) != .completed {
+        if Waiting.wait(for: sent, timeout: 15) != .completed {
             capture(app, "Still waiting at line \(line)")
             XCTFail("Items still wait for the server", line: line)
         }
@@ -298,11 +298,11 @@ final class SyncRecoveryUITests: XCTestCase {
         app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", text)).firstMatch
     }
     @MainActor private func expectMessage(_ message: String, app: XCUIApplication) {
-        XCTAssertTrue(app.staticTexts[message].waitForExistence(timeout: 30), message)
+        XCTAssertTrue(app.staticTexts[message].waitToAppear(timeout: 30), message)
         shownMessage = message
     }
     @MainActor private func tap(_ element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout: 15))
+        XCTAssertTrue(element.waitToAppear(timeout: 15))
         element.tap()
     }
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {

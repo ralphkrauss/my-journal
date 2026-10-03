@@ -26,7 +26,9 @@ extension AppModel {
         }
     }
     var filteredDeletedJournals: [JournalItem] {
-        deletedJournals.filter { query.isEmpty || $0.title.localizedStandardContains(query) }
+        deletedJournals.filter {
+            (query.isEmpty || $0.title.localizedStandardContains(query)) && !lists.deleting.contains($0.id)
+        }
     }
     func restorableEntryCount(_ journalID: UUID) -> Int {
         items.filter {
@@ -46,6 +48,7 @@ extension AppModel {
     var filteredDeletedTemplates: [JournalItem] {
         items.filter { item in
             item.kind == "template" && item.deletedAt != nil && !item.isPermanentlyDeleted
+                && !lists.deleting.contains(item.id)
                 && (query.isEmpty || item.title.localizedStandardContains(query)
                     || item.document.text.localizedStandardContains(query))
         }.sorted { $0.date == $1.date ? $0.id.uuidString < $1.id.uuidString : $0.date > $1.date }

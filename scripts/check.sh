@@ -30,22 +30,38 @@ case "${1:-all}" in
     dotnet test server --no-build --no-restore
     ;;
   apple)
+    scripts/check.sh lint
+    scripts/check.sh core
+    scripts/generate-apple.sh
+    scripts/check.sh mac
+    scripts/check.sh ios-build
+    ;;
+  # The parts of the apple lane, for scripts/release-check.sh. mac and ios-build need the generated project.
+  lint)
     [[ "$(xcrun swift-format --version)" == "6.3.0" ]] || {
       echo "Use Xcode 26.6 (swift-format 6.3.0)." >&2
       exit 1
     }
     python3 scripts/quality/format-swift.py
     swiftlint lint --strict --quiet
+    ;;
+  core)
     swift test --package-path apps/apple/Packages/JournalCore --jobs 2 --force-resolved-versions \
       -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
-    scripts/generate-apple.sh
-    # Debug, explicitly: tests use loopback HTTP test servers, which only Debug builds accept.
+    ;;
+  mac)
+    # Debug, explicitly: tests use loopback HTTP test servers, which only Debug builds accept. JOURNAL_DERIVED_DATA
+    # lets it build beside a lane that uses artifacts/DerivedData.
     xcodebuild -jobs 2 -project apps/apple/Journal.xcodeproj -scheme 'My Journal (Mac)' -configuration Debug \
-      -destination 'platform=macOS' -derivedDataPath artifacts/DerivedData \
+      -destination 'platform=macOS' -derivedDataPath "${JOURNAL_DERIVED_DATA:-artifacts/DerivedData}" \
       -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- test
+    ;;
+  ios-build)
+    # Only this Mac's simulator architecture, which the simulator test lanes build too. Building every architecture
+    # would make this lane and those lanes recompile each other's code in the shared derived data.
     xcodebuild -jobs 2 -project apps/apple/Journal.xcodeproj -scheme 'My Journal (iOS)' \
       -destination 'generic/platform=iOS Simulator' -derivedDataPath artifacts/DerivedData \
-      -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- build
+      -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- ARCHS="$(uname -m)" build
     ;;
   audit)
     dotnet restore server --locked-mode --force-evaluate
@@ -57,8 +73,13 @@ case "${1:-all}" in
     scripts/check.sh apple
     scripts/check.sh audit
     ;;
+  release)
+    shift
+    exec scripts/release-check.sh "$@"
+    ;;
   *)
-    printf 'Usage: %s {hygiene|backend|apple|audit|all}\n' "$0" >&2
+    printf 'Usage: %s {hygiene|backend|apple|audit|all|release [options]}\n' "$0" >&2
+    printf 'Parts of apple: lint, core, mac, ios-build.\n' >&2
     exit 2
     ;;
 esac

@@ -11,19 +11,19 @@ final class SaveFailureUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = root.path
         app.launch()
-        guard app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15) else {
+        guard app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15) else {
             throw InteractionError.unreachable
         }
         app.secureTextFields["Recovery Key"].tap()
         app.secureTextFields["Recovery Key"].typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
-        guard NavigationTestSupport.title(app).waitForExistence(timeout: 15) else { throw InteractionError.unreachable }
+        guard NavigationTestSupport.title(app).waitToAppear(timeout: 15) else { throw InteractionError.unreachable }
         try rejectWrites(true, root: root)
         let body = app.textViews["Entry text"]
         body.tap()
         body.typeText("X")
         let alert = app.alerts["Journal"]
-        guard alert.waitForExistence(timeout: 10) else { throw InteractionError.unreachable }
+        guard alert.waitToAppear(timeout: 10) else { throw InteractionError.unreachable }
         capture(app, "Local save failure retains writing")
         let dismiss = alert.buttons["OK"]
         for _ in 0..<6 {
@@ -34,8 +34,8 @@ final class SaveFailureUITests: XCTestCase {
         }
         capture(app, "Save error explanation and dismissal after scrolling")
         dismiss.tap()
-        guard alert.waitForNonExistence(timeout: 5) else { throw InteractionError.unreachable }
-        XCTAssertEqual(body.value as? String, "X")
+        guard alert.waitToDisappear(timeout: 5) else { throw InteractionError.unreachable }
+        assertEventually(body.value as? String, equals: "X")
         capture(app, "Persistent warning immediately after dismissing the alert")
         let beforeRetry = try JournalStore(directory: root, key: fixture.key)
         let stored = try await beforeRetry.items().first { $0.id == fixture.entry.id }
@@ -43,7 +43,7 @@ final class SaveFailureUITests: XCTestCase {
         try await beforeRetry.close()
         let header = app.descendants(matching: .any).matching(identifier: "Entry header").firstMatch
         let retry = header.buttons["Try Again"]
-        guard retry.waitForExistence(timeout: 5) else {
+        guard retry.waitToAppear(timeout: 5) else {
             capture(app, "Dismissed failure has no retry action")
             throw InteractionError.unreachable
         }
@@ -54,13 +54,13 @@ final class SaveFailureUITests: XCTestCase {
         capture(app, "Draft retained with a reachable retry action")
         try rejectWrites(false, root: root)
         retry.tap()
-        guard retry.waitForNonExistence(timeout: 10) else { throw InteractionError.unreachable }
-        XCTAssertEqual(body.value as? String, "X")
+        guard retry.waitToDisappear(timeout: 10) else { throw InteractionError.unreachable }
+        assertEventually(body.value as? String, equals: "X")
         capture(app, "Retry saves the retained draft")
         app.terminate()
         app.launch()
-        guard NavigationTestSupport.title(app).waitForExistence(timeout: 15) else { throw InteractionError.unreachable }
-        XCTAssertEqual(body.value as? String, "X")
+        guard NavigationTestSupport.title(app).waitToAppear(timeout: 15) else { throw InteractionError.unreachable }
+        assertEventually(body.value as? String, equals: "X")
         XCTAssertFalse(header.buttons["Try Again"].exists)
         let store = try JournalStore(directory: root, key: fixture.key)
         let entries = try await store.items().filter { $0.kind == "entry" }

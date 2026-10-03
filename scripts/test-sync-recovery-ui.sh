@@ -163,6 +163,7 @@ xcodebuild -project apps/apple/Journal.xcodeproj -scheme 'My Journal (iOS)' \
   -configuration "${JOURNAL_CONFIGURATION:-Release}" \
   -destination "platform=iOS Simulator,id=$simulator_id" -parallel-testing-enabled NO \
   -derivedDataPath artifacts/DerivedData -resultBundlePath "$results/SyncRecovery.xcresult" \
+  -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
   -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- ENABLE_TESTABILITY=YES \
   JOURNAL_TEST_HEALTH_SERVER="$address" JOURNAL_TEST_HEALTH_CONTROL="$control" \
   "-only-testing:${JOURNAL_ONLY_TESTING:-JournalIOSUITests/SyncRecoveryUITests}" test

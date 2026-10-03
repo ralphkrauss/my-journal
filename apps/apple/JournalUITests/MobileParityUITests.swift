@@ -7,18 +7,18 @@ final class MobileParityUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
         defer { app.terminate() }
-        XCTAssertTrue(app.buttons["Start a Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
         app.buttons["Continue Without Encryption"].tap()
         NavigationTestSupport.selectCollection("Default", app: app)
         // Going straight back keeps the new entry, even though it's empty (owner decision, 2026-09-30).
         app.buttons["New Entry"].firstMatch.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 5))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 5))
         swipeBack(app)
         let emptyEntry = app.cells.containing(.staticText, identifier: "No additional text").firstMatch
-        XCTAssertTrue(emptyEntry.waitForExistence(timeout: 5))
+        XCTAssertTrue(emptyEntry.waitToAppear(timeout: 5))
         app.buttons["New Entry"].firstMatch.tap()
-        XCTAssertTrue(NavigationTestSupport.title(app).waitForExistence(timeout: 5))
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 5))
         app.typeText("Source formatting")
         let body = app.textViews["Entry text"]
         body.tap()
@@ -36,12 +36,12 @@ final class MobileParityUITests: XCTestCase {
         app.buttons["Finish Editing"].tap()
         for _ in 0..<2 {
             swipeBack(app)
-            XCTAssertTrue(app.searchFields["Search Default"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.searchFields["Search Default"].waitToAppear(timeout: 5))
             XCTAssertTrue(emptyEntry.exists)
             XCTAssertFalse(app.cells.containing(.staticText, identifier: "Source formatting").firstMatch.isSelected)
             swipeBack(app)
             let journals = app.collectionViews["Journals"]
-            XCTAssertTrue(journals.waitForExistence(timeout: 5))
+            XCTAssertTrue(journals.waitToAppear(timeout: 5))
             XCTAssertFalse(journals.cells.containing(.staticText, identifier: "Default").firstMatch.isSelected)
             NavigationTestSupport.openEntry("Source formatting", journal: "Default", app: app)
             if app.buttons["View Source"].firstMatch.exists {

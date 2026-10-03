@@ -78,7 +78,8 @@ Then run the lanes that match your change. CI runs all of them on every pull req
 | Backend | `mise exec -- scripts/check.sh backend` | Anything under `server/`. Locked restore, formatting, analyzers and API tests. |
 | Apple | `mise exec -- scripts/check.sh apple` | Swift code or `project.yml`. Format and lint, JournalCore tests, Mac tests and an iOS simulator build. |
 | Audit | `mise exec -- scripts/check.sh audit` | Dependencies. Needs network access. |
-| All | `mise exec -- scripts/check.sh all` | Before a release or a large change. |
+| All | `mise exec -- scripts/check.sh all` | A large change. |
+| Release | `mise exec -- scripts/release-check.sh` | Before a TestFlight build. Runs the lanes and end-to-end checks the changes need; see [release checks](engineering/release-checks.md). |
 
 Optionally install the Git hook, which runs the hygiene lane before each commit:
 

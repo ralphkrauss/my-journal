@@ -20,3 +20,13 @@ The current app shows one footer, "Items stay here until you delete them permane
 
 - iOS UI `testCancelledSwipeKeepsDeletedRowVisible`: swipe, Delete, Cancel; the row is still visible. It failed before the fix.
 - The existing `EntryActionsUITests.testSwipeDeletionRemovesOnlyThatRow` still passes (swipe to delete in a journal).
+
+## Delete Permanently: the row leaves as a deleted entry's row does — 2026-10-03
+
+Owner report: deleting an item permanently from Recently Deleted “kind of freezes and then poof it's gone without the animation”, unlike deleting an entry from a journal.
+
+Cause: the row stayed until the deletion was stored and the whole library read again, then the list was rebuilt outside any animation. A deleted entry's row instead leaves the list in the same update as the Delete action, with the list's own removal animation, while the deletion is stored afterwards.
+
+Intended behavior, the same mechanism as deleting an entry (`removeFromLists`/`hideInLists`): when Delete is chosen in the Delete Permanently alert, the entry's, template's or journal's row leaves Recently Deleted at once with the system list's removal animation. With Reduce Motion it is removed without animation, as other list changes are. If the deletion can't be stored (it changed meanwhile, or needs review), the row comes back and the existing message explains why. This covers the trailing swipe, the context menu and Delete Permanently… in the Entry Actions menu. From an open entry or deleted journal on iPhone, the page goes back to the list at once, as after Delete Entry, and the list shows without the row; it never appears there first. The alert and its copy are unchanged.
+
+Review: an independent design reviewer approved with changes. Checked: the store work runs off the main thread (a 3,000-entry library spends about 70 ms on the main thread updating the list as the row leaves, in a Debug build on the simulator), and a refused deletion after the iPhone page has gone back leaves the person in the list with the alert, never reopening the page. Not adopted: animating a returning row and moving the Mac selection to the next row; rows restored after a failed deletion, and the Mac selection, behave as for Delete Entry today.

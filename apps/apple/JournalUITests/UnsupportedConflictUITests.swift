@@ -11,7 +11,7 @@ final class UnsupportedConflictUITests: XCTestCase {
         defer { app.terminate() }
         app.launchEnvironment["JOURNAL_DATA_DIR"] = directory.path
         app.launch()
-        guard app.secureTextFields["Recovery Key"].waitForExistence(timeout: 15) else {
+        guard app.secureTextFields["Recovery Key"].waitToAppear(timeout: 15) else {
             throw InteractionError.unavailable
         }
         let recovery = app.secureTextFields["Recovery Key"]
@@ -20,11 +20,11 @@ final class UnsupportedConflictUITests: XCTestCase {
         app.buttons["Unlock"].tap()
         for attempt in 0..<2 {
             let review = app.buttons["Review Changes"].firstMatch
-            guard review.waitForExistence(timeout: 15) else { throw InteractionError.unavailable }
+            guard review.waitToAppear(timeout: 15) else { throw InteractionError.unavailable }
             review.tap()
             let explanation = app.staticTexts["Update My Journal to review these changes."]
-            guard explanation.waitForExistence(timeout: 10) else { throw InteractionError.unavailable }
-            XCTAssertTrue(app.buttons["Export Archive…"].isEnabled)
+            guard explanation.waitToAppear(timeout: 10) else { throw InteractionError.unavailable }
+            assertEventually(app.buttons["Export Archive…"].isEnabled)
             for action in ["Keep Both", "Keep One Version", "Keep Entry", "Keep Deletion", "Delete Permanently"] {
                 XCTAssertFalse(app.buttons[action].exists, "Unsupported content must not offer \(action).")
             }
@@ -33,7 +33,7 @@ final class UnsupportedConflictUITests: XCTestCase {
             screenshot.lifetime = .keepAlways
             add(screenshot)
             app.navigationBars["Review Changes"].buttons["Cancel"].tap()
-            guard explanation.waitForNonExistence(timeout: 5) else { throw InteractionError.unavailable }
+            guard explanation.waitToDisappear(timeout: 5) else { throw InteractionError.unavailable }
             app.terminate()
             try await verify(fixture, directory: directory)
             if attempt == 0 { app.launch() }

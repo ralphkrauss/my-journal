@@ -41,24 +41,26 @@ extension RootView {
                 )
                 .toolbar { compactToolbar }
                 .navigationDestination(for: CompactJournalRoute.self) { route in
-                    switch route {
-                    case .collection(let destination):
-                        // Only this collection's entries and actions ever appear here, even while a save finishes.
-                        if model.destination == destination {
-                            listedSidebar.toolbar { listToolbar }
-                        } else {
-                            Color.clear.navigationTitle(collectionTitle(destination))
-                        }
-                    case .entry(let id):
-                        Group {
-                            if model.draft?.id == id {
-                                detail
+                    ModelObservingPage {
+                        switch route {
+                        case .collection(let destination):
+                            // Only this collection's entries and actions ever appear here, even while a save finishes.
+                            if model.destination == destination {
+                                listedSidebar.toolbar { listToolbar }
                             } else {
-                                Color.clear
+                                Color.clear.navigationTitle(collectionTitle(destination))
                             }
+                        case .entry(let id):
+                            Group {
+                                if model.draft?.id == id {
+                                    detail
+                                } else {
+                                    Color.clear
+                                }
+                            }
+                            .toolbar { mainToolbar }
+                            .navigationBarTitleDisplayMode(.inline)
                         }
-                        .toolbar { mainToolbar }
-                        .navigationBarTitleDisplayMode(.inline)
                     }
                 }
             }
@@ -126,6 +128,8 @@ extension RootView {
             let previous = navigationPath
             navigationPath = requested
             if requested.count < previous.count, case .entry = previous.last {
+                // Writing interrupted as the entry's page leaves doesn't continue when it's opened again.
+                editor.entryVisitEnded()
                 // Once the writing is saved the entry is deselected, so a relaunch returns to the list rather than
                 // reopening it. An empty entry stays in the list, like any other.
                 Task {
@@ -175,3 +179,14 @@ extension RootView {
         }
     #endif
 }
+
+#if os(iOS)
+    /// A page on the stack, built again whenever the model changes. The stack doesn't always ask for its pages again
+    /// when the view holding it updates: when the list changed just as an entry's page went back to it, as after
+    /// Delete Permanently from the open entry, the list kept showing the deleted entry until the next change.
+    private struct ModelObservingPage<Content: View>: View {
+        @EnvironmentObject private var model: AppModel
+        @ViewBuilder let content: () -> Content
+        var body: some View { content() }
+    }
+#endif

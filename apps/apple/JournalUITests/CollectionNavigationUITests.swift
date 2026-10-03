@@ -13,23 +13,23 @@ final class CollectionNavigationUITests: XCTestCase {
         let app = try await launch()
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Templates", app: app)
-        XCTAssertTrue(app.staticTexts["Weekly review"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Weekly review"].firstMatch.waitToAppear(timeout: 10))
         try newEntry(app, from: "Templates")
 
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         let deleted = app.staticTexts["Lunch"].firstMatch
-        XCTAssertTrue(deleted.waitForExistence(timeout: 10))
+        XCTAssertTrue(deleted.waitToAppear(timeout: 10))
         // Beside the list, an open deleted entry closes for the new one.
         if !usesStack {
             deleted.tap()
-            XCTAssertTrue(app.buttons["Restore and Move…"].firstMatch.waitForExistence(timeout: 10))
+            XCTAssertTrue(app.buttons["Restore and Move…"].firstMatch.waitToAppear(timeout: 10))
         }
         try newEntry(app, from: "Recently Deleted")
 
         NavigationTestSupport.selectCollection("Default", app: app)
         let empty = app.staticTexts.matching(NSPredicate(format: "label == %@", "No additional text"))
-        XCTAssertTrue(empty.firstMatch.waitForExistence(timeout: 10))
-        XCTAssertEqual(empty.count, 2, "Each New Entry made one entry.")
+        XCTAssertTrue(empty.firstMatch.waitToAppear(timeout: 10))
+        assertEventually(empty.count, equals: 2, "Each New Entry made one entry.")
     }
 
     /// On iPhone, Merge Into… shows the journal the entries went to, Delete Journal… returns to Journals, and Restore
@@ -40,41 +40,41 @@ final class CollectionNavigationUITests: XCTestCase {
         let app = try await launch()
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Work", app: app)
-        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitToAppear(timeout: 10))
         journalAction("Merge Into…", app: app)
         let merge = app.navigationBars["Merge “Work”"]
-        XCTAssertTrue(merge.waitForExistence(timeout: 5))
+        XCTAssertTrue(merge.waitToAppear(timeout: 5))
         app.buttons["Travel"].firstMatch.tap()
         merge.buttons["Merge"].tap()
-        XCTAssertTrue(merge.waitForNonExistence(timeout: 10))
-        XCTAssertTrue(app.navigationBars["Travel"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(merge.waitToDisappear(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Travel"].waitToAppear(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitToAppear(timeout: 5))
         capture(app, "After Merge Into")
 
         journalAction("Delete Journal…", app: app)
         let deletion = app.alerts["Delete “Travel”?"]
-        XCTAssertTrue(deletion.waitForExistence(timeout: 5))
+        XCTAssertTrue(deletion.waitToAppear(timeout: 5))
         deletion.buttons["Delete"].tap()
-        XCTAssertTrue(app.collectionViews["Journals"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.collectionViews["Journals"].waitToAppear(timeout: 10))
         XCTAssertFalse(app.navigationBars["Untitled Journal"].exists)
         XCTAssertFalse(app.collectionViews["Journals"].staticTexts["Travel"].exists)
         capture(app, "After Delete Journal")
 
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         let journal = app.cells.containing(.staticText, identifier: "Travel").firstMatch
-        XCTAssertTrue(journal.waitForExistence(timeout: 10))
+        XCTAssertTrue(journal.waitToAppear(timeout: 10))
         journal.tap()
         app.buttons["Restore Journal…"].tap()
         let restore = app.buttons["Restore Journal"]
-        XCTAssertTrue(restore.waitForExistence(timeout: 5))
+        XCTAssertTrue(restore.waitToAppear(timeout: 5))
         restore.tap()
-        XCTAssertTrue(app.navigationBars["Travel"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Travel"].waitToAppear(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitToAppear(timeout: 5))
         XCTAssertFalse(app.navigationBars["Recently Deleted"].exists)
         capture(app, "After Restore Journal")
         // The entry deleted on its own is still in Recently Deleted.
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
-        XCTAssertTrue(app.staticTexts["Lunch"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Lunch"].firstMatch.waitToAppear(timeout: 10))
     }
 
     /// Restore and Move's title fits beside its buttons. Its confirm button had the same long label and truncated it.
@@ -83,12 +83,12 @@ final class CollectionNavigationUITests: XCTestCase {
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         let deleted = app.staticTexts["Lunch"].firstMatch
-        XCTAssertTrue(deleted.waitForExistence(timeout: 10))
+        XCTAssertTrue(deleted.waitToAppear(timeout: 10))
         deleted.tap()
         let action = NavigationTestSupport.readingButton("Restore and Move…", app: app)
         action.tap()
         let bar = app.navigationBars["Restore and Move"]
-        XCTAssertTrue(bar.waitForExistence(timeout: 5))
+        XCTAssertTrue(bar.waitToAppear(timeout: 5))
         let title = bar.staticTexts["Restore and Move"]
         XCTAssertTrue(title.exists)
         let font = UIFont.preferredFont(forTextStyle: .headline)
@@ -104,23 +104,23 @@ final class CollectionNavigationUITests: XCTestCase {
     @MainActor private var usesStack: Bool { !isPad }
     @MainActor private func newEntry(_ app: XCUIApplication, from collection: String) throws {
         let create = app.buttons["New Entry"].firstMatch
-        XCTAssertTrue(create.waitForExistence(timeout: 5))
+        XCTAssertTrue(create.waitToAppear(timeout: 5))
         create.tap()
         let title = NavigationTestSupport.title(app)
         let focused = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in (title.value(forKey: "hasKeyboardFocus") as? Bool) == true },
             object: title)
-        let opened = XCTWaiter.wait(for: [focused], timeout: 10) == .completed
+        let opened = Waiting.wait(for: focused, timeout: 10) == .completed
         capture(app, "New Entry from \(collection)")
         XCTAssertTrue(opened, "New Entry from \(collection) opens the entry with its title ready for typing.")
         XCTAssertFalse(app.navigationBars[collection].exists, "The new entry shows where it was filed.")
     }
     @MainActor private func journalAction(_ name: String, app: XCUIApplication) {
         let menu = app.navigationBars.buttons["Journal Actions"].firstMatch
-        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        XCTAssertTrue(menu.waitToAppear(timeout: 5))
         menu.tap()
         let action = app.buttons[name].firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 5))
+        XCTAssertTrue(action.waitToAppear(timeout: 5))
         action.tap()
     }
     /// Journals Default (the oldest), Travel and Work; "Work plan" in Work; "Lunch", deleted from Default on its own;
@@ -153,7 +153,7 @@ final class CollectionNavigationUITests: XCTestCase {
         app.launchEnvironment["JOURNAL_DATA_DIR"] = root.path
         app.launch()
         let field = app.secureTextFields["Recovery Key"]
-        XCTAssertTrue(field.waitForExistence(timeout: 15))
+        XCTAssertTrue(field.waitToAppear(timeout: 15))
         field.tap()
         field.typeText(phrase)
         app.buttons["Unlock"].tap()

@@ -334,3 +334,32 @@ Optional findings taken: Sync Status joining the trailing glass (recorded), "cen
 - The window's minimum width is 801, not 740 (list 360 because of AppKit's toolbar section, detail 440 for the editor's items).
 - Clicking the collapsed search field at the narrowest widths expands it (about 208 pt), and AppKit moves the trailing items into the » menu while the field is expanded; they return when search ends. Avoiding that needs a detail of about 600 pt (window about 960). Native `NSSearchToolbarItem` behavior; not changed.
 
+
+## 8. Sidebar toolbar icons in dark mode (3 October 2026)
+
+**Problem.** After the system switches from light to dark (Auto appearance), New Journal and Toggle Sidebar in the
+sidebar's toolbar section stay drawn for a light background: near-black on the dark sidebar. On macOS 26, AppKit gives
+toolbar items over a scroll view's top edge an explicit appearance computed from the content beneath that edge (the
+scroll-edge effect). For the SwiftUI sidebar `List` it recomputes about 0.45 s after the switch from a stale sample and
+not again until the sidebar scrolls. An AppKit source-list sidebar, as in Notes, never gets an explicit appearance, so
+its items simply follow the window.
+
+**Design.** The sidebar list hides its top scroll-edge effect (`.scrollEdgeEffectHidden(true, for: .top)`, macOS only),
+so the items over it follow the window's appearance as in Notes. Nothing else changes: same layout, items, copy and
+accessibility. The visible difference is that sidebar rows scrolling under the toolbar are no longer softened by the
+edge fade; rows simply pass under the toolbar as in an AppKit sidebar. The entries list and editor keep their edge
+effects. The owner chose this over re-triggering AppKit's sample after appearance changes, which has no public API.
+
+**Verification.** In dark mode, switching light → dark with the window key and with it in the background leaves both
+icons light; scrolling the sidebar under the toolbar looks like Notes; light mode, Increase Contrast and Reduce
+Transparency are unchanged.
+
+**Review outcome.** An independent design review approved the change with conditions:
+- keep the modifier macOS-only, with a comment saying why it's there (done);
+- try `.scrollEdgeEffectStyle(.hard, for: .top)` once in dark mode, and keep hiding the effect if the bug persists with it;
+- widen the dark-mode verification: a long, scrolled journal list with rows under both icons; switching in both
+  directions, including while scrolled; the sidebar collapsed and expanded again; the window in the background and in
+  full screen; Increase Contrast and Reduce Transparency in both appearances; VoiceOver and focus rings on both items;
+  before and after screenshots.
+
+The dark-mode checks wait until the system is in dark mode, since the fault only appears on a switch to dark.

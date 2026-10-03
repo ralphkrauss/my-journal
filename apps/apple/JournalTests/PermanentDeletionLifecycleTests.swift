@@ -85,4 +85,46 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
             XCTFail("A locked model must not publish a deletion preview.")
         } catch JournalError.locked {}
     }
+
+    /// Delete in the confirmation takes the row out of Recently Deleted at once, so it leaves with the list's animation
+    /// as a deleted entry's row does; it used to stay until the library was read again, then vanish. A deletion
+    /// that is refused brings the row back, and a stored one keeps it gone.
+    func testConfirmedRowLeavesAtOnceAndComesBackWhenRefused() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let store = try JournalStore(directory: root, key: VaultCrypto.generateKey())
+        addTeardownBlock { try await store.close() }
+        var journal = JournalItem(kind: "journal", title: "Old", date: Date(timeIntervalSince1970: 1_700_000_000))
+        journal.deletedAt = journal.date
+        let live = JournalItem(kind: "journal", title: "Personal")
+        var entry = JournalItem(kind: "entry", journalID: live.id, title: "Deleted entry")
+        entry.deletedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        for item in [journal, live, entry] { try await store.save(item) }
+        let model = AppModel(directory: root)
+        model.store = store
+        model.loaded = true
+        try await model.refresh()
+        model.showingTrash = true
+        XCTAssertEqual(model.filteredDeletedJournals.map(\.id), [journal.id])
+        XCTAssertEqual(model.entries.map(\.id), [entry.id])
+
+        let refused = try await model.preparePermanentDeletion(journal.id)
+        model.removePermanentlyDeletedFromLists(refused)
+        XCTAssertTrue(model.filteredDeletedJournals.isEmpty)
+        try await store.save(JournalItem(kind: "entry", journalID: journal.id, title: "Arrived meanwhile"))
+        do {
+            _ = try await model.permanentlyDeleteListed(refused)
+            XCTFail("Changed membership requires a new review.")
+        } catch PermanentDeletionError.changed {}
+        XCTAssertEqual(model.filteredDeletedJournals.map(\.id), [journal.id])
+
+        let confirmed = try await model.preparePermanentDeletion(entry.id)
+        model.removePermanentlyDeletedFromLists(confirmed)
+        XCTAssertTrue(model.entries.isEmpty)
+        let refreshed = try await model.permanentlyDeleteListed(confirmed)
+        XCTAssertTrue(refreshed)
+        XCTAssertFalse(model.entries.contains { $0.id == entry.id })
+        let stored = try await store.item(entry.id)
+        XCTAssertEqual(stored?.isPermanentlyDeleted, true)
+    }
 }

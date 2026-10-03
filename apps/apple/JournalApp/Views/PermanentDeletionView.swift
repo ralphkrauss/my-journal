@@ -2,9 +2,11 @@ import JournalCore
 import SwiftUI
 
 extension View {
-    /// Asks with a standard alert before permanently deleting the item whose ID is placed in `request`.
-    func permanentDeletionPrompt(_ request: Binding<UUID?>) -> some View {
-        modifier(PermanentDeletionPrompt(request: request))
+    /// Asks with a standard alert before permanently deleting the item whose ID is placed in `request`. Once
+    /// Delete is chosen, the item's row leaves its list, as a deleted entry's does, and `leave` is called with its
+    /// ID, so an iPhone showing the item can go back to the list at once.
+    func permanentDeletionPrompt(_ request: Binding<UUID?>, leave: @escaping (UUID) -> Void = { _ in }) -> some View {
+        modifier(PermanentDeletionPrompt(request: request, leave: leave))
     }
 }
 
@@ -12,7 +14,9 @@ extension View {
 /// only offers what can actually happen.
 private struct PermanentDeletionPrompt: ViewModifier {
     @EnvironmentObject var model: AppModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var request: UUID?
+    let leave: (UUID) -> Void
     @State private var confirmation: PermanentDeletionConfirmation?
     @State private var operation: Task<Void, Never>?
 
@@ -30,6 +34,9 @@ private struct PermanentDeletionPrompt: ViewModifier {
                 presenting: confirmation
             ) { reviewed in
                 Button("Delete", role: .destructive) {
+                    // The row leaves in this update, with the list's own animation, as a deleted entry's row does.
+                    withAnimation(reduceMotion ? nil : .default) { model.removePermanentlyDeletedFromLists(reviewed) }
+                    leave(reviewed.plan.recordID)
                     operation = Task { await commit(reviewed) }
                 }
                 Button("Cancel", role: .cancel) {}
@@ -74,7 +81,7 @@ private struct PermanentDeletionPrompt: ViewModifier {
     }
     private func commit(_ reviewed: PermanentDeletionConfirmation) async {
         do {
-            let refreshed = try await model.permanentlyDelete(reviewed)
+            let refreshed = try await model.permanentlyDeleteListed(reviewed)
             if !refreshed, !model.locked {
                 model.error =
                     "The item was deleted, but My Journal couldn’t update the view. Reopen My Journal to continue."
