@@ -44,7 +44,7 @@ enum ImagePresentation {
             #if os(macOS)
                 let image = NSImage(cgImage: picture.image, size: picture.size)
                 image.accessibilityDescription = description.isEmpty ? "Image" : description
-                attachment.attachmentCell = NSTextAttachmentCell(imageCell: image)
+                attachment.attachmentCell = JournalImageCell(imageCell: image)
             #else
                 attachment.image = UIImage(cgImage: picture.image)
                 attachment.bounds = CGRect(origin: .zero, size: picture.size)
@@ -69,7 +69,7 @@ enum ImagePresentation {
                 options: [.usesLineFragmentOrigin, .usesFontLeading])
             image.unlockFocus()
             image.accessibilityDescription = label
-            attachment.attachmentCell = NSTextAttachmentCell(imageCell: image)
+            attachment.attachmentCell = JournalImageCell(imageCell: image)
         #else
             let text = NSAttributedString(
                 string: status,

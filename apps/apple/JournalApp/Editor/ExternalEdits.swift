@@ -77,4 +77,10 @@ enum TextRanges {
         }
         return NSRange(location: min(max(0, mapped), after.length), length: 0)
     }
+
+    /// `range` after `delta` characters were inserted at `location`: moved along when it starts at or after it.
+    static func shifted(_ range: NSRange, by delta: Int, at location: Int) -> NSRange {
+        guard range.location >= location else { return range }
+        return NSRange(location: max(0, range.location + delta), length: range.length)
+    }
 }

@@ -89,6 +89,8 @@ struct ArchiveExportControls: View {
         .onValueChange(of: model.locked) { locked in
             if locked { export.cancel() }
         }
+        // Preparing the archive, not waiting in the save dialog.
+        .keepsUnlockedWhile(export.busy && !export.presenting)
         .onDisappear {
             if !export.presenting { export.cancel() }
         }
@@ -152,6 +154,7 @@ struct ArchiveImportView: View {
                 }
             }
             .interactiveDismissDisabled(committing)
+            .keepsUnlockedWhile(busy || committing)
             .onValueChange(of: model.locked) { locked in
                 if locked {
                     operation?.cancel()

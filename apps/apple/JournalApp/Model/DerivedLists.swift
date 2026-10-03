@@ -46,13 +46,33 @@ import JournalCore
         groups = nil
     }
 
+    /// When a row last left the lists, so the library is read again only once the last removal has finished moving
+    /// (`AppModel.waitForListRemovals`).
+    private(set) var lastRemoval: ContinuousClock.Instant?
+
     func hide(_ id: UUID) {
         guard deleting.insert(id).inserted else { return }
+        lastRemoval = .now
         deletingChanged()
     }
 
     func show(_ id: UUID) {
         guard deleting.remove(id) != nil else { return }
+        deletingChanged()
+    }
+
+    func hide(_ ids: [UUID]) {
+        let hidden = deleting.union(ids)
+        guard hidden != deleting else { return }
+        deleting = hidden
+        lastRemoval = .now
+        deletingChanged()
+    }
+
+    func show(_ ids: [UUID]) {
+        let shown = deleting.subtracting(ids)
+        guard shown != deleting else { return }
+        deleting = shown
         deletingChanged()
     }
 

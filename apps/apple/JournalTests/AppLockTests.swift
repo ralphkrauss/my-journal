@@ -181,6 +181,33 @@ final class AppLockTests: XCTestCase {
         XCTAssertTrue(model.journals.isEmpty)
     }
 
+    /// Locking the iPhone with the journal open: iOS ends the app's active state and moves it to the background in
+    /// the same moment, so the resign-active notification is handled only after the lock screen has appeared in the
+    /// background and asked. Face ID then showed over the iPhone's Lock Screen and unlocked the journal unseen. It
+    /// must ask only once the app is in front again.
+    func testLockingTheDeviceAsksOnlyOnceTheAppIsInFrontAgain() async throws {
+        let owner = TestDeviceOwner()
+        let library = try await library { $0.appLock = true }
+        let model = await launch(library, owner: owner)
+        await model.unlockWithDevice()
+        XCTAssertFalse(model.locked)
+        let asked = owner.requests
+
+        // The order of a device lock: the background first, then the lock screen's prompt, then resign-active.
+        model.applicationEnteredBackground()
+        await model.promptToUnlockIfPending()
+        model.applicationResignedActive()
+        XCTAssertTrue(model.locked)
+        XCTAssertEqual(owner.requests, asked, "Nothing is asked while the app is in the background.")
+        XCTAssertTrue(model.journals.isEmpty)
+
+        await model.applicationBecameActive()
+        XCTAssertEqual(owner.requests, asked + 1, "Asked once the app is in front again.")
+        XCTAssertFalse(model.locked)
+        await model.applicationBecameActive()
+        XCTAssertEqual(owner.requests, asked + 1, "Once per lock.")
+    }
+
     /// Cancelling says nothing; a failure offers the recovery credential; no passcode turns App Lock off once.
     func testUnlockOutcomes() async throws {
         let owner = TestDeviceOwner()

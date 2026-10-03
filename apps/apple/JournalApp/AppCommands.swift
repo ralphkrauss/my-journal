@@ -12,6 +12,7 @@ struct JournalCommands: Commands {
         @Environment(\.openWindow) private var openWindow
         /// The window in front with a library open.
         @FocusedValue(\.editorOnly) private var editorOnly
+        @FocusedValue(\.deleteAll) private var deleteAll
     #endif
 
     var body: some Commands {
@@ -36,6 +37,16 @@ struct JournalCommands: Commands {
             Button("Export Archive…") { inJournalWindow { model.archiveExportPresented = true } }
                 .disabled(!model.isReady || model.locked)
         }
+        #if os(macOS)
+            CommandGroup(after: .importExport) {
+                Divider()
+                // Names what it deletes: unlike the toolbar button, it has no list beside it. ⇧⌘⌫ as Finder's Empty
+                // Trash… and Mail's Erase Deleted Items.
+                Button("Delete All in Recently Deleted…") { deleteAll?.request() }
+                    .keyboardShortcut(.delete, modifiers: [.command, .shift])
+                    .disabled(deleteAll == nil || !model.canDeleteAll)
+            }
+        #endif
         TextEditingCommands()
         CommandGroup(after: .textEditing) {
             if Self.canPresentSearch {
@@ -136,7 +147,7 @@ struct JournalCommands: Commands {
                 .keyboardShortcut("7", modifiers: [.command, .shift])
             Button("Numbered List") { editor.perform(.paragraph("numbered")) }
                 .keyboardShortcut("9", modifiers: [.command, .shift])
-            Button("Task List") { editor.perform(.paragraph("task")) }.keyboardShortcut(
+            Button("Checklist") { editor.perform(.paragraph("task")) }.keyboardShortcut(
                 "l", modifiers: [.command, .shift])
             Button(editor.caretTaskChecked == true ? "Mark as Unchecked" : "Mark as Checked") {
                 editor.perform(.toggleTask)

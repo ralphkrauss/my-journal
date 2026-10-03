@@ -58,6 +58,7 @@ private struct ConnectionSheet: View {
             .fullScreenCover(isPresented: $scanning) { ScanCodeView { flow.join($0) } }
         #endif
         .interactiveDismissDisabled(flow.installing)
+        .keepsUnlockedWhile(flow.busy)
         .onDisappear {
             browser.stop()
             flow.close()

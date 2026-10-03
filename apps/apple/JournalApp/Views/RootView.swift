@@ -42,7 +42,11 @@ struct RootView: View {
     @State private var imageDescriptionsEntry: JournalItem?
     @State private var entryToMove: JournalItem?
     @State private var entryToDate: JournalItem?
-    @State private var permanentDeletionRequest: UUID?
+    @State private var permanentDeletionRequest: PermanentDeletionRequest?
+    /// Delete All in Recently Deleted: its toolbar button and, on the Mac, File ▸ Delete All in Recently Deleted….
+    @State var deleteAllRequested = false
+    /// A row in Recently Deleted that came back after its deletion was cancelled, for VoiceOver to return to.
+    @AccessibilityFocusState private var returnedRow: UUID?
     @State private var rowActionTask: Task<Void, Never>?
     /// Deletions are stored one after another, each without cancelling the last.
     @State private var deletionTask: Task<Void, Never>?
@@ -66,7 +70,13 @@ struct RootView: View {
         #endif
     }
 
+    /// The deletion prompts stay across locking, so a row a swipe took out of the list comes back when locking closes
+    /// the alert.
     var body: some View {
+        deletionPrompts(window)
+    }
+
+    private var window: some View {
         Group {
             if !model.loaded {
                 ProgressView("Opening Journal…")
@@ -190,7 +200,7 @@ struct RootView: View {
             #if os(iOS)
                 editor.entryVisitEnded()
             #endif
-            cancelImageImport()
+            cancelImageImport(leaving: true)
             editor.sourceMode = model.draft?.document.requiresMarkdownSource ?? false
             if model.titleFocus != nil || !usesStackedNavigation, let id = model.selectedID,
                 let destination = model.destination
@@ -219,7 +229,6 @@ struct RootView: View {
             if let archiveToImport { ArchiveImportView(source: archiveToImport) }
         }
         .sheet(item: $imageDescriptionsEntry) { ImageDescriptionsView(entry: $0) }
-        .permanentDeletionPrompt($permanentDeletionRequest, leave: leaveDeletedEntry)
         .sheet(item: $entryToDate) { EntryDateView(entry: $0) }
         .onDisappear {
             rowActionTask?.cancel()
@@ -236,6 +245,14 @@ struct RootView: View {
             .sheet(isPresented: $model.settingsPresented) { SettingsView() }
         #endif
     }
+    /// Delete Permanently for one item, and Delete All in Recently Deleted.
+    private func deletionPrompts(_ content: some View) -> some View {
+        content
+            .permanentDeletionPrompt(
+                $permanentDeletionRequest, leave: leaveDeletedEntry, returned: { id in Task { returnedRow = id } }
+            )
+            .deleteAllPrompt($deleteAllRequested)
+    }
     /// Opens a waiting archive once the journals are shown, as after unlocking, and after a change being stored. While
     /// connecting or turning on encryption replaces the journals, it can't be imported, and the person is told so.
     private func openPendingArchive() {
@@ -250,6 +267,7 @@ struct RootView: View {
     @ViewBuilder private var mainNavigation: some View {
         #if os(macOS)
             editorOnlyBehavior(macJournalWindow)
+                .focusedSceneValue(\.deleteAll, DeleteAllCommand { deleteAllRequested = true })
         #else
             if usesStackedNavigation {
                 compactNavigation
@@ -355,6 +373,7 @@ struct RootView: View {
                 // Delete and ⌘⌫ act only while the list has focus, never while typing in the editor.
                 .onDeleteCommand(perform: deleteSelectedFromList)
                 .modifier(CommandDeleteKey(action: deleteSelectedFromList))
+                .recentlyDeletedHeader(shown: model.showingTrash) { deleteAllRequested = true }
             #endif
             .overlay { if listIsEmpty { emptyListState } }
             #if os(iOS)
@@ -413,7 +432,12 @@ struct RootView: View {
             return title.isEmpty ? "Untitled Journal" : title
         }
     }
-    private var trashFooter: some View { Text("Items stay here until you delete them permanently.") }
+    /// On the Mac, the sentence is in the header with Delete All… instead (RecentlyDeletedHeader.swift).
+    @ViewBuilder private var trashFooter: some View {
+        #if os(iOS)
+            Text("Items stay here until you delete them permanently.")
+        #endif
+    }
     private func entryRow(_ entry: JournalItem, value: String? = nil) -> some View {
         entryLink(entry.id) {
             VStack(alignment: .leading, spacing: 5) {
@@ -450,6 +474,7 @@ struct RootView: View {
                 .accessibilityValue(value ?? "")
                 // Separators start at the row's text, not at the journal label's text.
                 .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+                .accessibilityFocused($returnedRow, equals: entry.id)
         }.contextMenu { entryActions(entry) }
             .swipeActions(edge: .trailing) { swipeActions(entry) }
             .swipeActions(edge: .leading) {
@@ -525,7 +550,7 @@ struct RootView: View {
             actions.append(.separator("restore"))
             actions.append(
                 .command("Delete Permanently…", symbol: "trash", destructive: true) {
-                    permanentDeletionRequest = entry.id
+                    permanentDeletionRequest = .init(id: entry.id)
                 })
         }
         if editable {
@@ -541,8 +566,7 @@ struct RootView: View {
     }
     @ViewBuilder private func swipeActions(_ entry: JournalItem) -> some View {
         if model.isRecentlyDeleted(entry) {
-            // Not the destructive role: that hides the row at once, and it stayed hidden when the alert was cancelled.
-            Button("Delete", systemImage: "trash") { permanentDeletionRequest = entry.id }.tint(.red)
+            Button("Delete", systemImage: "trash", role: .destructive) { swipePermanentDeletion(entry.id) }
         } else if entry.document.isEditable, entry.deletedAt == nil {
             Button("Delete", systemImage: "trash", role: .destructive) { delete(entry.id) }
         }
@@ -550,10 +574,16 @@ struct RootView: View {
     private func deleteSelectedFromList() {
         guard let entry = model.draft, entry.kind != "journal" else { return }
         if model.isRecentlyDeleted(entry) {
-            permanentDeletionRequest = entry.id
+            permanentDeletionRequest = .init(id: entry.id)
         } else if model.canEdit {
             delete(entry.id)
         }
+    }
+    /// A destructive swipe takes its row away at once, in one movement, as in a journal's list; the alert then asks,
+    /// and the row comes back unless the item is deleted (docs/design/ios-delete-all-and-settings-2026-10-03.md §1).
+    private func swipePermanentDeletion(_ id: UUID) {
+        withAnimation(reduceMotion ? nil : .default) { model.hideInLists(id) }
+        permanentDeletionRequest = .init(id: id, rowRemoved: true)
     }
     /// Restoring without further questions needs the entry's journal to be in use.
     private func canRestoreDirectly(_ entry: JournalItem) -> Bool {
@@ -573,7 +603,9 @@ struct RootView: View {
         let previous = deletionTask
         deletionTask = Task {
             await previous?.value
-            guard let deleted = await model.deleteListed(removal) else { return }
+            guard let deleted = await model.deleteListed(removal, settle: reduceMotion ? .zero : .listRemoval) else {
+                return
+            }
             model.registerDeletionUndo(deleted, selectingNext: selectingNext, in: undoManager)
         }
     }
@@ -648,10 +680,26 @@ struct RootView: View {
                 EntryHeaderView(item: item, title: binding(\.title, default: item.title, itemID: item.id))
                     .environmentObject(model).environmentObject(editor))
             configured.revealSaveFailure = model.saveFailure && model.error == nil
+            configured.imageActions = imageActions(for: item)
             return configured
         #else
+            native.imageActions = imageActions(for: item)
             return native
         #endif
+    }
+    /// The actions on the entry's pictures: on iPhone and iPad Copy, Share, Save to Photos, Image Descriptions and
+    /// Delete; on the Mac Cut, Copy, Paste, Share, Save Image As, Image Descriptions and Delete.
+    private func imageActions(for item: JournalItem) -> ImageActionSupport {
+        let store = model.store
+        let original: @MainActor (UUID) async -> Data? = { id in
+            guard let store else { return nil }
+            return try? await store.attachment(id)
+        }
+        var describe: (@MainActor () -> Void)?
+        if model.canDescribeImages(in: item.id) {
+            describe = { imageDescriptionsEntry = model.draft }
+        }
+        return ImageActionSupport(original: original, report: { model.error = $0 }, describe: describe)
     }
     @ViewBuilder var detail: some View {
         #if os(macOS)
@@ -697,6 +745,9 @@ struct RootView: View {
                             ConflictNotice(id: item.id)
                         }
                     #endif
+                    if let session = imageInsertion {
+                        ImageImportNotice(session: session) { cancelImageImport() }
+                    }
                     entryEditor(item).padding(.horizontal, Self.editorMargin)
                     #if os(macOS)
                         if model.saveFailure {
@@ -780,7 +831,7 @@ struct RootView: View {
                 })
         }
     #endif
-    private func importImageResult(_ session: ImageInsertionSession, result: Result<ImageLoad, Error>) {
+    private func importImageResult(_ session: ImageInsertionSession, result: Result<[ImageLoad], Error>) {
         guard imageInsertion === session, session.isCurrent(in: model) else { return }
         imageImportTask = Task {
             defer {
@@ -790,20 +841,18 @@ struct RootView: View {
                 }
             }
             do {
-                guard session.isCurrent(in: model) else { return }
-                let data = try await result.get()()
-                guard session.isCurrent(in: model) else { return }
-                await session.insert(data, into: model)
+                await session.insert(try result.get(), into: model)
             } catch {
                 guard session.isCurrent(in: model), (error as? CocoaError)?.code != .userCancelled else { return }
                 model.error = error.localizedDescription
             }
         }
     }
-    private func cancelImageImport() {
+    /// `leaving`: the person left the entry, which the import then mentions if it hadn't finished.
+    private func cancelImageImport(leaving: Bool = false) {
         imageImportTask?.cancel()
         imageImportTask = nil
-        imageInsertion?.cancel()
+        if leaving { imageInsertion?.leave() } else { imageInsertion?.cancel() }
         imageInsertion = nil
         importImage = false
     }

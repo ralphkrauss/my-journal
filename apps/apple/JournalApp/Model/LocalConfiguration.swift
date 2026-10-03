@@ -10,6 +10,8 @@ struct LocalConfiguration: Codable {
     var connectionKeyID: String?
     /// App Lock: the device's own authentication is needed to open the journals (AppLockOperations.swift).
     var appLock: Bool?
+    /// Lock when inactive (Mac), in minutes: absent is 30, 0 is Never (InactivityLock.swift).
+    var inactivityLockMinutes: Int?
     /// App Lock used a PIN of its own until this device moved to its authentication; cleared at the first unlock.
     var pinRetiredNotice: Bool?
     /// The earlier App Lock PIN. Only read to move App Lock to the device's authentication, then removed.

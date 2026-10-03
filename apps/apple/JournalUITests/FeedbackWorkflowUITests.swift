@@ -124,18 +124,20 @@ final class FeedbackWorkflowUITests: XCTestCase {
         assertEventually(title.value as? String, equals: "Checklist")
         body.tap()
         app.buttons["Formatting"].firstMatch.tap()
-        let taskList = app.buttons["Task List"].firstMatch
-        XCTAssertTrue(taskList.waitToAppear(timeout: 5))
-        // At half height on a smaller iPhone, the Format sheet's edge cuts through Task List; open it fully first.
+        let checklist = app.buttons["Checklist"].firstMatch
+        XCTAssertTrue(checklist.waitToAppear(timeout: 5))
+        // At half height on a smaller iPhone, the Format sheet's edge cuts through Checklist; open it fully first.
         let grabber = app.buttons["Sheet Grabber"]
         if grabber.exists { grabber.tap() }
-        taskList.tap()
+        checklist.tap()
         app.typeText("Review the day")
         app.buttons["Finish Editing"].tap()
-        let task = app.buttons["Mark as Complete: Review the day"]
+        // VoiceOver reads the checkbox as the item's text with its state.
+        let task = app.buttons["Review the day"]
         XCTAssertTrue(task.waitToAppear(timeout: 5))
+        XCTAssertEqual(task.value as? String, "Unchecked")
         task.tap()
-        XCTAssertTrue(app.buttons["Mark as Incomplete: Review the day"].exists)
+        assertEventually(task.value as? String, equals: "Checked")
         capture(app, "Completed checklist item")
         NavigationTestSupport.readingButton("View Source", app: app).tap()
         XCTAssertTrue((body.value as? String ?? "").contains("- [x] Review the day"))

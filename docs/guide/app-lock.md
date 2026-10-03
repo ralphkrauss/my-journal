@@ -14,7 +14,8 @@ To turn App Lock off, turn the switch off. This asks you to authenticate too.
 
 - When it opens.
 - On iPhone and iPad, as soon as you leave the app. While locked, the app switcher shows a cover instead of your journals.
-- On the Mac, when the Mac’s screen locks, or when you choose My Journal > **Lock My Journal** (⌃⌘L).
+- On the Mac, when you haven’t used My Journal for 30 minutes, or the time you choose in Settings > Privacy > **Lock when inactive**. Using other apps doesn’t count. Choosing a longer time or Never asks you to authenticate.
+- On the Mac, also when your Mac sleeps, its screen locks or you switch to another user, or when you choose My Journal > **Lock My Journal** (⌃⌘L).
 - When you choose Settings > Privacy > **Lock My Journal**.
 
 What you were writing is saved first. While My Journal is locked, agents can’t read your journals.

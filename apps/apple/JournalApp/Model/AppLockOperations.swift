@@ -150,6 +150,12 @@ extension AppModel {
 
 extension AppModel {
     func lock() async {
+        // Writing in the open entry and in open sheets is saved first, for a moment at most (LockSaving.swift).
+        if appLockOn && !locked {
+            await saveBeforeLocking()
+            // Another lock finished meanwhile and saved for itself.
+            guard !locked else { return }
+        }
         guard lockImmediately() else { return }
         await saveWhileLocked()
     }
@@ -178,6 +184,7 @@ extension AppModel {
         // A lock meanwhile clears it; a later unlock then reads for itself.
         defer { if vaultSessionID == session { openingJournals = false } }
         try await refresh()
+        await retryUnsavedImageDescriptions()
     }
     func canFinishUnlock(_ store: JournalStore, sessionID: UUID) -> Bool {
         !Task.isCancelled && !replacingVault && masterKey != nil
@@ -198,6 +205,15 @@ extension AppModel {
         #if os(iOS)
             if unlockState.authenticating { unlockState.inactiveForRequest = true }
         #endif
+    }
+
+    /// The app entered the background on iPhone or iPad: it locks, and asks for Face ID once it is in front again.
+    /// When the device itself locks, iOS ends the app's active state and moves it to the background within the
+    /// same moment, before the resign-active notification above has been handled. Without marking the app inactive
+    /// here, the lock screen appearing in the background would ask for Face ID over the iPhone's own Lock Screen.
+    func applicationEnteredBackground() {
+        applicationActive = false
+        lockImmediately(prompting: true)
     }
 
     /// The app became active: applies a success that arrived meanwhile, or asks as the lock screen appears.

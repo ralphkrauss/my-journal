@@ -43,8 +43,70 @@ import UniformTypeIdentifiers
             super.unmarkText()
             compositionEnded?()
         }
+        /// Where Copy and Cut put a selected picture: the general pasteboard, or a private one in tests.
+        var pasteboard = NSPasteboard.general
+        /// The selected picture as other apps paste it, when exactly one shown picture is selected
+        /// (ImageActionsMac.swift).
+        var selectedPicture: (() -> SelectedPicture)?
+        /// Reads the selected picture's original, then continues; on failure it says so and doesn't continue.
+        var awaitSelectedPicture: ((_ failure: String, _ then: @escaping @MainActor () -> Void) -> Void)?
+        /// The selected picture's menu, for a right-click on it or a menu asked for from the keyboard.
+        var pictureMenu: ((NSEvent?) -> NSMenu?)?
+        /// Shows the selected picture's menu at the picture; false when no picture is selected.
+        var showPictureMenu: (() -> Bool)?
+        /// The view leaves the window, as when the app locks.
+        var leavingWindow: (() -> Void)?
+        override func viewWillMove(toWindow newWindow: NSWindow?) {
+            if newWindow == nil { leavingWindow?() }
+            super.viewWillMove(toWindow: newWindow)
+        }
+        override func menu(for event: NSEvent) -> NSMenu? {
+            // The text view's own handling selects a picture that was clicked, so it goes first.
+            let standard = super.menu(for: event)
+            return pictureMenu?(event) ?? standard
+        }
+        override func accessibilityPerformShowMenu() -> Bool {
+            showPictureMenu?() == true || super.accessibilityPerformShowMenu()
+        }
         override var writablePasteboardTypes: [NSPasteboard.PasteboardType] {
-            [.journalMarkdown] + super.writablePasteboardTypes
+            // A selected picture goes to other apps as the image itself, with the entry's own Markdown for pasting
+            // into an entry, and no text, which other apps would take instead.
+            if case .ready(let representations) = selectedPicture?() ?? .none {
+                return representations.map(\.type) + [.journalMarkdown]
+            }
+            return [.journalMarkdown] + super.writablePasteboardTypes
+        }
+        override func copy(_ sender: Any?) {
+            switch selectedPicture?() ?? .none {
+            case .none: super.copy(sender)
+            case .ready: copyPicture()
+            case .pending:
+                awaitSelectedPicture?("The image couldn’t be copied.") { [weak self] in self?.copyPicture() }
+            }
+        }
+        override func cut(_ sender: Any?) {
+            switch selectedPicture?() ?? .none {
+            case .none: super.cut(sender)
+            case .ready: cutPicture()
+            case .pending:
+                awaitSelectedPicture?("The image couldn’t be copied.") { [weak self] in self?.cutPicture() }
+            }
+        }
+        @discardableResult private func copyPicture() -> Bool {
+            guard case .ready = selectedPicture?() ?? .none else { return false }
+            return writeSelection(to: pasteboard, types: writablePasteboardTypes)
+        }
+        private func cutPicture() {
+            guard isEditable, copyPicture() else { return }
+            delete(nil)
+            undoManager?.setActionName("Cut")
+        }
+        /// Another app gets a copy of what is dragged to it; only a drop within the journal moves it.
+        override func draggingSession(
+            _ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext
+        ) -> NSDragOperation {
+            let operations = super.draggingSession(session, sourceOperationMaskFor: context)
+            return context == .outsideApplication ? operations.intersection([.copy, .generic]) : operations
         }
         override var readablePasteboardTypes: [NSPasteboard.PasteboardType] {
             [.journalMarkdown] + super.readablePasteboardTypes + PastedImages.readableImageTypes + [.fileURL]
@@ -62,6 +124,11 @@ import UniformTypeIdentifiers
             if type == .journalMarkdown {
                 guard let markdown = selectionMarkdown?(range) else { return false }
                 return pboard.setString(markdown, forType: type)
+            }
+            if case .ready(let representations) = selectedPicture?() ?? .none,
+                let representation = representations.first(where: { $0.type == type })
+            {
+                return pboard.setData(representation.data, forType: type)
             }
             // Text views still name plain text by its original pasteboard type.
             if type == .string || type == NSPasteboard.PasteboardType("NSStringPboardType") {
@@ -263,8 +330,23 @@ import UniformTypeIdentifiers
         /// Reports the selection when the view leaves its window while it holds the keyboard.
         var leftWhileWriting: ((NSRange) -> Void)?
         var enteredWindow: (() -> Void)?
+        /// The view leaves the screen, as when the app locks.
+        var leavingWindow: (() -> Void)?
+        /// The app goes to the background while this view is on screen.
+        var enteringBackground: (() -> Void)? {
+            didSet {
+                NotificationCenter.default.removeObserver(
+                    self, name: UIScene.didEnterBackgroundNotification, object: nil)
+                guard enteringBackground != nil else { return }
+                NotificationCenter.default.addObserver(
+                    self, selector: #selector(sceneEnteredBackground), name: UIScene.didEnterBackgroundNotification,
+                    object: nil)
+            }
+        }
+        @objc private func sceneEnteredBackground() { enteringBackground?() }
         override func willMove(toWindow newWindow: UIWindow?) {
             if newWindow == nil {
+                leavingWindow?()
                 if isFirstResponder {
                     leftWhileWriting?(selectedRange)
                 } else if let resigned, Date().timeIntervalSince(resigned.time) < 0.5 {
@@ -301,7 +383,12 @@ import UniformTypeIdentifiers
             super.unmarkText()
             compositionEnded?()
         }
+        /// Copies a selected picture itself, for other apps; false when there is no picture to copy that way.
+        var copySelectedImage: ((ImageItem) -> Bool)?
         override func copy(_ sender: Any?) {
+            if let image = ImageItem.selected(selectedRange, in: textStorage), copySelectedImage?(image) == true {
+                return
+            }
             guard let item = pasteboardItem() else {
                 super.copy(sender)
                 return

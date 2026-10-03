@@ -6,25 +6,29 @@ import UniformTypeIdentifiers
 /// Reads the chosen picture; called off the picker so large photos don't hold up the interface.
 typealias ImageLoad = @Sendable () async throws -> Data
 
-/// Presents the picker for Insert Image: the photo library, the camera, or Files (the only choice on the Mac).
+/// Presents the picker for Insert Image: the photo library, the camera, or Files (the only choice on the Mac). The
+/// photo library and Files take several images at once, in the order chosen (docs/design/several-photos-2026-10-03.md).
 struct ImagePickerPresenter: View {
     let session: ImageInsertionSession
     let source: EditorActions.ImageSource
     @Binding var isPresented: Bool
-    let receive: (ImageInsertionSession, Result<ImageLoad, Error>) -> Void
-    @State private var photo: PhotosPickerItem?
+    let receive: (ImageInsertionSession, Result<[ImageLoad], Error>) -> Void
+    @State private var photos: [PhotosPickerItem] = []
 
     var body: some View {
         let anchor = Color.clear.frame(width: 0, height: 0).accessibilityHidden(true)
         #if os(iOS)
             switch source {
             case .photos:
-                anchor.photosPicker(isPresented: $isPresented, selection: $photo, matching: .images)
-                    .onValueChange(of: photo) { item in
-                        guard let item else { return }
-                        photo = nil
-                        receive(session, .success { try await Self.data(from: item) })
-                    }
+                anchor.photosPicker(
+                    isPresented: $isPresented, selection: $photos, maxSelectionCount: nil, selectionBehavior: .ordered,
+                    matching: .images
+                )
+                .onValueChange(of: photos) { items in
+                    guard !items.isEmpty else { return }
+                    photos = []
+                    receive(session, .success(items.map { item in { try await Self.data(from: item) } }))
+                }
             case .camera where CameraPicker.isDenied:
                 // With access turned off the camera would open black; say where to turn it on instead.
                 anchor.alert("Camera Access Is Off", isPresented: $isPresented) {
@@ -39,7 +43,7 @@ struct ImagePickerPresenter: View {
                 anchor.fullScreenCover(isPresented: $isPresented) {
                     CameraPicker { data in
                         isPresented = false
-                        if let data { receive(session, .success { data }) }
+                        if let data { receive(session, .success([{ data }])) }
                     }.ignoresSafeArea()
                 }
             case .files:
@@ -50,8 +54,9 @@ struct ImagePickerPresenter: View {
         #endif
     }
     private func files(_ anchor: some View) -> some View {
-        anchor.fileImporter(isPresented: $isPresented, allowedContentTypes: [.image]) { [session] result in
-            receive(session, result.map { url -> ImageLoad in { try Self.data(from: url) } })
+        anchor.fileImporter(isPresented: $isPresented, allowedContentTypes: [.image], allowsMultipleSelection: true) {
+            [session] result in
+            receive(session, result.map { urls in urls.map { url -> ImageLoad in { try Self.data(from: url) } } })
         }
     }
     private nonisolated static func data(from url: URL) throws -> Data {
@@ -59,9 +64,11 @@ struct ImagePickerPresenter: View {
         defer { if granted { url.stopAccessingSecurityScopedResource() } }
         return try Data(contentsOf: url)
     }
+    /// A photo the library can't provide, such as an iCloud original that couldn't be downloaded, is reported as
+    /// unavailable rather than as a damaged file.
     private nonisolated static func data(from item: PhotosPickerItem) async throws -> Data {
-        guard let data = try await item.loadTransferable(type: Data.self) else {
-            throw CocoaError(.fileReadCorruptFile)
+        guard let data = try? await item.loadTransferable(type: Data.self) else {
+            throw ImportedImage.Problem.unavailable
         }
         return data
     }

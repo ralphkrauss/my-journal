@@ -291,6 +291,16 @@ enum RichText {
             return UIFont(descriptor: descriptor, size: size)
         #endif
     }
+    /// The column a list item's bullet, number or checkbox sits in; its text starts after it, and wrapped lines
+    /// line up with that text. One width for every kind of list, so they line up with each other, and it grows
+    /// with the text (docs/design/checklists-2026-10-03.md).
+    nonisolated static func listColumn(size: CGFloat) -> CGFloat { (size * 1.5).rounded() }
+    /// How far list `levels` deep moves in: a column per level, as many as fit in 160 points, so deep nesting at a
+    /// large text size still leaves its text room on the line.
+    nonisolated static func nestingIndent(levels: Int, size: CGFloat) -> CGFloat {
+        let column = listColumn(size: size)
+        return CGFloat(min(levels, max(1, Int(160 / column)))) * column
+    }
     /// Blocks drawn in a bold font by their style. That weight isn't the Bold format: it isn't saved as bold and
     /// doesn't turn on the Bold button.
     nonisolated static let boldBlockKinds: Set<String> = [
@@ -316,11 +326,7 @@ enum RichText {
             style.tailIndent = -BlockDecorations.codeInset
         }
         if ["bullet", "numbered", "task", "checked"].contains(kind) {
-            #if os(iOS)
-                let indent: CGFloat = kind == "task" || kind == "checked" ? 44 : 22
-            #else
-                let indent: CGFloat = 22
-            #endif
+            let indent = listColumn(size: size)
             style.headIndent = indent
             style.tabStops = [NSTextTab(textAlignment: .left, location: indent)]
         }
@@ -362,7 +368,12 @@ enum RichText {
         if let prefix = block.markdownPrefix, !prefix.isEmpty,
             let style = (result[.paragraphStyle] as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle
         {
-            let indent = CGFloat(prefix.count) * size * 0.5
+            // Each list level moves in by one list column, so a nested item's marker lines up with its parent's
+            // text however many spaces the Markdown uses; other prefixes, such as a quote's "> ", by half an em
+            // per character.
+            let levels = block.listIndents ?? []
+            let other = max(0, prefix.count - levels.reduce(0, +))
+            let indent = nestingIndent(levels: levels.count, size: size) + CGFloat(other) * size * 0.5
             style.firstLineHeadIndent += indent
             style.headIndent += indent
             style.tabStops = style.tabStops.map {

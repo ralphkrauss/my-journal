@@ -135,6 +135,68 @@ final class PermanentDeletionUITests: XCTestCase {
         assertEventually(picker.label.contains("Work") || (picker.value as? String) == "Work")
         capture(app, "Default Journal setting")
     }
+    /// Delete All empties Recently Deleted after saying what it deletes; Cancel keeps everything. The button is only
+    /// there while Recently Deleted has something in it.
+    @MainActor func testDeleteAllEmptiesRecentlyDeleted() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
+        app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
+        app.buttons["Start a Journal"].tap()
+        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.selectCollection("Recently Deleted", app: app)
+        XCTAssertTrue(app.staticTexts["No Deleted Items"].waitToAppear(timeout: 5))
+        let deleteAll = app.navigationBars.buttons["Delete All"]
+        XCTAssertFalse(deleteAll.exists)
+        NavigationTestSupport.selectCollection("Default", app: app)
+        for title in ["First", "Second"] {
+            if app.buttons["Finish Editing"].exists { app.buttons["Finish Editing"].tap() }
+            NavigationTestSupport.newEntryFromList(app)
+            XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 5))
+            app.typeText(title)
+            app.buttons["Entry Actions"].firstMatch.tap()
+            app.buttons["Delete Entry"].tap()
+        }
+        NavigationTestSupport.showJournals(app)
+        app.buttons["New Journal"].tap()
+        let create = app.alerts["New Journal"]
+        XCTAssertTrue(create.waitToAppear(timeout: 5))
+        create.textFields["Name"].typeText("Work")
+        create.buttons["Create"].tap()
+        NavigationTestSupport.showJournals(app)
+        app.staticTexts["Work"].firstMatch.press(forDuration: 1)
+        app.buttons["Delete Journal…"].tap()
+        let deleteJournal = app.alerts["Delete “Work”?"]
+        XCTAssertTrue(deleteJournal.waitToAppear(timeout: 5))
+        deleteJournal.buttons["Delete"].tap()
+        NavigationTestSupport.selectCollection("Recently Deleted", app: app)
+        func row(_ title: String) -> XCUIElement { app.cells.containing(.staticText, identifier: title).firstMatch }
+        XCTAssertTrue(row("Second").waitToAppear(timeout: 5))
+        XCTAssertTrue(deleteAll.waitToAppear(timeout: 5))
+        capture(app, "Recently Deleted with Delete All")
+        deleteAll.tap()
+        let alert = app.alerts["Delete 3 Items Permanently?"]
+        XCTAssertTrue(alert.waitToAppear(timeout: 5))
+        XCTAssertTrue(
+            alert.staticTexts[
+                "Includes 1 journal and 2 entries. You can’t undo this. Copies may remain in archives, backups, and "
+                    + "server history."
+            ].exists)
+        capture(app, "Delete All confirmation")
+        alert.buttons["Cancel"].tap()
+        XCTAssertTrue(alert.waitToDisappear(timeout: 5))
+        for title in ["First", "Second", "Work"] { XCTAssertTrue(row(title).waitToAppear(timeout: 5)) }
+        deleteAll.tap()
+        XCTAssertTrue(alert.waitToAppear(timeout: 5))
+        alert.buttons["Delete"].tap()
+        XCTAssertTrue(app.staticTexts["No Deleted Items"].waitToAppear(timeout: 10))
+        XCTAssertTrue(deleteAll.waitToDisappear(timeout: 5))
+        capture(app, "Recently Deleted after Delete All")
+        NavigationTestSupport.showJournals(app)
+        XCTAssertFalse(app.collectionViews["Journals"].staticTexts["Work"].exists)
+    }
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

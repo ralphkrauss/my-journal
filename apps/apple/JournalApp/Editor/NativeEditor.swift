@@ -31,6 +31,8 @@ enum EntryTextInset {
         var actions: EditorActions
         /// “use a template”, the link in the empty body's placeholder (TemplateSuggestionView).
         var suggestion: AnyView? = nil
+        /// Copy, Share, Save Image As, Image Descriptions and Delete on a picture; without it, the standard text menu.
+        var imageActions: ImageActionSupport?
         var imageHandler: (Data) async -> DocumentBlock?
 
         func makeNSView(context: Context) -> NSScrollView {
@@ -93,6 +95,8 @@ enum EntryTextInset {
             var importingAttachments: Set<ObjectIdentifier> = []
             /// Typing in a table cell that extends the current undo step, if any.
             var cellTyping: CellTypingUndo?
+            /// An image is being inserted where the person no longer is: their focus and scrolling stay.
+            var insertingQuietly = false
             /// What the text read as, so typing reads only the paragraph it changed.
             var reading = EditorReading()
             /// This editor's pictures, decoded at the size they are shown.
@@ -101,6 +105,14 @@ enum EntryTextInset {
             var proseChecking: TextChecking?
             /// The line as typed before a Markdown shortcut converted it, so Backspace right after can restore it.
             var shortcutRevert: MarkdownShortcuts.Revert?
+            /// The selected picture's original, being read or read (ImageActionsMac.swift).
+            var pictureRead: PictureRead?
+            /// The picture menu, share picker and save panel shown, closed when the entry leaves the window.
+            weak var pictureMenuShown: NSMenu?
+            var sharePicker: NSSharingServicePicker?
+            weak var savePanel: NSSavePanel?
+            let pictureMenuTarget = MenuActionTarget()
+            let pictureMenuItems = PictureMenuItems()
             init(_ parent: NativeEditor) {
                 self.parent = parent
                 super.init()
@@ -299,6 +311,7 @@ enum EntryTextInset {
             }
             func textViewDidChangeSelection(_ notification: Notification) {
                 guard !applying else { return }
+                prepareSelectedPicture()
                 applySubstitutions()
                 updateCaretState()
                 parent.actions.formattingSelectionChanged()
@@ -367,35 +380,6 @@ enum EntryTextInset {
                 view.setSelectedRange(NSRange(location: range.location + text.length, length: 0))
                 if cell != nil { cellTyping?.document = parent.document }
             }
-            func formattingSession() -> ((EditorCommand) -> Void)? {
-                if let cellSession = tables?.cellFormattingSession(fallback: { [weak self] command in
-                    self?.perform(command)
-                }) {
-                    return cellSession
-                }
-                guard let view, parent.editable else { return nil }
-                let id = parent.itemID
-                var generation = sessionGeneration
-                var range = view.selectedRange()
-                var document = parent.document
-                var text = view.string
-                return { [weak self] command in
-                    guard let self, let view = self.view, self.parent.itemID == id, self.parent.editable else { return }
-                    if self.sessionGeneration != generation || self.parent.document != document {
-                        // Formatting applies only to the text it was chosen for, but an image that finishes
-                        // importing after further writing still goes where it was placed.
-                        guard case .image = command else { return }
-                        range = TextRanges.insertionPoint(following: range, from: text, to: view.string)
-                    }
-                    guard NSMaxRange(range) <= view.string.utf16.count else { return }
-                    view.setSelectedRange(range)
-                    self.perform(command)
-                    range = view.selectedRange()
-                    document = self.parent.document
-                    generation = self.sessionGeneration
-                    text = view.string
-                }
-            }
             private func focusEditor() { view?.window?.makeFirstResponder(view) }
             func perform(_ command: EditorCommand) {
                 if tables?.active?.formatCell(command) == true { return }
@@ -459,6 +443,7 @@ enum EntryTextInset {
                             ? "\n" : "", attributes: RichText.attributes(kind: "paragraph", size: parent.fontSize))
                     text.append(rendered)
                     replace(text, range: selection)
+                    if insertingQuietly { return }
                 }
                 view.window?.makeFirstResponder(view)
             }
@@ -481,6 +466,8 @@ enum EntryTextInset {
         /// Offered over the empty body, below its placeholder (TemplateSuggestionView).
         var suggestion: AnyView? = nil
         var revealSaveFailure = false
+        /// Copy, Share, Save to Photos, Image Descriptions and Delete on a picture; without it, the system's own.
+        var imageActions: ImageActionSupport?
         var imageHandler: (Data) async -> DocumentBlock?
         func makeUIView(context: Context) -> JournalWritingView {
             let container = JournalWritingView()
@@ -574,6 +561,11 @@ enum EntryTextInset {
             var importingAttachments: Set<ObjectIdentifier> = []
             /// Typing in a table cell that extends the current undo step, if any.
             var cellTyping: CellTypingUndo?
+            /// An image is being inserted where the person no longer is: their focus and scrolling stay.
+            var insertingQuietly = false
+            /// A share sheet or alert shown for a picture, closed when the entry leaves the screen.
+            weak var sharing: UIViewController?
+            var pictureElementsSource: PictureElementsSource?
             /// What the text read as, so typing reads only the paragraph it changed.
             var reading = EditorReading()
             /// This editor's pictures, decoded at the size they are shown.
@@ -858,35 +850,6 @@ enum EntryTextInset {
                 revealCaretAfterEdit()
                 if cell != nil { cellTyping?.document = parent.document }
             }
-            func formattingSession() -> ((EditorCommand) -> Void)? {
-                if let cellSession = tables?.cellFormattingSession(fallback: { [weak self] command in
-                    self?.perform(command)
-                }) {
-                    return cellSession
-                }
-                guard let view, parent.editable else { return nil }
-                let id = parent.itemID
-                var generation = sessionGeneration
-                var range = view.selectedRange
-                var document = parent.document
-                var text = view.textStorage.string
-                return { [weak self] command in
-                    guard let self, let view = self.view, self.parent.itemID == id, self.parent.editable else { return }
-                    if self.sessionGeneration != generation || self.parent.document != document {
-                        // Formatting applies only to the text it was chosen for, but an image that finishes
-                        // importing after further writing still goes where it was placed.
-                        guard case .image = command else { return }
-                        range = TextRanges.insertionPoint(following: range, from: text, to: view.textStorage.string)
-                    }
-                    guard NSMaxRange(range) <= view.textStorage.length else { return }
-                    view.selectedRange = range
-                    self.perform(command)
-                    range = view.selectedRange
-                    document = self.parent.document
-                    generation = self.sessionGeneration
-                    text = view.textStorage.string
-                }
-            }
             private func focusEditor() { view?.becomeFirstResponder() }
             func perform(_ command: EditorCommand) {
                 if tables?.active?.formatCell(command) == true { return }
@@ -952,6 +915,7 @@ enum EntryTextInset {
                             .init(blocks: [block, DocumentBlock()]), size: parent.fontSize, images: parent.images,
                             layout: imageLayout))
                     replace(text, range: selection)
+                    guard !insertingQuietly else { return }
                     view.becomeFirstResponder()
                     revealCaretAfterImage()
                     return

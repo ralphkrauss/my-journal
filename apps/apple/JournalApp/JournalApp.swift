@@ -36,6 +36,7 @@ struct JournalApp: App {
                     await model.load()
                     await ArchiveExportLeftovers.removeAtLaunch(dataDirectory: model.directory)
                     #if os(macOS)
+                        model.startInactivityLock()
                         LocalAgentCleanup.run(dataDirectory: model.directory)
                         await model.localServer.resumeIfNeeded()
                     #endif
@@ -76,7 +77,7 @@ struct JournalApp: App {
         #if os(iOS)
             // Lock before anything else, so no journal content is shown again. iOS may suspend the app soon after
             // it leaves the screen; ask for time to save first.
-            model.lockImmediately(prompting: true)
+            model.applicationEnteredBackground()
             BackgroundActivity.run("Save and lock") { await model.saveWhileLocked() }
         #else
             Task {

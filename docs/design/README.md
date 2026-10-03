@@ -35,7 +35,8 @@ A design and its reviews share one row.
 | [pre-release-fixes-2026-09-27.md](pre-release-fixes-2026-09-27.md) | Current. Changes made as bug fixes (connection, sync messages, App Lock cover, search, Move Entry, agent access, image descriptions), their design review, unreviewed editor changes and open owner decisions. |
 | [pre-release-ui-2026-09-27.md](pre-release-ui-2026-09-27.md) | Current. Deleted templates in Recently Deleted, the template sheet, Backspace in lists, the iPhone Format sheet, Search Entries ⌥⌘F, Devices, the new device’s check code, the one-time password check and Forgot Password?, and the Delete Permanently alert. Supersedes owner-decisions-2026-09-25.md §6 and the §1 alert message, and decides pre-release-fixes items (a) and (e). |
 | [default-journal.md](default-journal.md) | Current. Settings ▸ Default Journal, and New Entry outside a journal (Recently Deleted, Templates, All Entries, the iPhone Journals screen). Replaces the default-journal rule of feedback-stabilization-2026-09-23.md and the "Which journal" rule of new-entry-template-suggestion.md. |
-| [recently-deleted-2026-09-30.md](recently-deleted-2026-09-30.md) | Current. Cancelling a swipe to delete permanently keeps the row; the footer check. |
+| [recently-deleted-2026-09-30.md](recently-deleted-2026-09-30.md) | Current, amended by ios-delete-all-and-settings-2026-10-03.md (the Recently Deleted swipe is destructive again; Cancel brings the row back). The footer check. |
+| [ios-delete-all-and-settings-2026-10-03.md](ios-delete-all-and-settings-2026-10-03.md) | Current. Deletion motion on iOS, Delete All in Recently Deleted (iPhone, iPad, and the Mac in §4: a header in the list and File ▸ Delete All in Recently Deleted… ⇧⌘⌫), Settings at the top left of Journals on iPhone. Includes its reviews. |
 | [device-orientations.md](device-orientations.md), [review](device-orientations-review.md) | Current, amended. The constrained iOS header was replaced by unified-entry-scrolling.md. |
 | [unified-entry-scrolling.md](unified-entry-scrolling.md), [review](unified-entry-scrolling-review.md) | Current. |
 | [typing-scroll.md](typing-scroll.md), [review](typing-scroll-review.md) | Current. Scrolling while typing on iPhone and iPad: the writing controls' area is the entry's bottom inset and the text view follows the caret, as in Notes. |
@@ -56,6 +57,7 @@ A design and its reviews share one row.
 | [new-entry-button-options.md](new-entry-button-options.md) | Evidence. Research and prototypes for folding Templates… into New Entry; the owner chose option D. |
 | [title-paste-workflow-review.md](title-paste-workflow-review.md) | Evidence. |
 | [pasted-text.md](pasted-text.md), [review](pasted-text-review.md) | Current. Text pasted from other apps (owner-decisions-2026-10-01.md §6). |
+| [checklists-2026-10-03.md](checklists-2026-10-03.md) | Current. Checklist (was Task List): square checkboxes on iPhone and iPad, one list column for every kind of list that grows with the text, nested items under their parent's text, Mark as Checked / Mark as Unchecked. Includes its review. |
 | [save-failure-retry.md](save-failure-retry.md), [review](save-failure-retry-review.md) | Current, amended. The Export Entry option was removed (owner-decisions-2026-09-25.md §2). |
 | [unsaved-draft-export-review.md](unsaved-draft-export-review.md) | Removed feature (Export Entry). |
 
@@ -70,6 +72,9 @@ A design and its reviews share one row.
 | [image-descriptions.md](image-descriptions.md), [review](image-descriptions-review.md), [implementation review](image-descriptions-implementation-review.md) | Current. |
 | [image-description-keyboard.md](image-description-keyboard.md), [review](image-description-keyboard-review.md) | Superseded by image-description-native-form.md. |
 | [image-description-native-form.md](image-description-native-form.md), [review](image-description-native-form-review.md) | Current, amended. Descriptions are one line; Return moves to the next (pre-release-fixes-2026-09-27.md). |
+| [several-photos-2026-10-03.md](several-photos-2026-10-03.md) | Current. Insert Image takes several photos or files at once, in the order chosen, with a progress notice, Stop and one undo step. Includes its reviews. |
+| [image-actions-ios-2026-10-03.md](image-actions-ios-2026-10-03.md) | Current. Long press on a picture on iPhone and iPad: Copy, Share…, Save to Photos, Image Descriptions…, Delete; VoiceOver actions. Includes its review. |
+| [image-actions-mac-2026-10-03.md](image-actions-mac-2026-10-03.md) | Current. Right-click on a picture on the Mac: Cut, Copy, Paste, Share…, Save Image As…, Image Descriptions…, Delete; Copy, Cut and dragging hand other apps the original; VoiceOver actions. Includes its reviews. |
 
 ## Journals, deletion and history
 
@@ -120,7 +125,8 @@ A design and its reviews share one row.
 | [sync-health-and-recovery.md](sync-health-and-recovery.md) | Current (revision 2, approved by the owner and implemented 2026-10-01; Check Connection left out; §4.2 amended by quiet-sync-and-title-alignment.md). Every sync failure classified into a few states with one action each (Set Up Server Again…, Connect Again…, Sign In…), automatic retries stopped where they can't help, Merge Journals only for a different library (lineage), Stop Syncing in Settings > Sync. |
 | [sync-protocol-efficiency.md](sync-protocol-efficiency.md), [review](sync-protocol-efficiency-review.md) | Current (revision 9, approved after nine independent review rounds; implemented 2026-10-02, waiting for a red team before build 10). Short push receipts (`sync-short-receipt`) and waiting for changes instead of polling (`sync-wait`), with the server contract in protocol/README.md. |
 | [quiet-sync-and-title-alignment.md](quiet-sync-and-title-alignment.md), [review](quiet-sync-and-title-alignment-review.md) | Current (implemented 2026-10-02). Sync Status shows only when the person must act or after a day of failing, in a toolbar place kept for it on the Mac so nothing moves; the entry title starts exactly where the body text does. |
-| [app-lock-system-auth.md](app-lock-system-auth.md) | Current. App Lock uses only the device's own authentication (Face ID, Touch ID, Optic ID, passcode or Mac login password); the PIN, its sheet and attempt delay are removed and PIN users are migrated. The review outcome is recorded in the record. |
+| [app-lock-system-auth.md](app-lock-system-auth.md) | Current, amended by mac-inactivity-lock-2026-10-03.md (the Mac now locks after inactivity, on sleep and on switching users). App Lock uses only the device's own authentication (Face ID, Touch ID, Optic ID, passcode or Mac login password); the PIN, its sheet and attempt delay are removed and PIN users are migrated. The review outcome is recorded in the record. Since 2026-10-03, locking the iPhone with My Journal open asks for Face ID only once the app is in front again. |
+| [mac-inactivity-lock-2026-10-03.md](mac-inactivity-lock-2026-10-03.md) | Current. Settings ▸ Privacy ▸ Lock when inactive on the Mac (30 minutes by default), locking on sleep and on switching users, what counts as use, and saving before locking. The review outcome is recorded in the record. |
 | [app-lock-accessibility.md](app-lock-accessibility.md), [review](app-lock-accessibility-review.md) | Current, amended by app-lock-system-auth.md (no PIN field; the scrolling lock-screen layout still applies). The iPhone and iPad privacy cover is in pre-release-fixes-2026-09-27.md. |
 | [missing-device-key-unlock.md](missing-device-key-unlock.md), [review](missing-device-key-unlock-review.md) | Current. |
 | [local-server.md](local-server.md), [review](local-server-review.md), [implementation review](local-server-implementation-review.md) | Current. |
@@ -138,6 +144,8 @@ A design and its reviews share one row.
 
 | Record | Status |
 | --- | --- |
+| [pinned-entries.md](pinned-entries.md) | Reviewed, owner decisions recorded; not built yet. Pinned entries, and the `library` record that syncs pins and journal order. |
+| [journal-order.md](journal-order.md) | Reviewed, owner decisions recorded; not built yet. Reordering journals: edit mode on iPhone and iPad, drag on the Mac. |
 | [website.md](website.md), [review](website-review.md) | Superseded: the repository is the website. The custom site was removed; its privacy policy and support copy moved to [PRIVACY.md](../../PRIVACY.md) and [SUPPORT.md](../../SUPPORT.md). |
 
 ## Adding a record

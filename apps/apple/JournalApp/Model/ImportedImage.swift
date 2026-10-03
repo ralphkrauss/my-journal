@@ -4,28 +4,38 @@ import JournalCore
 import UniformTypeIdentifiers
 
 extension AppModel {
+    /// Stores an image for the open entry and returns its block, or nil when it couldn't be stored (the error alert
+    /// says why) or the entry, library or lock changed meanwhile.
     func addImage(_ data: Data) async -> DocumentBlock? {
+        do {
+            return try await importImage(data)
+        } catch {
+            self.error = error.localizedDescription
+            return nil
+        }
+    }
+
+    /// Stores an image for the open entry and returns its block; nil when the entry, library or lock changed
+    /// meanwhile, and an error only while they haven't. With `showing`, the editor gets the picture at once instead of
+    /// reading it back from the store.
+    func importImage(_ data: Data, showing: Bool = true) async throws -> DocumentBlock? {
         guard let store, let entryID = draft?.id, !locked, !replacingVault else { return nil }
         let generation = imageInsertionGeneration
+        func current() -> Bool {
+            !Task.isCancelled && imageInsertionGeneration == generation && self.store === store
+                && draft?.id == entryID && !locked && !replacingVault
+        }
         do {
+            guard data.count <= ImportedImage.maximumBytes else { throw ImportedImage.Problem.tooLarge }
             // Where the photo was taken is removed before anything is stored.
             let image = try await Task.detached { try ImportedImage.prepare(data) }.value
             let id = try await store.addAttachment(image.data)
-            guard !Task.isCancelled, imageInsertionGeneration == generation, self.store === store, draft?.id == entryID,
-                !locked, !replacingVault
-            else {
-                return nil
-            }
-            imageLoader.prime(image.data, id: id, documentID: entryID, store: store)
+            guard current() else { return nil }
+            if showing { imageLoader.prime(image.data, id: id, documentID: entryID, store: store) }
             return DocumentBlock(kind: "image", attachmentID: id, imageDescription: "", mediaType: image.mediaType)
         } catch {
-            guard !Task.isCancelled, imageInsertionGeneration == generation, self.store === store, draft?.id == entryID,
-                !locked, !replacingVault
-            else {
-                return nil
-            }
-            self.error = error.localizedDescription
-            return nil
+            guard current() else { return nil }
+            throw error
         }
     }
 }
@@ -60,6 +70,32 @@ enum ImportedImage {
     private enum ImportError: LocalizedError {
         case unreadable
         var errorDescription: String? { "This file couldn’t be read as an image." }
+    }
+
+    /// The largest image the store keeps (its encrypted copy has 28 bytes more).
+    static let maximumBytes = 25 * 1024 * 1024 - 28
+
+    /// Why an image couldn't be added, for one message about several images.
+    enum Problem: LocalizedError, Equatable {
+        case tooLarge
+        case unreadable
+        /// The photo library couldn't provide the photo, such as an iCloud original that isn't downloaded.
+        case unavailable
+
+        var errorDescription: String? {
+            switch self {
+            case .tooLarge: return "Choose an image smaller than 25 MB."
+            case .unreadable: return "This file couldn’t be read as an image."
+            case .unavailable:
+                return "The image couldn’t be added. It may still be downloading from iCloud. Try again later."
+            }
+        }
+
+        /// The cause of a failure, as one message about several images names it.
+        static func of(_ error: Error) -> Problem {
+            if let problem = error as? Problem { return problem }
+            return .unreadable
+        }
     }
 
     /// Location metadata: EXIF GPS, and the IPTC place fields as ImageIO presents them in XMP and IIM.

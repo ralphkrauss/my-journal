@@ -262,6 +262,7 @@ extension AppModel {
             LocalConfiguration(
                 recovery: envelope, recoveryConfirmed: true, storageFolder: folder, keyID: account,
                 connectionKeyID: connectionAccount, appLock: oldConfiguration?.appLock,
+                inactivityLockMinutes: oldConfiguration?.inactivityLockMinutes,
                 supersededLibraries: librariesSuperseded(by: store == nil ? nil : oldConfiguration)),
             writtenAccounts: [account, connectionAccount])
         stagedVault = nil

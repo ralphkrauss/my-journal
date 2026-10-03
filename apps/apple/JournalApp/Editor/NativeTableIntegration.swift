@@ -9,8 +9,15 @@ extension NativeEditor.Coordinator {
         view.selectionMarkdown = { [weak self] range in self?.markdown(for: range) }
         #if os(iOS)
             view.showsSource = { [weak self] in self?.showsSource ?? false }
+            view.copySelectedImage = { [weak self, weak view] image in
+                let markdown = view?.selectionMarkdown?(NSRange(location: image.index, length: 1))
+                return self?.copySelected(image, markdown: markdown) ?? false
+            }
+            view.leavingWindow = { [weak self] in self?.dismissImagePresentations() }
+            view.enteringBackground = { [weak self] in self?.dismissImageMenu() }
         #endif
         #if os(macOS)
+            configurePictures(view)
             view.textStorage?.delegate = self
         #else
             view.textStorage.delegate = self
@@ -49,6 +56,11 @@ extension NativeEditor.Coordinator {
             self.applySubstitutions()
         }
         taskControls?.synchronize(editable: parent.editable)
+        #if os(iOS)
+            synchronizePictureElements()
+        #else
+            synchronizePictureCells()
+        #endif
         tables?.synchronize(size: parent.fontSize, editable: parent.editable, images: parent.images)
     }
     /// Code must stay exactly as typed: in source view and inside code blocks or inline code, smart dashes and

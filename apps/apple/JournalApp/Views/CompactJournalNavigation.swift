@@ -97,16 +97,19 @@ extension RootView {
         }
 
         @ToolbarContentBuilder private var compactToolbar: some ToolbarContent {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button {
-                    newJournal = true
-                } label: {
-                    Label("New Journal", systemImage: "folder.badge.plus")
-                }
+            // Two items, so each has its own button: Settings at the top left, New Journal at the top right.
+            ToolbarItem(placement: .topBarLeading) {
                 Button {
                     model.settingsPresented = true
                 } label: {
                     Label("Settings", systemImage: "gearshape")
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    newJournal = true
+                } label: {
+                    Label("New Journal", systemImage: "folder.badge.plus")
                 }
             }
             if #available(iOS 26.0, *) { DefaultToolbarItem(kind: .search, placement: .bottomBar) }

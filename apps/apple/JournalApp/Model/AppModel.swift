@@ -76,7 +76,12 @@ final class AppModel: ObservableObject {
     /// Set when launching or unlocking restores an entry, so the iPhone shows it rather than the list.
     @Published var revealsSelection = false
     @Published var selectedID: UUID? {
-        didSet { if oldValue != selectedID { imageInsertionGeneration = UUID() } }
+        didSet {
+            guard oldValue != selectedID else { return }
+            imageInsertionGeneration = UUID()
+            // Choosing an entry is use, also with VoiceOver or Voice Control, which send no key or click.
+            noteUse()
+        }
     }
     var draft: JournalItem? {
         willSet { if !lists.quietDraft { objectWillChange.send() } }
@@ -116,6 +121,8 @@ final class AppModel: ObservableObject {
     @Published var showingTemplates = false
     @Published var showingUnavailable = false
     @Published var showingAllEntries = false
+    /// Where Delete All in Recently Deleted is, for every window and the menu bar (PermanentDeletionOperations.swift).
+    @Published var deleteAllPhase = DeleteAllPhase.idle
     @Published var error: String?
     @Published var saveFailure = false
     @Published var locked = false {
@@ -173,6 +180,10 @@ final class AppModel: ObservableObject {
     /// App Lock's authentication: the device's own (AppLockOperations.swift, DeviceAuthentication.swift).
     var deviceOwner: DeviceOwnerAuthenticating
     @Published var unlockState = DeviceUnlockState()
+    /// Saves of typed content in open sheets, run before locking (LockSaving.swift).
+    var savesBeforeLocking: [UUID: @MainActor () async -> Void] = [:]
+    /// Image descriptions a lock closed before they were saved (LockSaving.swift).
+    var unsavedImageDescriptions: UnsavedImageDescriptions?
     /// Whether the app is active, kept current from the system; a success is applied only while it is.
     var applicationActive = false
     private var activitySubscriptions: [AnyCancellable] = []
@@ -181,6 +192,8 @@ final class AppModel: ObservableObject {
 
     #if os(macOS)
         lazy var localServer = LocalServerController(model: self)
+        /// Locks after a time without use (InactivityLock.swift); started once the app has launched.
+        var inactivityLock: InactivityLock?
         /// The journal window; menu commands that need it open it again after it was closed.
         weak var journalWindow: NSWindow?
         var hasJournalWindow: Bool { journalWindow.map { $0.isVisible || $0.isMiniaturized } ?? false }
@@ -446,6 +459,8 @@ final class AppModel: ObservableObject {
         // Text typed into an editable entry keeps it editable; anything else is checked.
         let textOnly = draft.map { item.document.changesOnlyText(from: $0.document) } ?? false
         guard canEdit, draft?.id == item.id, textOnly || item.document.isEditable else { return }
+        // Only the editor's edits arrive here, including Dictation's, which sends no key presses.
+        noteUse()
         var item = item
         item.modifiedAt = Date()
         item.storedVersion = draft?.storedVersion
@@ -816,29 +831,35 @@ extension AppModel {
 
 extension AppModel {
     // Complete reconciliation before a lock/quit flush can save the retained draft.
-    func commitMutation(
-        _ operation: @escaping @Sendable () async throws -> JournalItem,
-        reconcile: @escaping @MainActor (JournalItem) -> Void
+    /// With `settle`, the library is read again only once a list's removal animation has finished
+    /// (`waitForListRemovals`): the update would otherwise land in the middle of it.
+    func commitMutation<Outcome: Sendable>(
+        settle: Duration = .zero,
+        _ operation: @escaping @Sendable () async throws -> Outcome,
+        reconcile: @escaping @MainActor (Outcome) -> Void
     ) async throws -> Bool {
         guard !locked, !replacingVault else { throw JournalError.locked }
         // The same library stays open: images, pending focus and other session work continue.
         committingMutation = true
         let task = Task {
             try Task.checkCancellation()
-            let item = try await operation()
+            let outcome = try await operation()
             pendingSync = true
-            reconcile(item)
+            reconcile(outcome)
         }
         mutationTask = task
-        defer {
-            mutationTask = nil
-            committingMutation = false
+        do {
+            defer {
+                mutationTask = nil
+                committingMutation = false
+            }
+            try await withTaskCancellationHandler {
+                try await task.value
+            } onCancel: {
+                task.cancel()
+            }
         }
-        try await withTaskCancellationHandler {
-            try await task.value
-        } onCancel: {
-            task.cancel()
-        }
+        await waitForListRemovals(settle)
         do {
             try await refresh()
             return true

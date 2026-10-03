@@ -140,6 +140,14 @@ Measured in a Release build on an iPhone 17 simulator with simulated Face ID and
 
 Review: an independent design review approved this with required changes, all applied above: state the trade-off of the inactive window; set the flag only in the resign-active handler while a request is showing and clear it on activation and in the background; keep the Mac's rule; use an explicit reading flag, not empty lists; post screen-changed on activation. Its concern about focusing the editor while inactive doesn't apply: restoring the remembered entry on iPhone pushes it without bringing up the keyboard. Automatic sync starting during the panel is ordinary background work.
 
+### Locking the iPhone with My Journal open (2026-10-03)
+
+Owner report: “When I lock the phone while the My Journal app is open, the Face ID is being triggered on the home screen.”
+
+Reproduced on the iPhone 17 simulator (iOS 26.5) with the side button (`XCUIDevice` `pressLockButton`) and temporary lifecycle tracing. Within about 20 ms: the scene deactivated, the app entered the background, `scenePhase` became `.background` and the app locked with the automatic prompt pending; the lock screen's view appeared in the background and asked for Face ID. The app's “active” flag was still set, because the resign-active notification reaches the model through an asynchronous hop and arrived about 130 ms later. On a phone, Face ID then shows over the Lock Screen and, as the person is looking at it, succeeds and unlocks the journal in the background, so returning to the app shows the journal without asking. Pressing Home or using the app switcher didn't show it: there, resign-active arrives well before the background. The order varies between runs (one of two runs on the simulator).
+
+Fix: entering the background marks the app inactive before it locks (`applicationEnteredBackground`), whatever order the notifications arrive in. The prompt waits for the app to become active again, as on return from the Home Screen. No interface or copy change. `AppLockTests.testLockingTheDeviceAsksOnlyOnceTheAppIsInFrontAgain` feeds the model a device lock's order of events; a UI test couldn't show the problem reliably, because the order depends on timing.
+
 ## Migration of PIN users
 
 This runs in `load()`, after decoding and before anything is shown. `locked` is already true at that point.

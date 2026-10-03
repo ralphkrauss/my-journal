@@ -33,7 +33,7 @@ struct MergeJournalView: View {
     private var canMerge: Bool { !busy && !sourceGone && destination != nil }
 
     var body: some View {
-        layout.interactiveDismissDisabled(busy)
+        layout.interactiveDismissDisabled(busy).keepsUnlockedWhile(busy)
             .sheet(isPresented: $reviewing) {
                 if let id = conflictToReview, let conflict = model.conflicts.first(where: { $0.id == id }) {
                     if conflict.local.kind == "journal" {

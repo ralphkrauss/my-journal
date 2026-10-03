@@ -102,7 +102,7 @@ import JournalCore
         switch kind {
         case "bullet": return "Bulleted list"
         case "numbered": return "Numbered list"
-        case "task", "checked": return "Task list"
+        case "task", "checked": return "Checklist"
         case "quote": return "Block quote"
         case "heading": return "Heading 1"
         case "subheading": return "Heading 2"

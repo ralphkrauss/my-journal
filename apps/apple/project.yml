@@ -75,6 +75,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSFaceIDUsageDescription: Unlock your journals and confirm adding a device.
         NSCameraUsageDescription: Take photos for your entries and scan codes to connect your devices.
+        NSPhotoLibraryAddUsageDescription: Save images from your entries to your photo library.
         NSLocalNetworkUsageDescription: Find and sync with your server on your local network.
         NSBonjourServices: [_myjournal._tcp]
         UILaunchScreen: {}

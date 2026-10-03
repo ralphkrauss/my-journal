@@ -19,6 +19,12 @@ extension RootView {
             if case .journal = model.destination, let journal = model.selectedJournal {
                 ToolbarItem(placement: .primaryAction) { JournalMoreMenu(journal: journal) }
             }
+            // Only with something to delete, and not while searching, where “All” could mean the results.
+            if model.offersDeleteAll {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Delete All") { deleteAllRequested = true }.disabled(!model.canDeleteAll)
+                }
+            }
             if #available(iOS 26.0, *) { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
             ToolbarItemGroup(placement: .bottomBar) {
                 Spacer()

@@ -1,6 +1,6 @@
 # Recently Deleted: swipe to delete permanently, and its footer — 2026-09-30
 
-Status: bug fix, no interface change beyond the swipe behavior. Amends pre-release-ui-2026-09-27.md §1.
+Status: bug fix, no interface change beyond the swipe behavior. Amends pre-release-ui-2026-09-27.md §1. The swipe part is amended by ios-delete-all-and-settings-2026-10-03.md §1: the swipe action is destructive again, and the row comes back explicitly on Cancel.
 
 ## Swipe, Delete, Cancel
 

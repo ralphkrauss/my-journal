@@ -141,6 +141,7 @@
                 }.padding(24)
             }.frame(minWidth: 320, idealWidth: 480, minHeight: 320, idealHeight: 430)
                 .onAppear { recoveryFocused = true }
+                .keepsUnlockedWhile(busy)
                 .onDisappear {
                     operation?.cancel()
                     controller.requestSetupCancellation()

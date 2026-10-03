@@ -110,10 +110,20 @@
             setNeedsLayout()
         }
 
+        /// After the entry's text and its tables: the checklist checkboxes on screen, then an element for every
+        /// picture in the entry, each in document order (docs/design/image-actions-ios-2026-10-03.md).
+        var checkboxElements: [UIView] = [] {
+            didSet { if checkboxElements != oldValue { updateAccessibility() } }
+        }
+        var pictureElements: [UIAccessibilityElement] = [] {
+            didSet { if pictureElements != oldValue { updateAccessibility() } }
+        }
+
         func updateAccessibility() {
             let tables = subviews.compactMap { $0 as? InlineTableGrid }.sorted { $0.frame.minY < $1.frame.minY }
             let offered = suggestion.flatMap { $0.isHidden ? nil : $0 }
-            accessibilityElements = [header, offered].compactMap { $0 } + [editor] + tables
+            let views: [UIView] = [header, offered].compactMap { $0 } + [editor] + tables + checkboxElements
+            accessibilityElements = (views as [Any]) + (pictureElements as [Any])
         }
 
         override func layoutSubviews() {

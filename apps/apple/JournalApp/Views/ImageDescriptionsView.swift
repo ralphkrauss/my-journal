@@ -1,6 +1,7 @@
 import ImageIO
 import JournalCore
 import SwiftUI
+import os
 
 struct ImageDescriptionsView: View {
     @EnvironmentObject var model: AppModel
@@ -17,6 +18,8 @@ struct ImageDescriptionsView: View {
     @State private var error: String?
     @State private var confirmingReload = false
     @State private var operation: Task<Void, Never>?
+    /// The descriptions were saved as the journals locked.
+    @State private var savedBeforeLocking = false
     @State private var previews = ImagePreviews()
     @Environment(\.displayScale) private var displayScale
     init(entry: JournalItem) {
@@ -54,13 +57,24 @@ struct ImageDescriptionsView: View {
             #endif
         }
         .interactiveDismissDisabled(busy || dirty)
+        // Typed descriptions are saved, as Done would, before My Journal locks and closes the sheet.
+        .savesBeforeLocking { await saveBeforeLocking() }
         .onDisappear { operation?.cancel() }
-        .onAppear { checkEligibility() }
+        .onAppear {
+            restoreKeptDescriptions()
+            checkEligibility()
+        }
         .onValueChange(of: eligible) { available in
             if !available { checkEligibility() }
         }
         .onValueChange(of: model.locked) { locked in
             if locked {
+                // Descriptions that couldn't be saved first stay in memory, never lost (LockSaving.swift).
+                if dirty && !completed && !savedBeforeLocking {
+                    model.keepUnsavedImageDescriptions(
+                        UnsavedImageDescriptions(
+                            entryID: entryID, expectedImages: images, descriptions: descriptions))
+                }
                 operation?.cancel()
                 focusedImage = nil
                 images = []
@@ -202,6 +216,25 @@ struct ImageDescriptionsView: View {
         guard !eligible, !busy, !completed, !model.locked else { return }
         invalidated = true
         error = "This entry is no longer available for editing. Your description changes are still here."
+    }
+    private func saveBeforeLocking() async {
+        guard dirty, !busy, !completed, eligible, !invalidated else { return }
+        do {
+            _ = try await model.saveImageDescriptions(
+                entryID: entryID, expectedImages: images, descriptions: descriptions)
+            savedBeforeLocking = true
+        } catch {
+            // The lock keeps them in memory instead.
+            Logger(subsystem: "org.privatejournal", category: "image-descriptions").error(
+                "Could not save image descriptions before locking.")
+        }
+    }
+    /// Descriptions a lock closed this sheet on before they were saved appear again, still to be saved with Done.
+    private func restoreKeptDescriptions() {
+        guard let kept = model.takeUnsavedImageDescriptions(for: entryID, images: images) else { return }
+        for block in images {
+            if let text = kept[block.id] { descriptions[block.id] = text }
+        }
     }
     private func save() {
         guard !busy, !completed, eligible, !invalidated, !needsEntrySave else { return }

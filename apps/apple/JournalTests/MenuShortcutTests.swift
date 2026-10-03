@@ -5,7 +5,7 @@
     @MainActor
     final class MenuShortcutTests: XCTestCase {
         /// Two commands with one shortcut make one of them unreachable, and can run the wrong one (such as locking
-        /// the app instead of starting a task list).
+        /// the app instead of starting a checklist).
         func testMenuBarShortcutsAreUnique() throws {
             let menu = try XCTUnwrap(NSApp.mainMenu)
             var owners: [String: String] = [:]
@@ -29,7 +29,7 @@
                 }
             }
             visit(menu, path: "")
-            XCTAssertNotNil(owners.values.first { $0.hasSuffix("▸ Task List") }, "The Format menu must be checked.")
+            XCTAssertNotNil(owners.values.first { $0.hasSuffix("▸ Checklist") }, "The Format menu must be checked.")
             XCTAssertEqual(duplicates, [])
             // As in Notes. The system Find menu would otherwise keep Find and Replace… on ⌥⌘F and win over it.
             let command = NSEvent.ModifierFlags.command.rawValue

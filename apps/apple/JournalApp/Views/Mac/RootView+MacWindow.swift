@@ -95,16 +95,9 @@
             case .templates:
                 return Self.count(model.templates.count, one: "template", many: "templates", none: "No Templates")
             case .deleted:
-                let snapshot = model.lifecycle
-                let items = model.items.filter { item in
-                    switch item.kind {
-                    case "entry": return snapshot.location(of: item) == .recentlyDeleted
-                    case "template": return model.isRecentlyDeleted(item)
-                    default: return false
-                    }
-                }.count
+                // Without the rows that are leaving, so the count changes as they leave.
                 return Self.count(
-                    items + model.deletedJournals.count, one: "item", many: "items", none: "No Items")
+                    model.recentlyDeletedContents.count, one: "item", many: "items", none: "No Items")
             case .unavailable:
                 let snapshot = model.lifecycle
                 let entries = model.items.filter { item in
@@ -150,6 +143,22 @@
             JournalActionPresentation(
                 renaming: $journalToRename, name: $journalRenameText, deletionRequest: $journalDeletionRequest,
                 history: $journalHistory, merging: $journalToMerge)
+        }
+    }
+
+    /// File ▸ Delete All in Recently Deleted… for the window in front, which asks in its own sheet.
+    struct DeleteAllCommand {
+        let request: @MainActor () -> Void
+    }
+
+    private struct DeleteAllCommandKey: FocusedValueKey {
+        typealias Value = DeleteAllCommand
+    }
+
+    extension FocusedValues {
+        var deleteAll: DeleteAllCommand? {
+            get { self[DeleteAllCommandKey.self] }
+            set { self[DeleteAllCommandKey.self] = newValue }
         }
     }
 

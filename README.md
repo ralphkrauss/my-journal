@@ -15,9 +15,9 @@ My Journal is an open-source journal with a clean, simple interface that feels a
   <img src="docs/app-store/screenshots/mac/01-hero.jpg" width="860" alt="My Journal on the Mac: journals in the sidebar, a list of dated entries, and the entry Slow Sunday with text and a photo of coffee on a wooden table">
 </p>
 <p align="center">
-  <img src="docs/app-store/screenshots/iphone/01-hero.jpg" width="250" alt="My Journal on iPhone: the entry Slow Sunday with text, a photo, a bulleted list and a task list">
+  <img src="docs/app-store/screenshots/iphone/01-hero.jpg" width="250" alt="My Journal on iPhone: the entry Slow Sunday with text, a photo, a bulleted list and a checklist">
   <img src="docs/app-store/screenshots/iphone/02-privacy.jpg" width="250" alt="Privacy settings on iPhone: Your Journals Are Encrypted, Change Password, and App Lock with Require Face ID turned on">
-  <img src="docs/app-store/screenshots/iphone/06-dark.jpg" width="250" alt="My Journal on iPhone in dark appearance: the entry Porto, day two with a photo of the river at sunset and a task list">
+  <img src="docs/app-store/screenshots/iphone/06-dark.jpg" width="250" alt="My Journal on iPhone in dark appearance: the entry Porto, day two with a photo of the river at sunset and a checklist">
 </p>
 
 **Status: in testing.** The iPhone, iPad and Mac apps are coming to the App Store; there is no public release yet. You can [build them from source](docs/development.md) today. Until the first release, keep an [archive](docs/guide/backups.md) of anything you can’t afford to lose.
@@ -34,7 +34,7 @@ My Journal is an open-source journal with a clean, simple interface that feels a
 
 ### Writing
 
-- Rich text with headings, bold, italic, underline, strikethrough, lists, task lists, quotes, code, tables, links and images. Your system’s spelling and correction settings apply.
+- Rich text with headings, bold, italic, underline, strikethrough, lists, checklists, quotes, code, tables, links and images. Your system’s spelling and correction settings apply.
 - Markdown shortcuts as you type, and a source view for the Markdown itself.
 - Images with descriptions for VoiceOver. Location data (GPS coordinates and place names) is removed when you add a photo.
 - Separate journals, for example for personal and work notes, and editable templates, with a default template for each journal.

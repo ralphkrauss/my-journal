@@ -29,6 +29,9 @@ struct AppLockSettingsSection: View {
             )
             // Turning off stays possible without a passcode; turning on needs one.
             .disabled(requested != nil || (!usable && !model.appLockOn))
+            #if os(macOS)
+                if model.appLockOn { InactivityLockPicker() }
+            #endif
             if model.appLockOn {
                 Button("Lock My Journal") {
                     Task {
@@ -53,7 +56,8 @@ struct AppLockSettingsSection: View {
         case .available(let method):
             let phrase = method.phrase
             let who = phrase.prefix(1).uppercased() + phrase.dropFirst()
-            return "\(who) is needed to open My Journal. App Lock doesn’t change how your journals are encrypted."
+            return
+                "\(who) is needed to open My Journal.\(model.automaticLockSentence) App Lock doesn’t change how your journals are encrypted."
         case .noPasscode:
             #if os(macOS)
                 return "To use App Lock, set a login password for your Mac user in System Settings."

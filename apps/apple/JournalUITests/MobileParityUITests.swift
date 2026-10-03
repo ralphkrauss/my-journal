@@ -30,7 +30,7 @@ final class MobileParityUITests: XCTestCase {
         XCTAssertEqual(body.value as? String, "# A heading")
         XCTAssertFalse(app.buttons["Share Entry"].exists)
         XCTAssertFalse(app.buttons["Insert Table"].exists)
-        XCTAssertFalse(app.buttons["Task List"].exists)
+        XCTAssertFalse(app.buttons["Checklist"].exists)
         XCTAssertFalse(app.buttons["Undo"].exists)
         XCTAssertFalse(app.buttons["Redo"].exists)
         app.buttons["Finish Editing"].tap()
@@ -54,7 +54,18 @@ final class MobileParityUITests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+    /// Swipes back from the screen's leading edge once the page has finished sliding in: iOS ignores the back swipe
+    /// while a page is still being pushed.
     @MainActor private func swipeBack(_ app: XCUIApplication) {
+        let title = NavigationTestSupport.title(app)
+        let page = title.exists ? title : app.searchFields.firstMatch
+        var last = CGRect.null
+        XCTAssertTrue(
+            Waiting.until(timeout: 5) {
+                let frame = page.exists ? page.frame : .null
+                defer { last = frame }
+                return !frame.isNull && frame == last && frame.minX < app.frame.midX
+            })
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5))
         start.press(forDuration: 0.05, thenDragTo: end)

@@ -9,7 +9,7 @@ struct DeletedJournalView: View {
     @State private var restoring = false
     @State private var reviewing: ConflictVersion?
     @State private var history = false
-    @State private var permanentDeletionRequest: UUID?
+    @State private var permanentDeletionRequest: PermanentDeletionRequest?
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -31,7 +31,7 @@ struct DeletedJournalView: View {
                 if model.journalHistoryIDs.contains(journal.id) {
                     Button("Version History…") { history = true }.disabled(model.replacingVault)
                 }
-                Button("Delete Permanently…", role: .destructive) { permanentDeletionRequest = journal.id }
+                Button("Delete Permanently…", role: .destructive) { permanentDeletionRequest = .init(id: journal.id) }
                     .disabled(model.replacingVault)
             }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
         }

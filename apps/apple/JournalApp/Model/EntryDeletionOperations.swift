@@ -24,20 +24,33 @@ extension AppModel {
     /// Moves an entry or template that `removeFromLists` took out of the lists to Recently Deleted and returns it
     /// so the deletion can be undone. Another entry that is open stays open. When the deletion fails, the row
     /// comes back.
-    func deleteListed(_ deletion: ListedDeletion) async -> JournalItem? {
+    /// With `settle`, the library is read again only once the row's removal animation has finished.
+    func deleteListed(_ deletion: ListedDeletion, settle: Duration = .zero) async -> JournalItem? {
         defer { showInLists(deletion.id) }
-        if draft?.id == deletion.id { return await deleteOpenItem(opening: deletion.next) }
+        if draft?.id == deletion.id { return await deleteOpenItem(opening: deletion.next, settle: settle) }
         guard !locked, !replacingVault, let store, var item = items.first(where: { $0.id == deletion.id }) else {
             return nil
         }
         item.deletedAt = Date()
         do {
             try await store.save(item)
+            await waitForListRemovals(settle)
             try await refresh()
             return item
         } catch {
             self.error = error.localizedDescription
             return nil
+        }
+    }
+    /// Waits until `settle` has passed since a row last left a list. Reading the library again updates every list, and
+    /// in the middle of a row's removal that interrupts its movement; after several quick deletions, this waits for
+    /// the last one.
+    func waitForListRemovals(_ settle: Duration) async {
+        guard settle > .zero else { return }
+        while let last = lists.lastRemoval, !Task.isCancelled {
+            let remaining = last.advanced(by: settle) - .now
+            guard remaining > .zero else { return }
+            try? await Task.sleep(for: remaining)
         }
     }
     /// Stops listing a journal, entry or template while it is being deleted.
@@ -50,7 +63,12 @@ extension AppModel {
         objectWillChange.send()
         lists.show(id)
     }
-    private func deleteOpenItem(opening next: UUID?) async -> JournalItem? {
+    func showInLists(_ ids: [UUID]) {
+        guard !lists.deleting.isDisjoint(with: ids) else { return }
+        objectWillChange.send()
+        lists.show(ids)
+    }
+    private func deleteOpenItem(opening next: UUID?, settle: Duration = .zero) async -> JournalItem? {
         guard !locked, !replacingVault, await flush(), let store, var item = draft else { return nil }
         guard item.kind != "journal" else { return nil }
         item.deletedAt = Date()
@@ -60,6 +78,7 @@ extension AppModel {
             let replacement = next.flatMap { id in items.first { $0.id == id } }
             selectedID = replacement?.id
             draft = replacement
+            await waitForListRemovals(settle)
             try await refresh()
             if let replacement, selectedID == replacement.id { rememberSelection() }
             return item
@@ -137,6 +156,11 @@ extension AppModel {
             self.error = error.localizedDescription
         }
     }
+}
+
+extension Duration {
+    /// How long a list takes to close the gap a removed row leaves (measured on iOS 26: about 0.4 s).
+    static let listRemoval = Duration.milliseconds(450)
 }
 
 /// An entry or template whose row has left the lists while it moves to Recently Deleted.

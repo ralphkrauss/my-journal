@@ -89,7 +89,7 @@ struct FormattingPopover: View {
                 Button {
                     apply(.toggleTask)
                 } label: {
-                    rowLabel(completion == .on ? "Mark as Incomplete" : "Mark as Complete")
+                    rowLabel(completion == .on ? "Mark as Unchecked" : "Mark as Checked")
                 }
             }
             Menu {
@@ -102,7 +102,7 @@ struct FormattingPopover: View {
             Divider().padding(.vertical, 4)
             style("Bulleted List", kind: "bullet", font: .body, symbol: "list.bullet")
             style("Numbered List", kind: "numbered", font: .body, symbol: "list.number")
-            style("Task List", kind: "task", font: .body, symbol: "checklist")
+            style("Checklist", kind: "task", font: .body, symbol: "checklist")
             style("Block Quote", kind: "quote", font: .body, symbol: "text.quote")
             if state.canIndent || state.sourceMode && inList {
                 HStack {
@@ -181,11 +181,15 @@ struct FormattingPopover: View {
                 if let symbol { Image(systemName: symbol).accessibilityHidden(true) }
                 Text(label).font(font)
                 Spacer(minLength: 0)
-                if state.paragraph == kind { Image(systemName: "checkmark").font(.caption) }
+                if isCurrent(kind) { Image(systemName: "checkmark").font(.caption) }
             }.padding(.horizontal, 8)
                 .frame(maxWidth: .infinity, minHeight: rowHeight, alignment: .leading).contentShape(Rectangle())
         }.disabled(state.paragraph == "tableCell" || inCodeBlock)
-            .accessibilityLabel(label).accessibilityAddTraits(state.paragraph == kind ? .isSelected : [])
+            .accessibilityLabel(label).accessibilityAddTraits(isCurrent(kind) ? .isSelected : [])
+    }
+    /// Whether the selection is in this style; checked and unchecked items are both a checklist.
+    private func isCurrent(_ kind: String) -> Bool {
+        state.paragraph == kind || kind == "task" && state.paragraph == "checked"
     }
 }
 

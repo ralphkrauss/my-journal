@@ -71,6 +71,7 @@ struct AddDeviceView: View {
             .background(ScreenCaptureExclusion())
         #endif
         .interactiveDismissDisabled(busy)
+        .keepsUnlockedWhile(waitingForDevice)
         .task { await start() }
         .onDisappear {
             operation?.cancel()
@@ -262,6 +263,14 @@ struct AddDeviceView: View {
 
     // MARK: Showing a code
 
+    /// A code is shown or a device is answering: the person is busy on the other device, not here.
+    private var waitingForDevice: Bool {
+        switch step {
+        case .preparing, .waiting: return true
+        case .showingCode: return !expired
+        case .entry, .confirm, .finished: return busy
+        }
+    }
     private func start() async {
         guard !model.locked, let address = model.connection?.address,
             PairingInviteHost(server: address) != nil,

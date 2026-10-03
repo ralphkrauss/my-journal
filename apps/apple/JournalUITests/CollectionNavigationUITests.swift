@@ -160,6 +160,39 @@ final class CollectionNavigationUITests: XCTestCase {
         NavigationTestSupport.showJournals(app)
         return app
     }
+    /// On the iPhone's Journals screen, Settings is at the top left and New Journal at the top right, each its own
+    /// button (owner request, 2026-10-03), and both open what they name.
+    /// iPad keeps Settings as the sidebar's last row, as the Mac does.
+    @MainActor func testSettingsAtTopLeftAndNewJournalAtTopRight() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
+        app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
+        app.buttons["Start a Journal"].tap()
+        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.showJournals(app)
+        let settings = app.buttons["Settings"].firstMatch
+        let newJournal = app.buttons["New Journal"].firstMatch
+        XCTAssertTrue(settings.waitToAppear(timeout: 5))
+        XCTAssertTrue(newJournal.waitToAppear(timeout: 5))
+        if !isPad {
+            let bar = app.navigationBars.firstMatch.frame
+            XCTAssertTrue(bar.contains(settings.frame) && bar.contains(newJournal.frame))
+            XCTAssertLessThan(settings.frame.maxX, app.frame.midX, "Settings is at the top left.")
+            XCTAssertGreaterThan(newJournal.frame.minX, app.frame.midX, "New Journal is at the top right.")
+        }
+        capture(app, "Journals toolbar")
+        settings.tap()
+        XCTAssertTrue(app.buttons["Writing"].waitToAppear(timeout: 5))
+        NavigationTestSupport.closeSettings(app)
+        XCTAssertTrue(newJournal.waitToAppear(timeout: 5))
+        newJournal.tap()
+        let create = app.alerts["New Journal"]
+        XCTAssertTrue(create.waitToAppear(timeout: 5))
+        create.buttons["Cancel"].tap()
+    }
     private struct Configuration: Encodable {
         let recovery: RecoveryEnvelope
         let recoveryConfirmed = true
