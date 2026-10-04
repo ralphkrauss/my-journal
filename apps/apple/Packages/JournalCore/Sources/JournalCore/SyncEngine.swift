@@ -77,6 +77,8 @@ public actor SyncEngine {
     private var shortReceipts = false
     /// The server holds waits for changes (capability `sync-wait`).
     static let waitFeature = "sync-wait"
+    /// The server takes records of any well-formed kind, such as the library record (capability `record-kinds`).
+    static let recordKindsFeature = "record-kinds"
     /// Queued records this synchronization left only because they wait for a retry time or for images.
     private var waitingRecords = Set<UUID>()
     private let now: @Sendable () -> Date
@@ -233,6 +235,8 @@ public actor SyncEngine {
         waitingRecords = []
         var received = Set<UUID>()
         try await confirmSameProtection(serverID: serverID)
+        // Before anything is queued or read for sending: pins and journal order go only to a server that takes them.
+        try await store.updateLibrarySync(available: status.supports(Self.recordKindsFeature))
         if try await store.needsReconciliation(serverID: serverID) {
             try await reconcile(serverID: serverID)
             checkedAllImages = false

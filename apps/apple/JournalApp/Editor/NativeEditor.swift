@@ -88,6 +88,9 @@ enum EntryTextInset {
             var pendingExternal: JournalDocument?
             /// Set while the editor puts its own, already complete text in place.
             var replacingText = false
+            /// Set while the editor's own replacement is checked and made, including pasted text it adopts: the
+            /// replacement is complete, so it isn't turned into list items or joined again (ListEditing.swift).
+            var checkingOwnReplacement = false
             /// The empty body's placeholder: “Start writing…”, or “Start writing or ” followed by the link.
             let placeholder = PlaceholderTextView()
             var suggestionHost: NSHostingView<AnyView>?
@@ -294,6 +297,9 @@ enum EntryTextInset {
                     : commandSelector == #selector(NSResponder.insertBacktab(_:))
                         ? .outdent : commandSelector == #selector(NSResponder.moveDown(_:)) ? .down : nil
                 if let structural, performStructuralKey(structural) { return true }
+                if commandSelector == #selector(NSResponder.deleteBackward(_:)), removeItemFormattingAtStart() {
+                    return true
+                }
                 if commandSelector == #selector(NSResponder.insertNewline(_:)), let view,
                     convertLineOnReturn(selection: view.selectedRange())
                 {
@@ -305,12 +311,18 @@ enum EntryTextInset {
                 else { return false }
                 replace(action.replacement, range: action.range)
                 if let caret = action.caret { view.setSelectedRange(NSRange(location: caret, length: 0)) }
-                view.typingAttributes =
-                    action.typing ?? RichText.attributes(kind: action.nextKind, size: parent.fontSize)
+                view.typingAttributes = RichText.typing(after: action, in: storage, size: parent.fontSize)
                 return true
             }
             func textViewDidChangeSelection(_ notification: Notification) {
                 guard !applying else { return }
+                if let view, !showsSource, !view.hasMarkedText(), let storage = view.textStorage,
+                    view.selectedRange().length == 0,
+                    let typing = RichText.typingAttributes(
+                        storage, at: view.selectedRange().location, size: parent.fontSize)
+                {
+                    view.typingAttributes = typing
+                }
                 prepareSelectedPicture()
                 applySubstitutions()
                 updateCaretState()
@@ -364,20 +376,30 @@ enum EntryTextInset {
                 _ text: NSAttributedString, range: NSRange, actionName: String? = nil, showingSource: Bool? = nil,
                 typingIn cell: AnyHashable? = nil, adopting: Bool = false
             ) {
-                guard let view else { return }
+                guard let view, let storage = view.textStorage else { return }
+                let range = RichText.replacedRange(range, with: text, in: storage)
                 replacingText = !adopting
                 defer { replacingText = false }
                 view.undoManager?.disableUndoRegistration()
+                checkingOwnReplacement = true
                 let allowed = view.shouldChangeText(in: range, replacementString: text.string)
+                checkingOwnReplacement = false
                 view.undoManager?.enableUndoRegistration()
                 guard allowed else { return }
                 registerSnapshot(actionName: actionName, typingIn: cell)
                 if let showingSource { showsSource = showingSource }
                 view.undoManager?.disableUndoRegistration()
                 defer { view.undoManager?.enableUndoRegistration() }
+                checkingOwnReplacement = true
                 view.textStorage?.replaceCharacters(in: range, with: text)
+                checkingOwnReplacement = false
+                replacingText = true
+                RichText.repairEnd(storage)
+                RichText.alignNumberedLists(
+                    storage, around: NSRange(location: range.location, length: text.length), size: parent.fontSize)
+                replacingText = !adopting
                 view.didChangeText()
-                view.setSelectedRange(NSRange(location: range.location + text.length, length: 0))
+                view.setSelectedRange(NSRange(location: min(range.location + text.length, storage.length), length: 0))
                 if cell != nil { cellTyping?.document = parent.document }
             }
             private func focusEditor() { view?.window?.makeFirstResponder(view) }
@@ -417,15 +439,17 @@ enum EntryTextInset {
                         view.setSelectedRange(selection)
                     }
                 case .paragraph(let kind):
-                    let range = RichText.paragraphContentRange(view.string, selection: selection)
-                    let text = NSMutableAttributedString(
-                        attributedString: storage.attributedSubstring(from: range))
-                    var doc = RichText.document(text)
-                    doc = RichText.restyling(doc, kind: kind)
-                    let replacement = RichText.render(
-                        doc, size: parent.fontSize, images: parent.images, layout: imageLayout)
-                    replace(replacement, range: range)
-                    view.typingAttributes = RichText.attributes(kind: kind, size: parent.fontSize)
+                    let range = (view.string as NSString).paragraphRange(for: selection)
+                    let doc = RichText.restyling(
+                        .init(blocks: RichText.paragraphBlocks(storage, in: range)), kind: kind)
+                    let replacement = RichText.paragraphReplacement(
+                        doc.blocks, replacing: range, in: storage, size: parent.fontSize, images: parent.images,
+                        layout: imageLayout)
+                    replace(replacement.text, range: range)
+                    let caret = range.location + replacement.content
+                    view.setSelectedRange(NSRange(location: caret, length: 0))
+                    view.typingAttributes = RichText.styledTyping(
+                        kind: kind, at: caret, in: storage, size: parent.fontSize)
                 case .link(let address, let displayText):
                     guard let url = LinkAddress.url(address) else { return }
                     let replacement = LinkInsertion.text(
@@ -557,6 +581,9 @@ enum EntryTextInset {
             var pendingExternal: JournalDocument?
             /// Set while the editor puts its own, already complete text in place.
             var replacingText = false
+            /// Set while the editor's own replacement is checked and made, including pasted text it adopts: the
+            /// replacement is complete, so it isn't turned into list items or joined again (ListEditing.swift).
+            var checkingOwnReplacement = false
             /// Attachments pasted or dropped from elsewhere whose images are being imported.
             var importingAttachments: Set<ObjectIdentifier> = []
             /// Typing in a table cell that extends the current undo step, if any.
@@ -714,6 +741,7 @@ enum EntryTextInset {
             private func configureKeyboard(_ view: JournalTextView) {
                 parent.actions.owningWindow = { [weak view] in view?.window }
                 view.keyboardStructure = { [weak self] key in self?.performStructuralKey(key) ?? false }
+                view.deleteBackwardAtStart = { [weak self] in self?.removeItemFormattingAtStart() ?? false }
                 parent.actions.isEditing = { [weak self, weak view] in
                     view?.isFirstResponder == true || self?.tables?.active != nil
                 }
@@ -789,8 +817,8 @@ enum EntryTextInset {
                 }
                 replace(action.replacement, range: action.range)
                 if let caret = action.caret { textView.selectedRange = NSRange(location: caret, length: 0) }
-                textView.typingAttributes =
-                    action.typing ?? RichText.attributes(kind: action.nextKind, size: parent.fontSize)
+                textView.typingAttributes = RichText.typing(
+                    after: action, in: textView.textStorage, size: parent.fontSize)
                 return false
             }
             func textViewDidEndEditing(_ textView: UITextView) {
@@ -806,10 +834,17 @@ enum EntryTextInset {
                         previousSelection = caret
                         textView.selectedRange = caret
                     }
-                    // UIKit derives typing attributes from the character before the caret, including a hidden marker.
+                    // UIKit derives typing attributes from the character before the caret, including a hidden marker,
+                    // and at the start of a list item from the line before it.
                     if HiddenMarkers.isInvisible(textView.typingAttributes) {
                         textView.typingAttributes = HiddenMarkers.typingAttributes(
                             textView.typingAttributes, size: parent.fontSize)
+                    }
+                    if textView.selectedRange.length == 0,
+                        let typing = RichText.typingAttributes(
+                            textView.textStorage, at: textView.selectedRange.location, size: parent.fontSize)
+                    {
+                        textView.typingAttributes = typing
                     }
                 }
                 previousSelection = textView.selectedRange
@@ -838,13 +873,23 @@ enum EntryTextInset {
                 typingIn cell: AnyHashable? = nil, adopting: Bool = false
             ) {
                 guard let view else { return }
+                let range = RichText.replacedRange(range, with: text, in: view.textStorage)
                 registerSnapshot(actionName: actionName, typingIn: cell)
                 if let showingSource { showsSource = showingSource }
                 let typing = view.typingAttributes
                 replacingText = !adopting
+                checkingOwnReplacement = true
                 view.textStorage.replaceCharacters(in: range, with: text)
+                checkingOwnReplacement = false
+                replacingText = true
+                RichText.repairEnd(view.textStorage)
+                RichText.alignNumberedLists(
+                    view.textStorage, around: NSRange(location: range.location, length: text.length),
+                    size: parent.fontSize)
                 replacingText = false
-                view.selectedRange = NSRange(location: range.location + text.length, length: 0)
+                view.selectedRange = HiddenMarkers.caret(
+                    view.textStorage, proposed: NSRange(location: range.location + text.length, length: 0),
+                    previous: view.selectedRange)
                 if view.textStorage.length == 0 { view.typingAttributes = typing }
                 textViewDidChange(view)
                 revealCaretAfterEdit()
@@ -890,13 +935,18 @@ enum EntryTextInset {
                     view.toggleUnderline(nil)
                     textViewDidChange(view)
                 case .paragraph(let kind):
-                    let range = RichText.paragraphContentRange(view.textStorage.string, selection: selection)
-                    var doc = RichText.document(view.textStorage.attributedSubstring(from: range))
-                    doc = RichText.restyling(doc, kind: kind)
-                    replace(
-                        RichText.render(doc, size: parent.fontSize, images: parent.images, layout: imageLayout),
-                        range: range)
-                    view.typingAttributes = RichText.attributes(kind: kind, size: parent.fontSize)
+                    let storage = view.textStorage
+                    let range = (storage.string as NSString).paragraphRange(for: selection)
+                    let doc = RichText.restyling(
+                        .init(blocks: RichText.paragraphBlocks(storage, in: range)), kind: kind)
+                    let replacement = RichText.paragraphReplacement(
+                        doc.blocks, replacing: range, in: storage, size: parent.fontSize, images: parent.images,
+                        layout: imageLayout)
+                    replace(replacement.text, range: range)
+                    let caret = range.location + replacement.content
+                    view.selectedRange = NSRange(location: caret, length: 0)
+                    view.typingAttributes = RichText.styledTyping(
+                        kind: kind, at: caret, in: view.textStorage, size: parent.fontSize)
                 case .link(let address, let displayText):
                     guard let url = LinkAddress.url(address) else { return }
                     let replacement = LinkInsertion.text(

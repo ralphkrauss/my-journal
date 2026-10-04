@@ -46,9 +46,11 @@ extension JournalStore {
                 db,
                 sql: """
                     SELECT (SELECT value FROM settings WHERE key='cursor') AS cursor,
-                    (SELECT COUNT(*) FROM records) AS records, (SELECT TOTAL(revision) FROM records) AS revisions,
-                    (SELECT TOTAL(dirty) FROM records) AS dirty, (SELECT COUNT(*) FROM outbox) AS outbox,
-                    (SELECT COUNT(*) FROM conflicts) AS conflicts
+                    (SELECT COUNT(*) FROM records WHERE kind<>'library') AS records,
+                    (SELECT TOTAL(revision) FROM records WHERE kind<>'library') AS revisions,
+                    (SELECT TOTAL(dirty) FROM records WHERE kind<>'library') AS dirty,
+                    (SELECT COUNT(*) FROM outbox WHERE kind<>'library') AS outbox,
+                    (SELECT COUNT(*) FROM conflicts WHERE record<>'\(LibraryRecord.idText)') AS conflicts
                     """)
             let cursor = (row?["cursor"] as Data?).flatMap { String(data: $0, encoding: .utf8) } ?? "0"
             let parts: [String] = [

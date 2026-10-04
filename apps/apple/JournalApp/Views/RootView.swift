@@ -62,6 +62,19 @@ struct RootView: View {
     #endif
     @ScaledMetric(relativeTo: .body) private var preferredTextSize = 17.0
 
+    /// Whether a journal is on screen: in stacked navigation (iPhone, a narrow iPad window) only once its list was
+    /// opened; on the Journals screen none is, though the last one opened is still the destination.
+    private var showsJournal: Bool {
+        Self.showsJournal(destination: model.destination, stacked: usesStackedNavigation, path: navigationPath)
+    }
+    static func showsJournal(destination: JournalDestination?, stacked: Bool, path: [CompactJournalRoute]) -> Bool {
+        guard destination.map(\.isJournal) ?? false else { return false }
+        guard stacked else { return true }
+        return path.contains { route in
+            if case .collection(let shown) = route { return shown.isJournal }
+            return false
+        }
+    }
     var usesStackedNavigation: Bool {
         #if os(macOS)
             false
@@ -131,6 +144,7 @@ struct RootView: View {
         .onValueChange(of: model.newJournalRequested) { _ in presentRequestedNewJournal() }
         // The menu may have asked while no window was open; this window answers it when it appears.
         .onAppear(perform: presentRequestedNewJournal)
+        .onAppear { model.windowUndoManager = undoManager }
         .fileImporter(isPresented: $model.archiveImportRequested, allowedContentTypes: [.journalArchive]) { result in
             // A choice made as the app locked, or while the journals are being replaced, isn't imported.
             guard !model.locked, !model.replacingVault, case .success(let url) = result else { return }
@@ -151,7 +165,8 @@ struct RootView: View {
         .sheet(isPresented: $creatingLibrary) { CreateJournalView() }
         .sheet(item: $managedJournal) { JournalsSheet(journalID: $0.id) }
         .sheet(isPresented: $model.templateChooserPresented) {
-            TemplateChooserView(journalID: model.newEntryJournal?.id)
+            // File ▸ New Entry from Template…: outside a journal, the sheet asks which journal.
+            TemplateChooserView(journalID: model.newEntryJournal?.id, choosesJournal: !showsJournal)
         }
         .sheet(isPresented: $model.journalsPresented) { JournalsSheet() }
         .background {
@@ -313,62 +328,70 @@ struct RootView: View {
     }
     var sidebar: some View {
         VStack(spacing: 0) {
-            List(selection: listSelection) {
-                if model.showingTrash {
-                    if !model.filteredDeletedJournals.isEmpty {
-                        Section {
-                            ForEach(model.filteredDeletedJournals) { journal in
-                                entryLink(journal.id) {
-                                    VStack(alignment: .leading, spacing: 5) {
-                                        Text(journal.title.isEmpty ? "Untitled Journal" : journal.title)
-                                        Text(
-                                            model.restorableEntryCount(journal.id) == 1
-                                                ? "1 entry on this device"
-                                                : "\(model.restorableEntryCount(journal.id)) entries on this device"
-                                        )
-                                        .font(.callout).foregroundStyle(.secondary)
-                                    }.accessibilityElement(children: .combine)
-                                        .accessibilityValue("Journal")
+            ScrollViewReader { proxy in
+                List(selection: listSelection) {
+                    if model.showingTrash {
+                        if !model.filteredDeletedJournals.isEmpty {
+                            Section {
+                                ForEach(model.filteredDeletedJournals) { journal in
+                                    entryLink(journal.id) {
+                                        VStack(alignment: .leading, spacing: 5) {
+                                            Text(journal.title.isEmpty ? "Untitled Journal" : journal.title)
+                                            Text(
+                                                model.restorableEntryCount(journal.id) == 1
+                                                    ? "1 entry on this device"
+                                                    : "\(model.restorableEntryCount(journal.id)) entries on this device"
+                                            )
+                                            .font(.callout).foregroundStyle(.secondary)
+                                        }.accessibilityElement(children: .combine)
+                                            .accessibilityValue("Journal")
+                                    }
                                 }
+                            } header: {
+                                Text("Journals")
+                            } footer: {
+                                if model.filteredDeletedTemplates.isEmpty && groupedEntries.isEmpty { trashFooter }
                             }
-                        } header: {
-                            Text("Journals")
-                        } footer: {
-                            if model.filteredDeletedTemplates.isEmpty && groupedEntries.isEmpty { trashFooter }
                         }
-                    }
-                    if !model.filteredDeletedTemplates.isEmpty {
-                        Section {
-                            ForEach(model.filteredDeletedTemplates) { entryRow($0, value: "Template") }
-                        } header: {
-                            Text("Templates")
-                        } footer: {
-                            if groupedEntries.isEmpty { trashFooter }
-                        }
-                    }
-                    ForEach(groupedEntries, id: \.0) { month, entries in
-                        Section {
-                            ForEach(entries) { listedRow($0) }
-                        } header: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                if month == groupedEntries.first?.0 { Text("Entries") }
-                                Text(month)
+                        if !model.filteredDeletedTemplates.isEmpty {
+                            Section {
+                                ForEach(model.filteredDeletedTemplates) { entryRow($0, value: "Template") }
+                            } header: {
+                                Text("Templates")
+                            } footer: {
+                                if groupedEntries.isEmpty { trashFooter }
                             }
-                        } footer: {
-                            if month == groupedEntries.last?.0 { trashFooter }
                         }
-                    }
-                } else {
-                    ForEach(groupedEntries, id: \.0) { month, entries in
-                        Section(month) { ForEach(entries) { listedRow($0) } }
+                        ForEach(groupedEntries, id: \.0) { month, entries in
+                            Section {
+                                ForEach(entries) { listedRow($0) }
+                            } header: {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    if month == groupedEntries.first?.0 { Text("Entries") }
+                                    Text(month)
+                                }
+                            } footer: {
+                                if month == groupedEntries.last?.0 { trashFooter }
+                            }
+                        }
+                    } else {
+                        // The Pinned section comes first, styled like the months (pinned-entries.md).
+                        ForEach(groupedEntries, id: \.0) { month, entries in
+                            Section(month) { ForEach(entries) { listedRow($0) } }
+                        }
                     }
                 }
+                #if os(macOS)
+                    .listStyle(.inset)
+                #else
+                    .listStyle(.insetGrouped)
+                #endif
+                // The open entry stays in view when it moves into or out of Pinned.
+                .onValueChange(of: model.selectedID.map(model.library.pinned.contains)) { _ in
+                    guard let id = model.selectedID else { return }
+                    withAnimation(AppModel.listAnimation) { proxy.scrollTo(id) }
+                }
             }
-            #if os(macOS)
-                .listStyle(.inset)
-            #else
-                .listStyle(.insetGrouped)
-            #endif
             #if os(macOS)
                 // Delete and ⌘⌫ act only while the list has focus, never while typing in the editor.
                 .onDeleteCommand(perform: deleteSelectedFromList)
@@ -471,7 +494,8 @@ struct RootView: View {
                     .lineLimit(1).fixedSize(horizontal: false, vertical: true)
             }.fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, 4).accessibilityElement(children: .combine)
-                .accessibilityValue(value ?? "")
+                // A pinned row says so, even when its section header is skipped.
+                .accessibilityValue(value ?? (model.showsPinnedSection && model.isPinned(entry) ? "Pinned" : ""))
                 // Separators start at the row's text, not at the journal label's text.
                 .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
                 .accessibilityFocused($returnedRow, equals: entry.id)
@@ -482,6 +506,11 @@ struct RootView: View {
                     Button("Restore", systemImage: "arrow.uturn.backward") {
                         rowActionTask?.cancel()
                         rowActionTask = Task { await model.restore(entry) }
+                    }.tint(.accentColor)
+                } else if model.canPin(entry) {
+                    let pinned = model.isPinned(entry)
+                    Button(pinned ? "Unpin" : "Pin", systemImage: pinned ? "pin.slash" : "pin") {
+                        setPinned(!pinned, entry.id)
                     }.tint(.accentColor)
                 }
             }
@@ -501,12 +530,17 @@ struct RootView: View {
             entry.document.isEditable && entry.deletedAt == nil
             && (entry.kind == "template" || location.isInLiveJournal)
         var actions: [MenuAction] = []
-        if editable, entry.kind == "template" {
+        // First in the entry's group, as Pin Note is in Notes.
+        if entry.kind == "entry", model.canPin(entry) {
+            let pinned = model.isPinned(entry)
             actions.append(
-                .command(
-                    model.newEntryFromTemplateTitle(), id: "New Entry from Template", symbol: "square.and.pencil",
-                    enabled: model.canStartEntry(fromTemplate: entry)
-                ) { startEntry(fromTemplate: entry.id) })
+                .command(pinned ? "Unpin Entry" : "Pin Entry", symbol: pinned ? "pin.slash" : "pin") {
+                    setPinned(!pinned, entry.id)
+                })
+        }
+        if editable, entry.kind == "template" {
+            // New Entry In ▸ the journals, the likely one first (template-journal-choice-2026-10-03.md).
+            actions.append(model.newEntryFromTemplateAction(entry) { startEntry(fromTemplate: entry.id, in: $0) })
             actions.append(.separator("new entry"))
         }
         if editable, entry.kind == "entry" {
@@ -617,12 +651,12 @@ struct RootView: View {
         let title = model.journals.first { $0.id == entry.journalID }?.title ?? ""
         return title.isEmpty ? "Untitled Journal" : title
     }
-    /// Opens the new entry in its journal. Every window shares the model, so each leaves Templates.
-    private func startEntry(fromTemplate id: UUID) {
+    /// Opens the new entry in the chosen journal. Every window shares the model, so each leaves Templates.
+    private func startEntry(fromTemplate id: UUID, in journalID: UUID) {
         rowActionTask?.cancel()
         rowActionTask = Task {
             let previous = model.selectedID
-            await model.newEntry(fromTemplate: id)
+            await model.newEntry(fromTemplate: id, in: journalID)
             #if os(iOS)
                 // The iPhone's stack becomes the journal's entries and the entry, as the compose button leaves it.
                 if usesStackedNavigation, let entryID = model.selectedID, entryID != previous,
@@ -631,6 +665,19 @@ struct RootView: View {
                     model.revealsSelection = true
                 }
             #endif
+        }
+    }
+    /// Pins or unpins without changing the selection. VoiceOver focus follows the row to its new section once the list
+    /// has updated, since the row's view is made again there.
+    private func setPinned(_ pinned: Bool, _ id: UUID) {
+        rowActionTask?.cancel()
+        // The next row action cancels only the focus change: a pin made in quick succession with it still happens.
+        let pinning = Task { await model.setPinned(pinned, entryID: id, undoManager: undoManager) }
+        rowActionTask = Task {
+            _ = await pinning.value
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            guard !Task.isCancelled else { return }
+            returnedRow = id
         }
     }
     private func performRowAction(_ id: UUID, action: @escaping @MainActor () async -> Void) {

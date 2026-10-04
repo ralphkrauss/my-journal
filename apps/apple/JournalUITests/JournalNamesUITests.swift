@@ -57,11 +57,11 @@ final class JournalNamesUITests: XCTestCase {
         createJournal("Travel", app: app)
         NavigationTestSupport.showJournals(app)
         let list = app.collectionViews["Journals"]
-        list.staticTexts["Travel"].firstMatch.press(forDuration: 1)
-        app.buttons["Delete Journal…"].tap()
+        NavigationTestSupport.journalAction("Delete Journal…", journal: "Travel", app: app)
         let deletion = app.alerts["Delete “Travel”?"]
         XCTAssertTrue(deletion.waitToAppear(timeout: 5))
         deletion.buttons["Delete"].tap()
+        NavigationTestSupport.finishJournalEditing(app)
         NavigationTestSupport.showJournals(app)
         createJournal("Travel", app: app)
 
@@ -78,8 +78,7 @@ final class JournalNamesUITests: XCTestCase {
         NavigationTestSupport.showJournals(app)
         XCTAssertTrue(list.staticTexts["Travel 2"].waitToAppear(timeout: 5))
 
-        list.staticTexts["Travel 2"].firstMatch.press(forDuration: 1)
-        app.buttons["Rename…"].tap()
+        NavigationTestSupport.journalAction("Rename…", journal: "Travel 2", app: app)
         let rename = app.alerts["Rename Journal"]
         XCTAssertTrue(rename.waitToAppear(timeout: 5))
         rename.textFields["Name"].tap()
@@ -90,6 +89,7 @@ final class JournalNamesUITests: XCTestCase {
         taken.buttons["OK"].tap()
         XCTAssertTrue(app.alerts["Rename Journal"].waitToAppear(timeout: 5), "OK returns to Rename.")
         app.alerts["Rename Journal"].buttons["Cancel"].tap()
+        NavigationTestSupport.finishJournalEditing(app)
         XCTAssertTrue(list.staticTexts["Travel 2"].exists)
     }
 

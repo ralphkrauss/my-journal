@@ -32,7 +32,11 @@ extension NativeEditor.Coordinator: NSTextStorageDelegate {
             InsertedText.adoptSource(storage, range: range, size: parent.fontSize)
             return
         }
+        let ownBlocks = checkingOwnReplacement ? [] : RichText.linesWithTheirOwnBlocks(storage, inserted: range)
         InsertedText.adopt(storage, range: range, size: parent.fontSize)
+        if !checkingOwnReplacement {
+            RichText.continueInsertedLines(storage, inserted: range, size: parent.fontSize, keeping: ownBlocks)
+        }
         if InsertedText.containsForeignAttachment(storage, in: range) {
             DispatchQueue.main.async { [weak self] in self?.importForeignImages() }
         }
@@ -81,9 +85,11 @@ extension NativeEditor.Coordinator: NSTextStorageDelegate {
 
 @MainActor enum InsertedText {
     /// Attributes that place text in its block. Inserted text takes them from the block it lands in.
-    private static let blockKeys: [NSAttributedString.Key] = [
-        .journalKind, .journalBlockID, .journalBlockMetadata, .journalStructuredBlock,
-    ]
+    private static let blockKeys: [NSAttributedString.Key] =
+        [
+            .journalKind, .journalBlockID, .journalBlockMetadata, .journalStructuredBlock, .journalListNumber,
+            .journalListColumn,
+        ] + ListAccessibility.keys
 
     /// In the Markdown source everything is plain monospaced text.
     static func adoptSource(_ storage: NSTextStorage, range: NSRange, size: CGFloat) {
@@ -158,7 +164,11 @@ extension NativeEditor.Coordinator: NSTextStorageDelegate {
         guard let owner, !["image", "table", "rule"].contains(owner[.journalKind] as? String ?? "") else {
             return [.journalKind: "paragraph", .journalBlockID: UUID().uuidString]
         }
-        return owner.filter { blockKeys.contains($0.key) }
+        var context = owner.filter { blockKeys.contains($0.key) }
+        // A line's indent is its paragraph style, which text typed at its start on iOS would otherwise bring from the
+        // line before, such as a list item's.
+        context[.paragraphStyle] = owner[.paragraphStyle]
+        return context
     }
 
     private static func firstIndex(of range: NSRange, outside inserted: NSRange) -> Int? {

@@ -142,6 +142,10 @@ extension JournalStore {
             try apply(db, change: change)
             return
         }
+        if uuid == LibraryRecord.id {
+            // Never a review: what this device knows only fills in what the server lacks (pinned-entries.md, rule 4).
+            return record(try library.reconcile(db, server: change, seen: head["seen_payload"]))
+        }
         if try Bool.fetchOne(db, sql: "SELECT EXISTS(SELECT 1 FROM conflicts WHERE record=?)", arguments: [recordID])
             == true
         {
@@ -186,6 +190,7 @@ extension JournalStore {
     }
     private func reconcileMissing(_ db: Database, row: Row) throws {
         let recordID: String = row["id"]
+        if recordID == LibraryRecord.idText { return record(try library.reconcile(db, server: nil, seen: nil)) }
         if try Bool.fetchOne(db, sql: "SELECT EXISTS(SELECT 1 FROM conflicts WHERE record=?)", arguments: [recordID])
             == true
         {
@@ -296,7 +301,7 @@ extension JournalStore {
             try Bool.fetchOne(
                 db,
                 sql:
-                    "SELECT EXISTS(SELECT 1 FROM outbox o LEFT JOIN conflicts c ON c.record=o.record WHERE c.record IS NULL)"
+                    "SELECT EXISTS(SELECT 1 FROM outbox o LEFT JOIN conflicts c ON c.record=o.record WHERE c.record IS NULL AND \(Self.sendable))"
             ) == true
         }
     }
@@ -339,12 +344,14 @@ extension JournalStore {
             taken.baseRevision = row["base"]
             let current: String = row["current"]
             guard untried, current != taken.payload, row["revision"] as Int64 == taken.baseRevision else {
+                if pending.kind == LibraryRecord.kind { try library.sending(db, payload: taken.payload) }
                 return taken
             }
             if try imagesAreOnServer(db, payload: current, id: pending.recordID, kind: pending.kind) {
                 try db.execute(
                     sql: "UPDATE outbox SET payload=? WHERE operation=?", arguments: [current, id(pending.operationId)])
                 taken.payload = current
+                if pending.kind == LibraryRecord.kind { try library.sending(db, payload: taken.payload) }
                 return taken
             }
             let earlierIsComplete = try imagesAreOnServer(

@@ -9,14 +9,21 @@ extension AppModel {
         lists.lifecycle = snapshot
         return snapshot
     }
+    /// Journals not in Recently Deleted, in the order the sidebar lists them (journal-order.md).
     var journalRecords: [JournalItem] {
-        items.filter { $0.kind == "journal" && $0.deletedAt == nil }.sorted {
-            $0.title.localizedStandardCompare($1.title) == .orderedAscending
-        }
+        JournalRanks.arranged(items.filter { $0.kind == "journal" && $0.deletedAt == nil }, ranks: library.ranks)
     }
+    /// Journals in use, in the person's order: by rank, then the others by name.
     var journals: [JournalItem] {
         if let cached = lists.journals { return cached }
-        let sorted = lifecycle.liveJournals.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        var sorted = JournalRanks.arranged(lifecycle.liveJournals, ranks: library.ranks)
+        if let order = lists.journalOrder {
+            let position = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
+            sorted = sorted.enumerated().sorted { first, second in
+                (position[first.element.id] ?? order.count + first.offset)
+                    < (position[second.element.id] ?? order.count + second.offset)
+            }.map(\.element)
+        }
         lists.journals = sorted
         return sorted
     }
@@ -107,12 +114,15 @@ extension AppModel {
         lists.entries = (key, computed)
         return computed
     }
-    /// Entries grouped by the month of their date, newest first, as the list shows them.
+    /// Entries grouped by the month of their date, newest first, as the list shows them. In a journal and in All
+    /// Entries, pinned entries come first, in a Pinned section (pinned-entries.md).
     var entryGroups: [(String, [JournalItem])] {
         let listed = entries
         if let cached = lists.groups, cached.key == lists.entries?.key { return cached.groups }
         var groups: [(String, [JournalItem])] = []
-        for entry in listed {
+        let pinned = showsPinnedSection ? listed.filter(isPinned) : []
+        if !pinned.isEmpty { groups.append((Self.pinnedSection, pinned)) }
+        for entry in listed[pinned.count...] {
             let name = Self.monthFormatter.string(from: entry.date)
             if groups.last?.0 == name {
                 groups[groups.count - 1].1.append(entry)
@@ -123,6 +133,8 @@ extension AppModel {
         if let key = lists.entries?.key { lists.groups = (key, groups) }
         return groups
     }
+    /// The Pinned section's title, which no month can have.
+    static let pinnedSection = "Pinned"
     private static let monthFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = .autoupdatingCurrent
@@ -158,7 +170,7 @@ extension AppModel {
         let snapshot = lifecycle
         // While a new query is searched, the results of the previous one stay; before any, nothing is filtered.
         let matches = query.isEmpty ? nil : lists.matches?.ids
-        return items.filter { item in
+        let listed = items.filter { item in
             let included: Bool
             if showingTemplates {
                 included = item.kind == "template" && item.deletedAt == nil
@@ -175,6 +187,9 @@ extension AppModel {
             }
             return included && matches.map { $0.contains(item.id) } != false && !lists.deleting.contains(item.id)
         }.sorted { $0.date == $1.date ? $0.id.uuidString < $1.id.uuidString : $0.date > $1.date }
+        // Pinned entries come first, in the same order: Previous Entry and Next Entry follow what's on screen.
+        guard showsPinnedSection, !library.pinned.isEmpty else { return listed }
+        return listed.filter(isPinned) + listed.filter { !isPinned($0) }
     }
     @discardableResult func select(_ id: UUID?) async -> Bool {
         endEntryCreation()

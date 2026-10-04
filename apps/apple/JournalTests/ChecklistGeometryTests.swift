@@ -48,7 +48,51 @@ final class ChecklistGeometryTests: XCTestCase {
             XCTAssertEqual(
                 items[0].textX - items[0].markerX, RichText.listColumn(size: size), accuracy: 0.5,
                 "The column grows with the text.")
+            // Build 13's hidden ☐ fell back to a font with a deeper descent, so unchecked items' first lines were
+            // taller and checking one moved the text below it.
+            XCTAssertEqual(items[2].firstLineHeight, items[3].firstLineHeight, accuracy: 0.01, "at \(size) pt")
+            XCTAssertEqual(items[0].firstLineHeight, items[2].firstLineHeight, accuracy: 0.01, "at \(size) pt")
             try checkBoxes(harness, items: items, size: size)
+        }
+    }
+
+    /// A numbered list's numbers keep at least a space before their text, two-digit and three-digit ones included,
+    /// and every item's text lines up, at the default and the largest text size: the list's column fits its widest
+    /// number. A Return that makes the list's first wider number widens every item's column with it.
+    func testNumbersKeepASpaceBeforeTheirTextAndTheListLinesUp() throws {
+        let harness = EditorHarness(JournalDocument(), width: 402)
+        defer { harness.close() }
+        #if os(macOS)
+            let sizes: [CGFloat] = [16, 30]
+        #else
+            let sizes: [CGFloat] = [17, 53]
+        #endif
+        for size in sizes {
+            for markdown in ["97. One\n98. Two \(Self.long)\n99. Three", "98. One\n99. Two\n100. Three \(Self.long)"] {
+                show(markdown, size: size, in: harness)
+                try assertNumbersFit(harness, size: size, markdown)
+            }
+            // Return after item 9 makes item 10.
+            show("8. Eight\n9. Nine", size: size, in: harness)
+            harness.caret(at: harness.text.length - 1)
+            harness.pressReturn()
+            harness.type("Ten")
+            try assertNumbersFit(harness, size: size, "after Return makes item 10")
+        }
+    }
+
+    private func assertNumbersFit(_ harness: EditorHarness, size: CGFloat, _ name: String) throws {
+        let items = try paragraphs(harness)
+        let font = ListMarkers.font(size: size)
+        let space = (" " as NSString).size(withAttributes: [.font: font]).width
+        for item in items {
+            let number = try XCTUnwrap(
+                harness.text.attribute(.journalListNumber, at: item.location, effectiveRange: nil) as? Int)
+            let width = ("\(number)." as NSString).size(withAttributes: [.font: font]).width
+            XCTAssertGreaterThanOrEqual(
+                item.textX - item.markerX, width + space - 0.5, "\(number). keeps a space at \(size) pt, \(name)")
+            XCTAssertEqual(item.textX, items[0].textX, accuracy: 0.5, "\(number). lines up at \(size) pt, \(name)")
+            for line in item.lines.dropFirst() { XCTAssertEqual(line, item.textX, accuracy: 0.5, name) }
         }
     }
 
@@ -98,18 +142,100 @@ final class ChecklistGeometryTests: XCTestCase {
         }
     }
 
+    /// Bullets and numbers are drawn, not stored, and they must look exactly as the characters the text system drew
+    /// in their place did: same glyph, size, position and colour.
+    func testDrawnBulletsAndNumbersMatchTheCharactersTheyReplace() throws {
+        let harness = EditorHarness(JournalDocument(), width: 402)
+        defer { harness.close() }
+        #if os(macOS)
+            let sizes: [CGFloat] = [16, 30]
+        #else
+            let sizes: [CGFloat] = [17, 53]
+        #endif
+        for size in sizes {
+            for (markdown, marker, text) in [("- Bullet", "•", "Bullet"), ("1. Number", "1.", "Number")] {
+                show(markdown, size: size, in: harness)
+                let (_, layout, container, _) = try parts(harness)
+                let margin = container.lineFragmentPadding + RichText.listColumn(size: size) - 1
+                let drawn = try XCTUnwrap(ink(of: layout, width: container.size.width, before: margin))
+                // The same line as the text system laid it out with the marker's characters, as build 13 stored it.
+                let column = RichText.listColumn(size: size)
+                var attributes = RichText.attributes(kind: "bullet", size: size)
+                let style = NSMutableParagraphStyle()
+                style.setParagraphStyle(try XCTUnwrap(attributes[.paragraphStyle] as? NSParagraphStyle))
+                style.firstLineHeadIndent = 0
+                style.tabStops = [NSTextTab(textAlignment: .left, location: column)]
+                attributes[.paragraphStyle] = style
+                let storage = NSTextStorage(string: marker + "\t" + text, attributes: attributes)
+                let reference = NSLayoutManager()
+                storage.addLayoutManager(reference)
+                let referenceContainer = NSTextContainer(size: container.size)
+                referenceContainer.lineFragmentPadding = container.lineFragmentPadding
+                reference.addTextContainer(referenceContainer)
+                let expected = try XCTUnwrap(ink(of: reference, width: container.size.width, before: margin))
+                XCTAssertEqual(drawn.minX, expected.minX, accuracy: 0.5, "\(marker) at \(size) pt")
+                XCTAssertEqual(drawn.maxX, expected.maxX, accuracy: 0.5, "\(marker) at \(size) pt")
+                XCTAssertEqual(drawn.minY, expected.minY, accuracy: 0.5, "\(marker) at \(size) pt")
+                XCTAssertEqual(drawn.maxY, expected.maxY, accuracy: 0.5, "\(marker) at \(size) pt")
+            }
+        }
+    }
+
+    /// The bounds, in points, of what `layout` draws left of `before` points from the container's edge.
+    private func ink(of layout: NSLayoutManager, width: CGFloat, before limit: CGFloat) -> CGRect? {
+        guard let container = layout.textContainers.first else { return nil }
+        let glyphs = layout.glyphRange(for: container)
+        let height = layout.usedRect(for: container).height + 20
+        #if os(macOS)
+            let image = NSImage(size: CGSize(width: width, height: height), flipped: true) { _ in
+                layout.drawGlyphs(forGlyphRange: glyphs, at: .zero)
+                return true
+            }
+            var rect = CGRect(x: 0, y: 0, width: width, height: height)
+            guard let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return nil }
+        #else
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 2
+            let image = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).image { _ in
+                layout.drawGlyphs(forGlyphRange: glyphs, at: .zero)
+            }
+            guard let cgImage = image.cgImage else { return nil }
+        #endif
+        let pixelsWide = cgImage.width
+        let pixelsHigh = cgImage.height
+        var pixels = [UInt8](repeating: 0, count: pixelsWide * pixelsHigh * 4)
+        guard
+            let context = CGContext(
+                data: &pixels, width: pixelsWide, height: pixelsHigh, bitsPerComponent: 8, bytesPerRow: pixelsWide * 4,
+                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: pixelsWide, height: pixelsHigh))
+        let points = CGFloat(pixelsWide) / width
+        var bounds: CGRect?
+        for row in 0..<pixelsHigh {
+            for column in 0..<min(pixelsWide, Int(limit * points))
+            where pixels[(row * pixelsWide + column) * 4 + 3] > 64 {
+                let pixel = CGRect(
+                    x: CGFloat(column) / points, y: CGFloat(row) / points, width: 1 / points, height: 1 / points)
+                bounds = bounds.map { $0.union(pixel) } ?? pixel
+            }
+        }
+        return bounds
+    }
+
     // MARK: - Measuring
 
     private struct Paragraph {
         let location: Int
         let kind: String
         let text: String
-        /// The marker's or box's position: the start of the item's column.
+        /// Where the bullet or number is drawn, or the checkbox placed: the start of the item's column.
         let markerX: CGFloat
         /// The first character of the item's text.
         let textX: CGFloat
         /// Where each line of the item starts; the first is its text.
         let lines: [CGFloat]
+        let firstLineHeight: CGFloat
     }
 
     private func show(_ markdown: String, size: CGFloat, in harness: EditorHarness) {
@@ -127,7 +253,8 @@ final class ChecklistGeometryTests: XCTestCase {
     }
 
     private func paragraphs(_ harness: EditorHarness) throws -> [Paragraph] {
-        let (storage, layout, _, origin) = try parts(harness)
+        let (storage, layout, container, origin) = try parts(harness)
+        XCTAssertTrue(layout is ListLayoutManager, "The editor draws its list markers with TextKit 1.")
         let source = storage.string as NSString
         var result: [Paragraph] = []
         var position = 0
@@ -137,28 +264,24 @@ final class ChecklistGeometryTests: XCTestCase {
             guard let kind = storage.attribute(.journalKind, at: range.location, effectiveRange: nil) as? String,
                 ["bullet", "numbered", "task", "checked"].contains(kind)
             else { continue }
-            var text = range.location
-            while text < NSMaxRange(range) - 1,
-                storage.attribute(.journalMarker, at: text, effectiveRange: nil) != nil
-            {
-                text += 1
-            }
             var lines: [CGFloat] = []
+            var heights: [CGFloat] = []
             layout.enumerateLineFragments(
                 forGlyphRange: layout.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
             ) { rect, _, _, glyphs, _ in
-                let first = max(glyphs.location, layout.glyphIndexForCharacter(at: text))
-                lines.append(origin.x + rect.minX + layout.location(forGlyphAt: first).x)
+                lines.append(origin.x + rect.minX + layout.location(forGlyphAt: glyphs.location).x)
+                heights.append(rect.height)
             }
-            let marker = layout.glyphIndexForCharacter(at: range.location)
-            let markerX =
-                origin.x + layout.lineFragmentRect(forGlyphAt: marker, effectiveRange: nil).minX
-                + layout.location(forGlyphAt: marker).x
+            // Bullets and numbers where the layout manager draws them; checkboxes where they are placed.
+            let drawn = ListMarkers.marker(atParagraph: range.location, layout: layout).map { origin.x + $0.x }
+            let box = InlineTasks.placement(
+                at: range.location, storage: storage, layout: layout, container: container, origin: origin)?.boxX
+            let markerX = try XCTUnwrap(["task", "checked"].contains(kind) ? box : drawn, kind)
             result.append(
                 Paragraph(
-                    location: range.location, kind: kind,
-                    text: source.substring(with: NSRange(location: text, length: NSMaxRange(range) - text)),
-                    markerX: markerX, textX: lines.first ?? markerX, lines: lines))
+                    location: range.location, kind: kind, text: source.substring(with: range),
+                    markerX: markerX, textX: lines.first ?? markerX, lines: lines,
+                    firstLineHeight: heights.first ?? 0))
         }
         return result
     }

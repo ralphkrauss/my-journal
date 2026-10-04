@@ -65,13 +65,17 @@ final class EditorTests: XCTestCase {
         let text = RichText.render(
             .init(blocks: [DocumentBlock(kind: "bullet", runs: [TextRun("A point")])]), size: 17, images: [:])
         let action = try XCTUnwrap(
-            RichText.newlineAction(text, selection: NSRange(location: text.length, length: 0), size: 17))
-        XCTAssertEqual(action.replacement.string, "\n•\t")
+            RichText.newlineAction(
+                text, selection: NSRange(location: ("A point" as NSString).length, length: 0), size: 17))
+        let continued = NSMutableAttributedString(attributedString: text)
+        continued.replaceCharacters(in: action.range, with: action.replacement)
+        // Only the line breaks are added: the new item has no marker characters, only its own line break.
+        XCTAssertEqual(continued.string, "A point\n\n")
         XCTAssertEqual(action.nextKind, "bullet")
+        XCTAssertEqual(RichText.document(continued).blocks.map(\.kind), ["bullet", "bullet"])
         let empty = RichText.render(.init(blocks: [DocumentBlock(kind: "bullet")]), size: 17, images: [:])
-        let exit = try XCTUnwrap(
-            RichText.newlineAction(empty, selection: NSRange(location: empty.length, length: 0), size: 17))
-        XCTAssertEqual(exit.range, NSRange(location: 0, length: 2))
+        let exit = try XCTUnwrap(RichText.newlineAction(empty, selection: NSRange(location: 0, length: 0), size: 17))
+        XCTAssertEqual(exit.range, NSRange(location: 0, length: 1))
         XCTAssertEqual(exit.replacement.string, "")
         XCTAssertEqual(exit.nextKind, "paragraph")
     }

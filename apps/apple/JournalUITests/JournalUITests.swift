@@ -63,9 +63,7 @@ final class JournalUITests: XCTestCase {
         XCTAssertTrue(title.waitToAppear(timeout: 10))
         title.tap()
         title.typeText("Keep this reflection")
-        NavigationTestSupport.showJournals(app)
-        app.staticTexts["Default"].firstMatch.press(forDuration: 1)
-        app.buttons["Delete Journal…"].tap()
+        NavigationTestSupport.journalAction("Delete Journal…", journal: "Default", app: app)
         let alert = app.alerts["Delete “Default”?"]
         XCTAssertTrue(alert.waitToAppear(timeout: 10))
         XCTAssertTrue(alert.staticTexts["Its entry moves to Recently Deleted."].exists)

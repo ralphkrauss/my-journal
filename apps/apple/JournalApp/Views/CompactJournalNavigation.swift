@@ -40,6 +40,10 @@ extension RootView {
                         text: $journalsQuery, isPresented: $journalsSearchPresented, prompt: "Search All Entries")
                 )
                 .toolbar { compactToolbar }
+                // Searching ends the Journals list's edit mode, as New Entry does.
+                .onValueChange(of: journalsSearchPresented) { searching in
+                    if searching { model.editingJournals = false }
+                }
                 .navigationDestination(for: CompactJournalRoute.self) { route in
                     ModelObservingPage {
                         switch route {
@@ -112,6 +116,7 @@ extension RootView {
                     Label("New Journal", systemImage: "folder.badge.plus")
                 }
             }
+            JournalEditToolbarItems(placement: .primaryAction)
             if #available(iOS 26.0, *) { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
             ToolbarItemGroup(placement: .bottomBar) {
                 Spacer()

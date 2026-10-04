@@ -1,6 +1,6 @@
 # Portable records
 
-A record is one journal, entry or template, stored and synced as a UTF-8 JSON object. The same JSON is the plaintext of a sync payload, of a local database payload and of an archive. How it is encrypted, or base64-encoded in libraries without encryption, is in [README.md](README.md); [fixtures/encryption-v2.json](fixtures/README.md) has a complete current example.
+A record is one journal, entry or template, or the library record, stored and synced as a UTF-8 JSON object. The same JSON is the plaintext of a sync payload, of a local database payload and of an archive. How it is encrypted, or base64-encoded in libraries without encryption, is in [README.md](README.md); [fixtures/encryption-v2.json](fixtures/README.md) has a complete current example.
 
 ## Record fields
 
@@ -51,6 +51,41 @@ A record can authenticate and still be one this client can't fully read. Such a 
 - A required field that is missing or has the wrong type, `archivedAt` on a journal or template, permanent-deletion fields that don't form a [canonical marker](permanent-deletion.md), or an `id` or `kind` that doesn't match its context: the record is kept byte for byte as an unreadable, read-only record with whatever title and dates can be read. It is never treated as a deletion marker. When it replaces a version this client could read, that version goes to Version History.
 
 A newer app reads kept records again from their stored bytes. A client must not save over a record it can't fully read; an edit made from an older copy becomes a conflict.
+
+## The library record
+
+One record per library holds small arrangement values shared across the library: pinned entries and journal order (docs/design/pinned-entries.md, docs/design/journal-order.md). Records that hold content are unchanged. [fixtures/library-record-v1.json](fixtures/README.md) has an example sealed with the corpus key, and [fixtures/journal-ranks-v1.json](fixtures/README.md) the rank vectors.
+
+```json
+{"id":"9F297F28-7D13-41B7-A7EA-83D06CAC6924","kind":"library","modifiedAt":"2026-10-03T12:00:00Z","title":"Pinned Entries and Journal Order","values":{"journal-rank/1b6f0e2a-4c8d-4e3f-a1b2-c3d4e5f60718":"Kf","pinned/2f1c7a54-8e0b-4d6a-9c3e-5b7d1f2a4c60":true},"version":1}
+```
+
+- **Identity:** always `9f297f28-7d13-41b7-a7ea-83d06cac6924`, in every library, so devices that create it separately create the same record and the server's revisions order their changes. Its kind is `library`, and it's encrypted like any record, with the AAD `journal:v1:record:library:9f297f28-7d13-41b7-a7ea-83d06cac6924`. Because every library has this identity, it never counts as evidence that two libraries are the same.
+- **Members:** `id`, `kind`, `version` (integer, 1), `modifiedAt` (informational, never orders anything), `title` (always "Pinned Entries and Journal Order", only so that an older app that has to name the record shows something sensible) and `values`, an object whose keys have the form `‹namespace›/‹lower-case UUID or name›`. It has no `document`, `date` or `deletedWithJournal`, so older apps can't read it as a journal, entry or template.
+- **Values:**
+  - `pinned/‹entry id›`: writers write `true`. Readers treat any value other than `false` or `null` as pinned, so a later version can store more. A missing key means not pinned; unpinning removes the key.
+  - `journal-rank/‹journal id›`: a rank string. The 62 ASCII characters `0-9`, `A-Z`, `a-z`, in ASCII order; 1 to 64 of them, not ending in `0`. Ranks compare byte by byte, never by locale. Journals in use with a valid rank are listed by (rank, lower-case ID), then the others by name, then by ID. A move writes one rank strictly between the new neighbours' ranks; any algorithm that produces one is allowed. Ranks of journals in Recently Deleted are kept, so a restored journal returns to its place.
+- **Reading rules:**
+  - Unknown namespaces, unknown top-level members, and values of the wrong type for a known namespace are kept and written back unchanged. They never make the record read-only; a wrong-type value is ignored for display.
+  - A `version` above 1 is reserved for incompatible changes. Such a record, or one that isn't a library record a client can read, is kept byte for byte and never written; pins and order then fall back to none and to names. Adding a namespace never changes `version`.
+  - Keys of records that don't exist, are in Recently Deleted, or are permanently deleted are ignored for display. A writer removes keys of records it has as permanent-deletion markers only together with a change of its own, and never removes keys of records it doesn't have: they may not have arrived yet.
+- **Never in:** Version History, reviews, agent copies, search or counts.
+
+### Merging instead of reviews
+
+These values are arrangement, not content, so the record is a deliberate exception to keeping both versions for review. No text, title, date or image is ever merged this way, and the rule applies to the `library` kind only:
+
+1. **Intents.** A device keeps the keys it changed that the server hasn't confirmed, each with its new value (or its removal), a strength (**set** for the person's own changes, **set if absent** for automatic ranks) and whether it was **sent**.
+2. **Merging.** Wherever another record would become a review (a change arriving while one waits to be sent, a push refused with `revision_conflict` and `current`, another version at a revision the device has), the device takes the server's version and applies its intents on top: **set** always, **set if absent** only where the key is absent from the server's version (a present value of any type counts). If the result equals the server's version, the device adopts it and sends nothing; otherwise it sends the result as a new operation based on the server's revision.
+3. **Clearing.** Whenever a device acknowledges or adopts a server version, it forgets **set** intents whose value that version has, and **set if absent** intents whose key it has any value for.
+4. **Restores, rollbacks, forks and new servers.** When a device can't tell whether the server's version is newer than what it knows (reconciliation after a restore, another version at a known revision, the server lacking the record, signing in again after encryption was turned on elsewhere), intents that never left the device keep their strength; sent ones become **set if absent**, and sent removals are dropped. Every other key the device has and the server lacks becomes **set if absent**, unless the server's log contains the device's current version, which proves the server's version descends from it. Then it merges as in 2.
+5. **Result.** For a key changed on two devices, the change synced last wins, even if it was made earlier; keys changed on one device always survive; device clocks are never used. After a restore, the worst case is a pin that comes back, or a move or unpin sent before the restore that is lost.
+
+### Compatibility
+
+Only servers that list `record-kinds` take the record ([README.md](README.md#sync-and-conflicts)); until then a client keeps it, and its intents, on the device, without counting it as waiting or reporting an error.
+
+Clients that don't know the record read it under the [reading rules](#reading-rules) below as an unreadable record of an unknown kind: it's kept byte for byte, read-only, and invisible in lists. Such a client may still send it again after a server restore, when turning on encryption or from a restored archive, and may keep a differing server version of it for review; the next version that knows the record converts such a review into a merge when it opens the library, and removes any of its versions from Version History. An older client that joins a server without encryption may take the record's shared identity as a sign that two libraries are the same; this is a known limit of those versions.
 
 ## Markdown
 

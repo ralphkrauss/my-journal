@@ -228,8 +228,17 @@ extension NativeEditor.Coordinator {
         guard NSMaxRange(range) <= storage.length else { return nil }
         if showsSource { return (storage.string as NSString).substring(with: range) }
         let selected = storage.attributedSubstring(from: range)
-        let document = RichText.document(selected)
-        guard !selected.string.contains("\n") else { return document.markdown }
+        var document = RichText.document(selected)
+        if selected.string.contains("\n") {
+            // A line copied from inside it is text, not a list item or quote: its formatting belongs to its start.
+            let source = storage.string as NSString
+            if source.paragraphRange(for: NSRange(location: range.location, length: 0)).location != range.location,
+                let first = document.blocks.first, ListMarkers.itemKinds.contains(first.kind)
+            {
+                document.blocks[0] = RichText.restyling(.init(blocks: [first]), kind: "paragraph").blocks[0]
+            }
+            return document.markdown
+        }
         return RichText.restyling(document, kind: "paragraph").markdown.trimmingCharacters(in: .newlines)
     }
 
@@ -250,7 +259,7 @@ extension NativeEditor.Coordinator {
         let fragment = JournalDocument(markdown: value)
         let text = NSMutableAttributedString(
             attributedString: RichText.render(
-                fragment, size: parent.fontSize, images: parent.images, layout: imageLayout))
+                fragment, size: parent.fontSize, images: parent.images, layout: imageLayout, endsText: false))
         let lineStart =
             selection.location == 0 || (storage.string as NSString).character(at: selection.location - 1) == 0x0A
         let inline = !value.hasSuffix("\n") && fragment.blocks.count == 1 && fragment.blocks[0].kind == "paragraph"

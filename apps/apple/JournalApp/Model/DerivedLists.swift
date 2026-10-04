@@ -10,6 +10,10 @@ import JournalCore
     private(set) var contentRevision = 0
     var lifecycle: JournalLifecycleSnapshot?
     var journals: [JournalItem]?
+    /// The order a dropped journal shows while its move is stored, so the row doesn't jump back meanwhile.
+    var journalOrder: [UUID]? {
+        didSet { journals = nil }
+    }
     var templates: [JournalItem]?
     var counts: (all: Int, journals: [UUID: Int], unavailable: Bool)?
     var entries: (key: EntriesKey, items: [JournalItem])?

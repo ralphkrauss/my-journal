@@ -165,6 +165,8 @@ struct SettingsView: View {
                         Text(error)
                     } else if model.connection == nil {
                         Text("Your journals are saved on this device.")
+                    } else if let footer = model.libraryFooter {
+                        Text(footer)
                     }
                 }
                 if model.connection != nil { StopSyncingSection(activity: model.syncActivity) }

@@ -19,6 +19,7 @@ extension JournalStore {
     /// copy of this library, is kept for review. Before anything is sent, `source` remembers what this attempt queued.
     public func importMerging(from source: JournalStore, server: String, readByAgents: Set<UUID>?) async throws {
         let transfer = try await source.contentForImport(for: .merge)
+        let arrangement = try await source.arrangementForImport()
         let queuedBefore = try await source.mergeQueued()
         let versioned = Set(transfer.history.map(\.id) + transfer.conflicts.map(\.id))
         let plan = MergePlan(
@@ -44,6 +45,9 @@ extension JournalStore {
         }
         try Task.checkCancellation()
         try writeMerged(transfer, plan: plan, images: images, queuedBefore: queuedBefore)
+        // Pins of merged entries, and journals added here after the server's; combined journals don't move.
+        let identities = plan.mergedIdentities.filter { !plan.skipped.contains($0.key) }
+        try importArrangement(arrangement, identities: identities)
         try await source.rememberMergeQueued(try queuedPayloadDigests())
     }
     private func writeMerged(

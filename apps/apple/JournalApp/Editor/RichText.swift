@@ -274,7 +274,7 @@ extension NSAttributedString.Key {
     static let journalLinkTitle = Self("JournalLinkTitle")
     static let journalRawHTML = Self("JournalRawHTML")
     static let journalInertLink = Self("JournalInertLink")
-    /// Marks the hidden characters that start a list item, task, quote or rule line.
+    /// Marks a rule's hidden character (RichText.ruleCharacter).
     static let journalMarker = Self("JournalMarker")
 }
 @MainActor
@@ -314,10 +314,9 @@ enum RichText {
         style.paragraphSpacing = 10
         style.lineSpacing = 3
         if kind == "quote" {
-            // The quote bar sits in this indent; the stored "❯" marker is kept but not shown.
+            // The quote bar sits in this indent.
             style.firstLineHeadIndent = BlockDecorations.quoteIndent
             style.headIndent = BlockDecorations.quoteIndent
-            style.tabStops = [NSTextTab(textAlignment: .left, location: BlockDecorations.quoteIndent + 0.5)]
         }
         if ["codeBlock", "html"].contains(kind) {
             style.paragraphSpacing = 0
@@ -326,9 +325,10 @@ enum RichText {
             style.tailIndent = -BlockDecorations.codeInset
         }
         if ["bullet", "numbered", "task", "checked"].contains(kind) {
+            // The bullet, number or checkbox is drawn in the column before the text (ListLayout.swift).
             let indent = listColumn(size: size)
+            style.firstLineHeadIndent = indent
             style.headIndent = indent
-            style.tabStops = [NSTextTab(textAlignment: .left, location: indent)]
         }
         var attributes: [NSAttributedString.Key: Any] = [
             .font: font(
@@ -339,6 +339,7 @@ enum RichText {
         if ["codeBlock", "html"].contains(kind) {
             attributes[.font] = PlatformFont.monospacedSystemFont(ofSize: size, weight: .regular)
         }
+        attributes.merge(ListAccessibility.attributes(kind: kind)) { $1 }
         if let kind = run.breakKind { attributes[.journalBreakKind] = kind }
         if let title = run.linkTitle { attributes[.journalLinkTitle] = title }
         if run.rawHTML { attributes[.journalRawHTML] = true }
@@ -365,6 +366,12 @@ enum RichText {
         var result = attributes(kind: block.kind, size: size, run: run)
         if let data = metadata ?? (try? JournalCoding.encoder().encode(block)) { result[.journalBlockMetadata] = data }
         result[.journalBlockID] = block.id.uuidString
+        if let levels = block.listIndents, !levels.isEmpty {
+            result.merge(ListAccessibility.attributes(kind: block.kind, number: block.listNumber, level: levels.count))
+            {
+                $1
+            }
+        }
         if let prefix = block.markdownPrefix, !prefix.isEmpty,
             let style = (result[.paragraphStyle] as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle
         {
@@ -392,14 +399,16 @@ enum RichText {
         var scale: CGFloat = 2
         var thumbnails: ImageThumbnails?
     }
+    /// The editor's text for `document`. A whole entry (`endsText`) whose last block is a list item or quote ends
+    /// with that item's own line break; a fragment placed into other text doesn't (ListEditing.swift).
     static func render(
         _ document: JournalDocument, size: CGFloat, images: [UUID: Data], sourceMode: Bool = false,
-        layout: ImageLayout
+        layout: ImageLayout, endsText: Bool = true
     ) -> NSAttributedString {
         if sourceMode || document.requiresMarkdownSource {
             return MarkdownEditing.render(document.markdown, size: size)
         }
-        return blocks(document, size: size, images: images, layout: layout)
+        return blocks(document, size: size, images: images, layout: layout, endsText: endsText)
     }
     /// Makes the first paragraph of `text` join the paragraph it is inserted into: it loses its own block, and any
     /// list marker, and takes on the block of the text around it.
@@ -411,7 +420,8 @@ enum RichText {
             guard value == nil else { return }
             for key in [
                 NSAttributedString.Key.journalKind, .journalBlockID, .journalBlockMetadata, .journalStructuredBlock,
-            ] {
+                .journalListNumber, .journalOwnEnd,
+            ] + ListAccessibility.keys {
                 text.removeAttribute(key, range: part)
             }
         }
@@ -419,17 +429,18 @@ enum RichText {
     static func render(
         _ document: JournalDocument, size: CGFloat, images: [UUID: Data], sourceMode: Bool = false,
         width: CGFloat = 620,
-        loadingImages: Set<UUID> = [], placeholderColor: PlatformColor? = nil
+        loadingImages: Set<UUID> = [], placeholderColor: PlatformColor? = nil, endsText: Bool = true
     )
         -> NSAttributedString
     {
         render(
             document, size: size, images: images, sourceMode: sourceMode,
-            layout: ImageLayout(width: width, loading: loadingImages, placeholderColor: placeholderColor))
+            layout: ImageLayout(width: width, loading: loadingImages, placeholderColor: placeholderColor),
+            endsText: endsText)
     }
-    private static func blocks(_ document: JournalDocument, size: CGFloat, images: [UUID: Data], layout: ImageLayout)
-        -> NSAttributedString
-    {
+    private static func blocks(
+        _ document: JournalDocument, size: CGFloat, images: [UUID: Data], layout: ImageLayout, endsText: Bool
+    ) -> NSAttributedString {
         let width = layout.width
         let result = NSMutableAttributedString(string: "")
         let blocks = document.blocks.isEmpty ? [DocumentBlock()] : document.blocks
@@ -461,26 +472,18 @@ enum RichText {
                 let text = block.runs.map(\.text).joined()
                 result.append(NSAttributedString(string: text.isEmpty ? "\n" : text, attributes: base))
             } else {
-                result.append(marker(for: block.kind, number: block.listNumber ?? number, attributes: base))
-                for run in block.runs {
-                    if run.imageSource != nil {
-                        let image = NSMutableAttributedString(
-                            attributedString: inlineImage(run, size: size, images: images, layout: layout))
-                        image.addAttributes(base, range: NSRange(location: 0, length: image.length))
-                        result.append(image)
-                        continue
-                    }
-                    result.append(
-                        NSAttributedString(
-                            string: run.breakKind == nil ? run.text : "\u{2028}",
-                            attributes: blockAttributes(block, size: size, run: run, metadata: metadata)))
-                }
+                result.append(
+                    textBlock(block, base: base, metadata: metadata, size: size, images: images, layout: layout))
             }
             // Code usually ends with its own line break, which then separates it from the next block.
             let endsWithBreak =
                 ["codeBlock", "html"].contains(block.kind) && result.length > start && result.string.hasSuffix("\n")
             if index < blocks.count - 1, !endsWithBreak {
                 result.append(NSAttributedString(string: "\n", attributes: base))
+            } else if index == blocks.count - 1, endsText, ListMarkers.itemKinds.contains(block.kind) {
+                var end = base
+                end[.journalOwnEnd] = true
+                result.append(NSAttributedString(string: "\n", attributes: end))
             }
             if result.length > start {
                 if ["codeBlock", "html"].contains(block.kind), let data = metadata {
@@ -491,6 +494,11 @@ enum RichText {
                 result.addAttributes(
                     [.journalKind: block.kind, .journalBlockID: block.id.uuidString],
                     range: NSRange(location: start, length: result.length - start))
+                if block.kind == "numbered" {
+                    numbering(
+                        result, range: NSRange(location: start, length: result.length - start),
+                        number: block.listNumber ?? number, size: size)
+                }
                 let afterBox = index > 0 && ["codeBlock", "html", "table"].contains(blocks[index - 1].kind)
                 let isCode = ["codeBlock", "html"].contains(block.kind)
                 if index > 0, afterBox || isCode {
@@ -504,25 +512,64 @@ enum RichText {
                 }
             }
         }
+        if blocks.contains(where: { $0.kind == "numbered" }) {
+            alignNumberedLists(result, around: NSRange(location: 0, length: result.length), size: size)
+        }
         return result
     }
-    /// The characters that start a list item, task, quote or rule line. They stay in the text so the line lays
-    /// out natively, but they are never content: reading skips them by `.journalMarker`, whatever they contain.
-    static func marker(for kind: String, number: Int, attributes base: [NSAttributedString.Key: Any])
-        -> NSAttributedString
-    {
-        let markers = ["bullet": "•\t", "task": "☐\t", "checked": "☑\t", "quote": "❯\t", "rule": "—"]
-        guard let value = kind == "numbered" ? "\(number).\t" : markers[kind] else { return NSAttributedString() }
+    /// A paragraph, heading, list item, quote or rule: its text, with no characters for markers.
+    private static func textBlock(
+        _ block: DocumentBlock, base: [NSAttributedString.Key: Any], metadata: Data?, size: CGFloat,
+        images: [UUID: Data], layout: ImageLayout
+    ) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        if block.kind == "rule" { result.append(ruleCharacter(attributes: base)) }
+        for run in block.runs {
+            if run.imageSource != nil {
+                let image = NSMutableAttributedString(
+                    attributedString: inlineImage(run, size: size, images: images, layout: layout))
+                image.addAttributes(base, range: NSRange(location: 0, length: image.length))
+                result.append(image)
+                continue
+            }
+            result.append(
+                NSAttributedString(
+                    string: run.breakKind == nil ? run.text : "\u{2028}",
+                    attributes: blockAttributes(block, size: size, run: run, metadata: metadata)))
+        }
+        return result
+    }
+    /// The one hidden character of a rule's line, which is the rule itself, as U+FFFC is a picture. Reading skips it
+    /// by `.journalMarker`. List items and quotes have no such characters: their markers are drawn (ListLayout.swift).
+    static func ruleCharacter(attributes base: [NSAttributedString.Key: Any]) -> NSAttributedString {
         var attributes = base
         attributes[.journalMarker] = true
-        if ["task", "checked", "rule", "quote"].contains(kind) {
-            attributes[.foregroundColor] = PlatformColor.clear
+        attributes[.foregroundColor] = PlatformColor.clear
+        return NSAttributedString(string: "—", attributes: attributes)
+    }
+    /// Gives a numbered item in `range` its number, and its first line room for a number wider than the list column,
+    /// which would otherwise overlap the text.
+    static func numbering(_ text: NSMutableAttributedString, range: NSRange, number: Int, size: CGFloat) {
+        text.addAttribute(.journalListNumber, value: number, range: range)
+        ListAccessibility.renumber(text, range: range, number: number)
+        let font = ListMarkers.font(size: size)
+        let width = ("\(number)." as NSString).size(withAttributes: [.font: font]).width
+        let column = listColumn(size: size)
+        guard width > column else { return }
+        let space = (" " as NSString).size(withAttributes: [.font: font]).width
+        text.enumerateAttribute(.paragraphStyle, in: range) { value, part, _ in
+            guard let style = (value as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle else { return }
+            style.firstLineHeadIndent = style.headIndent - column + (width + space).rounded(.up)
+            text.addAttribute(.paragraphStyle, value: style, range: part)
         }
-        if kind == "quote" {
-            // Nearly zero width, so quote text starts at the indent beside the bar.
-            attributes[.font] = PlatformFont.systemFont(ofSize: 0.1)
+    }
+    /// The attributes of a list item's or quote's paragraph, its line break included.
+    static func itemAttributes(_ block: DocumentBlock, number: Int?, size: CGFloat) -> [NSAttributedString.Key: Any] {
+        let text = NSMutableAttributedString(string: "\n", attributes: blockAttributes(block, size: size))
+        if block.kind == "numbered" {
+            numbering(text, range: NSRange(location: 0, length: 1), number: number ?? block.listNumber ?? 1, size: size)
         }
-        return NSAttributedString(string: value, attributes: attributes)
+        return text.attributes(at: 0, effectiveRange: nil)
     }
     /// Leaves room below a code block's background or a table grid before the next block.
     static func spaceAfterCode(_ text: NSMutableAttributedString, range: NSRange, spacing: CGFloat = 12) {
@@ -543,65 +590,34 @@ enum RichText {
     static func newlineAction(_ text: NSAttributedString, selection: NSRange, size: CGFloat) -> NewlineAction? {
         guard !MarkdownEditing.isSource(text), selection.location <= text.length else { return nil }
         let source = text.string as NSString
-        let paragraph = source.paragraphRange(for: selection)
+        let paragraph = source.paragraphRange(for: NSRange(location: selection.location, length: 0))
         // An empty last line has no characters of its own; the line break before it belongs to the previous block,
         // so its style must not make this line behave like, say, an empty list item.
         guard paragraph.length > 0 else { return nil }
-        let line = source.substring(with: paragraph).trimmingCharacters(in: .newlines)
-        let lineRange = NSRange(location: paragraph.location, length: line.utf16.count)
+        let line = paragraphContentRange(text.string, selection: NSRange(location: selection.location, length: 0))
         let attributes =
-            paragraphAttributes(text, in: lineRange) ?? text.attributes(at: paragraph.location, effectiveRange: nil)
+            paragraphAttributes(text, in: line) ?? text.attributes(at: paragraph.location, effectiveRange: nil)
         let kind = attributes[.journalKind] as? String ?? "paragraph"
         let headings = ["heading", "subheading", "heading3", "heading4", "heading5", "heading6"]
-        let markers = markerRanges(text, in: lineRange)
-        // A bullet or numbered line whose marker is gone reads as a paragraph, so Return doesn't continue a list there.
-        guard
-            headings.contains(kind) || ["task", "checked"].contains(kind)
-                || ["bullet", "numbered"].contains(kind) && !markers.isEmpty
-        else { return nil }
         if headings.contains(kind) {
             return NewlineAction(
                 range: selection,
                 replacement: NSAttributedString(string: "\n", attributes: self.attributes(kind: kind, size: size)),
                 nextKind: "paragraph")
         }
-        var block =
-            (attributes[.journalBlockMetadata] as? Data).flatMap {
-                try? JournalCoding.decoder().decode(DocumentBlock.self, from: $0)
-            }
-            ?? DocumentBlock(kind: kind)
-        let markerText = markers.first.map { source.substring(with: $0) } ?? ""
-        let content = self.content(text, in: lineRange).string
-        let number = Int(markerText.prefix(while: { $0.isNumber })) ?? block.listNumber ?? 1
-        let nextKind = kind == "checked" ? "task" : kind
-        if content.isEmpty {
-            if let indent = block.listIndents?.popLast() {
-                block.markdownPrefix = String((block.markdownPrefix ?? "").dropLast(indent))
-                let prefix = block.markdownPrefix ?? ""
-                block.markdownContinuation =
-                    prefix + String(repeating: " ", count: kind == "numbered" ? "\(number). ".count : 2)
-                let replacement = marker(for: kind, number: number, attributes: blockAttributes(block, size: size))
-                return NewlineAction(
-                    range: NSRange(location: paragraph.location, length: line.utf16.count),
-                    replacement: replacement, nextKind: kind, typing: blockAttributes(block, size: size))
-            }
-            // Leaving the list turns the line into a plain paragraph, including its line break, so the next
-            // Return starts a new line as usual.
-            let breaks = paragraph.length > line.utf16.count
-            return NewlineAction(
-                range: breaks ? paragraph : NSRange(location: paragraph.location, length: line.utf16.count),
-                replacement: NSAttributedString(
-                    string: breaks ? "\n" : "", attributes: self.attributes(kind: "paragraph", size: size)),
-                nextKind: "paragraph", caret: paragraph.location)
+        guard ListMarkers.itemKinds.contains(kind) else { return nil }
+        let empty = content(text, in: line).length == 0
+        if empty, kind != "quote", selection.length == 0 {
+            return leavingItem(text, paragraph: paragraph, attributes: attributes, size: size)
         }
-        block.id = UUID()
-        block.kind = nextKind
-        block.runs = []
-        block.listNumber = kind == "numbered" ? number + 1 : nil
-        let nextAttributes = blockAttributes(block, size: size)
-        let replacement = NSMutableAttributedString(string: "\n", attributes: nextAttributes)
-        replacement.append(marker(for: nextKind, number: number + 1, attributes: nextAttributes))
-        return NewlineAction(range: selection, replacement: replacement, nextKind: nextKind, typing: nextAttributes)
+        if selection.length == 0, selection.location == line.location, !empty {
+            return itemAbove(text, paragraph: paragraph, attributes: attributes, size: size)
+        }
+        // The next item continues the formatting at the caret, not the item's first word.
+        let style =
+            selection.location > paragraph.location
+            ? text.attributes(at: selection.location - 1, effectiveRange: nil) : attributes
+        return itemLines(text, range: selection, lines: ["", ""], typing: style, size: size)
     }
 
     static func document(_ text: NSAttributedString) -> JournalDocument {
@@ -638,11 +654,14 @@ enum RichText {
                 blocks +=
                     textDocument(text.attributedSubstring(from: NSRange(location: start, length: end - start))).blocks
             } else if !foundImage, position <= paragraph.location {
-                blocks.append(DocumentBlock())
+                blocks.append(emptyBlock(text, paragraph: paragraph))
             }
             position = NSMaxRange(paragraph)
         }
-        if blocks.isEmpty || source.length > 0 && source.substring(from: source.length - 1) == "\n" {
+        // A line break ends an empty paragraph after it, unless it is the last list item's own (ListLayout.swift).
+        if blocks.isEmpty
+            || source.length > 0 && source.substring(from: source.length - 1) == "\n" && !ListMarkers.hasOwnEnd(text)
+        {
             blocks.append(DocumentBlock())
         }
         var seen = Set<UUID>()
@@ -653,6 +672,21 @@ enum RichText {
             }
         }
         return JournalDocument(blocks: blocks)
+    }
+    /// The block of a paragraph that has only its line break: an empty list item or quote keeps its block, which
+    /// its line break carries; any other empty line is a new empty paragraph, as before.
+    private static func emptyBlock(_ text: NSAttributedString, paragraph: NSRange) -> DocumentBlock {
+        guard paragraph.length > 0,
+            ListMarkers.itemKinds.contains(
+                text.attribute(.journalKind, at: paragraph.location, effectiveRange: nil) as? String ?? ""),
+            var block = self.paragraph(text, content: NSRange(location: paragraph.location, length: 0)).first?.0
+        else { return DocumentBlock() }
+        if let raw = text.attribute(.journalBlockID, at: paragraph.location, effectiveRange: nil) as? String,
+            let id = UUID(uuidString: raw)
+        {
+            block.id = id
+        }
+        return block
     }
     /// The images and tables in `range`, each with its position.
     private static func blockAttachments(_ text: NSAttributedString, in range: NSRange) -> [(Int, DocumentBlock)] {
@@ -723,12 +757,14 @@ enum RichText {
             position = end
             if end == source.length { break }
         } while position < source.length
-        if source.length > 0 && source.substring(from: source.length - 1) == "\n" { blocks.append(DocumentBlock()) }
+        if source.length > 0 && source.substring(from: source.length - 1) == "\n" && !ListMarkers.hasOwnEnd(text) {
+            blocks.append(DocumentBlock())
+        }
         return JournalDocument(blocks: blocks)
     }
     /// Reads one native paragraph, with the range each block takes its identity from. Its kind and metadata come
     /// from its first character that carries them, since text typed on iOS or pasted from elsewhere carries none;
-    /// hidden markers are never read as content.
+    /// a rule's hidden character is never read as content.
     private static func paragraph(_ text: NSAttributedString, content: NSRange) -> [(DocumentBlock, NSRange?)] {
         // An empty paragraph has only its line break, which keeps the block it was rendered for.
         let attributes =
@@ -756,14 +792,6 @@ enum RichText {
             block.runs = []
             let rest = NSRange(location: NSMaxRange(marker), length: NSMaxRange(content) - NSMaxRange(marker))
             return runs.isEmpty ? [(block, marker)] : [(block, marker), (DocumentBlock(runs: runs), rest)]
-        case "bullet", "numbered":
-            // Without its bullet or number the line is no longer a list item.
-            guard markers.isEmpty else { break }
-            kind = "paragraph"
-            block.markdownPrefix = nil
-            block.markdownContinuation = nil
-            block.listIndents = nil
-            block.listNumber = nil
         default: break
         }
         block.kind = kind
@@ -780,7 +808,7 @@ enum RichText {
         }
         return result
     }
-    /// The hidden list, task, quote and rule markers within `range`.
+    /// The hidden rule characters within `range`.
     static func markerRanges(_ text: NSAttributedString, in range: NSRange) -> [NSRange] {
         var result: [NSRange] = []
         text.enumerateAttribute(.journalMarker, in: range) { value, part, _ in

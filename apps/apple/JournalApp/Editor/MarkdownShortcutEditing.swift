@@ -23,6 +23,13 @@ extension NativeEditor.Coordinator {
             return false
         }
         if replacement.isEmpty, removeItemFormatting(deleting: range) { return false }
+        if !editingSource, applyItemEdit(in: range, replacement: replacement) { return false }
+        // The last item's own line break goes only with all of the text (ListEditing.swift).
+        if replacement.isEmpty, range.length == 1, range.location > 0, NSMaxRange(range) == storage(of: view).length,
+            ListMarkers.hasOwnEnd(storage(of: view))
+        {
+            return false
+        }
         if replacement.isEmpty, deleteHiddenMarker(range) { return false }
         if replacement == " ", range.length == 0, MarkdownShortcuts.enabled, !editingSource {
             let caret = range.location + 1
@@ -75,12 +82,52 @@ extension NativeEditor.Coordinator {
         announce(conversion.announcement)
     }
 
+    /// Return in a list item or quote, and deletions that join lines when an item is one of them, as the editor's own
+    /// undoable step (ListEditing.swift). Returns false when the text view can make
+    /// the change itself.
+    private func applyItemEdit(in range: NSRange, replacement: String) -> Bool {
+        guard let view, parent.editable, !checkingOwnReplacement else { return false }
+        // An input method composing over the selection replaces it itself.
+        guard replacement.isEmpty || replacement == "\n" || !view.settingMarkedText else { return false }
+        let text = storage(of: view)
+        let typing = view.typingAttributes
+        let action: RichText.NewlineAction?
+        if replacement == "\n" {
+            action = RichText.newlineAction(text, selection: range, size: parent.fontSize)
+        } else {
+            action = RichText.joining(text, range: range, replacement: replacement, typing: typing)
+        }
+        guard let action else { return false }
+        breakTypingUndo(view)
+        replace(action.replacement, range: action.range)
+        if let caret = action.caret { select(NSRange(location: caret, length: 0), in: view) }
+        view.typingAttributes = RichText.typing(after: action, in: storage(of: view), size: parent.fontSize)
+        return true
+    }
+
+    /// Backspace at the start of the text, where the text view itself does nothing: on a list item, task or quote it
+    /// removes one level of its formatting. Returns false otherwise.
+    func removeItemFormattingAtStart() -> Bool {
+        guard let view, selection(of: view) == NSRange(location: 0, length: 0), !hasMarkedText(view) else {
+            return false
+        }
+        let revert = shortcutRevert
+        shortcutRevert = nil
+        // Straight after a shortcut on the first line, Backspace gives back what was typed, as it does elsewhere.
+        if let revert, revert.convertedCaret == 0, storage(of: view).length == revert.length {
+            replace(revert.original, range: revert.range, actionName: "Typing")
+            select(NSRange(location: revert.caret, length: 0), in: view)
+            return true
+        }
+        return removeItemFormatting(deleting: NSRange(location: 0, length: 0), atStart: true)
+    }
+
     /// Backspace (or Option- or Command-Backspace) at the start of a list item, task or quote removes one level of
-    /// its formatting instead of the hidden marker. Returns false when the text view can delete as asked.
-    private func removeItemFormatting(deleting range: NSRange) -> Bool {
+    /// its formatting. Returns false when the text view can delete as asked.
+    private func removeItemFormatting(deleting range: NSRange, atStart: Bool = false) -> Bool {
         guard let view, parent.editable, !editingSource else { return false }
         let caret = selection(of: view)
-        guard caret.length == 0, range.length > 0, NSMaxRange(range) == caret.location,
+        guard caret.length == 0, range.length > 0 || atStart, NSMaxRange(range) == caret.location,
             let edit = ItemFormattingRemoval.edit(
                 storage(of: view), caret: caret.location, size: parent.fontSize, images: parent.images)
         else { return false }

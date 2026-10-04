@@ -3,11 +3,17 @@ import SwiftUI
 
 enum JournalDestination: Hashable {
     case journal(UUID), all, templates, deleted, unavailable
+
+    var isJournal: Bool {
+        if case .journal = self { return true }
+        return false
+    }
 }
 
 struct JournalSidebarView: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.undoManager) private var undoManager
     var newJournal: () -> Void
     var onNavigate: ((JournalDestination) -> Void)?
     var showsToolbar = true
@@ -21,32 +27,28 @@ struct JournalSidebarView: View {
     @State private var retrying: JournalItem?
     @State private var merging: JournalItem?
 
+    /// Edit mode on iPhone and iPad (journal-order.md); the Mac has none, journals are dragged there.
+    private var editing: Bool {
+        #if os(iOS)
+            model.editingJournals
+        #else
+            false
+        #endif
+    }
+    private var listedJournals: [JournalItem] { model.journals.filter { !model.lists.deleting.contains($0.id) } }
+
     var body: some View {
-        List(selection: stacked ? nil : Binding(get: { model.destination }, set: { navigate($0) })) {
+        // While editing, the selection stays where it is, and rows can't be chosen.
+        List(selection: stacked ? nil : Binding(get: { model.destination }, set: { if !editing { navigate($0) } })) {
             destinationRow("All Entries", symbol: "tray.full", destination: .all)
             Section("Journals") {
-                ForEach(model.journals.filter { !model.lists.deleting.contains($0.id) }) { journal in
-                    destinationRow(
-                        journal.title.isEmpty ? "Untitled Journal" : journal.title, symbol: "book.closed",
-                        destination: .journal(journal.id)
-                    )
-                    .contextMenu {
-                        #if os(macOS)
-                            Button("New Journal…", action: newJournal)
-                            Divider()
-                        #endif
-                        MenuActionsView(
-                            actions: model.journalActions(
-                                journal,
-                                rename: {
-                                    name = journal.title
-                                    renaming = journal
-                                },
-                                merge: { merging = journal },
-                                history: { history = journal },
-                                delete: { deletionRequest = journal.id }))
-                    }
+                let journals = listedJournals
+                ForEach(journals) { journal in
+                    journalRow(journal, in: journals)
                 }
+                // Drag to reorder: with a handle in edit mode, by holding and moving a row otherwise, and on the Mac
+                // by dragging a row.
+                .onMove(perform: model.canMoveJournals ? { move($0, to: $1, in: journals) } : nil)
             }
             Section {
                 destinationRow("Templates", symbol: "doc.on.doc", destination: .templates)
@@ -58,10 +60,15 @@ struct JournalSidebarView: View {
             #if os(iOS)
                 if showsToolbar {
                     Section {
-                        Button {
-                            model.settingsPresented = true
-                        } label: {
-                            Label("Settings", systemImage: "gearshape")
+                        if editing {
+                            // A fixed row, dimmed like the others while journals are edited (journal-order.md).
+                            Label("Settings", systemImage: "gearshape").foregroundStyle(.secondary).disabled(true)
+                        } else {
+                            Button {
+                                model.settingsPresented = true
+                            } label: {
+                                Label("Settings", systemImage: "gearshape")
+                            }
                         }
                     }
                 }
@@ -93,8 +100,18 @@ struct JournalSidebarView: View {
         .journalDeletionPrompt($deletionRequest)
         .sheet(item: $history) { JournalHistoryView(journalID: $0.id) }
         .sheet(item: $merging) { MergeJournalView(sourceID: $0.id) }
+        #if os(iOS)
+            // Only while editing: outside edit mode the list keeps its own, as rows are lifted by holding them.
+            .environment(\.editMode, editing ? .constant(.active) : nil)
+            // Edit mode ends with the last journal; the model ends it when the journals lock or the library is
+            // replaced, but not while a change such as deleting a journal is committed.
+            .onValueChange(of: model.journals.isEmpty) { empty in if empty { model.editingJournals = false } }
+        #endif
         .onValueChange(of: model.locked) { locked in
             if locked {
+                #if os(iOS)
+                    model.editingJournals = false
+                #endif
                 renaming = nil
                 takenName = nil
                 retrying = nil
@@ -111,21 +128,112 @@ struct JournalSidebarView: View {
             }
         #else
             .navigationTitle("Journals")
+            // A large title, as on the iPhone: the sidebar's bar holds New Journal, Edit and the sidebar button.
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 if showsToolbar {
-                    ToolbarItemGroup {
+                    ToolbarItem {
                         Button(action: newJournal) { Label("New Journal", systemImage: "folder.badge.plus") }
                         .iconHelp("New Journal")
                     }
+                    JournalEditToolbarItems()
                 }
             }
         #endif
         .accessibilityLabel("Journals")
     }
+    /// A journal's row: its destination with the journal's context menu, or in edit mode its name, Journal Actions (⋯)
+    /// and the system's reorder handle. On iPhone and iPad, VoiceOver also offers Move Up and Move Down.
+    @ViewBuilder private func journalRow(_ journal: JournalItem, in journals: [JournalItem]) -> some View {
+        let title = JournalNames.displayName(journal.title)
+        Group {
+            if editing {
+                HStack(spacing: stacked ? 12 : 6) {
+                    // At accessibility sizes, and in the iPad's narrow sidebar, the name has the icon's room.
+                    Group {
+                        if dynamicTypeSize.isAccessibilitySize || !stacked {
+                            Text(title).fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Label(title, systemImage: "book.closed")
+                        }
+                    }
+                    .foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading).layoutPriority(1)
+                    Menu {
+                        MenuActionsView(actions: actions(for: journal))
+                    } label: {
+                        Image(systemName: "ellipsis.circle").imageScale(.large).foregroundStyle(.tint)
+                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge).frame(
+                                minWidth: stacked ? 44 : 32, minHeight: 44
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless).fixedSize().accessibilityLabel("Journal Actions")
+                    .accessibilityIdentifier("Journal Actions " + journal.id.uuidString)
+                    Divider().frame(width: 1, height: 24).accessibilityHidden(true)
+                }
+                // The sidebar's selection stays on the collection shown (journal-order.md).
+                .tag(JournalDestination.journal(journal.id))
+            } else {
+                destinationRow(title, symbol: "book.closed", destination: .journal(journal.id))
+                    .contextMenu {
+                        #if os(macOS)
+                            Button("New Journal…", action: newJournal)
+                            Divider()
+                        #endif
+                        MenuActionsView(actions: actions(for: journal))
+                    }
+            }
+        }
+        #if os(iOS)
+            .accessibilityActions {
+                if model.canMoveJournals, let index = journals.firstIndex(where: { $0.id == journal.id }) {
+                    if index > 0 { Button("Move Up") { move(journal.id, by: -1, in: journals) } }
+                    if index + 1 < journals.count { Button("Move Down") { move(journal.id, by: 1, in: journals) } }
+                }
+            }
+        #endif
+    }
+    private func actions(for journal: JournalItem) -> [MenuAction] {
+        model.journalActions(
+            journal,
+            rename: {
+                name = journal.title
+                renaming = journal
+            },
+            merge: { merging = journal },
+            history: { history = journal },
+            delete: { deletionRequest = journal.id })
+    }
+    /// A drop at `destination` of the list shown (offsets as `onMove` gives them), as a position among all journals.
+    private func move(_ source: IndexSet, to destination: Int, in shown: [JournalItem]) {
+        guard let from = source.first, shown.indices.contains(from) else { return }
+        let id = shown[from].id
+        let others = shown.map(\.id).filter { $0 != id }
+        let target = destination > from ? destination - 1 : destination
+        place(id, before: others.indices.contains(target) ? others[target] : nil)
+    }
+    private func move(_ id: UUID, by step: Int, in shown: [JournalItem]) {
+        guard let index = shown.firstIndex(where: { $0.id == id }) else { return }
+        let others = shown.map(\.id).filter { $0 != id }
+        let target = index + step
+        guard (0...others.count).contains(target) else { return }
+        place(id, before: others.indices.contains(target) ? others[target] : nil)
+    }
+    /// Moves `id` before the journal `next` (at the end without one) in the whole list, which also has journals being
+    /// deleted that the sidebar no longer shows.
+    private func place(_ id: UUID, before next: UUID?) {
+        let all = model.journals.map(\.id).filter { $0 != id }
+        let index = next.flatMap { all.firstIndex(of: $0) } ?? all.count
+        Task { await model.moveJournal(id, to: index, undoManager: undoManager) }
+    }
     @ViewBuilder private func destinationRow(_ title: String, symbol: String, destination: JournalDestination)
         -> some View
     {
-        if stacked {
+        if editing {
+            // Rows that can't be edited are dimmed: no count, no chevron, nothing to choose.
+            Label(title, systemImage: symbol).foregroundStyle(.secondary).disabled(true)
+                .accessibilityIdentifier(rowIdentifier(destination)).tag(destination)
+        } else if stacked {
             NavigationLink(value: CompactJournalRoute.collection(destination)) {
                 rowLabel(title, symbol: symbol, destination: destination)
             }.accessibilityIdentifier(rowIdentifier(destination))

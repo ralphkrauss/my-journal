@@ -10,7 +10,7 @@ import XCTest
     import UIKit
 #endif
 
-/// Writing next to images, tables, rules and hidden list markers must save exactly what the person sees.
+/// Writing next to images, tables, rules and list items must save exactly what the person sees.
 @MainActor final class EditorContentSafetyTests: XCTestCase {
     private var table: DocumentBlock {
         var block = DocumentBlock(kind: "table")
@@ -90,7 +90,7 @@ import XCTest
         ] {
             let harness = EditorHarness(markdown: markdown)
             defer { harness.close() }
-            // Home, a click at the start of the line, or ⌘A: the caret never lands inside the hidden marker.
+            // Home, a click at the start of the line, or ⌘A: typing there is the item's text.
             harness.caret(at: 0)
             harness.type("X")
             XCTAssertEqual(
@@ -102,7 +102,7 @@ import XCTest
     }
 
     func testBackspaceAtTheStartOfAnItemNeverSavesItsHiddenMarker() throws {
-        // The first Backspace removes the item's formatting (as in Notes); the text stays, without marker glyphs.
+        // The first Backspace removes the item's formatting (as in Notes); the text stays, without marker characters.
         for (markdown, expected) in [
             ("- [ ] Buy milk", "XBuy milk"), ("> Buy milk", "XBuy milk"), ("- Buy milk", "XBuy milk"),
         ] {
@@ -125,20 +125,6 @@ import XCTest
         harness.deleteBackward()
         XCTAssertEqual(harness.document.markdown.trimmingCharacters(in: .newlines), "PreviousBuy milk")
         XCTAssertEqual(harness.text.string, "PreviousBuy milk")
-    }
-
-    func testMarkersAreReadByTheirAttributeNotTheirShape() {
-        let item = RichText.render(
-            .init(blocks: [DocumentBlock(kind: "numbered", runs: [TextRun("Buy")])]), size: 17, images: [:])
-        let text = NSMutableAttributedString(
-            string: "Note: ", attributes: item.attributes(at: item.length - 1, effectiveRange: nil))
-        text.append(item)
-        // Text that only looks like a marker is content.
-        text.append(
-            NSAttributedString(string: " •\t☐", attributes: item.attributes(at: item.length - 1, effectiveRange: nil)))
-        let read = RichText.document(text)
-        XCTAssertEqual(read.blocks.map(\.kind), ["numbered"])
-        XCTAssertEqual(read.blocks.first?.runs.map(\.text).joined(), "Note: Buy •\t☐")
     }
 
     func testPastingRichTextInSourceViewKeepsTheMarkdown() throws {

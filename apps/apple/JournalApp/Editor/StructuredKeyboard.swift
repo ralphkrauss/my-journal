@@ -35,12 +35,9 @@ import SwiftUI
         for (paragraph, original) in items.reversed() {
             var block = original
             change(&block, key: key, complete: complete)
-            let replacement = NSMutableAttributedString(
-                attributedString: RichText.render(.init(blocks: [block]), size: size, images: images))
-            if source.substring(with: paragraph).hasSuffix("\n") {
-                replacement.append(
-                    NSAttributedString(string: "\n", attributes: RichText.blockAttributes(block, size: size)))
-            }
+            let replacement = RichText.paragraphReplacement(
+                [block], replacing: paragraph, in: text, size: size, images: images
+            ).text
             result.replaceCharacters(
                 in: NSRange(location: paragraph.location - range.location, length: paragraph.length), with: replacement)
         }
@@ -174,7 +171,9 @@ extension NativeEditor.Coordinator {
             if let selection = edit.selection { view.selectedRange = selection }
         #endif
         if edit.text.length > 0 {
-            view.typingAttributes = edit.text.attributes(at: edit.text.length - 1, effectiveRange: nil)
+            view.typingAttributes = edit.text.attributes(at: edit.text.length - 1, effectiveRange: nil).filter {
+                $0.key != .journalOwnEnd
+            }
         }
         return true
     }

@@ -14,8 +14,15 @@ public static class SyncEndpoints
     public const string ContinuityDigestFeature = "sync-continuity-digest";
     public const string ShortReceiptFeature = "sync-short-receipt";
     public const string WaitFeature = "sync-wait";
+    // Records of any well-formed kind are stored as they are, such as the library record (protocol/records.md).
+    public const string RecordKindsFeature = "record-kinds";
     // The longest a wait is held. Below the response and idle timeouts of common reverse proxies (30 s and more).
     public const int MaximumWaitSeconds = 25;
+
+    // 1 to 32 characters from a-z, 0-9 and '-'. The server never interprets a payload; the kind is bound into the
+    // record's encryption context by clients.
+    internal static bool IsRecordKind(string? kind) =>
+        kind is { Length: >= 1 and <= 32 } && kind.All(c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '-');
 
     private static bool IsDigest(string value) =>
         value.Length == 64 && value.All(c => char.IsAsciiDigit(c) || c is >= 'a' and <= 'f');
@@ -178,7 +185,7 @@ public static class SyncEndpoints
     {
         var ct = http.RequestAborted;
         if (id == Guid.Empty || request.OperationId == Guid.Empty || request.BaseRevision < 0 ||
-            request.Kind is not ("journal" or "entry" or "template") || !Secrets.IsBase64(request.Payload, 29, 4 * 1024 * 1024))
+            !IsRecordKind(request.Kind) || !Secrets.IsBase64(request.Payload, 29, 4 * 1024 * 1024))
         {
             return Problems.Of(StatusCodes.Status400BadRequest, "invalid_record");
         }

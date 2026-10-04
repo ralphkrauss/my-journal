@@ -121,7 +121,7 @@ extension JournalDocument {
         }
         return result
     }
-    public var markdown: String { source ?? blocks.map { MarkdownWriter.write([$0]) + "\n\n" }.joined() }
+    public var markdown: String { source ?? MarkdownWriter.segments(blocks).joined() }
     public func replacingMarkdown(_ value: String) -> JournalDocument {
         if value == markdown { return self }
         var metadata = markdownMetadata
@@ -130,7 +130,7 @@ extension JournalDocument {
     }
     public func insertingMarkdown(_ value: String, after blockID: UUID?) -> (text: String, caret: Int) {
         let segments =
-            sourceSegments.count == blocks.count ? sourceSegments : blocks.map { MarkdownWriter.write([$0]) + "\n\n" }
+            sourceSegments.count == blocks.count ? sourceSegments : MarkdownWriter.segments(blocks)
         let index = blockID.flatMap { id in blocks.firstIndex { $0.id == id } } ?? (blocks.count - 1)
         let before = index >= 0 ? segments.prefix(index + 1).joined() : ""
         let after = segments.dropFirst(max(0, index + 1)).joined()
@@ -145,7 +145,7 @@ extension JournalDocument {
     /// source and the rendered blocks. Nil when the source can't be split along the blocks.
     public var markdownBlockSegments: [String]? {
         let segments =
-            sourceSegments.count == blocks.count ? sourceSegments : blocks.map { MarkdownWriter.write([$0]) + "\n\n" }
+            sourceSegments.count == blocks.count ? sourceSegments : MarkdownWriter.segments(blocks)
         guard !requiresSource, !segments.isEmpty, segments.joined() == markdown else { return nil }
         return segments
     }
@@ -198,7 +198,7 @@ extension JournalDocument {
         return MarkdownMetadata(
             blockIDs: blocks.map(\.id),
             segmentLengths: source == nil
-                ? blocks.map { (MarkdownWriter.write([$0]) + "\n\n").utf8.count }
+                ? MarkdownWriter.segments(blocks).map(\.utf8.count)
                 : (sourceSegments.count == blocks.count ? sourceSegments.map { $0.utf8.count } : nil), imageTypes: types
         )
     }
@@ -290,6 +290,14 @@ private struct SourceLayout {
         for index in parts.indices.dropLast() where !MarkdownText.endsWithLineEnding(parts[index].tail) {
             // The previous end of the document takes the spacing used before it.
             parts[index].tail += spacing(near: index - 1) ?? "\n\n"
+        }
+        // An empty item keeps the item nested under it on the next line; a blank line would end the item.
+        for index in parts.indices.dropLast()
+        where MarkdownWriter.opensNested(blocks[index], blocks[index + 1])
+            && parts[index].tail.allSatisfy(\.isWhitespace) && MarkdownText.endsWithBlankLine(parts[index].tail)
+        {
+            parts[index].tail = parts[index].tail.contains("\r\n") ? "\r\n" : "\n"
+            touched.formUnion([index - 1, index])
         }
         if !leading.isEmpty, !parts.isEmpty, !MarkdownText.endsWithLineEnding(leading) { leading += "\n" }
     }
@@ -413,11 +421,25 @@ private struct SourceLayout {
     /// Whether a blank line after part `index` ends one top-level block before the next begins, so that neither reads
     /// differently whatever the other one holds.
     private func separates(_ index: Int) -> Bool {
+        // Two items of a top-level list, the second starting on a line of its own at the margin: each reads as its own
+        // item whatever the other holds, so a long list isn't read whole for an edit in one of its items.
+        if Self.isTopLevelItem(blocks[index]), Self.isTopLevelItem(blocks[index + 1]),
+            MarkdownText.endsWithLineEnding(parts[index].tail),
+            parts[index].tail.allSatisfy(\.isWhitespace),
+            let first = parts[index + 1].body.unicodeScalars.first, first != " " && first != "\t"
+        {
+            return true
+        }
         guard MarkdownText.endsWithBlankLine(parts[index].tail), Self.isTopLevel(blocks[index]),
             Self.isTopLevel(blocks[index + 1]), let first = parts[index + 1].body.unicodeScalars.first
         else { return false }
         // An indented first line could continue a block above it.
         return first != " " && first != "\t"
+    }
+    /// A list item at the margin: in no quote and in no other item.
+    private static func isTopLevelItem(_ block: DocumentBlock) -> Bool {
+        ["bullet", "numbered", "task", "checked"].contains(block.kind) && (block.markdownPrefix ?? "").isEmpty
+            && (block.listIndents ?? []).isEmpty
     }
     /// A block outside any list or quote that nothing after a blank line can continue.
     private static func isTopLevel(_ block: DocumentBlock) -> Bool {

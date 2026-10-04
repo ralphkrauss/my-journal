@@ -13,6 +13,8 @@
 
         var body: some View {
             Button {
+                // New Entry ends the Journals list's edit mode first.
+                model.editingJournals = false
                 if global {
                     // Outside any collection, open the default journal so Back shows where the entry was filed.
                     if let id = model.defaultJournal?.id { activate(id) } else { newJournal() }

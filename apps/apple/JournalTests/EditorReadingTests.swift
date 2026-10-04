@@ -60,6 +60,27 @@ import XCTest
         XCTAssertTrue(harness.document.markdown.contains("Morning mors"))
     }
 
+    /// Typing at the end of the last list item reads only that item, as typing anywhere else does: its own line break
+    /// is in its paragraph. Reading the whole text on every key made typing at the end of a long list lag.
+    func testTypingAtTheEndOfTheLastItemReadsOnlyThatItem() throws {
+        let harness = EditorHarness(
+            JournalDocument(blocks: [
+                DocumentBlock(runs: [TextRun("Intro")]), DocumentBlock(),
+                DocumentBlock(kind: "bullet", runs: [TextRun("One")]),
+                DocumentBlock(kind: "bullet", runs: [TextRun("Two")]),
+            ]))
+        defer { harness.close() }
+        harness.caret(at: harness.text.length - 1)
+        harness.type("a")
+        let empty = try XCTUnwrap(
+            harness.coordinator.reading.blocks?.first { $0.kind == "paragraph" && $0.runs.isEmpty })
+        harness.type("b")
+        let kept = harness.coordinator.reading.blocks?.contains { $0.id == empty.id } ?? false
+        XCTAssertTrue(kept, "Only the item was read again; a whole reading gives empty paragraphs new identities")
+        assertReadsAsWhole(harness, "After typing at the end of the last item")
+        XCTAssertEqual(harness.document.blocks.last?.runs.map(\.text).joined(), "Twoab")
+    }
+
     /// Line breaks change which paragraphs there are: splitting and joining them reads the whole text again.
     func testSplittingAndJoiningParagraphsSavesWhatReadingTheWholeTextGives() throws {
         let harness = EditorHarness(markdown: "One two\n\nThree four\n\n- Item")

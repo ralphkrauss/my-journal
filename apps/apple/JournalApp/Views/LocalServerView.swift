@@ -53,6 +53,8 @@
                         Text(SyncPauseNotice.saveFailed).foregroundStyle(.secondary)
                     } else if let error = model.syncError {
                         Text(error).foregroundStyle(.secondary)
+                    } else if let footer = model.libraryFooter {
+                        Text(footer).foregroundStyle(.secondary)
                     }
                 } else {
                     Text("Your journals are saved on this device.")

@@ -13,7 +13,7 @@ public static class AccountEndpoints
     private static readonly int[] ProtocolVersions = [1];
     private static readonly int[] RecoveryVersions = [1, 2, 3, 4];
     // Additive protocol v1 capabilities; see protocol/README.md.
-    private static readonly string[] Features = ["sync-identity", "pairing-check-code", "password-change", "sync-continuity", SyncEndpoints.ContinuityDigestFeature, "private-envelope", "pairing-invite", "setup-check", EncryptionEndpoints.Feature, "agent-access-2", SyncEndpoints.ShortReceiptFeature, SyncEndpoints.WaitFeature];
+    private static readonly string[] Features = ["sync-identity", "pairing-check-code", "password-change", "sync-continuity", SyncEndpoints.ContinuityDigestFeature, "private-envelope", "pairing-invite", "setup-check", EncryptionEndpoints.Feature, "agent-access-2", SyncEndpoints.ShortReceiptFeature, SyncEndpoints.WaitFeature, SyncEndpoints.RecordKindsFeature];
     private static readonly string ServerVersion = (typeof(AccountEndpoints).Assembly
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0").Split('+')[0];
 

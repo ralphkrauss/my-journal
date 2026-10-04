@@ -53,12 +53,25 @@ extension NativeEditor.Coordinator {
         let announced = reading.announced
         reading.announced = nil
         guard let announced, !announced.breaksLines, mask.contains(.editedCharacters),
-            range.location == announced.range.location, delta == announced.length - announced.range.length
+            range.location == announced.range.location, delta == announced.length - announced.range.length,
+            let inserted = insertedRange(edited: range, length: announced.length)
         else {
             reading.plainEdit = nil
             return
         }
-        reading.plainEdit = range
+        reading.plainEdit = inserted
+    }
+    /// The inserted text of an announced change. Inserting at the end of the last list item, the text system also
+    /// fixes the attributes of that item's own line break and includes it in the edited range; the line break stays
+    /// in its paragraph, so only the inserted text is the edit. Nil when the edited range reaches another paragraph.
+    private func insertedRange(edited range: NSRange, length: Int) -> NSRange? {
+        let inserted = NSRange(location: range.location, length: length)
+        guard range.length > inserted.length else { return range }
+        guard let storage = view?.textStorage else { return nil }
+        let source = storage.string as NSString
+        guard NSMaxRange(range) <= source.length else { return nil }
+        let paragraph = source.paragraphRange(for: inserted)
+        return NSMaxRange(range) <= NSMaxRange(paragraph) ? inserted : nil
     }
 
     /// The text read into blocks, as `RichText.document` reads it. After one edit within a paragraph that holds only

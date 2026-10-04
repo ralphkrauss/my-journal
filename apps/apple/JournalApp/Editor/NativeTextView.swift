@@ -4,6 +4,23 @@ import UniformTypeIdentifiers
 #if os(macOS)
     import AppKit
     final class JournalTextView: NSTextView {
+        /// The text view keeps its own text system, laid out with TextKit 1 by the list layout manager from the start
+        /// (ListLayout.swift).
+        override init(frame frameRect: NSRect) {
+            super.init(frame: frameRect)
+            textContainer?.replaceLayoutManager(ListLayoutManager())
+        }
+        override init(frame frameRect: NSRect, textContainer container: NSTextContainer?) {
+            super.init(frame: frameRect, textContainer: container)
+        }
+        required init?(coder: NSCoder) { nil }
+        /// An input method is starting or continuing a composition: what it replaces is left to the text system.
+        private(set) var settingMarkedText = false
+        override func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
+            settingMarkedText = true
+            defer { settingMarkedText = false }
+            super.setMarkedText(string, selectedRange: selectedRange, replacementRange: replacementRange)
+        }
         /// Controls shown over empty space in the text, such as “Use a Template…”, which VoiceOver reaches from here.
         var accessoryViews: [NSView] = []
         override func accessibilityChildren() -> [Any]? {
@@ -130,13 +147,22 @@ import UniformTypeIdentifiers
             {
                 return pboard.setData(representation.data, forType: type)
             }
+            // Other apps take lists with their markers (ListEditing.swift).
+            let shared = RichText.otherAppsText(attributedString(), range: range)
             // Text views still name plain text by its original pasteboard type.
             if type == .string || type == NSPasteboard.PasteboardType("NSStringPboardType") {
                 // A table's Markdown is the most useful plain text for it; pictures have no text at all.
                 let plain =
                     RichText.tableSelectionMarkdown(attributedString(), range: range)
-                    ?? (string as NSString).substring(with: range).replacingOccurrences(of: "\u{FFFC}", with: "")
+                    ?? shared.string.replacingOccurrences(of: "\u{FFFC}", with: "")
                 return pboard.setString(plain, forType: .string)
+            }
+            let whole = NSRange(location: 0, length: shared.length)
+            if type == .rtf, let data = shared.rtf(from: whole) {
+                return pboard.setData(data, forType: .rtf)
+            }
+            if type == .rtfd, let data = shared.rtfd(from: whole) {
+                return pboard.setData(data, forType: .rtfd)
             }
             return super.writeSelection(to: pboard, type: type)
         }
@@ -179,6 +205,12 @@ import UniformTypeIdentifiers
             }
             return super.readSelection(from: pboard, type: type)
         }
+        /// Dropped text goes before the last list item's own line break, never after it.
+        override func characterIndexForInsertion(at point: NSPoint) -> Int {
+            let index = super.characterIndexForInsertion(at: point)
+            guard let storage = textStorage, ListMarkers.hasOwnEnd(storage) else { return index }
+            return min(index, storage.length - 1)
+        }
         override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
             let board = sender.draggingPasteboard
             let images = board.availableType(from: [.journalMarkdown]) == nil ? PastedImages.images(on: board) : []
@@ -196,8 +228,30 @@ import UniformTypeIdentifiers
         /// Controls over empty text, such as the placeholder's “use a template”: a tap there is theirs, so the text
         /// view neither raises the keyboard nor moves the caret first.
         var gestureExclusions: [UIView] = []
+        /// An input method is starting or continuing a composition: what it replaces is left to the text system.
+        private(set) var settingMarkedText = false
+        override func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
+            settingMarkedText = true
+            defer { settingMarkedText = false }
+            super.setMarkedText(markedText, selectedRange: selectedRange)
+        }
+        override func setAttributedMarkedText(_ markedText: NSAttributedString?, selectedRange: NSRange) {
+            settingMarkedText = true
+            defer { settingMarkedText = false }
+            super.setAttributedMarkedText(markedText, selectedRange: selectedRange)
+        }
+        /// The TextKit 1 text system the view is made with (ListLayoutManager.makeTextSystem); the view doesn't keep
+        /// its storage itself.
+        private var ownedStorage: NSTextStorage?
+        /// Made with TextKit 1 and the list layout manager unless given a container of its own.
         override init(frame: CGRect, textContainer: NSTextContainer?) {
-            super.init(frame: frame, textContainer: textContainer)
+            if let textContainer {
+                super.init(frame: frame, textContainer: textContainer)
+            } else {
+                let (storage, container) = ListLayoutManager.makeTextSystem(width: frame.width)
+                ownedStorage = storage
+                super.init(frame: frame, textContainer: container)
+            }
             addGestureRecognizer(tapBelowText)
         }
         required init?(coder: NSCoder) { nil }
@@ -232,6 +286,17 @@ import UniformTypeIdentifiers
         }
         func closeFormattingPanel() {
             if markedTextRange == nil { formattingActions?.closeFormatting?(true) }
+        }
+        /// Backspace at the very start of the text, which UIKit ignores; true when it was handled (a list item's
+        /// formatting removed).
+        var deleteBackwardAtStart: (() -> Bool)?
+        override func deleteBackward() {
+            if selectedRange == NSRange(location: 0, length: 0), markedTextRange == nil,
+                deleteBackwardAtStart?() == true
+            {
+                return
+            }
+            super.deleteBackward()
         }
         var keyboardFormatting: ((EditorCommand) -> Void)?
         var keyboardStructure: ((StructuredKeyboard.Key) -> Bool)?
@@ -409,7 +474,8 @@ import UniformTypeIdentifiers
             guard range.length > 0, NSMaxRange(range) <= textStorage.length,
                 let markdown = selectionMarkdown?(range)
             else { return nil }
-            let selected = textStorage.attributedSubstring(from: range)
+            // Other apps take lists with their markers (ListEditing.swift).
+            let selected = RichText.otherAppsText(textStorage, range: range)
             var item: [String: Any] = [
                 PastedImages.markdownType: Data(markdown.utf8),
                 // A table's Markdown is the most useful plain text for it; pictures have no text at all.

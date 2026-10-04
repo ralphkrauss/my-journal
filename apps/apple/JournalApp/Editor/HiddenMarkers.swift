@@ -7,8 +7,9 @@ import SwiftUI
     import UIKit
 #endif
 
-/// List, task, quote and rule markers are hidden characters. The caret stays outside them, typing next to them is
-/// visible body text, and deleting into one removes it as a whole, so they never end up in what is saved.
+/// A rule's line holds one hidden character. The caret stays outside it, typing next to it is visible body text, and
+/// deleting into it removes it as a whole, so it never ends up in what is saved. List items and quotes have no hidden
+/// characters (ListLayout.swift); the caret only stays before a final item's own line break.
 @MainActor enum HiddenMarkers {
     /// What typing continues with. It never continues a marker, an image, a table or a rule: text typed after one of
     /// those starts a paragraph of its own.
@@ -26,6 +27,7 @@ import SwiftUI
         }
         var result = proposed
         result[.journalMarker] = nil
+        result[.journalOwnEnd] = nil
         result[.journalInlineImage] = nil
         result[.attachment] = nil
         if isInvisible(result) {
@@ -45,8 +47,21 @@ import SwiftUI
     }
 
     /// Moves a caret that would sit before or inside a hidden marker to just after it. Moving left out of the start of
-    /// an item goes on to the end of the line before, so the arrow keys never get stuck.
-    static func caret(_ text: NSAttributedString, proposed: NSRange, previous: NSRange) -> NSRange {
+    /// a rule goes on to the end of the line before, so the arrow keys never get stuck. A selection ends before a final
+    /// item's own line break unless it holds the whole text, and a caret never goes past it.
+    static func caret(_ text: NSAttributedString, proposed original: NSRange, previous: NSRange) -> NSRange {
+        var proposed = original
+        proposed.location = min(proposed.location, text.length)
+        proposed.length = min(proposed.length, text.length - proposed.location)
+        if ListMarkers.hasOwnEnd(text), NSMaxRange(proposed) == text.length,
+            proposed.location > 0 || proposed.length == 0
+        {
+            if proposed.length > 0 {
+                proposed.length -= 1
+            } else {
+                proposed.location = text.length - 1
+            }
+        }
         guard proposed.length == 0, proposed.location < text.length,
             text.attribute(.journalMarker, at: proposed.location, effectiveRange: nil) != nil
         else { return proposed }
@@ -98,30 +113,23 @@ import SwiftUI
         let actionName: String
         let announcement: String
     }
-    /// The edit for a deletion that ends at `caret`, when the caret is at the start of an item's text; otherwise nil.
+    /// The edit for a deletion that ends at `caret`, when the caret is at the start of an item's line; otherwise nil.
     static func edit(_ text: NSAttributedString, caret: Int, size: CGFloat, images: [UUID: Data]) -> Edit? {
-        guard caret > 0, caret <= text.length else { return nil }
+        guard caret < text.length else { return nil }
         let source = text.string as NSString
-        let content = RichText.paragraphContentRange(text.string, selection: NSRange(location: caret, length: 0))
-        guard let marker = RichText.markerRanges(text, in: content).first, marker.location == content.location,
-            NSMaxRange(marker) == caret
-        else { return nil }
         let paragraph = source.paragraphRange(for: NSRange(location: caret, length: 0))
-        guard let original = RichText.document(text.attributedSubstring(from: paragraph)).blocks.first,
+        guard paragraph.location == caret, paragraph.length > 0,
+            ListMarkers.itemKinds.contains(
+                text.attribute(.journalKind, at: caret, effectiveRange: nil) as? String ?? ""),
+            let original = RichText.document(text.attributedSubstring(from: paragraph)).blocks.first,
             let change = removingOneLevel(original)
         else { return nil }
         let block = change.block
-        let replacement = NSMutableAttributedString(
-            attributedString: RichText.render(.init(blocks: [block]), size: size, images: images))
-        if source.substring(with: paragraph).hasSuffix("\n") {
-            replacement.append(
-                NSAttributedString(string: "\n", attributes: RichText.blockAttributes(block, size: size)))
-        }
-        // The text keeps its length, so the caret keeps its distance from the end of the line.
+        let replacement = RichText.paragraphReplacement(
+            [block], replacing: paragraph, in: text, size: size, images: images)
         return Edit(
-            text: replacement, range: paragraph,
-            caret: paragraph.location + replacement.length - (NSMaxRange(paragraph) - caret),
-            typing: RichText.blockAttributes(block, size: size), actionName: change.actionName,
+            text: replacement.text, range: paragraph, caret: paragraph.location,
+            typing: RichText.itemAttributes(block, number: block.listNumber, size: size), actionName: change.actionName,
             announcement: change.announcement)
     }
     /// One level, innermost first: a nested list item moves out a level, a list item in a quote becomes quote text,

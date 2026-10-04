@@ -66,6 +66,8 @@ struct MergePlan {
     }
 
     func derived(_ original: UUID) -> UUID { Self.derived(original, server: server) }
+    /// Where each device item ends up, for items that are merged.
+    var mergedIdentities: [UUID: UUID] { identities.filter { !purged.contains($0.key) } }
     static func derived(_ original: UUID, server: String) -> UUID {
         let name = "myjournal-merge-1\u{0}\(server)\u{0}\(original.uuidString.lowercased())"
         var bytes = Array(SHA256.hash(data: Data(name.utf8)).prefix(16))

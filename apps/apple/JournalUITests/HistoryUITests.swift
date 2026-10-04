@@ -102,9 +102,7 @@ final class HistoryUITests: XCTestCase {
     }
 
     @MainActor private func restoreJournalSettings(_ app: XCUIApplication) throws {
-        NavigationTestSupport.showJournals(app)
-        app.staticTexts["Current Work"].firstMatch.press(forDuration: 1)
-        app.buttons["Version History…"].tap()
+        NavigationTestSupport.journalAction("Version History…", journal: "Current Work", app: app)
         XCTAssertTrue(app.staticTexts["Earlier Work"].waitToAppear(timeout: 10))
         try tap(app.buttons["Restore Settings…"], scrolling: app.scrollViews.firstMatch)
         XCTAssertTrue(app.navigationBars["Restore Settings"].waitToAppear(timeout: 5))

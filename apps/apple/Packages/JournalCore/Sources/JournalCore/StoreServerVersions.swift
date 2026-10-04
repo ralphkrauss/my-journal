@@ -18,13 +18,19 @@ extension JournalStore {
     func rememberServerVersion(
         _ db: Database, recordID: String, revision: Int64, payload: String, unlessKnown: Bool = false
     ) throws {
+        try Self.rememberServerVersion(
+            db, recordID: recordID, revision: revision, payload: payload, unlessKnown: unlessKnown)
+    }
+    static func rememberServerVersion(
+        _ db: Database, recordID: String, revision: Int64, payload: String, unlessKnown: Bool = false
+    ) throws {
         guard revision > 0 else { return }
         try db.execute(
             sql: """
                 INSERT INTO server_versions(record,revision,digest) VALUES (?,?,?)
                 ON CONFLICT(record) DO UPDATE SET revision=excluded.revision,digest=excluded.digest
                 """ + (unlessKnown ? " WHERE server_versions.revision<>excluded.revision" : ""),
-            arguments: [recordID, revision, Self.payloadDigest(payload)])
+            arguments: [recordID, revision, payloadDigest(payload)])
     }
     /// After the server accepted `payload` at `revision`: remembers it, rebases a change queued while it was being
     /// sent, such as when a review was resolved meanwhile, and lets a review whose other version is the one accepted

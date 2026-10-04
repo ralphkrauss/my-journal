@@ -7,6 +7,22 @@ enum MarkdownWriter {
     static func write(_ blocks: [DocumentBlock]) -> String {
         blocks.map(block).joined(separator: "\n\n")
     }
+    /// Each block's Markdown with the line endings after it: a blank line, or only a line ending after an empty item
+    /// that an item nested under it follows.
+    static func segments(_ blocks: [DocumentBlock]) -> [String] {
+        blocks.indices.map { index in
+            let next = blocks.indices.contains(index + 1) ? blocks[index + 1] : nil
+            return block(blocks[index]) + (next.map { opensNested(blocks[index], $0) } == true ? "\n" : "\n\n")
+        }
+    }
+    /// An empty list item followed by an item nested under it. Its marker stands alone on its line, and a blank line
+    /// after it would end the item, so the nested item must follow on the next line (CommonMark: an item can begin
+    /// with at most one blank line).
+    static func opensNested(_ item: DocumentBlock, _ next: DocumentBlock) -> Bool {
+        listKinds.contains(item.kind)
+            && item.runs.allSatisfy { $0.text.isEmpty && $0.imageSource == nil }
+            && (next.listIndents?.count ?? 0) > (item.listIndents?.count ?? 0)
+    }
     static func block(_ block: DocumentBlock) -> String {
         let prefix = block.markdownPrefix ?? ""
         let continuation = continuation(of: block, prefix: prefix)

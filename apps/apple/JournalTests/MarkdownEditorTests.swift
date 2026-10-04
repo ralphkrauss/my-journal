@@ -143,9 +143,11 @@ final class MarkdownEditorTests: XCTestCase {
         let read = MarkdownEditing.read(text, previous: original)
         XCTAssertEqual(read.markdown, source)
         XCTAssertEqual(read.attachmentIDs, [id])
-        let marker = (text.string as NSString).range(of: "☐")
-        XCTAssertNotEqual(marker.location, NSNotFound)
-        let checked = try XCTUnwrap(StructuredKeyboard.edit(.toggleTask, text: text, selection: marker, size: 17))
+        let item = (text.string as NSString).range(of: "Check this")
+        XCTAssertNotEqual(item.location, NSNotFound)
+        let checked = try XCTUnwrap(
+            StructuredKeyboard.edit(
+                .toggleTask, text: text, selection: NSRange(location: item.location, length: 0), size: 17))
         let updated = NSMutableAttributedString(attributedString: text)
         updated.replaceCharacters(in: checked.range, with: checked.text)
         let document = MarkdownEditing.read(updated, previous: original)

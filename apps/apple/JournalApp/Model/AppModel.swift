@@ -24,6 +24,9 @@ final class AppModel: ObservableObject {
                 initialInsertion = nil
                 titleFocus = nil
                 entryCreationID = nil
+                // The journals list leaves edit mode (journal-order.md). Committing a change, such as deleting a
+                // journal in edit mode, keeps it.
+                editingJournals = false
             }
             updateImageLoading()
         }
@@ -133,6 +136,9 @@ final class AppModel: ObservableObject {
                 initialInsertion = nil
                 titleFocus = nil
                 entryCreationID = nil
+                // The journals list leaves edit mode (journal-order.md). Committing a change, such as deleting a
+                // journal in edit mode, keeps it.
+                editingJournals = false
             }
             updateImageLoading()
         }
@@ -149,6 +155,15 @@ final class AppModel: ObservableObject {
         didSet { lists.invalidate() }
     }
     @Published var pendingSync = false
+    /// Pins and journal ranks (LibraryOperations.swift), and what Settings ▸ Sync says about them.
+    @Published var library = LibraryArrangement.empty {
+        didSet { if library != oldValue { lists.invalidate() } }
+    }
+    @Published var librarySync = LibrarySyncState()
+    /// The Journals list's edit mode on iPhone and iPad (journal-order.md).
+    @Published var editingJournals = false
+    /// The front window's undo manager, for menu bar commands that can be undone.
+    weak var windowUndoManager: UndoManager?
     @Published var syncError: String?
     /// The last synchronization failed as a whole, for example without a connection, and `syncError` says why.
     /// Otherwise `syncError` describes a record or image that can't sync while everything else did.
@@ -206,6 +221,9 @@ final class AppModel: ObservableObject {
                 initialInsertion = nil
                 titleFocus = nil
                 entryCreationID = nil
+                // The journals list leaves edit mode (journal-order.md). Committing a change, such as deleting a
+                // journal in edit mode, keeps it.
+                editingJournals = false
             }
             updateImageLoading()
         }
@@ -419,11 +437,14 @@ final class AppModel: ObservableObject {
         let received = await store.receivedChangeCount()
         await store.rememberDecodedRecords()
         let snapshot = try await store.viewSnapshot()
+        let libraryState = try? await store.librarySyncState()
         guard isCurrent() else { return }
         items = snapshot.items
         conflicts = snapshot.conflicts
         journalHistoryIDs = snapshot.journalHistoryIDs
         pendingSync = snapshot.pending
+        if library != snapshot.library { library = snapshot.library }
+        if let libraryState, libraryState != librarySync { librarySync = libraryState }
         refreshedChanges = received
         followStoredDraft(from: base, writes: writes)
         reconcileDraftLocation()
@@ -526,11 +547,20 @@ final class AppModel: ObservableObject {
         if generation != saveGeneration { return await flush(whileEditing: entryID) }
         return true
     }
-    func newEntry(template: JournalItem? = nil, blank: Bool = false) async {
+    /// A new entry in `chosen`, or where New Entry puts it. A template chosen for an empty entry fills that entry
+    /// instead, when `filling` allows it and the entry is in the chosen journal.
+    func newEntry(
+        template: JournalItem? = nil, blank: Bool = false, in chosen: JournalItem? = nil, filling: Bool = true
+    ) async {
         guard !locked, !replacingVault, !Task.isCancelled else { return }
-        // A template chosen for an empty entry fills that entry instead of replacing it.
-        if let template, await fillEmptyEntry(with: template) { return }
-        guard !locked, !replacingVault, !Task.isCancelled, let store, let journal = newEntryJournal else { return }
+        if let template, filling, chosen == nil || draft?.journalID == chosen?.id,
+            await fillEmptyEntry(with: template)
+        {
+            return
+        }
+        guard !locked, !replacingVault, !Task.isCancelled, let store, let journal = chosen ?? newEntryJournal else {
+            return
+        }
         let creationID = UUID()
         var selection = selectedID
         var context = selectedJournalID
@@ -639,6 +669,8 @@ final class AppModel: ObservableObject {
             } else {
                 let pending = try await store.hasPendingChanges()
                 if pending != pendingSync { pendingSync = pending }
+                // The server may have gained or lost the library record (Settings ▸ Sync's footer).
+                if let state = try? await store.librarySyncState(), state != librarySync { librarySync = state }
             }
         } catch {
             failure = failure ?? error
@@ -678,6 +710,8 @@ final class AppModel: ObservableObject {
         unlockState.inactiveForRequest = false
         locked = true
         openingJournals = false
+        // The journals list leaves edit mode (journal-order.md); its view is gone before it could see the lock.
+        editingJournals = false
         SensitivePasteboard.clear()
         mutationTask?.cancel()
         #if os(macOS)

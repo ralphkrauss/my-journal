@@ -35,6 +35,12 @@ actor MemoryServer: SyncServer {
     var shortReceiptRequests: [Bool] = []
     /// Offers capability `sync-wait`; waits answer from `waitAnswers` in order, then `unchanged`.
     var holdsWaits = false
+    /// Offers capability `record-kinds`; without it, like servers from before it, a record of another kind than
+    /// journal, entry or template is refused as invalid.
+    var acceptsAnyKind = true
+    /// The identity pages and the status report, and the newest cursor that existed when it was assigned.
+    var serverID = "memory-server"
+    var identityCursor: Int64 = 0
     var waitAnswers: [WaitAnswer] = []
     var waitPositions: [QuietPosition] = []
     private var pushesBeforeFailure: Int?
@@ -52,8 +58,9 @@ actor MemoryServer: SyncServer {
             protocolVersion: 1, initialized: true,
             features: (confirmsContinuity ? ["sync-continuity"] : [])
                 + (confirmsDigest ? ["sync-continuity-digest"] : [])
-                + (answersShortReceipts ? [ServerClient.shortReceiptFeature] : []) + (holdsWaits ? ["sync-wait"] : []),
-            serverId: "memory-server")
+                + (answersShortReceipts ? [ServerClient.shortReceiptFeature] : []) + (holdsWaits ? ["sync-wait"] : [])
+                + (acceptsAnyKind ? [SyncEngine.recordKindsFeature] : []),
+            serverId: serverID)
     }
     func changes(after cursor: Int64, limit: Int, applied: LoggedChange?) async throws -> SyncPage {
         pageRequests += 1
@@ -78,14 +85,15 @@ actor MemoryServer: SyncServer {
             }
         }
         if stallsPages {
-            return SyncPage(changes: [], cursor: cursor, hasMore: true, serverId: "memory-server", serverIdCursor: 0)
+            return SyncPage(
+                changes: [], cursor: cursor, hasMore: true, serverId: serverID, serverIdCursor: identityCursor)
         }
         let newer = state.log.filter { $0.cursor > cursor }
         let page = Array(newer.prefix(limit))
         changesSent += page.count
         return SyncPage(
             changes: page, cursor: page.last?.cursor ?? cursor, hasMore: newer.count > page.count,
-            serverId: "memory-server", serverIdCursor: 0)
+            serverId: serverID, serverIdCursor: identityCursor)
     }
     func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) async throws -> ServerClient.PushResult {
         shortReceiptRequests.append(shortReceipt)
@@ -131,6 +139,9 @@ actor MemoryServer: SyncServer {
             await action()
         }
         pushes.append(pending)
+        guard acceptsAnyKind || ["journal", "entry", "template"].contains(pending.kind) else {
+            throw SyncRejection(reason: .invalid)
+        }
         if failsPageAfterNextPush {
             failsPageAfterNextPush = false
             failsNextPage = true
@@ -184,6 +195,20 @@ actor MemoryServer: SyncServer {
     func whileSendingNext(_ action: @escaping @Sendable () async -> Void) { whileSendingNext = action }
     /// Restores a copy of the server's data without a new identity, as copying its data folder back would.
     func rollBack(to earlier: State) { state = earlier }
+    /// Restores a backup with `--restore`: the server takes a new identity, and changes up to the backup's newest
+    /// cursor predate it.
+    func restore(_ backup: State, identity: String) {
+        state = backup
+        serverID = identity
+        identityCursor = backup.nextCursor - 1
+    }
+    /// Stops or starts offering capability `record-kinds`, as downgrading or updating the server would.
+    func acceptAnyKind(_ accepts: Bool) { acceptsAnyKind = accepts }
+    /// The library record's values as the server holds them, opened with `store`'s key.
+    func libraryValues(openedBy store: JournalStore) async -> [String: JSONValue]? {
+        guard let record = state.records[LibraryRecord.id] else { return nil }
+        return await store.libraryValues(inPayload: record.payload)
+    }
     /// Holds the next page request until `releasePage()`.
     func holdNextPage() { holdsNextPage = true }
     /// Returns once a page request is held.

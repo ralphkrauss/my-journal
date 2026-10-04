@@ -105,7 +105,8 @@ extension JournalStore {
     /// content, as when another device encrypted the same journals separately and sent them first, it's adopted as if
     /// this change had been accepted, instead of being shown for review. Returns whether it was.
     func adoptSameContent(_ pending: PendingChange, remote: RemoteChange) throws -> Bool {
-        guard remote.recordId == pending.recordID, remote.kind == pending.kind,
+        // The library record is merged instead, which also adopts the same content (`recordConflict`).
+        guard remote.recordId == pending.recordID, remote.kind == pending.kind, pending.kind != LibraryRecord.kind,
             sameContent(remote.payload, pending.payload, id: pending.recordID, kind: pending.kind)
         else { return false }
         let recordID = id(pending.recordID)
@@ -236,6 +237,7 @@ final class Reencryption {
             case .restart: try restart(db)
             case .reconcile: try reconcile(db)
             }
+            try sealLibraryChanges(db)
             try db.execute(
                 sql: "UPDATE settings SET value = ? WHERE key = 'content-protection'",
                 arguments: [ContentProtection.encrypted.rawValue])
@@ -272,8 +274,12 @@ final class Reencryption {
         try db.execute(sql: "DELETE FROM outbox")
         try db.execute(sql: "UPDATE records SET revision = 0, dirty = 1")
         try db.execute(sql: "UPDATE conflicts SET revision = 0")
+        // The library record is queued by the first synchronization with a server that takes it.
         let rows = try Row.fetchAll(
-            db, sql: "SELECT id, kind, payload FROM records WHERE id NOT IN (SELECT record FROM conflicts)")
+            db,
+            sql:
+                "SELECT id, kind, payload FROM records WHERE id NOT IN (SELECT record FROM conflicts) AND kind <> 'library'"
+        )
         for row in rows {
             try db.execute(
                 sql: "INSERT INTO outbox(operation, record, kind, payload, base) VALUES (?, ?, ?, ?, 0)",
@@ -294,6 +300,25 @@ final class Reencryption {
     private func reconcile(_ db: Database) throws {
         try startReconciliation(db)
         try db.execute(sql: "UPDATE attachments SET uploaded = 2 WHERE uploaded = 1")
+    }
+
+    /// Seals the library record's unsent changes (`library-changes`), which are a setting rather than a record. A value
+    /// that can't be read was of no use to this library either and is left out.
+    private func sealLibraryChanges(_ db: Database) throws {
+        guard
+            let stored = try Data.fetchOne(
+                db, sql: "SELECT value FROM settings WHERE key = ?", arguments: [LibraryChanges.setting])
+        else { return }
+        guard let text = String(data: stored, encoding: .utf8), let readable = Data(base64Encoded: text),
+            (try? JournalCoding.decoder().decode(LibraryChanges.self, from: readable)) != nil
+        else {
+            try db.execute(sql: "DELETE FROM settings WHERE key = ?", arguments: [LibraryChanges.setting])
+            return
+        }
+        let sealed = try VaultCrypto.seal(readable, key: key, context: LibraryChanges.context)
+        try db.execute(
+            sql: "UPDATE settings SET value = ? WHERE key = ?",
+            arguments: [Data(sealed.base64EncodedString().utf8), LibraryChanges.setting])
     }
 
     /// Seals every image file in place, then closes the copy's database.

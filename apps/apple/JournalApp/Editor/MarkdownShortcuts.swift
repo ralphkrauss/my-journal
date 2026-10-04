@@ -92,10 +92,15 @@ import JournalCore
         {
             document.blocks[0].id = identity
         }
-        let replacement = RichText.render(document, size: size, images: images, width: width)
+        // The whole line, its line break included, so the line break takes the new block's attributes.
+        let paragraph = (text.string as NSString).paragraphRange(for: line)
+        let replacement = RichText.paragraphReplacement(
+            document.blocks, replacing: paragraph, in: text, size: size, images: images,
+            layout: RichText.ImageLayout(width: width))
         return Conversion(
-            range: line, replacement: replacement, caret: line.location + replacement.length - rest.length,
-            typing: RichText.blockAttributes(document.blocks[0], size: size), announcement: announcement(style.kind))
+            range: paragraph, replacement: replacement.text, caret: line.location + replacement.content - rest.length,
+            typing: RichText.itemAttributes(document.blocks[0], number: style.number, size: size),
+            announcement: announcement(style.kind))
     }
 
     private static func announcement(_ kind: String) -> String {

@@ -1,6 +1,6 @@
 # Journal order
 
-Status: reviewed proposal, 2026-10-03. Not implemented. It uses the **library record** defined in [pinned-entries.md](pinned-entries.md#proposal-one-library-record). The independent review is recorded at the end.
+Status: current, built 2026-10-03; the prototype outcome and implementation notes are at the end. Reviewed proposal, 2026-10-03. It uses the **library record** defined in [pinned-entries.md](pinned-entries.md#proposal-one-library-record). The independent review is recorded at the end.
 
 ## Request
 
@@ -294,3 +294,21 @@ The owner accepted the recommendations, with two changes:
 - Edit appears in the iPad sidebar as well as on iPhone.
 - There is no Sort by Name command for now.
 - "Default" is an ordinary journal: it can be reordered, renamed and deleted. Only All Entries is fixed.
+
+## Drag prototype (3 October 2026)
+
+A throwaway SwiftUI app (a `List` with `ForEach.onMove` and `.contextMenu` on the same rows) was run with UI tests:
+
+- **iOS 26.5 (iPhone 17) and iPadOS 26.5 (iPad Pro 13-inch):** holding a row shows its context menu; moving the finger while holding lifts the row and reorders it; a tap still opens the row; in edit mode the system handles reorder. No UIKit fallback is needed.
+- **macOS 26.3, in an AppKit split view's sidebar:** SwiftUI registers its list-reorder drag type (`com.apple.SwiftUI.listReorder`) on the sidebar's table. Mac XCUITest needs automation-mode approval and synthetic AppKit drags don't start a drag session, so the Mac drag is checked by hand, as this design planned.
+- **Test runner:** while a context menu of a reorderable SwiftUI list is open on iOS 26, XCUITest never receives "animations complete", so each test step waits a minute (127 s for one menu choice in the prototype with `.onMove`, 7.6 s without). It isn't visible to people. UI tests that only need a journal's actions use Edit and the row's ⋯ (`NavigationTestSupport.journalAction`); one test keeps using the held row's context menu.
+- Seen in both the prototype and the app: when a drag starts from an open context menu, the system centres the lifted row under the finger, so a row held near its leading edge jumps sideways. This is the system's drag preview; changing it would need a UIKit list.
+
+## Implementation notes (3 October 2026)
+
+- **Owner changes applied:** New Journal keeps edit mode on (the new journal is added at the end and not opened); the Mac has no Move Up and Move Down (drag only); iOS keeps the VoiceOver actions Move Up and Move Down; "Default" is an ordinary journal.
+- **A dropped journal shows at once** where it was dropped while the move is stored, then the stored order replaces it, or the previous order returns with the error alert.
+- **The moved journal** gets no automatic rank of its own. When its neighbours' ranks leave no room (equal ranks from two devices, or a rank longer than 64 characters), every journal is spaced again as set intents.
+- **A key holding an invalid rank** is kept and the journal stays unranked (after the ranked ones, by name) until it is moved.
+- **iPad sidebar:** it now has a large "Journals" title, because the sidebar's bar has no room for the title beside New Journal, Edit and the sidebar button. In its edit mode the rows show the journal's name without the book icon and a 32-point-wide (44-point-tall) ⋯ button, so names fit the 210-point sidebar. At accessibility text sizes, edit rows on iPhone also show the name without the icon, as the rows outside edit mode do.
+- **Restoring a journal** without a rank, once journals are arranged, puts it at the end.

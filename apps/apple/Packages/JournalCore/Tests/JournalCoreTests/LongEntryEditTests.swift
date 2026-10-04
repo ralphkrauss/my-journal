@@ -46,4 +46,46 @@ final class LongEntryEditTests: XCTestCase {
         let saved = document.applyingRichEdit(edited)
         XCTAssertEqual(shape(JournalDocument(markdown: saved.markdown)), shape(edited))
     }
+
+    /// Edits in a long list read back only the items around them. Whatever is typed into an item, and however items
+    /// are added, removed, nested or changed in kind, the saved Markdown reads back as the blocks the editor had.
+    func testRandomEditsInALongListReadBackAsWritten() {
+        var state: UInt64 = 41
+        func random(_ bound: Int) -> Int {
+            state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            return Int((state >> 33) % UInt64(bound))
+        }
+        let kinds = ["bullet", "numbered", "task", "checked"]
+        let texts = [
+            "milk", "1. not a number", "- not a bullet", "# not a heading", "> not a quote", "**bold**", "x",
+            "  spaced",
+        ]
+        var lines: [String] = []
+        for index in 0..<200 {
+            switch index % 4 {
+            case 0: lines.append("- [ ] Task \(index)")
+            case 1: lines.append("- Bullet \(index)")
+            case 2: lines.append("  - Nested \(index)")
+            default: lines.append("- [x] Done \(index)")
+            }
+        }
+        var document = JournalDocument(markdown: "Intro\n\n" + lines.joined(separator: "\n") + "\n\nAfter")
+        for step in 0..<300 {
+            var edited = document
+            let index = 1 + random(edited.blocks.count - 2)
+            switch random(5) {
+            case 0: edited.blocks[index].runs = [TextRun(texts[random(texts.count)])]
+            case 1: edited.blocks[index].kind = kinds[random(kinds.count)]
+            case 2:
+                edited.blocks.insert(
+                    DocumentBlock(kind: kinds[random(kinds.count)], runs: [TextRun(texts[random(texts.count)])]),
+                    at: index)
+            case 3: edited.blocks.remove(at: index)
+            default: edited.blocks[index].runs.append(TextRun(" typed"))
+            }
+            document = document.applyingRichEdit(edited)
+            XCTAssertEqual(shape(JournalDocument(markdown: document.markdown)), shape(edited), "After edit \(step)")
+            if shape(JournalDocument(markdown: document.markdown)) != shape(edited) { return }
+        }
+    }
 }

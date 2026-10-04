@@ -439,6 +439,8 @@ The action lives in the template's own actions catalog (`entryActionCatalog`), s
 
 ### Which journal
 
+> Superseded by [template-journal-choice-2026-10-03.md](template-journal-choice-2026-10-03.md) for the Templates list and File ▸ New Entry from Template… outside a journal: the person chooses the journal (New Entry In ▸). The text below records the earlier rule.
+
 One rule, one resolver: `newEntryJournal` is the selected journal, otherwise the default journal. From All Entries it stays the default journal. The toolbar's New Entry and this item both use it, so they always agree. Creating the entry selects that journal (`selectedJournalID`), so the list and sidebar show where it went.
 
 The item names the journal when there's a choice (see Copy), so nothing is hidden. The app never asks: New Entry doesn't ask either, and Move Entry… changes the journal afterwards.
@@ -458,7 +460,7 @@ The item names the journal when there's a choice (see Copy), so nothing is hidde
 
 - Menu item, with the `square.and.pencil` symbol and no ellipsis, because nothing more is asked:
   - **New Entry from Template** with one live journal, matching File ▸ New Entry from Template…;
-  - **New Entry in “‹Journal›”** with more than one live journal ("Untitled Journal" for a journal without a name).
+  - **New Entry in “‹Journal›”** with more than one live journal ("Untitled Journal" for a journal without a name). Superseded: now a **New Entry In** submenu (template-journal-choice-2026-10-03.md).
 - Alerts, when the template changed since the menu opened:
   - "This template is no longer available.";
   - "Review the changes to this template first."

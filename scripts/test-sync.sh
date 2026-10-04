@@ -117,6 +117,12 @@ start_server "$task_dir/merge-server"
 probe merge "$address" "$task_dir/merge-server/setup-code"
 stop_server
 
+# Pins and journal order (docs/design/pinned-entries.md): the server takes the library record, and changes made on two
+# devices at once are merged without a review.
+start_server "$task_dir/library-server"
+probe library "$address" "$task_dir/library-server/setup-code"
+stop_server
+
 # Turning on encryption for a synced library (docs/design/enable-encryption.md): a sync of the unencrypted library
 # after the server switched sends nothing readable, and another device that signs in again first doesn't leave the
 # switching device with reviews of identical journals or images that never sync.

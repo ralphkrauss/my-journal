@@ -76,4 +76,6 @@ public struct JournalViewSnapshot: Sendable {
     public let conflicts: [ConflictVersion]
     public let journalHistoryIDs: Set<UUID>
     public let pending: Bool
+    /// Pins and journal ranks.
+    public let library: LibraryArrangement
 }

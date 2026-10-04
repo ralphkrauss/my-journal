@@ -8,6 +8,8 @@ These files are public, deterministic compatibility corpora for other native cli
 | `agent-copy-v1.json` | Agent access through the server: copy subkeys, an item ID, digest and sealed item, and a copy key wrap, with two wrong positions that must fail ([agent-access-server.md](../agent-access-server.md)) | .NET 10 |
 | `sync-receipts-v1.json` | A push, its full receipt and the equivalent short receipt (capability `sync-short-receipt`, `payloadDigest` = lower-case hex SHA-256 of the payload text), and the three wait answers ([README.md](../README.md#waiting-for-changes)) | Python's hashlib; checked by the server's serializer and the Apple client's decoder |
 | `encryption-v2.json` | Formats 2 and 3 (password), password normalization, format 4 (no password), check-code pairing and its sealed grant, a current Markdown record with its image | The Apple app's derivation, pairing and record code, sealed with CryptoKit using fixed nonces |
+| `library-record-v1.json` | The [library record](../records.md#the-library-record) (pins and journal ranks) as the Apple app writes it, sealed with `recovery.vaultKey` of `encryption-v2.json` and a fixed nonce, with the values a reader must obtain | CryptoKit with a fixed nonce; checked by .NET's AES-GCM and the Apple app's reader |
+| `journal-ranks-v1.json` | Journal ranks: valid and invalid ranks, byte order, the reference algorithm's rank between two bounds (null where none fits in 64 characters or the bounds are out of order) and automatic spacing for 1 to 62 journals | An independent Python implementation; checked by the Apple app's ranks |
 
 Both languages check both files: `ProtocolVectorTests` recomputes every value with .NET's independent cryptography and the server's own verifier, commitment and input-bound code; Swift `InteroperabilityTests` and `InteroperabilityV2Tests` check them through CryptoKit, CommonCrypto and the application's actual decryption, recovery, pairing and record-decoding APIs. Keeping the expected bytes in shared static files prevents either implementation silently changing the protocol and passing only its own round-trip test.
 
@@ -62,6 +64,12 @@ Both languages check both files: `ProtocolVectorTests` recomputes every value wi
 - `wrap.wrappedKey` seals `copyKey` under HKDF-SHA256(`wrap.secret`, no salt, info `journal:v1:agent-grant-wrap`, 32 bytes) with `wrap.context` (`journal:v1:agent-grant:{grantId}`). A token's wrap uses the same construction with info `journal:v1:agent-token-wrap`.
 
 `AgentAccessTests` checks the file with .NET; Swift `AgentCopyTests` checks it through the app's own sealing and wrapping code.
+
+## The library record and ranks (`library-record-v1.json`, `journal-ranks-v1.json`)
+
+- `record.combined` is nonce (12) || AES-256-GCM(vault key, `record.plaintext`) || tag (16) with `record.context` (`journal:v1:record:library:{id}`). Opening it as another kind fails. `expected` lists the pinned entries, the valid ranks and every key of `values`.
+- A client that doesn't know the record must keep it as an unreadable record of an unknown kind ([records.md](../records.md#reading-rules)); Swift `LibrarySyncTests` checks this with the decoding rules versions without the record used.
+- `journal-ranks-v1.json`: `between` gives the reference algorithm's result (base-62 midpoint, adding a digit only when the bounds are adjacent; `null` lower and upper bounds are the start and the end). `spaced` lists the automatic ranks of `count` journals: with `w` digits, the smallest such that 62^(w−1) ≥ count + 1, position `i` (from 0) gets ⌊(i + 1) · 62^w / (count + 1)⌋ written as `w` base-62 digits without trailing zeros. Swift `JournalOrderTests` checks both.
 
 ## Running verification
 

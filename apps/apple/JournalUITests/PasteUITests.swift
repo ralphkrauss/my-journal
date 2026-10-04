@@ -23,7 +23,8 @@ final class PasteUITests: XCTestCase {
         let pasted = body.value as? String ?? ""
         XCTAssertTrue(pasted.hasPrefix("Packed bags\nDay one\n"), pasted)
         XCTAssertTrue(pasted.contains("Train\n"), pasted)
-        XCTAssertTrue(pasted.hasSuffix("Hotels"), "The caret is after the pasted text: \(pasted)")
+        // An entry that ends with a list item ends with that item's own line break (list-markers-2026-10-03.md).
+        XCTAssertTrue(pasted.hasSuffix("Hotels\n"), "The caret is after the pasted text: \(pasted)")
         capture(app, "Web page pasted as a heading and a list")
         body.typeKey("z", modifierFlags: .command)
         body.typeKey("z", modifierFlags: .command)

@@ -67,25 +67,54 @@ extension AppModel {
 // MARK: New Entry from a template on the Templates screen
 
 extension AppModel {
-    /// The Templates screen's “New Entry from Template” item: the title names the journal when there's a choice.
-    func newEntryFromTemplateTitle() -> String {
-        guard journals.count > 1, let journal = newEntryJournal else { return "New Entry from Template" }
-        let name = journal.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return "New Entry in “\(name.isEmpty ? "Untitled Journal" : name)”"
-    }
-
     /// Whether a template can start an entry now: there's a journal to write in, saving works, and the template has
     /// no changes to review.
     func canStartEntry(fromTemplate template: JournalItem) -> Bool {
-        newEntryJournal != nil && !saveFailure && !locked && !replacingVault
-            && !conflicts.contains { $0.id == template.id }
+        !journals.isEmpty && !saveFailure && !locked && !replacingVault && !conflicts.contains { $0.id == template.id }
     }
 
-    /// Starts an entry from the template as it's written now, in the journal New Entry uses from this screen.
-    func newEntry(fromTemplate id: UUID) async {
-        // Edits to the open template are saved first, so the entry has them.
+    /// The journal offered first for a new entry from `template` (template-journal-choice-2026-10-03.md): one that
+    /// uses it as its Default Template, else the journal last opened, else the Default Journal.
+    func suggestedJournal(for template: JournalItem) -> JournalItem? {
+        let live = journals
+        if let using = live.first(where: { $0.defaultTemplateID == template.id }) { return using }
+        return lastOpenedJournal ?? defaultJournal
+    }
+    /// The journal relaunching would reopen, while it's in use.
+    var lastOpenedJournal: JournalItem? { journals.first { $0.id == configuration?.lastJournalID } }
+
+    /// The template's New Entry In ▸ submenu, or with one journal (or none) its single New Entry from Template item.
+    func newEntryFromTemplateAction(_ template: JournalItem, start: @escaping @MainActor (UUID) -> Void) -> MenuAction {
+        let enabled = canStartEntry(fromTemplate: template)
+        let live = journals
+        guard live.count > 1 else {
+            return .command(
+                "New Entry from Template", symbol: "square.and.pencil", enabled: enabled && live.count == 1
+            ) { if let journal = live.first { start(journal.id) } }
+        }
+        func item(_ journal: JournalItem) -> MenuAction {
+            .command(JournalNames.displayName(journal.title), id: journal.id.uuidString) { start(journal.id) }
+        }
+        let suggested = suggestedJournal(for: template)
+        var items: [MenuAction] = []
+        if let suggested {
+            items = [item(suggested), .separator("suggested")]
+        }
+        items += live.filter { $0.id != suggested?.id }.map(item)
+        return .submenu("New Entry In", symbol: "square.and.pencil", enabled: enabled, items)
+    }
+
+    /// Starts an entry from the template, as it's written now, in the journal chosen for it. It's always a new entry.
+    func newEntry(fromTemplate id: UUID, in journalID: UUID) async {
         guard await flush() else { return }
         try? await refresh()
+        // Locking meanwhile ends the choice; the journals aren't shown, so none is "no longer available".
+        guard !locked, !replacingVault else { return }
+        guard let journal = journals.first(where: { $0.id == journalID }) else {
+            let name = items.first { $0.id == journalID }.map { JournalNames.displayName($0.title) }
+            error = name.map { "“\($0)” is no longer available." } ?? "This journal is no longer available."
+            return
+        }
         guard let template = templates.first(where: { $0.id == id }), template.document.isEditable else {
             error = "This template is no longer available."
             return
@@ -94,6 +123,6 @@ extension AppModel {
             error = "Review the changes to this template first."
             return
         }
-        await newEntry(template: template)
+        await newEntry(template: template, in: journal, filling: false)
     }
 }

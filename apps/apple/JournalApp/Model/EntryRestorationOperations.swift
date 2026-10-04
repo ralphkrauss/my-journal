@@ -39,6 +39,7 @@ extension AppModel {
         conflicts = snapshot.conflicts
         journalHistoryIDs = snapshot.journalHistoryIDs
         pendingSync = snapshot.pending
+        library = snapshot.library
         selectedID = current.id
         selectedJournalID = current.journalID
         draft = current

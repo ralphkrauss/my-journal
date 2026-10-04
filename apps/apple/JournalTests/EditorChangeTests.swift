@@ -277,7 +277,8 @@ import XCTest
             XCTAssertTrue(harness.view.isAutomaticDashSubstitutionEnabled)
         }
 
-        func testArrowKeysStepOverHiddenMarkers() throws {
+        /// An item's start is a caret position like any line's (build 13 stepped over hidden marker characters there).
+        func testArrowKeysMoveAcrossAnItemsStartLikeAnyLine() throws {
             let harness = EditorHarness(markdown: "Before\n\n- [ ] Task")
             defer { harness.close() }
             let task = (harness.text.string as NSString).range(of: "Task").location

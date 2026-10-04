@@ -71,7 +71,12 @@ extension AppModel {
             throw JournalError.server("Save your entry before restoring this journal.")
         }
         guard !locked, !replacingVault, let store else { throw JournalError.locked }
-        return try await commitMutation({ try await store.restoreJournal(id, expectedTitle: expectedTitle) }) {
+        return try await commitMutation({
+            let journal = try await store.restoreJournal(id, expectedTitle: expectedTitle)
+            // Back where it was, or at the end once journals were arranged (journal-order.md).
+            try? await store.placeJournalAtEnd(journal.id)
+            return journal
+        }) {
             journal in
             self.selectedJournalID = journal.id
             self.selectedID = nil
@@ -107,6 +112,7 @@ extension AppModel {
             self.persistSelection(journalID: destination.id, entryID: self.selectedID)
         }
     }
+    /// Creates a journal and opens it; in the Journals list's edit mode, it's only added, and editing continues.
     func createJournal(_ name: String) async {
         endEntryCreation()
         guard !locked, !replacingVault, await flush(), let store else { return }
@@ -115,8 +121,9 @@ extension AppModel {
         do {
             let journal = JournalItem(kind: "journal", title: trimmed)
             try await store.save(journal)
+            await placeJournalAtEnd(journal.id)
             try await refresh()
-            await switchJournal(journal.id)
+            if !editingJournals { await switchJournal(journal.id) }
         } catch { self.error = error.localizedDescription }
     }
     func createRecoveryJournal(_ name: String, entryID: UUID?) async throws -> Bool {
@@ -130,6 +137,7 @@ extension AppModel {
         let journal = JournalItem(kind: "journal", title: trimmed)
         let refreshed = try await commitMutation({
             try await store.save(journal)
+            try? await store.placeJournalAtEnd(journal.id)
             return journal
         }) { _ in }
         return refreshed

@@ -57,7 +57,7 @@ import SwiftUI
                     as? String
             else { return }
             guard
-                let used = usedRect(of: range, layout: layout, container: container)?.offsetBy(
+                let used = usedRect(of: range, layout: layout, container: container, quote: kind == "quote")?.offsetBy(
                     dx: origin.x, dy: origin.y)
             else { return }
             let left = origin.x + container.lineFragmentPadding
@@ -82,11 +82,15 @@ import SwiftUI
         return result
     }
 
-    private static func usedRect(of range: NSRange, layout: NSLayoutManager, container: NSTextContainer) -> CGRect? {
+    private static func usedRect(
+        of range: NSRange, layout: NSLayoutManager, container: NSTextContainer, quote: Bool
+    ) -> CGRect? {
         // Trailing line breaks (block separators, a code block's final newline) add no visible line.
         let text = layout.textStorage?.string as NSString? ?? ""
         var content = range
         while content.length > 0, text.character(at: NSMaxRange(content) - 1) == 0x0A { content.length -= 1 }
+        // An empty quote line has only its line break, whose line the bar covers.
+        if content.length == 0, range.length > 0, quote { content.length = 1 }
         let glyphs = layout.glyphRange(forCharacterRange: content, actualCharacterRange: nil)
         guard glyphs.length > 0 else { return nil }
         var result: CGRect?

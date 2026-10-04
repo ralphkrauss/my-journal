@@ -86,7 +86,7 @@ enum MarkdownReader {
         var tableLines: [Int: Int] = [:]
         for (index, node) in nodes.enumerated() {
             let startLine: Int
-            let end: Int
+            var end: Int
             if let range = node.range {
                 // A paragraph that starts with link reference definitions still reports their first line. Its text
                 // is on its last lines, one per line break, so the definitions stay out of the block's own source.
@@ -94,6 +94,12 @@ enum MarkdownReader {
                 startLine = tableLines[index] ?? max(range.lowerBound.line, textLine)
                 let endLine = min(max(1, range.upperBound.line), offsets.count)
                 end = min(bytes.count, offsets[endLine - 1] + max(0, range.upperBound.column - 1))
+                // An empty item with its content below it is only its marker's line; the content is blocks of its own.
+                if let item = node as? ListItem, let first = item.child(at: 0)?.range,
+                    first.lowerBound.line > range.lowerBound.line, lines.indices.contains(startLine - 1)
+                {
+                    end = offsets[startLine - 1] + lines[startLine - 1].utf8.count
+                }
             } else if let paragraph = node as? Paragraph, index + 1 < nodes.count, nodes[index + 1] is Table,
                 let table = nodes[index + 1].range
             {
@@ -164,7 +170,12 @@ enum MarkdownReader {
             let written = sourceMarker(item, lines: lines)
             let marker = written ?? (node is OrderedList ? "\(start + index). " : "- ")
             let continuation = prefix + String(repeating: " ", count: marker.count)
-            if item.childCount == 0 {
+            // An item whose first line is empty, with its content (such as a nested list) on the lines below it, is an
+            // empty item of its own; "- - text", content on the marker's line, is one nested item.
+            let startsBelow =
+                item.childCount > 0 && !(item.child(at: 0) is Paragraph)
+                && (item.child(at: 0)?.range?.lowerBound.line ?? 0) > (item.range?.lowerBound.line ?? 0)
+            if item.childCount == 0 || startsBelow {
                 var block = DocumentBlock(kind: kind)
                 block.markdownPrefix = prefix.isEmpty ? nil : prefix
                 block.listNumber = node is OrderedList ? start + index : nil
@@ -186,14 +197,15 @@ enum MarkdownReader {
                     block.listIndents = indents.isEmpty ? nil : indents
                     result.append((block, content))
                 } else {
-                    let contentPrefix = position == 0 ? prefix + marker : continuation
+                    let onMarkerLine = position == 0 && !startsBelow
+                    let contentPrefix = onMarkerLine ? prefix + marker : continuation
                     guard
                         var nested = leaves(
                             content, prefix: contentPrefix, indents: indents + [marker.count], lines: lines)
                     else {
                         return nil
                     }
-                    if position == 0, !nested.isEmpty { nested[0].0.markdownContinuation = continuation }
+                    if onMarkerLine, !nested.isEmpty { nested[0].0.markdownContinuation = continuation }
                     result += nested
                 }
             }

@@ -15,7 +15,7 @@ Owner rule (verbatim in substance): "in the settings I can choose my default jou
 - New Entry is never disabled only because no journal is shown. It is still disabled while locked, while the library is being replaced, and while saving is blocked, as today. This covers every path: the iPhone Journals screen's and entries list's New Entry button, the Mac toolbar's New Entry, File ▸ New Entry (⌘N), New Blank Entry (⇧⌘N) and New Entry from Template…. All of them were disabled in Recently Deleted.
 - The iPhone Journals screen's button already knows it is outside a journal (it always uses the Default Journal and opens it first). The model doesn't need to know that screen is showing.
 - After creating, the app shows the entry inside its journal, as New Entry from Template does: the sidebar selects the journal, the list shows it, the title is focused. On iPhone the stack becomes [journal, entry], so Back shows where the entry was filed. From All Entries the entry stays in All Entries with its journal label (unchanged).
-- New Entry from Template in a template's menu follows the same rule, so from Templates it names and uses the Default Journal ("New Entry in “‹Default Journal›”" when there are several journals).
+- ~~New Entry from Template in a template's menu follows the same rule~~ Superseded by [template-journal-choice-2026-10-03.md](template-journal-choice-2026-10-03.md): a template's menu offers New Entry In ▸ the journals, and File ▸ New Entry from Template… outside a journal asks for the journal.
 
 ## Setting
 

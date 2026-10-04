@@ -267,7 +267,7 @@ extension EditorHarness {
         func testPasteAndMatchStylePastesThePlainText() throws {
             let harness = EditorHarness(markdown: "- Milk\n- Bread")
             defer { harness.close() }
-            harness.caret(at: 6)
+            harness.caret(at: ("Milk" as NSString).length)
             let board = NSPasteboard(name: NSPasteboard.Name("PasteCorpus-" + UUID().uuidString))
             defer { board.releaseGlobally() }
             PasteSample.html("<h1>Eggs</h1><p>Jam</p>", plain: " and eggs\nJam").write(to: board)
@@ -319,7 +319,7 @@ extension EditorHarness {
                 "dear|world"
             ),
             (
-                "lines at the end of a list item", JournalDocument(markdown: "- Milk\n- Bread"), { $0.caret(at: 6) },
+                "lines at the end of a list item", JournalDocument(markdown: "- Milk\n- Bread"), { $0.caret(at: 4) },
                 PasteSample(name: "plain", plain: " and eggs\nButter\nJam"),
                 ["bullet: Milk and eggs", "bullet: Butter", "bullet: Jam", "bullet: Bread"], "Jam|\n"
             ),

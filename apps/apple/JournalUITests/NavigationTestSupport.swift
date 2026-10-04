@@ -62,6 +62,37 @@ enum NavigationTestSupport {
         }
         XCTAssertTrue(list.waitToAppear(timeout: 10))
     }
+    /// Chooses one of a journal's actions through Edit and the journal's ⋯ (Journal Actions), then ends edit mode
+    /// unless the action leaves an alert or sheet open (`endEditing: false`). A held row's context menu offers the same
+    /// actions, but while it's open the reorderable list never reports its animations finished, so each step after
+    /// a long press waits a minute (journal-order.md, prototype).
+    static func journalAction(_ action: String, journal name: String, app: XCUIApplication, endEditing: Bool = false) {
+        showJournals(app)
+        let list = app.collectionViews["Journals"]
+        if !app.buttons["Done"].firstMatch.exists {
+            let edit = app.buttons["Edit"].firstMatch
+            XCTAssertTrue(edit.waitToAppear(timeout: 5))
+            edit.tap()
+        }
+        let row = list.staticTexts.matching(NSPredicate(format: "label == %@", name)).firstMatch
+        XCTAssertTrue(row.waitToAppear(timeout: 5))
+        let buttons = list.buttons.matching(NSPredicate(format: "label == %@", "Journal Actions"))
+        XCTAssertTrue(buttons.firstMatch.waitToAppear(timeout: 5))
+        let menu = buttons.allElementsBoundByIndex.min {
+            abs($0.frame.midY - row.frame.midY) < abs($1.frame.midY - row.frame.midY)
+        }
+        menu?.tap()
+        let item = app.buttons[action].firstMatch
+        XCTAssertTrue(item.waitToAppear(timeout: 5))
+        item.tap()
+        if endEditing { finishJournalEditing(app) }
+    }
+    /// Done in the Journals list's edit mode.
+    static func finishJournalEditing(_ app: XCUIApplication) {
+        showJournals(app)
+        let done = app.buttons["Done"].firstMatch
+        if done.waitToAppear(timeout: 3) { done.tap() }
+    }
     static func selectCollection(_ name: String, app: XCUIApplication) {
         showJournals(app)
         let list = app.collectionViews["Journals"]

@@ -34,7 +34,7 @@ A design and its reviews share one row.
 | [owner-decisions-2026-09-25.md](owner-decisions-2026-09-25.md), [review](owner-decisions-2026-09-25-review.md) | Current, amended. §5 (discarding untouched new entries) was reversed by new-entry-template-suggestion.md. Delete and Recently Deleted, removal of Archive and Export Entry, Insert Image, Markdown as you type, menus, keyboard and Settings. |
 | [pre-release-fixes-2026-09-27.md](pre-release-fixes-2026-09-27.md) | Current. Changes made as bug fixes (connection, sync messages, App Lock cover, search, Move Entry, agent access, image descriptions), their design review, unreviewed editor changes and open owner decisions. |
 | [pre-release-ui-2026-09-27.md](pre-release-ui-2026-09-27.md) | Current. Deleted templates in Recently Deleted, the template sheet, Backspace in lists, the iPhone Format sheet, Search Entries ⌥⌘F, Devices, the new device’s check code, the one-time password check and Forgot Password?, and the Delete Permanently alert. Supersedes owner-decisions-2026-09-25.md §6 and the §1 alert message, and decides pre-release-fixes items (a) and (e). |
-| [default-journal.md](default-journal.md) | Current. Settings ▸ Default Journal, and New Entry outside a journal (Recently Deleted, Templates, All Entries, the iPhone Journals screen). Replaces the default-journal rule of feedback-stabilization-2026-09-23.md and the "Which journal" rule of new-entry-template-suggestion.md. |
+| [default-journal.md](default-journal.md) | Current, amended by template-journal-choice-2026-10-03.md (templates started from the Templates list). Settings ▸ Default Journal, and New Entry outside a journal (Recently Deleted, Templates, All Entries, the iPhone Journals screen). Replaces the default-journal rule of feedback-stabilization-2026-09-23.md and the "Which journal" rule of new-entry-template-suggestion.md. |
 | [recently-deleted-2026-09-30.md](recently-deleted-2026-09-30.md) | Current, amended by ios-delete-all-and-settings-2026-10-03.md (the Recently Deleted swipe is destructive again; Cancel brings the row back). The footer check. |
 | [ios-delete-all-and-settings-2026-10-03.md](ios-delete-all-and-settings-2026-10-03.md) | Current. Deletion motion on iOS, Delete All in Recently Deleted (iPhone, iPad, and the Mac in §4: a header in the list and File ▸ Delete All in Recently Deleted… ⇧⌘⌫), Settings at the top left of Journals on iPhone. Includes its reviews. |
 | [device-orientations.md](device-orientations.md), [review](device-orientations-review.md) | Current, amended. The constrained iOS header was replaced by unified-entry-scrolling.md. |
@@ -57,7 +57,8 @@ A design and its reviews share one row.
 | [new-entry-button-options.md](new-entry-button-options.md) | Evidence. Research and prototypes for folding Templates… into New Entry; the owner chose option D. |
 | [title-paste-workflow-review.md](title-paste-workflow-review.md) | Evidence. |
 | [pasted-text.md](pasted-text.md), [review](pasted-text-review.md) | Current. Text pasted from other apps (owner-decisions-2026-10-01.md §6). |
-| [checklists-2026-10-03.md](checklists-2026-10-03.md) | Current. Checklist (was Task List): square checkboxes on iPhone and iPad, one list column for every kind of list that grows with the text, nested items under their parent's text, Mark as Checked / Mark as Unchecked. Includes its review. |
+| [checklists-2026-10-03.md](checklists-2026-10-03.md) | Current, amended by list-markers-2026-10-03.md (no hidden marker characters). Checklist (was Task List): square checkboxes on iPhone and iPad, one list column for every kind of list that grows with the text, nested items under their parent's text, Mark as Checked / Mark as Unchecked. Includes its review. |
+| [list-markers-2026-10-03.md](list-markers-2026-10-03.md) | Current. List, checklist and quote markers are drawn, not stored: the text holds only what the person wrote, so the keyboard capitalizes new items. Why the editor stays on TextKit 1, the own end of a final item, and the visible differences. Includes its reviews. |
 | [save-failure-retry.md](save-failure-retry.md), [review](save-failure-retry-review.md) | Current, amended. The Export Entry option was removed (owner-decisions-2026-09-25.md §2). |
 | [unsaved-draft-export-review.md](unsaved-draft-export-review.md) | Removed feature (Export Entry). |
 
@@ -144,8 +145,9 @@ A design and its reviews share one row.
 
 | Record | Status |
 | --- | --- |
-| [pinned-entries.md](pinned-entries.md) | Reviewed, owner decisions recorded; not built yet. Pinned entries, and the `library` record that syncs pins and journal order. |
-| [journal-order.md](journal-order.md) | Reviewed, owner decisions recorded; not built yet. Reordering journals: edit mode on iPhone and iPad, drag on the Mac. |
+| [pinned-entries.md](pinned-entries.md) | Current, built 2026-10-03 (implementation notes in the record). Pinned entries, and the `library` record that syncs pins and journal order. |
+| [journal-order.md](journal-order.md) | Current, built 2026-10-03 (prototype outcome and implementation notes in the record). Reordering journals: edit mode on iPhone and iPad, drag on the Mac. |
+| [template-journal-choice-2026-10-03.md](template-journal-choice-2026-10-03.md) | Current, built 2026-10-03; includes its two reviews. New Entry In ▸ a journal from the Templates list, and the Journal picker of File ▸ New Entry from Template… outside a journal. Supersedes the template rules of default-journal.md and new-entry-template-suggestion.md. |
 | [website.md](website.md), [review](website-review.md) | Superseded: the repository is the website. The custom site was removed; its privacy policy and support copy moved to [PRIVACY.md](../../PRIVACY.md) and [SUPPORT.md](../../SUPPORT.md). |
 
 ## Adding a record

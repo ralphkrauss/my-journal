@@ -1,0 +1,26 @@
+{
+  "expected" : {
+    "keys" : [
+      "journal-rank/1b6f0e2a-4c8d-4e3f-a1b2-c3d4e5f60718",
+      "journal-rank/d0e1f2a3-b4c5-4d6e-8f70-81920a1b2c3d",
+      "pinned/2f1c7a54-8e0b-4d6a-9c3e-5b7d1f2a4c60",
+      "pinned/c4a9e8b1-3d27-4f56-8a0b-9e1c2d3f4a5b"
+    ],
+    "pinned" : [
+      "2f1c7a54-8e0b-4d6a-9c3e-5b7d1f2a4c60",
+      "c4a9e8b1-3d27-4f56-8a0b-9e1c2d3f4a5b"
+    ],
+    "ranks" : {
+      "1b6f0e2a-4c8d-4e3f-a1b2-c3d4e5f60718" : "Kf",
+      "d0e1f2a3-b4c5-4d6e-8f70-81920a1b2c3d" : "fK"
+    }
+  },
+  "purpose" : "The library record (protocol/records.md, The library record) as the Apple app writes it, sealed with recovery.vaultKey of encryption-v2.json and a fixed nonce. Older clients read it as a record of an unknown kind.",
+  "record" : {
+    "combined" : "QEFCQ0RFRkdISUpLloTLwDQKVVkbMweaa0miTHkzBoJsK8RN/zk6V1TVkd235UkTTte829u+zGo+/3u149lwRMre7MK4MEyReooh1dpps+EHIh7Qc1/nLRWNI1VxWw50VYqpzgnUOkCY0S5IYjzGGzMvetMApCNX5hLeJ/i/i1H//c41VAi2bCSkz+1gefBU1ndX3cbWDFnslg0wDmnsf3UNiLB/oTu506YuIcYvkDsQUa/YxMHwhQLpHj7YD7mouhc34Kf6dWSzi2NEVLDcFjHRQzBq6B+qutXKdE4Dgxj1CcWy6I7KQmOoZBchMUS3DtIfaOhl4COZROg95+EjxJPxn342ZVjZjUER61roseAwTAHNDs8eJNkMGa6FyPB96T23vn7/2Pb0S60EeVGF/3H70uUQp+iC2GsAewoEQZgI5JeJZX/NymywtnxDj7ZbfwMitmza+K3uEZu81rkA9SCDUjFffUakjC9AQtfehl0Kqg0ZAkcSFYsOXmQtHnSiHukIxRvxtRI+Z6r8jvcZcZkU8tc5HtiZ",
+    "context" : "journal:v1:record:library:9f297f28-7d13-41b7-a7ea-83d06cac6924",
+    "id" : "9f297f28-7d13-41b7-a7ea-83d06cac6924",
+    "nonce" : "QEFCQ0RFRkdISUpL",
+    "plaintext" : "{\"id\":\"9F297F28-7D13-41B7-A7EA-83D06CAC6924\",\"kind\":\"library\",\"modifiedAt\":\"2026-10-03T12:00:00Z\",\"title\":\"Pinned Entries and Journal Order\",\"values\":{\"journal-rank/1b6f0e2a-4c8d-4e3f-a1b2-c3d4e5f60718\":\"Kf\",\"journal-rank/d0e1f2a3-b4c5-4d6e-8f70-81920a1b2c3d\":\"fK\",\"pinned/2f1c7a54-8e0b-4d6a-9c3e-5b7d1f2a4c60\":true,\"pinned/c4a9e8b1-3d27-4f56-8a0b-9e1c2d3f4a5b\":true},\"version\":1}"
+  }
+}

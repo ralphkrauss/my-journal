@@ -1,6 +1,6 @@
 # Pinned entries
 
-Status: reviewed proposal, 2026-10-03. Not implemented. It includes the shared **library record** that [journal-order.md](journal-order.md) also uses. The independent review is recorded at the end.
+Status: current, built 2026-10-03; implementation notes at the end. Reviewed proposal, 2026-10-03. It includes the shared **library record** that [journal-order.md](journal-order.md) also uses. The independent review is recorded at the end.
 
 ## Request
 
@@ -356,3 +356,15 @@ The owner accepted the recommendations:
 - Pinned appears in All Entries as well as in journals.
 - Pinned entries are ordered by entry date, newest first.
 - The server accepts any well-formed record type and advertises it.
+
+## Implementation notes (3 October 2026)
+
+Built as designed, with these refinements, each found while writing the protecting tests:
+
+- **Rule 4 and proven lineage.** When reconciliation finds this device's current version in the server's log (`seen_payload`), the server's version descends from it. Only the intents not contained in that version survive; "every other key this device has and the server lacks" is *not* turned into set-if-absent then, because those keys were removed by newer changes the device never read. Without this, an iPad that was behind at a restore would re-pin entries unpinned after it last synchronized (test "A device that was behind at a restore does not revert newer changes").
+- **A damaged intents value** is recorded as "unknown lineage" (`unknownLineage` in the stored value), kept through local changes, and applied once by the next merge or reconciliation (rule 4 for this device's differing keys).
+- **Archives.** The intents value is not authenticated separately on export: in encrypted archives the sealed manifest already covers the whole database file. Turning on encryption seals a readable value under the new key and leaves out a value that can't be read.
+- **Counts.** While the server takes the library record, an unsent change of it counts as one item in "Not on Server Yet", like any record; while it doesn't, it isn't counted (as designed).
+- **Capability changes.** A synchronization that only receives reuses the server status for up to a minute, so a server that gains or loses `record-kinds` is noticed within a minute, or at once with Sync Now.
+- **Pinned in the list.** Keys of entries deleted permanently on this device are left out of the pinned set the lists use; keys of entries not on this device yet are kept.
+- **Pin and Unpin** in the File menu act on the open entry. Undo uses the window's undo manager, for row actions and for the menu bar command.

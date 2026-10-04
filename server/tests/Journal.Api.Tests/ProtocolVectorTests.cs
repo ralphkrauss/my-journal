@@ -41,6 +41,24 @@ public sealed class ProtocolVectorTests
     private static string RecoverySecret(byte[] derivedKey) =>
         Convert.ToHexStringLower(HKDF.DeriveKey(HashAlgorithmName.SHA256, derivedKey, 32, [], "journal:v1:recovery-auth"u8.ToArray()));
 
+    // The library record is sealed like any record, with its kind in the context: opening it as another kind fails.
+    [Fact]
+    public void TheLibraryRecordFixtureOpensOnlyAsALibraryRecord()
+    {
+        using var library = Corpus("library-record-v1.json");
+        using var corpus = Corpus("encryption-v2.json");
+        var key = Bytes(corpus.RootElement.GetProperty("recovery"), "vaultKey");
+        var record = library.RootElement.GetProperty("record");
+        var combined = Bytes(record, "combined");
+        Assert.Equal("journal:v1:record:library:" + Text(record, "id"), Text(record, "context"));
+        AssertSealed(key, Encoding.UTF8.GetBytes(Text(record, "plaintext")), combined, Text(record, "context"));
+        using var aes = new AesGcm(key, 16);
+        var opened = new byte[combined.Length - 28];
+        Assert.ThrowsAny<CryptographicException>(() => aes.Decrypt(
+            combined.AsSpan(0, 12), combined.AsSpan(12, combined.Length - 28), combined.AsSpan(combined.Length - 16), opened,
+            Encoding.UTF8.GetBytes("journal:v1:record:entry:" + Text(record, "id"))));
+    }
+
     [Fact]
     public void PublicFixturesMatchIndependentDotNetEncryptionAndRecovery()
     {

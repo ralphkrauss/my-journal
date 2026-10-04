@@ -286,17 +286,43 @@ final class PreReleaseUITests: XCTestCase {
         app.typeText("Errands\n")
         let body = app.textViews["Entry text"]
         app.typeText("[] ")
-        let task = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in (body.value as? String ?? "").contains("☐") }, object: nil)
-        XCTAssertEqual(Waiting.wait(for: task, timeout: 5), .completed, "[] starts a task.")
+        let checkbox = app.buttons["Empty checklist item"]
+        XCTAssertTrue(checkbox.waitToAppear(timeout: 5), "[] starts a checklist item.")
         app.typeText("Buy milk\n")
+        XCTAssertTrue(app.buttons["Buy milk"].waitToAppear(timeout: 5))
+        XCTAssertTrue(app.buttons["Empty checklist item"].waitToAppear(timeout: 5), "Return starts the next item.")
         capture(app, "Second task, empty")
         app.typeText(XCUIKeyboardKey.delete.rawValue)
         app.typeText("Then a plain line")
         let value = body.value as? String ?? ""
         XCTAssertTrue(value.hasSuffix("\nThen a plain line"), value)
-        XCTAssertEqual(value.components(separatedBy: "☐").count - 1, 1, "Only the first line keeps its checkbox.")
+        XCTAssertFalse(app.buttons["Then a plain line"].exists, "Only the first line keeps its checkbox.")
+        XCTAssertTrue(app.buttons["Buy milk"].exists)
         capture(app, "Backspace removed the checkbox")
+    }
+
+    /// A new list item starts a line, so the keyboard capitalizes its first letter as on any new line. Build 13 kept
+    /// hidden marker characters before the caret, and the keyboard stayed lowercase.
+    @MainActor func testNewListItemsStartWithACapitalLetter() throws {
+        let app = launchWithoutEncryption(dark: false)
+        defer { app.terminate() }
+        NavigationTestSupport.selectCollection("Default", app: app)
+        app.buttons["New Entry"].firstMatch.tap()
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
+        app.typeText("Lists\n")
+        for (shortcut, name) in [
+            ("[] ", "checklist"), ("- ", "bulleted list"), ("1. ", "numbered list"), ("> ", "quote"),
+        ] {
+            app.typeText(shortcut)
+            // The keyboard shows capitals at the start of the first item, and again on the next one.
+            XCTAssertTrue(app.keys["B"].waitToAppear(timeout: 5), "The first \(name) item starts with a capital.")
+            app.typeText("buy milk\n")
+            XCTAssertTrue(app.keys["B"].waitToAppear(timeout: 5), "A new \(name) item starts with a capital.")
+            XCTAssertFalse(app.keys["b"].exists, name)
+            capture(app, "New \(name) item")
+            // Return on the empty item leaves the list for the next one.
+            app.typeText("\n")
+        }
     }
 
     /// Item 6: on an iPad keyboard, ⌥⌘F searches the entries, as in Notes, and ⇧⌘F opens Find and Replace in the

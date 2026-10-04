@@ -30,6 +30,15 @@ struct JournalCommands: Commands {
             .disabled(!model.canCreateEntry || model.templates.isEmpty)
             Button("New Journal…") { inJournalWindow { model.newJournalRequested = true } }
                 .keyboardShortcut("n", modifiers: [.command, .option]).disabled(!model.isReady || model.locked)
+            Divider()
+            // Acts on the selected entry; no shortcut, as in Notes (pinned-entries.md).
+            let pinnable = model.selectedPinnable
+            Button(pinnable.map(model.isPinned) == true ? "Unpin Entry" : "Pin Entry") {
+                guard let pinnable else { return }
+                Task {
+                    await model.setPinned(!model.isPinned(pinnable), entryID: pinnable.id, undoManager: undoManager)
+                }
+            }.disabled(pinnable == nil)
         }
         CommandGroup(replacing: .importExport) {
             Button("Import Archive…") { inJournalWindow { model.archiveImportRequested = true } }
@@ -114,6 +123,15 @@ struct JournalCommands: Commands {
             return false
         #else
             return true
+        #endif
+    }
+
+    /// The journal window's undo manager, so Edit ▸ Undo Pin Entry follows a menu command too.
+    private var undoManager: UndoManager? {
+        #if os(macOS)
+            model.journalWindow?.undoManager
+        #else
+            model.windowUndoManager
         #endif
     }
 

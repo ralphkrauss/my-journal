@@ -118,7 +118,7 @@ import SwiftUI
                     at: range.location, storage: storage, layout: layout, container: container, origin: origin),
                 area.minY...area.maxY ~= placement.capCenter
             else { continue }
-            let content = source.substring(with: range).dropFirst(2).trimmingCharacters(in: .whitespacesAndNewlines)
+            let content = source.substring(with: range).trimmingCharacters(in: .whitespacesAndNewlines)
             result.append(
                 Item(
                     location: range.location, checked: kind == "checked",
@@ -128,23 +128,26 @@ import SwiftUI
     }
 
     /// The checkbox's place for the item whose paragraph starts at `location`, from the laid-out text: the box at
-    /// the start of the item's list column, the text after it.
+    /// the start of the item's list column, where bullets and numbers are drawn, the text after it.
     static func placement(
         at location: Int, storage: NSTextStorage, layout: NSLayoutManager, container: NSTextContainer,
         origin: CGPoint
     ) -> Placement? {
-        // The paragraph font at the item's size: the hidden ☐ marker itself may be drawn in a fallback font.
+        // The paragraph font at the item's size, not the first word's bold or code font.
         guard location < storage.length,
-            let marker = storage.attribute(.font, at: location, effectiveRange: nil) as? PlatformFont
+            let first = storage.attribute(.font, at: location, effectiveRange: nil) as? PlatformFont
         else { return nil }
-        let font = RichText.font(size: marker.pointSize)
+        let font = RichText.font(size: first.pointSize)
         let glyph = layout.glyphIndexForCharacter(at: location)
         guard glyph < layout.numberOfGlyphs else { return nil }
         let line = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
         let point = layout.location(forGlyphAt: glyph)
         let style = storage.attribute(.paragraphStyle, at: location, effectiveRange: nil) as? NSParagraphStyle
+        let column = ListMarkers.columnStart(
+            style: style, size: first.pointSize, padding: container.lineFragmentPadding,
+            column: storage.attribute(.journalListColumn, at: location, effectiveRange: nil) as? CGFloat)
         return Placement(
-            boxX: origin.x + line.minX + point.x, baseline: origin.y + line.minY + point.y,
+            boxX: origin.x + line.minX + column, baseline: origin.y + line.minY + point.y,
             textX: origin.x + container.lineFragmentPadding + (style?.headIndent ?? 0), font: font)
     }
 

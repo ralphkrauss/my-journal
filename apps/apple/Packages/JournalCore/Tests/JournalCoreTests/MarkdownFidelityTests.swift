@@ -155,6 +155,41 @@ final class MarkdownFidelityTests: XCTestCase {
         }
     }
 
+    /// An empty item directly before an item nested under it stays an empty item of its own: written as its marker
+    /// alone on its line, read back as an item with the nested list below it, as CommonMark and other apps read it.
+    /// Content on the marker's own line ("- - text") still reads as one nested item.
+    func testAnEmptyItemBeforeANestedItemKeepsItsPlace() throws {
+        for kind in ["bullet", "numbered", "task", "checked"] {
+            var nested = DocumentBlock(kind: "bullet", runs: [TextRun("Nested")])
+            nested.listIndents = [kind == "numbered" ? 3 : 2]
+            nested.markdownPrefix = kind == "numbered" ? "   " : "  "
+            let blocks = [
+                DocumentBlock(kind: kind, runs: [TextRun("Before")]), DocumentBlock(kind: kind), nested,
+                DocumentBlock(kind: kind, runs: [TextRun("After")]),
+            ]
+            let markdown = JournalDocument(blocks: blocks).markdown
+            let read = JournalDocument(markdown: markdown)
+            XCTAssertEqual(
+                read.blocks.map { "\($0.kind) \($0.listIndents ?? []) \($0.runs.map(\.text).joined())" },
+                ["\(kind) [] Before", "\(kind) [] ", "bullet \(nested.listIndents ?? []) Nested", "\(kind) [] After"],
+                markdown.debugDescription)
+            XCTAssertEqual(read.markdown, markdown, "Written back byte for byte")
+        }
+        // Emptying an item of a loose list, above its nested item.
+        let loose = JournalDocument(markdown: "- One\n\n- Two\n\n  - Nested\n\n- Three\n")
+        var emptied = loose
+        emptied.blocks[1].runs = []
+        let saved = loose.applyingRichEdit(emptied)
+        XCTAssertEqual(
+            JournalDocument(markdown: saved.markdown).blocks.map {
+                "\($0.kind) \($0.listIndents ?? []) \($0.runs.map(\.text).joined())"
+            },
+            ["bullet [] One", "bullet [] ", "bullet [2] Nested", "bullet [] Three"], saved.markdown.debugDescription)
+        let sameLine = JournalDocument(markdown: "- - Nested")
+        XCTAssertEqual(sameLine.blocks.map(\.kind), ["bullet"])
+        XCTAssertEqual(sameLine.markdown, "- - Nested")
+    }
+
     func testRewrittenListItemsKeepTheirMarkerAndIndentation() {
         let cases = [
             ("* star\n* list\n* end\n", 1, "* star\n* list!\n* end\n"),

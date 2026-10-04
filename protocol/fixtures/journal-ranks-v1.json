@@ -1,0 +1,319 @@
+{
+  "purpose": "Journal ranks (docs/design/journal-order.md): validity, byte order, the reference algorithm's ranks between two ranks, and automatic spacing. Any rank strictly between the bounds is allowed; these vectors pin the reference algorithm so clients that use it agree.",
+  "alphabet": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+  "valid": [
+    "1",
+    "V",
+    "z",
+    "0V",
+    "a1",
+    "ZZ",
+    "Vz",
+    "1111111111111111111111111111111111111111111111111111111111111111"
+  ],
+  "invalid": [
+    "",
+    "0",
+    "V0",
+    "a-b",
+    "Ä",
+    "v ",
+    "11111111111111111111111111111111111111111111111111111111111111111",
+    "zz0"
+  ],
+  "ordered": [
+    [
+      "0V",
+      "1"
+    ],
+    [
+      "1",
+      "1V"
+    ],
+    [
+      "Z",
+      "a"
+    ],
+    [
+      "9",
+      "A"
+    ],
+    [
+      "V",
+      "VV"
+    ],
+    [
+      "Az",
+      "B"
+    ]
+  ],
+  "between": [
+    {
+      "lower": null,
+      "upper": null,
+      "rank": "V"
+    },
+    {
+      "lower": null,
+      "upper": "V",
+      "rank": "F"
+    },
+    {
+      "lower": "V",
+      "upper": null,
+      "rank": "k"
+    },
+    {
+      "lower": "V",
+      "upper": "W",
+      "rank": "VV"
+    },
+    {
+      "lower": "V",
+      "upper": "V1",
+      "rank": "V0V"
+    },
+    {
+      "lower": "1",
+      "upper": "1V",
+      "rank": "1F"
+    },
+    {
+      "lower": "1",
+      "upper": "105",
+      "rank": "102"
+    },
+    {
+      "lower": null,
+      "upper": "1",
+      "rank": "0V"
+    },
+    {
+      "lower": "0V",
+      "upper": "1",
+      "rank": "0k"
+    },
+    {
+      "lower": "z",
+      "upper": null,
+      "rank": "zV"
+    },
+    {
+      "lower": "zz",
+      "upper": null,
+      "rank": "zzV"
+    },
+    {
+      "lower": "Az",
+      "upper": "B",
+      "rank": "AzV"
+    },
+    {
+      "lower": "A",
+      "upper": "B",
+      "rank": "AV"
+    },
+    {
+      "lower": "A",
+      "upper": "C",
+      "rank": "B"
+    },
+    {
+      "lower": "Vz",
+      "upper": "W",
+      "rank": "VzV"
+    },
+    {
+      "lower": "VzV",
+      "upper": "W",
+      "rank": "Vzk"
+    },
+    {
+      "lower": "Vzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+      "upper": "W",
+      "rank": null
+    },
+    {
+      "lower": "W",
+      "upper": "V",
+      "rank": null
+    },
+    {
+      "lower": "V",
+      "upper": "V",
+      "rank": null
+    },
+    {
+      "lower": "VzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzV",
+      "upper": "W",
+      "rank": "Vzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzk"
+    }
+  ],
+  "spaced": [
+    {
+      "count": 1,
+      "ranks": [
+        "V"
+      ]
+    },
+    {
+      "count": 2,
+      "ranks": [
+        "Kf",
+        "fK"
+      ]
+    },
+    {
+      "count": 4,
+      "ranks": [
+        "CO",
+        "On",
+        "bC",
+        "nb"
+      ]
+    },
+    {
+      "count": 5,
+      "ranks": [
+        "AK",
+        "Kf",
+        "V",
+        "fK",
+        "pf"
+      ]
+    },
+    {
+      "count": 61,
+      "ranks": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "count": 62,
+      "ranks": [
+        "0z",
+        "1y1",
+        "2x2",
+        "3w3",
+        "4v4",
+        "5u5",
+        "6t6",
+        "7s7",
+        "8r8",
+        "9q9",
+        "ApA",
+        "BoB",
+        "CnC",
+        "DmD",
+        "ElE",
+        "FkF",
+        "GjG",
+        "HiH",
+        "IhI",
+        "JgJ",
+        "KfK",
+        "LeL",
+        "MdM",
+        "NcN",
+        "ObO",
+        "PaP",
+        "QZQ",
+        "RYR",
+        "SXS",
+        "TWT",
+        "UVU",
+        "VUV",
+        "WTW",
+        "XSX",
+        "YRY",
+        "ZQZ",
+        "aPa",
+        "bOb",
+        "cNc",
+        "dMd",
+        "eLe",
+        "fKf",
+        "gJg",
+        "hIh",
+        "iHi",
+        "jGj",
+        "kFk",
+        "lEl",
+        "mDm",
+        "nCn",
+        "oBo",
+        "pAp",
+        "q9q",
+        "r8r",
+        "s7s",
+        "t6t",
+        "u5u",
+        "v4v",
+        "w3w",
+        "x2x",
+        "y1y",
+        "z0z"
+      ]
+    }
+  ]
+}

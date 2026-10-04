@@ -133,8 +133,14 @@ import XCTest
     }
     func deleteBackward() {
         #if os(macOS)
-            view.deleteBackward(nil)
+            // As the Delete key arrives, so the editor sees it even at the start of the text.
+            view.doCommand(by: #selector(NSResponder.deleteBackward(_:)))
         #else
+            // At the start of the text the keyboard's Backspace changes no text; the text view hears it alone.
+            if view.selectedRange == NSRange(location: 0, length: 0) {
+                view.deleteBackward()
+                return
+            }
             let range =
                 view.selectedRange.length > 0
                 ? view.selectedRange : NSRange(location: max(0, view.selectedRange.location - 1), length: 1)

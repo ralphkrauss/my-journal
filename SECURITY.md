@@ -26,7 +26,8 @@ The vault key never changes. Changing the master password wraps the same key aga
 
 With encryption on, the server, and anyone with its data or backups, can see:
 
-- each record's ID and kind (journal, entry or template), and so how many of each exist;
+- each record's ID and kind (journal, entry, template or library), and so how many of each exist;
+- that the library uses pinned entries or a custom journal order (its library record exists), and when either changes: each pin, unpin or move is a revision of that one record, whose timing can be correlated with entry revisions. Its size shows roughly how many entries are pinned and journals ranked, and a change in size whether a change was probably a pin, an unpin or a move. It doesn't show which entry was pinned or which journal moved;
 - every revision of every record, kept permanently: its size (text isn't padded, so size follows length), when the server received it, and which device wrote it, which usually shows when entries were written and edited;
 - which records were probably deleted permanently, because their final revisions are small, content-free markers;
 - each image's ID, exact size (the original plus 28 bytes), the SHA-256 of its encrypted file and when it was uploaded, but not which entry uses it;

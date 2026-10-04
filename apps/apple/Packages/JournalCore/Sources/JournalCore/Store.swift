@@ -110,6 +110,15 @@ public actor JournalStore {
                     arguments: [protection.rawValue])
             }
         }
+        // What an older version kept for the library record, before anything synchronizes (pinned-entries.md, rule 5).
+        // Opening never writes otherwise, so a library damaged where records are kept still opens and reports that
+        // its data can't be read: only leftovers that can be read are converted, and a failed conversion leaves them.
+        let library = LibraryStore(key: key, protection: protection)
+        if (try? db.read { try library.hasLeftovers($0) }) == true {
+            do { try db.write { library.convertLeftovers($0) } } catch {
+                LibraryStore.logger.error("Couldn’t convert what an older version kept for the library record.")
+            }
+        }
     }
     static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
@@ -154,6 +163,13 @@ public actor JournalStore {
         ).base64EncodedString()
     }
     func enqueue(_ db: Database, recordID: String, kind: String, payload: String, revision: Int64) throws {
+        // The library record is queued only while the server takes it; it stays changed until then.
+        if kind == LibraryRecord.kind {
+            if let queued = try library.queue(db, payload: payload, revision: revision) {
+                unsentOperations[queued] = Date()
+            }
+            return
+        }
         let operation = UUID()
         try db.execute(
             sql: "INSERT OR IGNORE INTO outbox(operation,record,kind,payload,base) VALUES (?,?,?,?,?)",
@@ -175,6 +191,8 @@ public actor JournalStore {
     @discardableResult func save(
         _ db: Database, item: JournalItem, importingMarker: Bool = false, requiringUnchanged: Bool = false
     ) throws -> StoredVersion {
+        // The library record changes only by its own rules (StoreLibrary.swift).
+        guard item.kind != LibraryRecord.kind else { throw JournalError.invalidData }
         if item.isPermanentlyDeleted && !importingMarker { throw PermanentDeletionError.permanentlyDeleted }
         let recordID = id(item.id)
         // The stored version this save replaces, unless it's kept for review instead.
@@ -266,8 +284,11 @@ public actor JournalStore {
     public func items() throws -> [JournalItem] {
         try db.read { try items($0) }
     }
+    /// Journals, entries and templates, and records of kinds this version doesn't know. The library record, which
+    /// holds pins and journal order, is read with `libraryArrangement()`.
     private func items(_ db: Database) throws -> [JournalItem] {
-        try decodeRecords(storedRecords(db, sql: "SELECT id,kind,payload FROM records"), complete: true)
+        try decodeRecords(
+            storedRecords(db, sql: "SELECT id,kind,payload FROM records WHERE kind <> 'library'"), complete: true)
     }
     public func viewSnapshot() throws -> JournalViewSnapshot {
         try db.read { db in
@@ -279,8 +300,8 @@ public actor JournalStore {
                 pending: try Bool.fetchOne(
                     db,
                     sql:
-                        "SELECT EXISTS(SELECT 1 FROM outbox o LEFT JOIN conflicts c ON c.record=o.record WHERE c.record IS NULL)"
-                ) == true)
+                        "SELECT EXISTS(SELECT 1 FROM outbox o LEFT JOIN conflicts c ON c.record=o.record WHERE c.record IS NULL AND \(Self.sendable))"
+                ) == true, library: try libraryArrangement(db))
         }
     }
     public func lifecycleSnapshot() throws -> JournalLifecycleSnapshot {
@@ -473,7 +494,7 @@ public actor JournalStore {
             try Row.fetchAll(
                 db,
                 sql:
-                    "SELECT o.* FROM outbox o LEFT JOIN conflicts c ON c.record=o.record WHERE c.record IS NULL ORDER BY o.rowid"
+                    "SELECT o.* FROM outbox o LEFT JOIN conflicts c ON c.record=o.record WHERE c.record IS NULL AND \(Self.sendable) ORDER BY o.rowid"
             ).map { row in
                 guard let op = UUID(uuidString: row["operation"]), let record = UUID(uuidString: row["record"]) else {
                     throw JournalError.invalidData
@@ -508,6 +529,7 @@ public actor JournalStore {
             try enqueue(db, recordID: recordID, kind: row["kind"], payload: current, revision: revision)
         }
         try settleAcknowledged(db, recordID: recordID, revision: revision, payload: pending.payload)
+        if pending.kind == LibraryRecord.kind { try library.acknowledged(db, payload: pending.payload) }
     }
     public func cursor() throws -> Int64 {
         let value: Data? = try setting("cursor")
@@ -531,6 +553,11 @@ public actor JournalStore {
     }
     /// Records the server's current version after a rejected push. Returns the images it refers to.
     @discardableResult public func recordConflict(_ change: RemoteChange) throws -> Set<UUID> {
+        if change.recordId == LibraryRecord.id {
+            // Never a review: the server's version with this device's changes on top.
+            try db.write { db in record(try library.merge(db, server: change)) }
+            return []
+        }
         let incoming = try decode(change.payload, id: change.recordId, kind: change.kind)
         try db.write { db in
             try apply(db, change: change)
@@ -543,6 +570,7 @@ public actor JournalStore {
     /// Without `trustingRevision`, revisions are not compared: used when a restored server's revision
     /// numbers restarted, after reconciliation established that the change descends from local content.
     func apply(_ db: Database, change: RemoteChange, trustingRevision: Bool = true) throws {
+        if change.recordId == LibraryRecord.id { return try applyLibrary(db, change: change) }
         let recordID = id(change.recordId)
         if let row = try Row.fetchOne(db, sql: "SELECT * FROM records WHERE id=?", arguments: [recordID]) {
             let revision: Int64 = row["revision"]
@@ -704,92 +732,6 @@ public actor JournalStore {
             return try decode(payload, id: chosen.id, kind: chosen.kind)
         }
     }
-    /// Copies an authenticated historical record without changing its source or resolving its conflicts.
-    public func restoreHistoryCopy(_ version: JournalItem, to journalID: UUID? = nil) throws -> JournalItem {
-        try Task.checkCancellation()
-        return try db.write { db in
-            guard version.kind == "entry" || version.kind == "template" else { throw JournalError.invalidData }
-            guard !version.isPermanentlyDeleted,
-                try storedItem(db, uuid: version.id)?.isPermanentlyDeleted != true
-            else { throw PermanentDeletionError.permanentlyDeleted }
-            guard version.document.isEditable else { throw JournalError.unsupportedFormat }
-            try requireHistoricalVersion(db, version: version)
-            if version.kind == "entry" {
-                guard let journalID, let parent = try storedItem(db, uuid: journalID),
-                    parent.kind == "journal", parent.deletedAt == nil, parent.document.isEditable
-                else { throw HistoryRecoveryError.destinationUnavailable }
-                try requireNoConflict(db, uuid: journalID)
-            } else if journalID != nil {
-                throw JournalError.invalidData
-            }
-            var copy = version
-            copy.id = UUID()
-            copy.restoredFromDeletionID = nil
-            copy.journalID = journalID
-            copy.deletedAt = nil
-            copy.deletedWithJournal = false
-            copy.archivedAt = nil
-            copy.modifiedAt = Date()
-            return try saveCanonical(db, item: copy)
-        }
-    }
-    /// Restores only the selected journal settings; membership and lifecycle are retained.
-    public func restoreJournalSettings(_ version: JournalItem, expectedJournal: JournalItem) throws -> JournalItem {
-        try Task.checkCancellation()
-        return try db.write { db in
-            guard version.kind == "journal", expectedJournal.kind == "journal", version.id == expectedJournal.id else {
-                throw JournalError.invalidData
-            }
-            guard !version.isPermanentlyDeleted,
-                try storedItem(db, uuid: version.id)?.isPermanentlyDeleted != true
-            else { throw PermanentDeletionError.permanentlyDeleted }
-            guard version.document.isEditable else { throw JournalError.unsupportedFormat }
-            try requireHistoricalVersion(db, version: version)
-            guard var current = try storedItem(db, uuid: version.id), current.kind == "journal" else {
-                throw JournalLifecycleError.missingJournal
-            }
-            guard current.document.isEditable else { throw JournalLifecycleError.unsupportedJournal }
-            try requireNoConflict(db, uuid: current.id)
-            guard current == expectedJournal else { throw HistoryRecoveryError.changedJournal }
-            if JournalNames.key(current.title) != JournalNames.key(version.title), current.deletedAt == nil,
-                let other = try journalNamed(db, version.title, excluding: current.id)
-            {
-                throw JournalNameError.taken(JournalNames.displayName(other.title))
-            }
-            guard current.title != version.title || current.defaultTemplateID != version.defaultTemplateID else {
-                throw HistoryRecoveryError.settingsAlreadyApplied
-            }
-            try db.execute(
-                sql: "INSERT INTO history(record,kind,payload,saved) SELECT id,kind,payload,? FROM records WHERE id=?",
-                arguments: [JournalCoding.timestamp(Date()), id(current.id)])
-            current.title = version.title
-            current.defaultTemplateID = version.defaultTemplateID
-            current.modifiedAt = Date()
-            return try saveCanonical(db, item: current)
-        }
-    }
-    private func requireHistoricalVersion(_ db: Database, version: JournalItem) throws {
-        let rows = try Row.fetchCursor(
-            db, sql: "SELECT kind,payload FROM history WHERE record=? ORDER BY id DESC", arguments: [id(version.id)])
-        while let row = try rows.next() {
-            if try decode(row["payload"], id: version.id, kind: row["kind"]) == version { return }
-        }
-        throw HistoryRecoveryError.unavailableVersion
-    }
-    public func journalHistoryIDs() throws -> Set<UUID> {
-        try db.read { db in
-            Set(
-                try String.fetchAll(db, sql: "SELECT DISTINCT record FROM history WHERE kind='journal'").compactMap(
-                    UUID.init(uuidString:)))
-        }
-    }
-    public func history(for uuid: UUID) throws -> [JournalItem] {
-        try db.read { db in
-            try Row.fetchAll(
-                db, sql: "SELECT kind,payload FROM history WHERE record=? ORDER BY id DESC", arguments: [id(uuid)]
-            ).map { try decode($0["payload"], id: uuid, kind: $0["kind"]) }
-        }
-    }
     public func setting(_ name: String) throws -> Data? {
         try db.read { try Data.fetchOne($0, sql: "SELECT value FROM settings WHERE key=?", arguments: [name]) }
     }
@@ -826,6 +768,7 @@ public actor JournalStore {
     /// Source credentials, settings and synchronization baselines are deliberately not imported.
     public func importAsNewJournals(from source: JournalStore) async throws {
         let transfer = try await source.contentForImport()
+        let arrangement = try await source.arrangementForImport()
         let importedItems = try transfer.items.map(transfer.remap)
         let importedHistory = try transfer.history.map(transfer.remap)
         for (original, replacement) in transfer.imageIDs {
@@ -836,6 +779,7 @@ public actor JournalStore {
         try Task.checkCancellation()
         try saveImportedItems(importedItems)
         try importHistory(importedHistory, transfer: transfer)
+        try importArrangement(arrangement, identities: transfer.recordIDs)
     }
     private func importHistory(_ importedHistory: [JournalItem], transfer: ContentImport) throws {
         try db.write { db in
@@ -872,6 +816,10 @@ public actor JournalStore {
     }
     /// Images used by current records, their earlier versions and versions awaiting review.
     public func referencedAttachmentIDs() throws -> Set<UUID> {
+        // The library record has no images, but it's authenticated with everything else.
+        if let stored = try db.read({ try library.stored($0) }) {
+            _ = try openedPayload(stored.payload, id: LibraryRecord.id, kind: LibraryRecord.kind)
+        }
         var images = Set(try items().flatMap { $0.document.attachmentIDs })
         images.formUnion(try allHistory().flatMap { $0.document.attachmentIDs })
         for conflict in try conflicts() { images.formUnion(conflict.remote.document.attachmentIDs) }

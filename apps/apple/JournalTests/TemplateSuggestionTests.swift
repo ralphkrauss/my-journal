@@ -140,45 +140,70 @@ final class TemplateSuggestionTests: XCTestCase {
         XCTAssertTrue(conflicts.isEmpty)
     }
 
-    /// Outside a journal, the entry goes to Settings ▸ Default Journal, not to the journal shown before Templates
-    /// (docs/design/default-journal.md).
-    func testAnEntryStartedFromTheTemplatesScreenOpensInTheDefaultJournal() async throws {
+    /// From the Templates list, the entry goes to the journal chosen in New Entry In ▸, not to the Default Journal
+    /// (template-journal-choice-2026-10-03.md), with the template as it was just written, and opens there.
+    func testAnEntryStartedFromTheTemplatesScreenGoesToTheChosenJournal() async throws {
         let (model, store) = try await startedModel()
         await model.createJournal("Work")
         let work = try XCTUnwrap(model.journals.first { $0.title == "Work" })
         let other = try XCTUnwrap(model.journals.first { $0.id != work.id })
-        model.chooseDefaultJournal(work.id)
-        await model.switchJournal(other.id)
+        model.chooseDefaultJournal(other.id)
         await model.showCollection(templates: true)
         var template = try XCTUnwrap(model.templates.first)
         await model.select(template.id)
         template.document = .plain("Edited just now")
         model.updateDraft(template)
 
-        await model.newEntry(fromTemplate: template.id)
+        await model.newEntry(fromTemplate: template.id, in: work.id)
         XCTAssertFalse(model.showingTemplates, "Templates is left")
-        XCTAssertEqual(model.selectedJournalID, work.id)
+        XCTAssertEqual(model.selectedJournalID, work.id, "The list shows the chosen journal")
         let entry = try XCTUnwrap(model.draft)
         XCTAssertEqual(entry.kind, "entry", "The new entry is open")
         XCTAssertEqual(entry.journalID, work.id)
         XCTAssertEqual(entry.document.text, "Edited just now", "The template as it was just written")
-        let savedTemplate = try await store.item(template.id)
-        XCTAssertEqual(savedTemplate?.document.text, "Edited just now")
         let stored = try await entries(in: store)
         XCTAssertEqual(stored.count, 1)
     }
 
-    func testWithoutASelectedJournalTheEntryGoesToTheDefaultJournal() async throws {
-        let (model, _) = try await startedModel()
-        let fallback = try XCTUnwrap(model.defaultJournal)
+    /// A journal that went away while choosing gets nothing, and the message names it.
+    func testAChosenJournalThatIsNoLongerInUseGetsNoEntry() async throws {
+        let (model, store) = try await startedModel()
+        await model.createJournal("Work")
+        let work = try XCTUnwrap(model.journals.first { $0.title == "Work" })
+        let plan = try await model.prepareJournalDeletion(work.id)
+        _ = try await model.deleteJournal(plan)
         await model.showCollection(templates: true)
-        model.selectedJournalID = nil
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(fromTemplate: template.id)
-        XCTAssertEqual(model.draft?.journalID, fallback.id)
-        XCTAssertEqual(model.selectedJournalID, fallback.id, "The list shows where the entry went")
-        XCTAssertFalse(model.showingTemplates)
+        await model.newEntry(fromTemplate: template.id, in: work.id)
+        XCTAssertEqual(model.error, "“Work” is no longer available.")
+        let stored = try await entries(in: store)
+        XCTAssertTrue(stored.isEmpty)
+    }
+
+    /// The journal offered first: one using the template as its Default Template, else the journal last opened,
+    /// else the Default Journal.
+    func testTheSuggestedJournalFollowsDefaultTemplateThenLastJournalThenDefault() async throws {
+        let (model, _) = try await startedModel()
+        await model.createJournal("Work")
+        await model.createJournal("Home")
+        let work = try XCTUnwrap(model.journals.first { $0.title == "Work" })
+        let home = try XCTUnwrap(model.journals.first { $0.title == "Home" })
+        let template = try XCTUnwrap(model.templates.first)
+        model.chooseDefaultJournal(work.id)
+        await model.switchJournal(home.id)
+        XCTAssertEqual(model.suggestedJournal(for: template)?.id, home.id, "The journal last opened")
+        model.changeJournal(work.id, template: template.id)
+        await model.journalEditTask?.value
+        try await model.refresh()
+        XCTAssertEqual(model.suggestedJournal(for: template)?.id, work.id, "The journal that uses the template")
+        model.changeJournal(work.id, template: nil)
+        await model.journalEditTask?.value
+        try await model.refresh()
+        var configuration = try XCTUnwrap(model.configuration)
+        configuration.lastJournalID = UUID()
+        model.configuration = configuration
+        XCTAssertEqual(model.suggestedJournal(for: template)?.id, work.id, "Else the Default Journal")
     }
 
     // MARK: Support
@@ -250,62 +275,14 @@ final class TemplateSuggestionTests: XCTestCase {
             deviceId: UUID(), modifiedAt: Date())
         try await store.apply([change], cursor: revision)
     }
-}
 
-#if os(iOS)
-    extension TemplateSuggestionTests {
-        /// Once a template is chosen, the chooser stays out of use until it has closed. It was usable again as soon as
-        /// the entry was filled: its search field took the keyboard back, and the closing sheet rose with it, as if the
-        /// chooser opened again for a moment.
-        func testTheChooserStaysOutOfUseWhileItCloses() async throws {
-            let (model, _) = try await startedModel()
-            await model.newEntry(blank: true)
-            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 402, height: 874))
-            window.windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
-            let root = UIViewController()
-            window.rootViewController = root
-            window.makeKeyAndVisible()
-            defer { window.isHidden = true }
-            let chooser = UIHostingController(
-                rootView: TemplateChooserView(journalID: model.newEntryJournal?.id).environmentObject(model))
-            root.present(chooser, animated: false)
-            var found: UISearchBar?
-            for _ in 0..<200 where found?.searchTextField.isFirstResponder != true {
-                try await Task.sleep(for: .milliseconds(10))
-                found = searchBar(in: chooser.view)
-            }
-            let bar = try XCTUnwrap(found)
-            XCTAssertTrue(usable(bar, in: chooser.view))
-            // Down arrow highlights the first template; Return creates the entry from it.
-            bar.perform(NSSelectorFromString("moveDown"))
-            bar.delegate?.searchBarSearchButtonClicked?(bar)
-            var seen: [Bool] = []
-            for _ in 0..<300 where chooser.presentingViewController != nil {
-                seen.append(usable(bar, in: chooser.view))
-                try await Task.sleep(for: .milliseconds(10))
-            }
-            XCTAssertNil(chooser.presentingViewController, "The chooser closes.")
-            XCTAssertNotEqual(model.draft?.document.markdown ?? "", "", "The entry is filled from the template.")
-            let outOfUse = try XCTUnwrap(seen.firstIndex(of: false), "The chooser goes out of use: \(seen)")
-            XCTAssertFalse(seen[outOfUse...].contains(true), "The chooser became usable again as it closed: \(seen)")
-        }
-
-        private func searchBar(in view: UIView) -> UISearchBar? {
-            if let bar = view as? UISearchBar { return bar }
-            for child in view.subviews {
-                if let bar = searchBar(in: child) { return bar }
-            }
-            return nil
-        }
-
-        /// Whether touches reach the search field: no view between it and the chooser turns them away.
-        private func usable(_ bar: UISearchBar, in container: UIView) -> Bool {
-            var view: UIView? = bar.searchTextField
-            while let current = view, current !== container {
-                if !current.isUserInteractionEnabled { return false }
-                view = current.superview
-            }
-            return true
-        }
+    /// File ▸ New Entry from Template… asks for a journal unless one is on screen. In stacked navigation (an iPad in a
+    /// narrow window) the Journals screen shows none, though the last journal opened is still the destination.
+    func testTheTemplateSheetAsksForAJournalOnTheJournalsScreen() {
+        let journal = JournalDestination.journal(UUID())
+        XCTAssertTrue(RootView.showsJournal(destination: journal, stacked: false, path: []))
+        XCTAssertFalse(RootView.showsJournal(destination: journal, stacked: true, path: []), "the Journals screen")
+        XCTAssertTrue(RootView.showsJournal(destination: journal, stacked: true, path: [.collection(journal)]))
+        XCTAssertFalse(RootView.showsJournal(destination: .all, stacked: false, path: []))
     }
-#endif
+}

@@ -87,6 +87,48 @@ public sealed class SyncTests
     private static string Payload(byte value) => Convert.ToBase64String(Enumerable.Repeat(value, 60).ToArray());
     private static PutRecord Write(long revision, byte value = 1) => new(Guid.NewGuid(), revision, "entry", Payload(value));
 
+    // Clients send kinds the server never interprets, such as the library record, only to servers that list
+    // `record-kinds`; malformed kinds stay refused, and a record keeps its kind.
+    [Fact]
+    public async Task AnyWellFormedKindIsStoredAndAdvertisedWhileARecordKeepsItsKind()
+    {
+        using var factory = new JournalFactory();
+        var (client, _) = await factory.SetUp();
+        foreach (var path in new[] { "/v1/status", "/v1/server" })
+        {
+            var features = (await client.GetFromJsonAsync<JsonElement>(path)).GetProperty("features").EnumerateArray().Select(feature => feature.GetString());
+            Assert.Contains("record-kinds", features);
+        }
+        var library = Guid.NewGuid();
+        foreach (var kind in new[] { "library", "a", "future-kind-2", new string('k', 32) })
+        {
+            var id = kind == "library" ? library : Guid.NewGuid();
+            var response = await client.PutAsJsonAsync($"/v1/sync/{id}", Write(0) with
+            {
+                Kind = kind
+            });
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(kind, (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("kind").GetString());
+        }
+        var page = await client.GetFromJsonAsync<JsonElement>("/v1/sync/?after=0");
+        Assert.Contains(page.GetProperty("changes").EnumerateArray(), change => change.GetProperty("kind").GetString() == "library");
+        foreach (var kind in new[] { "", "Library", "library!", "lib rary", "librarý", new string('k', 33) })
+        {
+            var response = await client.PutAsJsonAsync($"/v1/sync/{Guid.NewGuid()}", Write(0) with
+            {
+                Kind = kind
+            });
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("invalid_record", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        }
+        var changed = await client.PutAsJsonAsync($"/v1/sync/{library}", Write(1) with
+        {
+            Kind = "entry"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, changed.StatusCode);
+        Assert.Equal("kind_is_immutable", (await changed.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
     [Fact]
     public async Task RetriedOperationReturnsOriginalReceiptWithoutDuplicatingChanges()
     {
