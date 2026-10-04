@@ -104,11 +104,13 @@ struct FormattingPopover: View {
             style("Numbered List", kind: "numbered", font: .body, symbol: "list.number")
             style("Checklist", kind: "task", font: .body, symbol: "checklist")
             style("Block Quote", kind: "quote", font: .body, symbol: "text.quote")
-            if state.canIndent || state.sourceMode && inList {
-                HStack {
-                    indentation("Decrease Indent", symbol: "decrease.indent", command: .outdent)
-                    indentation("Increase Indent", symbol: "increase.indent", command: .indent)
-                }.disabled(state.sourceMode)
+            // Always shown, dimmed where they don't apply, so the rows don't move as the caret does
+            // (docs/design/list-indentation-2026-10-04.md).
+            HStack {
+                indentation(
+                    "Decrease Indent", symbol: "decrease.indent", command: .outdent, enabled: state.indent.decrease)
+                indentation(
+                    "Increase Indent", symbol: "increase.indent", command: .indent, enabled: state.indent.increase)
             }
             if inCodeBlock {
                 Button {
@@ -129,16 +131,14 @@ struct FormattingPopover: View {
         }.padding(8)
     }
     private var inCodeBlock: Bool { state.paragraph == "codeBlock" }
-    private var inList: Bool {
-        ["bullet", "numbered", "task", "checked"].contains(state.paragraph ?? "")
-    }
-    private func indentation(_ title: String, symbol: String, command: EditorCommand) -> some View {
+    /// Indenting keeps the panel open, so an item can be moved several levels, as the inline styles do.
+    private func indentation(_ title: String, symbol: String, command: EditorCommand, enabled: Bool) -> some View {
         Button {
-            apply(command)
+            editor.performFormatting(command)
         } label: {
             Label(title, systemImage: symbol).labelStyle(.iconOnly)
                 .frame(maxWidth: .infinity, minHeight: rowHeight).contentShape(Rectangle())
-        }.accessibilityLabel(title).help(title)
+        }.disabled(!enabled).accessibilityLabel(title).help(title)
     }
     private func rowLabel(_ title: String, opensMenu: Bool = false) -> some View {
         HStack {
@@ -225,10 +225,13 @@ private struct FormattingRowStyle: ButtonStyle {
     }
     private struct Row: View {
         let configuration: Configuration
+        @Environment(\.isEnabled) private var isEnabled
         @State private var hovered = false
         var body: some View {
-            configuration.label.background(
-                hovered || configuration.isPressed ? Color.primary.opacity(0.08) : .clear,
+            // A custom style draws its own disabled state: dimmed, as the system dims an unavailable control, and
+            // without the hover highlight.
+            configuration.label.opacity(isEnabled ? 1 : 0.3).background(
+                isEnabled && (hovered || configuration.isPressed) ? Color.primary.opacity(0.08) : .clear,
                 in: RoundedRectangle(cornerRadius: 4)
             ).onHover { hovered = $0 }
         }

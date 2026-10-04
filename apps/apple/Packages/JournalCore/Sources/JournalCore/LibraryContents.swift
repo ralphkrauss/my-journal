@@ -10,8 +10,9 @@ public struct LibraryContents: Sendable, Equatable {
     public let templates: Int
     /// Journals, entries and templates in Recently Deleted.
     public let recentlyDeleted: Int
-    /// Nothing anyone wrote: exactly one journal named "Default" as Start a Journal creates it, no entries, only
-    /// unedited built-in templates and no changes to review. Joining a server may replace such a library.
+    /// Nothing anyone wrote: exactly one journal named "Default" as Start a Journal creates it, no entries, no
+    /// templates other than the unedited built-ins earlier builds created, and no changes to review. Joining a server
+    /// may replace such a library.
     public let nothingWritten: Bool
 
     public init(items: [JournalItem], conflicts: Int) {

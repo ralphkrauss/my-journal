@@ -73,17 +73,11 @@ extension AppModel {
         !journals.isEmpty && !saveFailure && !locked && !replacingVault && !conflicts.contains { $0.id == template.id }
     }
 
-    /// The journal offered first for a new entry from `template` (template-journal-choice-2026-10-03.md): one that
-    /// uses it as its Default Template, else the journal last opened, else the Default Journal.
-    func suggestedJournal(for template: JournalItem) -> JournalItem? {
-        let live = journals
-        if let using = live.first(where: { $0.defaultTemplateID == template.id }) { return using }
-        return lastOpenedJournal ?? defaultJournal
-    }
     /// The journal relaunching would reopen, while it's in use.
     var lastOpenedJournal: JournalItem? { journals.first { $0.id == configuration?.lastJournalID } }
 
-    /// The template's New Entry In ▸ submenu, or with one journal (or none) its single New Entry from Template item.
+    /// The template's New Entry In ▸ submenu, the journals in the sidebar order with none singled out
+    /// (template-journal-choice-2026-10-03.md), or with one journal (or none) its single New Entry from Template item.
     func newEntryFromTemplateAction(_ template: JournalItem, start: @escaping @MainActor (UUID) -> Void) -> MenuAction {
         let enabled = canStartEntry(fromTemplate: template)
         let live = journals
@@ -92,15 +86,9 @@ extension AppModel {
                 "New Entry from Template", symbol: "square.and.pencil", enabled: enabled && live.count == 1
             ) { if let journal = live.first { start(journal.id) } }
         }
-        func item(_ journal: JournalItem) -> MenuAction {
-            .command(JournalNames.displayName(journal.title), id: journal.id.uuidString) { start(journal.id) }
+        let items = live.map { journal in
+            MenuAction.command(JournalNames.displayName(journal.title), id: journal.id.uuidString) { start(journal.id) }
         }
-        let suggested = suggestedJournal(for: template)
-        var items: [MenuAction] = []
-        if let suggested {
-            items = [item(suggested), .separator("suggested")]
-        }
-        items += live.filter { $0.id != suggested?.id }.map(item)
         return .submenu("New Entry In", symbol: "square.and.pencil", enabled: enabled, items)
     }
 

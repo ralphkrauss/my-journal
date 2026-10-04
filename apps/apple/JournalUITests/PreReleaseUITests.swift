@@ -10,6 +10,14 @@ final class PreReleaseUITests: XCTestCase {
     @MainActor func testDeletedTemplateRestoresAndDeletesPermanently() throws {
         let app = launchWithoutEncryption(dark: false)
         defer { app.terminate() }
+        // A new library has no templates: the empty Templates list says how to make one.
+        NavigationTestSupport.selectCollection("Templates", app: app)
+        // VoiceOver reads the title and its explanation as one element.
+        let empty = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "No Templates")).firstMatch
+        XCTAssertTrue(empty.waitToAppear(timeout: 10))
+        XCTAssertTrue(empty.label.contains("To create a template, open an entry and choose Save"), empty.label)
+        capture(app, "No templates")
+        saveTemplates(["Daily Reflection", "Gratitude"], app: app)
         NavigationTestSupport.selectCollection("Templates", app: app)
         let template = app.staticTexts["Gratitude"].firstMatch
         XCTAssertTrue(template.waitToAppear(timeout: 10))
@@ -61,6 +69,7 @@ final class PreReleaseUITests: XCTestCase {
     @MainActor func testNewEntryFromTheTemplatesScreen() throws {
         let app = launchWithoutEncryption(dark: false)
         defer { app.terminate() }
+        saveTemplates(["Gratitude"], app: app)
         NavigationTestSupport.selectCollection("Templates", app: app)
         let template = app.staticTexts["Gratitude"].firstMatch
         XCTAssertTrue(template.waitToAppear(timeout: 10))
@@ -84,8 +93,8 @@ final class PreReleaseUITests: XCTestCase {
     @MainActor func testRecentlyDeletedTemplateRowsInDarkAndLargestText() throws {
         for (dark, largest) in [(true, false), (false, true)] {
             let app = launchWithoutEncryption(dark: dark, largestText: largest)
+            saveTemplates(["Weekly Reflection"], app: app)
             NavigationTestSupport.selectCollection("Templates", app: app)
-            // Templates made together are listed in no fixed order, and at the largest text size only two fit.
             let template = app.staticTexts["Weekly Reflection"].firstMatch
             for _ in 0..<4 where !template.waitToAppear(timeout: 3) { app.collectionViews.firstMatch.swipeUp() }
             XCTAssertTrue(template.waitToAppear(timeout: 10))
@@ -103,6 +112,7 @@ final class PreReleaseUITests: XCTestCase {
     @MainActor func testArrowKeysChooseTheTemplateReturnCreates() throws {
         let app = launchWithoutEncryption(dark: false)
         defer { app.terminate() }
+        saveTemplates(["Daily Reflection", "Gratitude"], app: app)
         NavigationTestSupport.selectCollection("Default", app: app)
         NavigationTestSupport.openTemplateChooserInNewEntry(app)
         let search = app.searchFields["Search Templates"]
@@ -130,6 +140,7 @@ final class PreReleaseUITests: XCTestCase {
             XCUIDevice.shared.orientation = orientation
         }
         XCUIDevice.shared.orientation = .portrait
+        saveTemplates(["Gratitude", "Workday Log"], app: app)
         NavigationTestSupport.selectCollection("Default", app: app)
         NavigationTestSupport.openTemplateChooserInNewEntry(app)
         let search = app.searchFields["Search Templates"]
@@ -180,9 +191,8 @@ final class PreReleaseUITests: XCTestCase {
                 for _ in 0..<6 where !insert.isHittable { app.buttons["Heading 2"].firstMatch.swipeUp() }
                 XCTAssertTrue(insert.isHittable)
                 capture(app, "Format panel scrolled" + (dark ? ", dark" : ""))
-                for _ in 0..<6 where !app.buttons["Bold"].firstMatch.isHittable {
-                    app.buttons["Bulleted List"].firstMatch.swipeDown()
-                }
+                // Back up from the bottom, on a row that's on screen there: the panel only keeps visible rows.
+                for _ in 0..<6 where !app.buttons["Bold"].firstMatch.isHittable { insert.swipeDown() }
                 if !dark {
                     XCUIDevice.shared.orientation = .landscapeLeft
                     XCTAssertTrue(app.buttons["Bold"].firstMatch.waitToAppear(timeout: 5))
@@ -421,6 +431,16 @@ final class PreReleaseUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
         app.buttons["Continue Without Encryption"].tap()
         return app
+    }
+    /// Templates with the questions of the ones earlier builds started libraries with; a new library has none.
+    @MainActor private func saveTemplates(_ names: [String], app: XCUIApplication) {
+        let questions = [
+            "Daily Reflection": "What went well?",
+            "Gratitude": "What am I grateful for today?",
+            "Workday Log": "What I worked on",
+            "Weekly Reflection": "What stood out this week?",
+        ]
+        for name in names { NavigationTestSupport.saveTemplate(name, text: questions[name] ?? name, app: app) }
     }
     /// A new entry long enough that the caret, at its end, is where a sheet would cover it.
     @MainActor private func writeLongEntry(_ app: XCUIApplication, lines: Int = 30) -> XCUIElement {

@@ -32,13 +32,18 @@ final class StructuredSelectionTests: XCTestCase {
     func testIndentAndOutdentMultipleItemsPreserveContent() throws {
         let original = JournalDocument(markdown: "- First\n- Second\n- Third\n\nAfter")
         let text = RichText.render(original, size: 17, images: [:])
-        let selection = NSRange(location: 0, length: text.length)
+        // The second and third items, which nest under the first (a list's first item can't be indented).
+        let start = (text.string as NSString).range(of: "Second").location
+        let selection = NSRange(
+            location: start, length: NSMaxRange((text.string as NSString).range(of: "Third")) - start)
         let indent = try XCTUnwrap(StructuredKeyboard.edit(.indent, text: text, selection: selection, size: 17))
         let indented = applying(indent, to: text)
+        XCTAssertEqual(
+            MarkdownEditing.read(indented, previous: original).blocks.map { $0.listIndents?.count ?? 0 }, [0, 1, 1, 0])
         let outdent = try XCTUnwrap(
-            StructuredKeyboard.edit(
-                .outdent, text: indented, selection: NSRange(location: 0, length: indented.length), size: 17))
+            StructuredKeyboard.edit(.outdent, text: indented, selection: selection, size: 17))
         let read = MarkdownEditing.read(applying(outdent, to: indented), previous: original)
+        XCTAssertEqual(read.markdown, original.markdown)
         XCTAssertEqual(read.blocks.map(\.runs), original.blocks.map(\.runs))
         XCTAssertEqual(read.blocks.map(\.kind), original.blocks.map(\.kind))
     }

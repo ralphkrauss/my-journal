@@ -146,18 +146,25 @@ final class MergeTests: XCTestCase {
 
     func testOnlyAnUntouchedNewLibraryCountsAsNothingWritten() throws {
         let journal = JournalItem(kind: "journal", title: "Default")
-        let started = [journal] + BuiltInTemplates.all.map(fresh)
-        XCTAssertTrue(LibraryContents(items: started, conflicts: 0).nothingWritten)
+        let started = [journal] + BuiltInTemplates.asEarlierBuildsCreated()
+        XCTAssertTrue(
+            LibraryContents(items: started, conflicts: 0).nothingWritten,
+            "A new library from an earlier build, with its built-in templates, joins without a Merge step.")
+        XCTAssertTrue(
+            LibraryContents(items: [journal], conflicts: 0).nothingWritten,
+            "A new library from this build, without templates, joins without a Merge step.")
+        let ownTemplate = JournalItem(kind: "template", title: "Standup", document: .plain("Yesterday, today"))
+        XCTAssertFalse(LibraryContents(items: [journal, ownTemplate], conflicts: 0).nothingWritten)
         var renamed = journal
         renamed.title = "Work"
-        var edited = fresh(BuiltInTemplates.all[0])
+        var edited = BuiltInTemplates.asEarlierBuildsCreated()[0]
         edited.document = .plain("My own questions")
-        var deletedTemplate = fresh(BuiltInTemplates.all[1])
+        var deletedTemplate = BuiltInTemplates.asEarlierBuildsCreated()[1]
         deletedTemplate.deletedAt = Date()
         var deletedEntry = JournalItem(kind: "entry", journalID: journal.id, title: "Tried it")
         deletedEntry.deletedAt = Date()
         let written: [String: ([JournalItem], Int)] = [
-            "a renamed journal": ([renamed] + BuiltInTemplates.all, 0),
+            "a renamed journal": ([renamed] + BuiltInTemplates.asEarlierBuildsCreated(), 0),
             "a second journal": (started + [JournalItem(kind: "journal", title: "Default")], 0),
             "an empty entry": (started + [JournalItem(kind: "entry", journalID: journal.id)], 0),
             "an entry in Recently Deleted": (started + [deletedEntry], 0),
@@ -175,17 +182,22 @@ final class MergeTests: XCTestCase {
     }
 
     /// After the app is opened again, a stored template is read back as Markdown rather than the blocks it was
-    /// created from; an untouched library must still count as nothing written.
+    /// created from; an untouched library must still count as nothing written. Opening a library an earlier build
+    /// made keeps its built-in templates as they are: they're the person's now (no-built-in-templates-2026-10-04.md).
     func testAReopenedNewLibraryStillCountsAsNothingWritten() async throws {
         let folder = root.appendingPathComponent("reopened")
         let created = try JournalStore(directory: folder, key: deviceKey)
         try await created.save(JournalItem(kind: "journal", title: "Default"))
-        for template in BuiltInTemplates.all.map(fresh) { try await created.save(template) }
+        let builtIns = BuiltInTemplates.asEarlierBuildsCreated()
+        for template in builtIns { try await created.save(template) }
         try await created.close()
         let reopened = try JournalStore(directory: folder, key: deviceKey)
         let items = try await reopened.items()
         XCTAssertTrue(LibraryContents(items: items, conflicts: 0).nothingWritten)
-        var markdownForm = fresh(BuiltInTemplates.all[0])
+        let kept = items.filter { $0.kind == "template" && $0.deletedAt == nil }
+        XCTAssertEqual(Set(kept.map(\.id)), Set(builtIns.map(\.id)), "Every built-in template stays.")
+        XCTAssertTrue(kept.allSatisfy(BuiltInTemplates.isUnedited))
+        var markdownForm = BuiltInTemplates.asEarlierBuildsCreated()[0]
         markdownForm.document = JournalDocument(markdown: markdownForm.document.markdown)
         XCTAssertTrue(BuiltInTemplates.isUnedited(markdownForm))
     }
@@ -213,7 +225,7 @@ final class MergeTests: XCTestCase {
         try await mac.save(serverDefault)
         try await mac.save(serverWork)
         try await mac.save(JournalItem(kind: "entry", journalID: serverDefault.id, title: "From the Mac"))
-        var templates = BuiltInTemplates.all.map(fresh)
+        var templates = BuiltInTemplates.asEarlierBuildsCreated()
         let gratitudeIndex = try XCTUnwrap(templates.firstIndex { $0.title == "Gratitude" })
         templates[gratitudeIndex].document = .plain("Edited on the Mac")
         for template in templates { try await mac.save(template) }
@@ -245,10 +257,10 @@ final class MergeTests: XCTestCase {
         var deleted = JournalItem(kind: "entry", journalID: journal.id, title: "Deleted thought")
         deleted.deletedAt = Date()
         try await local.save(deleted)
-        for template in BuiltInTemplates.all.map(fresh) where template.title != "Gratitude" {
+        for template in BuiltInTemplates.asEarlierBuildsCreated() where template.title != "Gratitude" {
             try await local.save(template)
         }
-        var localGratitude = fresh(try XCTUnwrap(BuiltInTemplates.all.first { $0.title == "Gratitude" }))
+        var localGratitude = try XCTUnwrap(BuiltInTemplates.asEarlierBuildsCreated().first { $0.title == "Gratitude" })
         localGratitude.document = .plain("Edited on the phone")
         try await local.save(localGratitude)
         try await local.save(JournalItem(kind: "template", title: "standup", document: .plain("Yesterday, today")))

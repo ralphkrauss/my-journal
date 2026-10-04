@@ -17,7 +17,7 @@ extension MergeTests {
     func testTemplateRulesFromTheDesign() async throws {
         let server = MergeServer()
         let (mac, macSync) = try await otherDevice(server)
-        var macGratitude = fresh(try XCTUnwrap(BuiltInTemplates.all.first { $0.title == "Gratitude" }))
+        var macGratitude = try XCTUnwrap(BuiltInTemplates.asEarlierBuildsCreated().first { $0.title == "Gratitude" })
         macGratitude.document = .plain("Edited on the Mac")
         let macRecipe = template("Recipe", "Ingredients")
         let macRetro = template("Retro", "What went well")
@@ -27,8 +27,9 @@ extension MergeTests {
         try await macSync.synchronize()
 
         let local = try store(key: deviceKey)
-        let unedited = fresh(try XCTUnwrap(BuiltInTemplates.all.first { $0.title == "Gratitude" }))
-        let dailyReflection = fresh(try XCTUnwrap(BuiltInTemplates.all.first { $0.title == "Daily Reflection" }))
+        let unedited = try XCTUnwrap(BuiltInTemplates.asEarlierBuildsCreated().first { $0.title == "Gratitude" })
+        let dailyReflection = try XCTUnwrap(
+            BuiltInTemplates.asEarlierBuildsCreated().first { $0.title == "Daily Reflection" })
         let image = Data(repeating: 3, count: 1024)
         let imageID = try await local.addAttachment(image)
         var recipe = template("Recipe", "")
@@ -50,7 +51,9 @@ extension MergeTests {
         XCTAssertEqual(
             live(result, "template", "Gratitude").map(\.document), [macGratitude.document],
             "An unedited built-in is left out even when the server's copy was edited, and isn't reviewed.")
-        XCTAssertEqual(live(result, "template", "Daily Reflection").count, 0)
+        XCTAssertEqual(
+            live(result, "template", "Daily Reflection").count, 1,
+            "An unedited built-in whose name the server lacks is added, so nothing is lost.")
         XCTAssertEqual(live(result, "template", "Standup").count, 3, "With several of a name, each is added.")
         XCTAssertEqual(live(result, "template", "Retro").map(\.id), [macRetro.id])
         XCTAssertEqual(
@@ -58,7 +61,9 @@ extension MergeTests {
             "A template in Recently Deleted is imported as it is, without matching.")
         func journal(_ title: String) throws -> JournalItem { try XCTUnwrap(result.first { $0.title == title }) }
         XCTAssertEqual(try journal("Travel").defaultTemplateID, macRecipe.id, "It follows the reviewed template.")
-        XCTAssertNil(try journal("Notes").defaultTemplateID, "An unmatched built-in isn't on the server.")
+        XCTAssertEqual(
+            try journal("Notes").defaultTemplateID, live(result, "template", "Daily Reflection").first?.id,
+            "It follows the added built-in.")
         let addedStandup = try XCTUnwrap(
             live(result, "template", "Standup").first { $0.document == standup.document })
         XCTAssertEqual(try journal("Ideas").defaultTemplateID, addedStandup.id)
@@ -179,7 +184,7 @@ extension MergeTests {
             RemoteChange(
                 cursor: 1, recordId: journal.id, revision: 1, kind: "journal", payload: try await local.encode(renamed),
                 deviceId: UUID(), modifiedAt: Date()))
-        let builtIn = fresh(try XCTUnwrap(BuiltInTemplates.all.first { $0.title == "Gratitude" }))
+        let builtIn = try XCTUnwrap(BuiltInTemplates.asEarlierBuildsCreated().first { $0.title == "Gratitude" })
         try await local.save(builtIn)
         var edited = builtIn
         edited.document = .plain("Edited elsewhere")
@@ -222,6 +227,89 @@ extension MergeTests {
         XCTAssertFalse(stagedImage)
     }
 
+    /// Libraries from builds that created built-in templates and from this one, which doesn't, merge both ways with
+    /// each built-in once, and nothing either side made is lost (no-built-in-templates-2026-10-04.md).
+    func testBuiltInTemplatesEndUpOnceWhicheverLibraryHasThem() async throws {
+        for builtInsOnServer in [true, false] {
+            let server = MergeServer()
+            let (mac, macSync) = try await otherDevice(server)
+            let serverJournal = JournalItem(kind: "journal", title: "Default")
+            try await mac.save(serverJournal)
+            try await mac.save(JournalItem(kind: "entry", journalID: serverJournal.id, title: "On the server"))
+            try await mac.save(JournalItem(kind: "template", title: "Standup", document: .plain("Yesterday, today")))
+            if builtInsOnServer {
+                for template in BuiltInTemplates.asEarlierBuildsCreated() { try await mac.save(template) }
+            }
+            try await macSync.synchronize()
+
+            let local = try store(key: deviceKey)
+            let localJournal = JournalItem(kind: "journal", title: "Default")
+            if !builtInsOnServer {
+                for template in BuiltInTemplates.asEarlierBuildsCreated() { try await local.save(template) }
+            }
+            try await local.save(localJournal)
+            try await local.save(JournalItem(kind: "entry", journalID: localJournal.id, title: "On this device"))
+            try await local.save(JournalItem(kind: "template", title: "Ideas", document: .plain("What if")))
+
+            try await merge(local, into: server)
+            let result = try await downloaded(server).items()
+            let side = builtInsOnServer ? "on the server" : "on this device"
+            for title in BuiltInTemplates.shipped.map(\.title) + ["Standup", "Ideas"] {
+                XCTAssertEqual(live(result, "template", title).count, 1, "\(title), built-ins \(side)")
+            }
+            XCTAssertTrue(
+                live(result, "template", "Gratitude").allSatisfy(BuiltInTemplates.isUnedited),
+                "Built-ins \(side) arrive unchanged.")
+            let entries = result.filter { $0.kind == "entry" }.map(\.title)
+            XCTAssertEqual(Set(entries), ["On the server", "On this device"], "Built-ins \(side)")
+        }
+    }
+
+    /// A second library with built-ins merging after the first doesn't add them again, and a built-in the server has
+    /// only in Recently Deleted stays deleted there instead of coming back, without a second copy of the same text.
+    func testBuiltInsArentAddedTwiceOrBroughtBackFromRecentlyDeleted() async throws {
+        let server = MergeServer()
+        let (mac, macSync) = try await otherDevice(server)
+        try await mac.save(JournalItem(kind: "journal", title: "Default"))
+        try await macSync.synchronize()
+        for device in ["first", "second"] {
+            let local = try store(key: deviceKey)
+            try await local.save(JournalItem(kind: "journal", title: "Default"))
+            try await local.save(JournalItem(kind: "entry", title: "From the \(device) device"))
+            for template in BuiltInTemplates.asEarlierBuildsCreated() { try await local.save(template) }
+            try await merge(local, into: server)
+        }
+        var result = try await downloaded(server).items()
+        for title in BuiltInTemplates.shipped.map(\.title) {
+            XCTAssertEqual(live(result, "template", title).count, 1, "\(title) is added once.")
+        }
+
+        try await macSync.synchronize()
+        let onMac = try await mac.items()
+        var gratitude = try XCTUnwrap(live(onMac, "template", "Gratitude").first)
+        gratitude.deletedAt = Date(timeIntervalSince1970: 1_900_000_000)
+        try await mac.save(gratitude)
+        var workday = try XCTUnwrap(live(onMac, "template", "Workday Log").first)
+        workday.document = .plain("Edited, then deleted")
+        workday.deletedAt = Date(timeIntervalSince1970: 1_900_000_000)
+        try await mac.save(workday)
+        try await macSync.synchronize()
+        let third = try store(key: deviceKey)
+        try await third.save(JournalItem(kind: "entry", title: "From the third device"))
+        for template in BuiltInTemplates.asEarlierBuildsCreated() { try await third.save(template) }
+        try await merge(third, into: server)
+        result = try await downloaded(server).items()
+        func deleted(_ title: String) -> Int {
+            result.filter { $0.kind == "template" && $0.title == title && $0.deletedAt != nil }.count
+        }
+        for title in ["Gratitude", "Workday Log"] {
+            XCTAssertTrue(live(result, "template", title).isEmpty, "\(title): the deletion isn't undone.")
+        }
+        XCTAssertEqual(deleted("Gratitude"), 1, "The same text is already in Recently Deleted.")
+        XCTAssertEqual(deleted("Workday Log"), 2, "This device's different copy is kept in Recently Deleted.")
+        XCTAssertEqual(live(result, "template", "Weekly Reflection").count, 1)
+    }
+
     func testShippedBuiltInTemplatesArePinned() {
         XCTAssertEqual(
             BuiltInTemplates.shipped.map(\.title),
@@ -235,10 +323,10 @@ extension MergeTests {
                 "# What I worked on\n# Decisions and context\n# Blockers and open questions\n# Where to pick up tomorrow",
                 "# What stood out this week?\n# What did I learn?\n# What would I like to change?",
             ], "Shipped texts are never edited.")
-        for template in BuiltInTemplates.all {
-            XCTAssertTrue(BuiltInTemplates.isUnedited(fresh(template)), "\(template.title) has a shipped entry.")
+        for template in BuiltInTemplates.asEarlierBuildsCreated() {
+            XCTAssertTrue(BuiltInTemplates.isUnedited(template), "\(template.title) has a shipped entry.")
         }
-        var edited = fresh(BuiltInTemplates.all[0])
+        var edited = BuiltInTemplates.asEarlierBuildsCreated()[0]
         edited.document = .plain("# What went well?")
         XCTAssertFalse(BuiltInTemplates.isUnedited(edited))
     }

@@ -86,8 +86,52 @@ final class PinnedOrderUITests: XCTestCase {
         app.buttons["Cancel"].firstMatch.tap()
     }
 
-    /// A template's New Entry In ▸ offers the journal that uses it as its Default Template first; choosing another
-    /// journal files the entry there and opens it in that journal.
+    /// Edit changes only the trailing end of the Journals list's rows, as in Notes: every row keeps its height, at the
+    /// default and the largest text size (journal-order.md).
+    @MainActor func testJournalRowsKeepTheirHeightInEditMode() async throws {
+        addTeardownBlock { @MainActor in
+            if #available(iOS 17.0, *) { XCUIDevice.shared.appearance = .light }
+        }
+        var measured: [(size: String, normal: [String: CGFloat], editing: [String: CGFloat])] = []
+        for largestText in [false, true] {
+            let app = try await launch(largestText: largestText)
+            let size = largestText ? "largest text" : "default text"
+            let list = app.collectionViews["Journals"]
+            let normal = rowHeights(list)
+            capture(app, "Journals, " + size)
+            app.buttons["Edit"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["Done"].firstMatch.waitToAppear(timeout: 5))
+            let editing = rowHeights(list)
+            capture(app, "Journals in edit mode, " + size)
+            measured.append((size, normal, editing))
+            if !largestText { tapActionsNearTheirTopEdge(app) }
+            app.buttons["Done"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["Edit"].firstMatch.waitToAppear(timeout: 5))
+            if #available(iOS 17.0, *) {
+                XCUIDevice.shared.appearance = .dark
+                app.buttons["Edit"].firstMatch.tap()
+                XCTAssertTrue(app.buttons["Done"].firstMatch.waitToAppear(timeout: 5))
+                capture(app, "Journals in edit mode, dark, " + size)
+                app.buttons["Done"].firstMatch.tap()
+                XCTAssertTrue(app.buttons["Edit"].firstMatch.waitToAppear(timeout: 5))
+                capture(app, "Journals, dark, " + size)
+                XCUIDevice.shared.appearance = .light
+            }
+            app.terminate()
+        }
+        // Compared once both sizes are seen, so a failure reports both.
+        for (size, normal, editing) in measured {
+            let compared = normal.keys.filter { editing[$0] != nil }
+            XCTAssertTrue(compared.contains("Default"), "A journal row is measured with \(size)")
+            XCTAssertTrue(compared.contains("All Entries"), "A fixed row is measured with \(size)")
+            for name in compared {
+                XCTAssertEqual(editing[name], normal[name], "“\(name)” keeps its height in edit mode, \(size)")
+            }
+        }
+    }
+
+    /// A template's New Entry In ▸ lists the journals in the sidebar order, none first although Home uses the template
+    /// as its Default Template; choosing a journal files the entry there and opens it in that journal.
     @MainActor func testANewEntryFromATemplateGoesToTheChosenJournal() async throws {
         let app = try await launch()
         defer { app.terminate() }
@@ -98,10 +142,10 @@ final class PinnedOrderUITests: XCTestCase {
         let submenu = app.buttons["New Entry In"].firstMatch
         XCTAssertTrue(submenu.waitToAppear(timeout: 5))
         submenu.tap()
-        let home = app.buttons["Home"].firstMatch
         let travel = app.buttons["Travel"].firstMatch
         XCTAssertTrue(travel.waitToAppear(timeout: 5))
-        XCTAssertLessThan(home.frame.minY, app.buttons["Default"].firstMatch.frame.minY, "Home uses the template")
+        let positions = ["Default", "Home", "Travel", "Work"].map { app.buttons[$0].firstMatch.frame.minY }
+        XCTAssertEqual(positions, positions.sorted(), "The journals in the sidebar order")
         capture(app, "New Entry In menu")
         travel.tap()
         let body = app.textViews["Entry text"]
@@ -119,6 +163,32 @@ final class PinnedOrderUITests: XCTestCase {
     @MainActor private func row(_ title: String, app: XCUIApplication) -> XCUIElement {
         app.staticTexts[title].firstMatch
     }
+    /// ⋯ keeps its 44-point-tall target although the row didn't grow: a tap near its top edge, above the symbol, opens
+    /// the journal's actions.
+    @MainActor private func tapActionsNearTheirTopEdge(_ app: XCUIApplication) {
+        let actions = app.collectionViews["Journals"].buttons.matching(
+            NSPredicate(format: "label == %@", "Journal Actions")
+        )
+        .firstMatch
+        XCTAssertTrue(actions.waitToAppear(timeout: 5))
+        XCTAssertGreaterThanOrEqual(actions.frame.height, 44, "Journal Actions keeps a 44-point target")
+        actions.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        let rename = app.buttons["Rename…"].firstMatch
+        XCTAssertTrue(rename.waitToAppear(timeout: 5), "A tap at the top of the target opens the journal's actions")
+        app.staticTexts["Journals"].firstMatch.tap()
+        XCTAssertTrue(rename.waitToDisappear(timeout: 5))
+    }
+    /// The height of each fully visible row of the Journals list, by its title.
+    @MainActor private func rowHeights(_ list: XCUIElement) -> [String: CGFloat] {
+        let names = ["All Entries", "Default", "Home", "Travel", "Work", "Templates", "Recently Deleted"]
+        var heights: [String: CGFloat] = [:]
+        for name in names {
+            let cell = list.cells.containing(NSPredicate(format: "label == %@", name)).firstMatch
+            guard cell.exists, list.frame.contains(cell.frame) else { continue }
+            heights[name] = cell.frame.height
+        }
+        return heights
+    }
     /// The journals of the Journals list, top to bottom.
     @MainActor private func journalOrder(_ list: XCUIElement) -> [String] {
         let names = ["Default", "Home", "Travel", "Work"]
@@ -130,7 +200,7 @@ final class PinnedOrderUITests: XCTestCase {
     }
     /// Journals Default (the oldest), Home, Travel and Work; in Work "Interview notes" (older) and "Standup"; and the
     /// template "Weekly review", Home's Default Template. The last journal opened is Default.
-    @MainActor private func launch() async throws -> XCUIApplication {
+    @MainActor private func launch(largestText: Bool = false) async throws -> XCUIApplication {
         continueAfterFailure = false
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("PinOrder-" + UUID().uuidString)
         addTeardownBlock { try? FileManager.default.removeItem(at: root) }
@@ -163,6 +233,9 @@ final class PinnedOrderUITests: XCTestCase {
         dataRoot = root
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_DATA_DIR"] = root.path
+        if largestText {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        }
         app.launch()
         unlock(app)
         NavigationTestSupport.showJournals(app)

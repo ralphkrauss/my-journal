@@ -4,8 +4,10 @@ import JournalCore
 extension Probe {
     /// Row 4: the server was wiped and set up with another library. A is told the server was restored or replaced;
     /// after signing in with that library's password, lineage finds nothing of A's there, so A's journals merge:
-    /// same-name journals combine and unedited built-in templates aren't added. With `encrypted`, the other library is
-    /// encrypted and A's isn't (case 10): A is asked to sign in, since that looks like encryption turned on elsewhere.
+    /// same-name journals combine and A's unedited built-in templates end up once each. Without `encrypted` the other
+    /// library is from a build that creates no templates, so A's are added; with it, the other library is from an
+    /// earlier build and has its own, so A's aren't. With `encrypted`, the other library is also encrypted and A's
+    /// isn't (case 10): A is asked to sign in, since that looks like encryption turned on elsewhere.
     static func replacedByAnotherLibrary(
         address: String, code: String, state: inout HealthState, root: URL, encrypted: Bool?
     ) async throws {
@@ -18,7 +20,9 @@ extension Probe {
             folder: "other", key: otherKey, token: grant.token, deviceID: grant.deviceId,
             protection: protection.rawValue)
         let other = try open("other", state, root: root, address: address)
-        for template in freshBuiltInTemplates() { try await other.store.save(template) }
+        if encrypted == true {
+            for template in BuiltInTemplates.asEarlierBuildsCreated() { try await other.store.save(template) }
+        }
         let journal = JournalItem(kind: "journal", title: "Default")
         try await other.store.save(journal)
         try await other.store.save(JournalItem(kind: "entry", journalID: journal.id, title: "Other library's entry"))
@@ -53,6 +57,10 @@ extension Probe {
         let journals = try await staged.items().filter { $0.kind == "journal" && $0.deletedAt == nil }
         guard journals.map(\.id) == [journal.id] else {
             throw ProbeFailure("the same-name journals weren't combined: \(journals.map(\.title))")
+        }
+        let templates = try await staged.items().filter { $0.kind == "template" && $0.deletedAt == nil }.map(\.title)
+        guard templates.sorted() == BuiltInTemplates.shipped.map(\.title).sorted() else {
+            throw ProbeFailure("the built-in templates aren't there once each: \(templates.sorted())")
         }
         print("PASS: merged into another library: one Default journal and each built-in template once")
     }

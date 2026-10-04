@@ -74,7 +74,32 @@ enum ListMarkers {
                 + columnStart(
                     style: style, size: size, padding: container.lineFragmentPadding,
                     column: attributes[.journalListColumn] as? CGFloat),
-            baseline: line.minY + layout.location(forGlyphAt: glyph).y)
+            baseline: line.minY + baseline(ofCharacter: location, glyph: glyph, layout: layout))
+    }
+
+    /// The baseline of the line that holds `character` (laid out as `glyph`), from the top of its line fragment.
+    /// TextKit lays a line break's glyph out below the baseline, so on an empty line, where the line break is all
+    /// there is, the baseline is where text in the line break's font sits once it's typed. Markers, checkboxes and
+    /// the caret are placed on it, so they don't move with the first character typed.
+    private static let paragraphBreaks: Set<unichar> = [0x0A, 0x0D, 0x2029]
+    /// Paragraph breaks and the line separator a soft line break is written as.
+    private static let lineBreaks = paragraphBreaks.union([0x2028])
+    static func baseline(ofCharacter character: Int, glyph: Int, layout: NSLayoutManager) -> CGFloat {
+        let location = layout.location(forGlyphAt: glyph).y
+        guard let storage = layout.textStorage, character < storage.length,
+            lineBreaks.contains((storage.string as NSString).character(at: character)),
+            let font = storage.attribute(.font, at: character, effectiveRange: nil) as? PlatformFont
+        else { return location }
+        // The space a paragraph after a code block or table leaves above its first line.
+        let style = storage.attribute(.paragraphStyle, at: character, effectiveRange: nil) as? NSParagraphStyle
+        let startsParagraph =
+            character > 0 && paragraphBreaks.contains((storage.string as NSString).character(at: character - 1))
+        let before = startsParagraph ? style?.paragraphSpacingBefore ?? 0 : 0
+        #if os(macOS)
+            return before + layout.defaultBaselineOffset(for: font)
+        #else
+            return before + font.ascender
+        #endif
     }
 
     /// The markers of the paragraphs whose first glyph is in `glyphs`.

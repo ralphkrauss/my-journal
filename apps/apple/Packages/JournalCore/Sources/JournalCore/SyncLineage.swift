@@ -3,7 +3,8 @@ import GRDB
 
 /// Whether a server holds this library's journals, decided after access is granted and before anything is sent
 /// (docs/design/sync-health-and-recovery.md §3.3). The same library rejoins by record identity, so nothing is
-/// duplicated; only a different library merges, which combines same-name journals and skips unedited built-ins.
+/// duplicated; only a different library merges, which combines same-name journals and skips unedited built-ins the
+/// server has its own of.
 public enum SyncLineage {
     /// Pages read at a time: small enough that records at their size limit fit one response.
     static let pageSize = 10

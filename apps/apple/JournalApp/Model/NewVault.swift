@@ -27,8 +27,8 @@ struct NewVault: Sendable {
             let storage = try JournalStore(directory: path, key: key, protection: envelope.contentProtection)
             staged = storage
             let journal = JournalItem(kind: "journal", title: "Default")
+            // No templates: a new library has only what the person makes (no-built-in-templates-2026-10-04.md).
             try await storage.save(journal)
-            for template in BuiltInTemplates.all { try await storage.save(template) }
             return NewVault(
                 store: storage, key: key, recovery: envelope, journalID: journal.id,
                 legacyPhrase: encrypted && password == nil ? phrase : nil, folder: folder)

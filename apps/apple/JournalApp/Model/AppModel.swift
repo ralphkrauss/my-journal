@@ -145,6 +145,8 @@ final class AppModel: ObservableObject {
     }
     /// Unlocked, and the journals are still being read (AppLockOperations.swift).
     @Published var openingJournals = false
+    /// Erase Journals and Settings is moving the library aside (EraseOperations.swift); windows close what they show.
+    @Published var erasingLibrary = false
     @Published var recoveryKey: String?
     @Published var configuration: LocalConfiguration?
     let imageLoader = DocumentImageLoader()
@@ -304,6 +306,8 @@ final class AppModel: ObservableObject {
     func load() async {
         guard !loaded else { return }
         defer { loaded = true }
+        // An erase an earlier run didn't finish is finished before anything is read (EraseOperations.swift).
+        finishEarlierErasures()
         do {
             guard FileManager.default.fileExists(atPath: configURL.path) else { return }
             configuration = try JournalCoding.decoder().decode(
@@ -383,9 +387,11 @@ final class AppModel: ObservableObject {
             // app's container path can change with an update.
             let account = "master-" + UUID().uuidString.lowercased()
             try Keychain.write(created.key, account: account)
+            // The connection's name too, so the library never finds an older library's connection by the
+            // path-derived name (docs/design/erase-device-2026-10-04.md §5).
             configuration = LocalConfiguration(
                 recovery: created.recovery, recoveryConfirmed: password != nil || !encrypted,
-                storageFolder: created.folder, keyID: account)
+                storageFolder: created.folder, keyID: account, connectionKeyID: account + "-connection")
             do { try persistConfiguration() } catch {
                 configuration = nil
                 try? Keychain.remove(account)
@@ -827,6 +833,10 @@ extension AppModel {
             stagedAccount = account
             try Keychain.write(nextKey, account: account)
             nextConfiguration.keyID = account
+            // A new library names its connection item, as `start` does.
+            if nextConfiguration.connectionKeyID == nil, configuration == nil {
+                nextConfiguration.connectionKeyID = account + "-connection"
+            }
             let previous = configuration
             configuration = nextConfiguration
             do { try persistConfiguration() } catch {
@@ -860,6 +870,71 @@ extension AppModel {
             if let stagedAccount { try? Keychain.remove(stagedAccount) }
             throw error
         }
+    }
+}
+
+extension AppModel {
+    /// Forgets the erased library, as if the app had just been installed (EraseOperations.swift): nothing of it stays
+    /// in memory, nothing keeps running for it, and the window shows the first-launch screen.
+    func clearErasedLibrary() {
+        deviceOwner.cancel()
+        unlockState.lockCount += 1
+        unlockState.authenticating = false
+        unlockState.promptPending = false
+        unlockState.problem = false
+        SensitivePasteboard.clear()
+        saveTask?.cancel()
+        saveTask = nil
+        mutationTask?.cancel()
+        mutationTask = nil
+        journalEditTask?.cancel()
+        journalEditTask = nil
+        supersededRemoval?.cancel()
+        supersededRemoval = nil
+        syncTiming.afterWriting?.cancel()
+        windowUndoManager?.removeAllActions()
+        // The connection first: its Last Synced time is forgotten with it.
+        connection = nil
+        store = nil
+        configureSync()
+        configuration = nil
+        masterKey = nil
+        recoveryKey = nil
+        draftWrite = nil
+        draft = nil
+        draftBase = nil
+        selectedID = nil
+        selectedJournalID = nil
+        items = []
+        conflicts = []
+        journalHistoryIDs = []
+        library = .empty
+        librarySync = LibrarySyncState()
+        pendingSync = false
+        refreshedChanges = nil
+        query = ""
+        showingTrash = false
+        showingTemplates = false
+        showingUnavailable = false
+        showingAllEntries = false
+        revealsSelection = false
+        editingJournals = false
+        openingJournals = false
+        error = nil
+        saveFailure = false
+        syncActivity.pendingItems = 0
+        encryption.turnedOnElsewhere = false
+        retryGrant = nil
+        agreedMergeHost = nil
+        mergeSending = false
+        joinPhase = nil
+        passwordResetAuthorizedAt = nil
+        savesBeforeLocking = [:]
+        unsavedImageDescriptions = nil
+        imageLoader.clear()
+        lists.clear()
+        locked = false
+        vaultReplacement = false
     }
 }
 

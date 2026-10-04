@@ -149,27 +149,10 @@ struct JournalSidebarView: View {
         Group {
             if editing {
                 HStack(spacing: stacked ? 12 : 6) {
-                    // At accessibility sizes, and in the iPad's narrow sidebar, the name has the icon's room.
-                    Group {
-                        if dynamicTypeSize.isAccessibilitySize || !stacked {
-                            Text(title).fixedSize(horizontal: false, vertical: true)
-                        } else {
-                            Label(title, systemImage: "book.closed")
-                        }
-                    }
-                    .foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading).layoutPriority(1)
-                    Menu {
-                        MenuActionsView(actions: actions(for: journal))
-                    } label: {
-                        Image(systemName: "ellipsis.circle").imageScale(.large).foregroundStyle(.tint)
-                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge).frame(
-                                minWidth: stacked ? 44 : 32, minHeight: 44
-                            )
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.borderless).fixedSize().accessibilityLabel("Journal Actions")
-                    .accessibilityIdentifier("Journal Actions " + journal.id.uuidString)
-                    Divider().frame(width: 1, height: 24).accessibilityHidden(true)
+                    // In the iPad's narrow sidebar the name has the icon's room.
+                    editingLabel(title, symbol: stacked ? "book.closed" : nil, destination: .journal(journal.id))
+                        .frame(maxWidth: .infinity, alignment: .leading).layoutPriority(1)
+                    journalActionsControls(journal)
                 }
                 // The sidebar's selection stays on the collection shown (journal-order.md).
                 .tag(JournalDestination.journal(journal.id))
@@ -192,6 +175,40 @@ struct JournalSidebarView: View {
                 }
             }
         #endif
+    }
+    /// What replaces a journal row's count and chevron in edit mode: Journal Actions (⋯) and a thin separator before
+    /// the system's reorder handle. ⋯ keeps a 44-point-tall target that overhangs the row's own top and bottom margins,
+    /// so the row keeps the height it has outside edit mode (journal-order.md).
+    private func journalActionsControls(_ journal: JournalItem) -> some View {
+        let target: CGFloat = 44
+        return HStack(spacing: stacked ? 12 : 6) {
+            Menu {
+                MenuActionsView(actions: actions(for: journal))
+            } label: {
+                Image(systemName: "ellipsis.circle").imageScale(.large).foregroundStyle(.tint)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                    .frame(width: stacked ? target : 32, height: target)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless).fixedSize().accessibilityLabel("Journal Actions")
+            .accessibilityIdentifier("Journal Actions " + journal.id.uuidString)
+            Divider().frame(width: 1, height: 24).accessibilityHidden(true)
+        }
+        .frame(height: target)
+        .padding(.vertical, -target / 2)
+    }
+    /// A row's leading part in edit mode: what it shows outside edit mode without the count and chevron at its trailing
+    /// end. At accessibility sizes the count is under the name, so it stays and the row keeps its height.
+    @ViewBuilder private func editingLabel(
+        _ title: String, symbol: String?, destination: JournalDestination, dimmed: Bool = false
+    ) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            rowLabel(title, symbol: symbol ?? "", destination: destination, dimmed: dimmed)
+        } else if let symbol {
+            Label(title, systemImage: symbol)
+        } else {
+            Text(title).fixedSize(horizontal: false, vertical: true)
+        }
     }
     private func actions(for journal: JournalItem) -> [MenuAction] {
         model.journalActions(
@@ -230,8 +247,9 @@ struct JournalSidebarView: View {
         -> some View
     {
         if editing {
-            // Rows that can't be edited are dimmed: no count, no chevron, nothing to choose.
-            Label(title, systemImage: symbol).foregroundStyle(.secondary).disabled(true)
+            // Rows that can't be edited are dimmed: no count at the trailing end, no chevron, nothing to choose.
+            editingLabel(title, symbol: symbol, destination: destination, dimmed: true).foregroundStyle(.secondary)
+                .disabled(true)
                 .accessibilityIdentifier(rowIdentifier(destination)).tag(destination)
         } else if stacked {
             NavigationLink(value: CompactJournalRoute.collection(destination)) {
@@ -248,12 +266,12 @@ struct JournalSidebarView: View {
             Label(title, systemImage: symbol).badge(count(destination) ?? 0).tag(destination)
         }
     }
-    @ViewBuilder private func rowLabel(_ title: String, symbol: String, destination: JournalDestination)
-        -> some View
-    {
+    @ViewBuilder private func rowLabel(
+        _ title: String, symbol: String, destination: JournalDestination, dimmed: Bool = false
+    ) -> some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+                Text(title).foregroundStyle(dimmed ? .secondary : .primary).fixedSize(horizontal: false, vertical: true)
                 if let count = count(destination) {
                     Text(count == 1 ? "1 entry" : "\(count.formatted()) entries")
                         .font(.subheadline).foregroundStyle(.secondary)
@@ -284,6 +302,12 @@ struct JournalSidebarView: View {
 }
 
 extension AppModel {
+    /// Whether a journal's Default Template offers a choice: there's a template, or the journal still refers to one
+    /// that's gone, which Blank Entry clears. Otherwise the setting is dimmed (no-built-in-templates-2026-10-04.md).
+    func offersDefaultTemplateChoice(for journal: JournalItem) -> Bool {
+        !templates.isEmpty || items.first { $0.id == journal.id }?.defaultTemplateID != nil
+    }
+
     /// A journal's actions, in its sidebar row's context menu and the Mac toolbar's Journal Actions menu.
     func journalActions(
         _ journal: JournalItem, rename: @escaping @MainActor () -> Void, merge: @escaping @MainActor () -> Void,
@@ -304,7 +328,9 @@ extension AppModel {
             }
         return [
             .command("Rename…", symbol: "pencil", enabled: !conflicted, perform: rename),
-            .submenu("Default Template", symbol: "doc.text", enabled: !conflicted, choices),
+            .submenu(
+                "Default Template", symbol: "doc.text",
+                enabled: !conflicted && offersDefaultTemplateChoice(for: journal), choices),
             .command(
                 "Merge Into…", symbol: "arrow.triangle.merge",
                 enabled: !conflicted && journals.contains { $0.id != journal.id }, perform: merge),

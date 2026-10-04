@@ -11,7 +11,7 @@ Style popover/menu: Body, Heading, Subheading; Bold ⌘B, Italic ⌘I, Underline
 Unknown document versions/content open read-only with 'Update Journal to edit this entry.' Export remains possible. Content is never silently flattened.
 
 ## Creation, journals and templates
-New Entry uses current journal's optional default template; a menu offers Blank Entry and New Entry from Template…. Focus body after creation. Built-ins: Daily Reflection, Gratitude, Workday Log, Weekly Reflection. Template questions are editable headings; no required answers or completion state. Template editor uses same rich editor. Save as Template… copies entry content; template changes affect future entries only. Applying a template to an existing entry is unavailable initially.
+New Entry uses current journal's optional default template; a menu offers Blank Entry and New Entry from Template…. Focus body after creation. Built-ins: Daily Reflection, Gratitude, Workday Log, Weekly Reflection (removed 2026-10-04: new libraries start without templates; see no-built-in-templates-2026-10-04.md). Template questions are editable headings; no required answers or completion state. Template editor uses same rich editor. Save as Template… copies entry content; template changes affect future entries only. Applying a template to an existing entry is unavailable initially.
 Manage Journals allows New, Rename, default template, and Delete. Deleting a journal moves its entries to Recently Deleted; explain count in confirmation. Move Entry… flushes current editing before changing journal. Recently Deleted offers Restore and Delete Permanently… with explicit irreversible confirmation. No automatic purge initially.
 
 ## Saving, sync and conflicts

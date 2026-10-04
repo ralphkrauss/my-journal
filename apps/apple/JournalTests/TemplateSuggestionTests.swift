@@ -181,31 +181,6 @@ final class TemplateSuggestionTests: XCTestCase {
         XCTAssertTrue(stored.isEmpty)
     }
 
-    /// The journal offered first: one using the template as its Default Template, else the journal last opened,
-    /// else the Default Journal.
-    func testTheSuggestedJournalFollowsDefaultTemplateThenLastJournalThenDefault() async throws {
-        let (model, _) = try await startedModel()
-        await model.createJournal("Work")
-        await model.createJournal("Home")
-        let work = try XCTUnwrap(model.journals.first { $0.title == "Work" })
-        let home = try XCTUnwrap(model.journals.first { $0.title == "Home" })
-        let template = try XCTUnwrap(model.templates.first)
-        model.chooseDefaultJournal(work.id)
-        await model.switchJournal(home.id)
-        XCTAssertEqual(model.suggestedJournal(for: template)?.id, home.id, "The journal last opened")
-        model.changeJournal(work.id, template: template.id)
-        await model.journalEditTask?.value
-        try await model.refresh()
-        XCTAssertEqual(model.suggestedJournal(for: template)?.id, work.id, "The journal that uses the template")
-        model.changeJournal(work.id, template: nil)
-        await model.journalEditTask?.value
-        try await model.refresh()
-        var configuration = try XCTUnwrap(model.configuration)
-        configuration.lastJournalID = UUID()
-        model.configuration = configuration
-        XCTAssertEqual(model.suggestedJournal(for: template)?.id, work.id, "Else the Default Journal")
-    }
-
     // MARK: Support
 
     private struct Case {
@@ -247,7 +222,14 @@ final class TemplateSuggestionTests: XCTestCase {
         }
         await model.start()
         model.confirmRecovery()
-        return (model, try XCTUnwrap(model.store))
+        // A new library has no templates; the person saved one.
+        let store = try XCTUnwrap(model.store)
+        try await store.save(
+            JournalItem(
+                kind: "template", title: "Daily",
+                document: JournalDocument(markdown: "# What went well?\n\n# What will I carry into tomorrow?")))
+        try await model.refresh()
+        return (model, store)
     }
 
     private func entries(in store: JournalStore) async throws -> [JournalItem] {

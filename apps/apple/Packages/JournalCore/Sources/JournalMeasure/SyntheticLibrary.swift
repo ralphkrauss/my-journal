@@ -70,10 +70,12 @@ struct SyntheticLibrary {
                 date: Self.start.addingTimeInterval(Double(index) * 60))
         }
         for journal in journals { try await store.save(journal) }
+        // A long-lived library: it still has the templates earlier builds created, and ones the person made.
+        let earlier = BuiltInTemplates.asEarlierBuildsCreated()
         for index in 0..<shape.templates {
             let template =
-                index < BuiltInTemplates.all.count
-                ? BuiltInTemplates.all[index]
+                index < earlier.count
+                ? earlier[index]
                 : JournalItem(
                     kind: "template", title: Words.title(&random, words: 2),
                     document: JournalDocument(markdown: markdown(words: 60, images: [])))

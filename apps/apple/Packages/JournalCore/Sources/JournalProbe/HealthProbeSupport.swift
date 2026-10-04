@@ -44,16 +44,6 @@ struct HealthDevice {
 }
 
 extension Probe {
-    /// Built-in templates as a new library gets them: the app creates them in each library's own process, so every
-    /// library has its own random identities for them.
-    static func freshBuiltInTemplates() -> [JournalItem] {
-        BuiltInTemplates.all.map { template in
-            var copy = template
-            copy.id = UUID()
-            return copy
-        }
-    }
-
     static func open(_ name: String, _ state: HealthState, root: URL) throws -> HealthDevice {
         guard let device = state.devices[name] else { throw ProbeFailure("no state for \(name)") }
         let store = try JournalStore(

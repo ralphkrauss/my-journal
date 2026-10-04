@@ -108,6 +108,8 @@ enum MarkdownWriter {
             return stored ?? "- "
         }
     }
+    /// The width of the marker written for a list item: how far Markdown indents the items nested under it.
+    static func markerWidth(_ block: DocumentBlock) -> Int { marker(block).count }
     private static func numbered(_ marker: String?, number: Int) -> String {
         guard let marker else { return "\(number). " }
         let digits = marker.prefix(while: \.isNumber)
@@ -374,4 +376,10 @@ enum MarkdownWriter {
         table ? text.replacingOccurrences(of: "|", with: "\\|") : text
     }
 
+}
+
+extension DocumentBlock {
+    /// The width of this list item's Markdown marker ("- " is 2, "10. " is 4): the indentation of the items nested
+    /// under it, as CommonMark requires and the reader records in `listIndents`.
+    public var listMarkerWidth: Int { MarkdownWriter.markerWidth(self) }
 }

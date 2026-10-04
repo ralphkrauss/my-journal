@@ -43,6 +43,10 @@ final class PasswordOnboardingTests: XCTestCase {
                 add(preview)
             }
         }
+        XCTAssertTrue(model.templates.isEmpty, "A new library has no templates.")
+        try await XCTUnwrap(model.store).save(
+            JournalItem(kind: "template", title: "Standup", document: .plain("Today")))
+        try await model.refresh()
         let template = try XCTUnwrap(model.templates.first)
         model.changeJournal(journal.id, name: "Work")
         model.changeJournal(journal.id, template: template.id)

@@ -25,6 +25,12 @@ final class FeedbackWorkflowUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "Journal row ")).firstMatch.tap()
         XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitToAppear(timeout: 5))
         capture(app, "Entries")
+        // A new library has no templates, so an empty entry offers none (no-built-in-templates-2026-10-04.md).
+        NavigationTestSupport.newEntryFromList(app)
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
+        XCTAssertFalse(app.buttons["Use a Template"].firstMatch.waitToAppear(timeout: 2))
+        capture(app, "Empty entry without templates")
+        NavigationTestSupport.saveNewEntryAsTemplate("Workday Log", text: "What I worked on", app: app)
         NavigationTestSupport.newEntryFromList(app)
         let suggestion = app.buttons["Use a Template"].firstMatch
         XCTAssertTrue(suggestion.waitToAppear(timeout: 10))

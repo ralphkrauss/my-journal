@@ -154,6 +154,40 @@ enum NavigationTestSupport {
         suggestion.tap()
         XCTAssertTrue(app.searchFields["Search Templates"].waitToAppear(timeout: 5))
     }
+    /// Saves a template as a person does, since a new library has none (no-built-in-templates-2026-10-04.md): a new
+    /// entry in Default titled “‹name› draft” with `text` as its body, then Entry Actions ▸ Save as Template…, named
+    /// `name`. The entry's title differs, so the template's name matches only the template.
+    static func saveTemplate(_ name: String, text: String, app: XCUIApplication) {
+        selectCollection("Default", app: app)
+        newEntryFromList(app)
+        saveNewEntryAsTemplate(name, text: text, app: app)
+    }
+    /// Writes the new entry that is open, with its title focused, and saves it as a template as `saveTemplate` does.
+    static func saveNewEntryAsTemplate(_ name: String, text: String, app: XCUIApplication) {
+        let suffix = " draft"
+        XCTAssertTrue(title(app).waitToAppear(timeout: 10))
+        app.typeText(name + suffix + "\n" + text)
+        let finish = app.buttons["Finish Editing"]
+        if finish.exists, finish.isHittable { finish.tap() }
+        app.buttons["Entry Actions"].firstMatch.tap()
+        let save = app.buttons["Save as Template…"]
+        for _ in 0..<8 {
+            if save.exists, save.isHittable { break }
+            let menus = app.collectionViews
+            guard menus.count > 0 else { break }
+            menus.element(boundBy: menus.count - 1).swipeUp()
+        }
+        XCTAssertTrue(save.isHittable)
+        save.tap()
+        let alert = app.alerts["Save as Template"]
+        XCTAssertTrue(alert.waitToAppear(timeout: 5))
+        // The name starts as the entry's title, with the caret at its end.
+        let field = alert.textFields["Name"]
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: suffix.count))
+        XCTAssertEqual(field.value as? String, name)
+        alert.buttons["Save"].tap()
+        XCTAssertTrue(alert.waitToDisappear(timeout: 5))
+    }
     static func openEntry(_ title: String, journal: String, app: XCUIApplication) {
         selectCollection(journal, app: app)
         let row = app.staticTexts[title].firstMatch

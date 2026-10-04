@@ -21,7 +21,7 @@ struct JournalMoreMenu: View {
                 ForEach(model.templates) { choice($0.displayTitle, id: $0.id) }
             } label: {
                 Label("Default Template", systemImage: "doc.text")
-            }.disabled(conflicted)
+            }.disabled(conflicted || !model.offersDefaultTemplateChoice(for: journal))
             Button("Merge Into…", systemImage: "arrow.triangle.merge") { merging = true }
                 .disabled(conflicted || !model.journals.contains { $0.id != journal.id })
             Button("Version History…", systemImage: "clock.arrow.circlepath") { history = true }

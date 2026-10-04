@@ -339,19 +339,25 @@ import UniformTypeIdentifiers
             let rect = super.caretRect(for: position)
             let offset = offset(from: beginningOfDocument, to: position)
             guard !rect.isNull, !rect.isInfinite, textStorage.length > 0,
-                let (font, glyph) = caretFont(at: offset)
+                let (font, character) = caretFont(at: offset)
             else { return rect }
             let height = ceil(font.ascender - font.descender)
             guard rect.height > height + 1 else { return rect }
-            // The system caret starts at the top of the line fragment; the glyph location is the baseline within it.
-            let baseline = rect.minY + layoutManager.location(forGlyphAt: glyph).y
+            // The system caret starts at the top of the line fragment; the baseline is measured within it, also on an
+            // empty line, where the only glyph is the line break's.
+            let baseline =
+                rect.minY
+                + ListMarkers.baseline(
+                    ofCharacter: character, glyph: layoutManager.glyphIndexForCharacter(at: character),
+                    layout: layoutManager)
             return CGRect(x: rect.minX, y: baseline - ceil(font.ascender), width: rect.width, height: height)
         }
-        /// The font the caret sits in: the character before it on the same line, else the one after it.
+        /// The font the caret sits in, and the character it's taken from: the character before the caret on the same
+        /// line, else the one after it.
         private func caretFont(at offset: Int) -> (UIFont, Int)? {
             let text = textStorage.string as NSString
             let index: Int
-            if offset > 0, offset <= text.length, text.character(at: offset - 1) != 0x0A {
+            if offset > 0, offset <= text.length, ![0x0A, 0x2028].contains(text.character(at: offset - 1)) {
                 index = offset - 1
             } else if offset < text.length {
                 // At the start of a line, including an empty one whose only character is its line break.
@@ -362,7 +368,7 @@ import UniformTypeIdentifiers
             guard text.character(at: index) != 0xFFFC,
                 let font = textStorage.attribute(.font, at: index, effectiveRange: nil) as? UIFont
             else { return nil }
-            return (font, layoutManager.glyphIndexForCharacter(at: index))
+            return (font, index)
         }
 
         private let decorations = BlockDecorationView()

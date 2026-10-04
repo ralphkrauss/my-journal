@@ -104,28 +104,29 @@ extension NativeEditor.Coordinator {
             if view.isFirstResponder { view.reloadInputViews() }
         #endif
     }
-    /// Keeps Format ▸ Mark as Checked/Unchecked in step with the line the caret is on.
+    /// Keeps Format ▸ Mark as Checked/Unchecked and Increase/Decrease Indent in step with the selection.
     func updateCaretState() {
         guard let view else { return }
         #if os(macOS)
             let text = view.textStorage ?? NSTextStorage()
-            let location = view.selectedRange().location
+            let selection = view.selectedRange()
         #else
             let text = view.textStorage
-            let location = view.selectedRange.location
+            let selection = view.selectedRange
         #endif
         var checked: Bool?
+        var indentation = ListIndentation.Availability()
         if text.length > 0, !editingSource {
-            let line = (text.string as NSString).paragraphRange(
-                for: NSRange(location: min(location, text.length), length: 0))
-            switch text.attribute(.journalKind, at: min(line.location, text.length - 1), effectiveRange: nil) as? String
-            {
+            switch FormattingState.caretKind(text, at: selection.location, typing: view.typingAttributes) {
             case "task": checked = false
             case "checked": checked = true
             default: checked = nil
             }
+            indentation = FormattingState.indentation(
+                text, range: selection, typing: view.typingAttributes, size: parent.fontSize)
         }
         if parent.actions.caretTaskChecked != checked { parent.actions.caretTaskChecked = checked }
+        if parent.actions.caretIndentation != indentation { parent.actions.caretIndentation = indentation }
     }
     private static func isCode(_ text: NSAttributedString, at location: Int, typing: [NSAttributedString.Key: Any])
         -> Bool
@@ -266,6 +267,10 @@ extension NativeEditor.Coordinator {
         // Text pasted within a paragraph becomes part of it, as its first line of pasted text does in any editor.
         if !lineStart || inline { RichText.joinParagraph(text) }
         replace(text, range: selection, adopting: true)
+        #if os(macOS)
+            // As a paste from another app does (PastedTextInsertion.swift); iPhone and iPad reveal it in replace.
+            revealCaretAfterKey()
+        #endif
     }
 }
 

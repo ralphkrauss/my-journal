@@ -178,28 +178,12 @@ struct RootView: View {
             }
         }
         .onValueChange(of: model.locked) { locked in
-            if locked {
-                // The open panel would otherwise stay over the lock screen.
-                model.archiveImportRequested = false
-                archiveToImport = nil
-                history = nil
-                entryToMove = nil
-                entryToDate = nil
-                rowActionTask?.cancel()
-                imageDescriptionsEntry = nil
-                connect = false
-                model.settingsPresented = false
-                model.journalsPresented = false
-                managedJournal = nil
-                model.templateChooserPresented = false
-                newJournal = false
-                journalNameTaken = nil
-
-                saveTemplate = false
-                cancelImageImport()
-                editor.requestLink = false
-                editor.endFormatting()
-            }
+            // The open panel would otherwise stay over the lock screen.
+            if locked { closePresentations() }
+        }
+        // Erasing this device's journals closes what every window shows of them (erase-device-2026-10-04.md).
+        .onValueChange(of: model.erasingLibrary) { erasing in
+            if erasing { closePresentations() }
         }
         #if os(iOS)
             .onValueChange(of: editor.searchRequested) { requested in
@@ -259,6 +243,28 @@ struct RootView: View {
         #else
             .sheet(isPresented: $model.settingsPresented) { SettingsView() }
         #endif
+    }
+    /// Closes every sheet, panel and prompt the window shows, when the app locks or its journals are erased.
+    private func closePresentations() {
+        model.archiveImportRequested = false
+        archiveToImport = nil
+        history = nil
+        entryToMove = nil
+        entryToDate = nil
+        rowActionTask?.cancel()
+        imageDescriptionsEntry = nil
+        connect = false
+        model.settingsPresented = false
+        model.journalsPresented = false
+        managedJournal = nil
+        model.templateChooserPresented = false
+        newJournal = false
+        journalNameTaken = nil
+
+        saveTemplate = false
+        cancelImageImport()
+        editor.requestLink = false
+        editor.endFormatting()
     }
     /// Delete Permanently for one item, and Delete All in Recently Deleted.
     private func deletionPrompts(_ content: some View) -> some View {
@@ -346,30 +352,37 @@ struct RootView: View {
                                         }.accessibilityElement(children: .combine)
                                             .accessibilityValue("Journal")
                                     }
+                                    .entriesRowSeparator(
+                                        lastInSection: journal.id == model.filteredDeletedJournals.last?.id)
                                 }
                             } header: {
-                                Text("Journals")
+                                Text("Journals").entriesHeaderSeparatorHidden()
                             } footer: {
                                 if model.filteredDeletedTemplates.isEmpty && groupedEntries.isEmpty { trashFooter }
                             }
                         }
                         if !model.filteredDeletedTemplates.isEmpty {
                             Section {
-                                ForEach(model.filteredDeletedTemplates) { entryRow($0, value: "Template") }
+                                ForEach(model.filteredDeletedTemplates) { template in
+                                    entryRow(template, value: "Template")
+                                        .entriesRowSeparator(
+                                            lastInSection: template.id == model.filteredDeletedTemplates.last?.id)
+                                }
                             } header: {
-                                Text("Templates")
+                                Text("Templates").entriesHeaderSeparatorHidden()
                             } footer: {
                                 if groupedEntries.isEmpty { trashFooter }
                             }
                         }
                         ForEach(groupedEntries, id: \.0) { month, entries in
                             Section {
-                                ForEach(entries) { listedRow($0) }
+                                monthRows(entries)
                             } header: {
                                 VStack(alignment: .leading, spacing: 8) {
                                     if month == groupedEntries.first?.0 { Text("Entries") }
                                     Text(month)
                                 }
+                                .entriesHeaderSeparatorHidden()
                             } footer: {
                                 if month == groupedEntries.last?.0 { trashFooter }
                             }
@@ -377,7 +390,11 @@ struct RootView: View {
                     } else {
                         // The Pinned section comes first, styled like the months (pinned-entries.md).
                         ForEach(groupedEntries, id: \.0) { month, entries in
-                            Section(month) { ForEach(entries) { listedRow($0) } }
+                            Section {
+                                monthRows(entries)
+                            } header: {
+                                Text(month).entriesHeaderSeparatorHidden()
+                            }
                         }
                     }
                 }
@@ -415,14 +432,16 @@ struct RootView: View {
     /// What an empty list shows, and the editor when the list is hidden.
     var emptyListState: some View {
         VStack(spacing: 10) {
-            Text(
-                model.query.isEmpty
-                    ? (model.showingTrash
-                        ? "No Deleted Items"
-                        : model.showingUnavailable
-                            ? "No Unavailable Entries"
-                            : model.showingTemplates ? "No Templates" : "No Entries") : "No Results"
-            ).foregroundStyle(.secondary)
+            if model.query.isEmpty && model.showingTemplates {
+                noTemplates
+            } else {
+                Text(
+                    model.query.isEmpty
+                        ? (model.showingTrash
+                            ? "No Deleted Items"
+                            : model.showingUnavailable ? "No Unavailable Entries" : "No Entries") : "No Results"
+                ).foregroundStyle(.secondary)
+            }
             if model.query.isEmpty && !model.showingTrash && !model.showingTemplates && !model.showingUnavailable {
                 if model.journals.isEmpty {
                     Button("New Journal…") {
@@ -437,6 +456,19 @@ struct RootView: View {
                 Button("Clear Search") { model.query = "" }
             }
         }
+    }
+    /// A new library has no templates, so the empty Templates list says how to make one
+    /// (no-built-in-templates-2026-10-04.md). VoiceOver reads both lines as one element.
+    private var noTemplates: some View {
+        VStack(spacing: 4) {
+            Text("No Templates")
+            // The command's name stays on one line.
+            Text("To create a template, open an entry and choose Save\u{00A0}as\u{00A0}Template.").font(.callout)
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
     }
     private func presentRequestedNewJournal() {
         guard model.newJournalRequested else { return }
@@ -539,7 +571,7 @@ struct RootView: View {
                 })
         }
         if editable, entry.kind == "template" {
-            // New Entry In ▸ the journals, the likely one first (template-journal-choice-2026-10-03.md).
+            // New Entry In ▸ the journals, in the sidebar order (template-journal-choice-2026-10-03.md).
             actions.append(model.newEntryFromTemplateAction(entry) { startEntry(fromTemplate: entry.id, in: $0) })
             actions.append(.separator("new entry"))
         }
@@ -701,6 +733,12 @@ struct RootView: View {
                 accessibilitySize: dynamicTypeSize.isAccessibilitySize, stacked: usesStackedNavigation,
                 searchPresented: searching)
         ) { sidebar }.equatable()
+    }
+    /// A section's rows; on the Mac the last one has no line below it.
+    private func monthRows(_ entries: [JournalItem]) -> some View {
+        ForEach(entries) { entry in
+            listedRow(entry).entriesRowSeparator(lastInSection: entry.id == entries.last?.id)
+        }
     }
     /// An entry's row, built again only when what it shows changed.
     private func listedRow(_ entry: JournalItem) -> some View {

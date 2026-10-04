@@ -23,6 +23,7 @@ final class MergeJoinTests: XCTestCase {
         }
         await model.start(password: encrypted ? "this device's own password" : nil, encrypted: encrypted)
         XCTAssertTrue(model.nothingWritten, "Start a Journal writes nothing yet.")
+        XCTAssertTrue(model.templates.isEmpty, "A new library has only what the person makes: no templates.")
         if writing {
             await model.newEntry()
             _ = await model.finishPendingSave()

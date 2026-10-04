@@ -43,7 +43,7 @@ If your journals sync, update My Journal on your other devices and let them sync
 
 - **New entry.** Choose **New Entry** in the toolbar (⌘N). It uses the journal’s default template, if it has one. **New Blank Entry** (⇧⌘N) always starts empty.
 - **Formatting.** Use the **Formatting** button in the toolbar, or the Format menu on the Mac. Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it; press Delete right after to keep what you typed. You can turn this off in Settings > General on the Mac (Writing on iPhone and iPad).
-- **Templates.** Choose **Save as Template…** in an entry’s actions (the … button, or Control-click or touch and hold the entry in the list). **Templates…** starts an entry from a template. To give a journal a default template, Control-click or touch and hold the journal and choose **Default Template**.
+- **Templates.** A new library has none. To make one, choose **Save as Template…** in an entry’s actions (the … button, or Control-click or touch and hold the entry in the list). In an empty entry, **use a template** fills it from one; **New Entry from Template…** in the File menu (Mac and iPad) starts a new one. To give a journal a default template, Control-click or touch and hold the journal and choose **Default Template**.
 - **Dates.** Every entry has a date, shown in the list. To change it, choose **Change Date…** in the entry’s actions.
 - **Search.** Use the search field, or Edit > Search Entries on the Mac.
 - **Focus on writing.** On the Mac, choose View > **Show Editor Only** (⇧⌘D) to hide the sidebar and entry list. Choose View > **Show Sidebar and List** to bring them back.

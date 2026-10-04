@@ -12,12 +12,17 @@ struct FormattingState: Equatable {
     var sourceOnly = false
     var sourceMode = false
     var taskCompletion: FormattingToggle?
-    var canIndent = false
+    /// Whether Increase and Decrease Indent apply (docs/design/list-indentation-2026-10-04.md).
+    var indent = ListIndentation.Availability()
     var paragraph: String?
 
     init() {}
-    /// `source` is whether the editor shows the Markdown source; table cells never do.
-    init(text: NSAttributedString, range: NSRange, typing: [NSAttributedString.Key: Any], source: Bool? = nil) {
+    /// `source` is whether the editor shows the Markdown source; table cells never do. `size` is the editor's text
+    /// size, which limits how deep a list can be indented.
+    @MainActor init(
+        text: NSAttributedString, range: NSRange, typing: [NSAttributedString.Key: Any], source: Bool? = nil,
+        size: CGFloat = 17
+    ) {
         var samples: [[NSAttributedString.Key: Any]] = []
         if range.length == 0 {
             samples = [typing]
@@ -34,10 +39,7 @@ struct FormattingState: Equatable {
         var kinds = Set(samples.map { $0[.journalKind] as? String ?? "paragraph" })
         if range.length == 0, text.length > 0 {
             // The block comes from the text at the caret; typing attributes only carry pending inline styles.
-            let line = (text.string as NSString).paragraphRange(
-                for: NSRange(location: min(range.location, text.length), length: 0))
-            let kind = text.attribute(.journalKind, at: min(line.location, text.length - 1), effectiveRange: nil)
-            kinds = [kind as? String ?? "paragraph"]
+            kinds = [Self.caretKind(text, at: range.location, typing: typing)]
         }
         let caretKind = range.length == 0 ? kinds.first : nil
         // A heading's bold weight is its style, not the Bold format.
@@ -56,7 +58,49 @@ struct FormattingState: Equatable {
             return kind == "checked" ? true : kind == "task" ? false : nil
         }
         if !tasks.isEmpty { taskCompletion = Self.toggle(tasks) }
-        canIndent = !sourceMode && !kinds.isDisjoint(with: ["bullet", "numbered", "task", "checked", "codeBlock"])
+        indent = Self.indentation(text, range: range, kinds: kinds, size: size)
+    }
+    /// The kind of the line at a caret: its paragraph's, or on the empty last line after a list, which is a plain
+    /// line, what typing there starts.
+    @MainActor static func caretKind(
+        _ text: NSAttributedString, at location: Int, typing: [NSAttributedString.Key: Any]
+    ) -> String {
+        guard text.length > 0 else { return typing[.journalKind] as? String ?? "paragraph" }
+        if RichText.continuesAfterList(text, at: location) {
+            let kind = typing[.journalKind] as? String ?? "paragraph"
+            return ListIndentation.kinds.contains(kind) ? "paragraph" : kind
+        }
+        let line = (text.string as NSString).paragraphRange(
+            for: NSRange(location: min(location, text.length), length: 0))
+        let kind = text.attribute(.journalKind, at: min(line.location, text.length - 1), effectiveRange: nil)
+        return kind as? String ?? "paragraph"
+    }
+    /// Increase and Decrease Indent for a selection, for the menus, without reading its other formatting.
+    @MainActor static func indentation(
+        _ text: NSAttributedString, range: NSRange, typing: [NSAttributedString.Key: Any], size: CGFloat
+    ) -> ListIndentation.Availability {
+        guard text.length > 0, NSMaxRange(range) <= text.length else { return ListIndentation.Availability() }
+        var kinds: Set<String> = []
+        if range.length == 0 {
+            kinds = [caretKind(text, at: range.location, typing: typing)]
+        } else {
+            text.enumerateAttribute(.journalKind, in: range) { value, _, _ in
+                kinds.insert(value as? String ?? "paragraph")
+            }
+        }
+        return indentation(text, range: range, kinds: kinds, size: size)
+    }
+    /// Increase and Decrease Indent: list items by their structure, code by whether a line has a tab to add or remove.
+    @MainActor private static func indentation(
+        _ text: NSAttributedString, range: NSRange, kinds: Set<String>, size: CGFloat
+    ) -> ListIndentation.Availability {
+        if kinds.contains("codeBlock") {
+            return ListIndentation.Availability(
+                increase: StructuredKeyboard.edit(.indent, text: text, selection: range, size: size) != nil,
+                decrease: StructuredKeyboard.edit(.outdent, text: text, selection: range, size: size) != nil)
+        }
+        guard !kinds.isDisjoint(with: ListIndentation.kinds) else { return ListIndentation.Availability() }
+        return ListIndentation.availability(text, selection: range, size: size)
     }
     /// In source mode the state comes from the Markdown syntax around the selection.
     private mutating func readSource(_ source: String, range: NSRange) {

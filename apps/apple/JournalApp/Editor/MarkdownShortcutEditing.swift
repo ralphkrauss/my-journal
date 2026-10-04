@@ -6,8 +6,8 @@ import SwiftUI
     import UIKit
 #endif
 
-/// Wires Markdown shortcuts into the editor: the typed space goes in as usual, then the conversion follows as a
-/// separate undo step, so Backspace or ⌘Z straight after it restores exactly what was typed.
+/// Wires Markdown shortcuts into the editor: the space that completes a shortcut goes in, then the conversion follows
+/// as a separate undo step, so Backspace or ⌘Z straight after it restores exactly what was typed.
 extension NativeEditor.Coordinator {
     /// Called for every change the text view is about to make. Returns false when the change was handled here.
     func markdownShortcutShouldChange(in range: NSRange, replacement: String) -> Bool {
@@ -20,6 +20,7 @@ extension NativeEditor.Coordinator {
         {
             replace(revert.original, range: revert.range, actionName: "Typing")
             select(NSRange(location: revert.caret, length: 0), in: view)
+            revealOnTheMac()
             return false
         }
         if replacement.isEmpty, removeItemFormatting(deleting: range) { return false }
@@ -31,9 +32,10 @@ extension NativeEditor.Coordinator {
             return false
         }
         if replacement.isEmpty, deleteHiddenMarker(range) { return false }
-        if replacement == " ", range.length == 0, MarkdownShortcuts.enabled, !editingSource {
-            let caret = range.location + 1
-            DispatchQueue.main.async { [weak self] in self?.applySpaceShortcut(caret: caret) }
+        if replacement == " ", range.length == 0, MarkdownShortcuts.enabled, !editingSource,
+            convertShortcut(typingSpaceAt: range.location)
+        {
+            return false
         }
         return true
     }
@@ -60,26 +62,49 @@ extension NativeEditor.Coordinator {
         breakTypingUndo(view)
         replace(edit.text, range: edit.range, actionName: value == "---" ? "Horizontal Rule" : "Code Block")
         if let caret = edit.selection { select(caret, in: view) }
+        revealOnTheMac()
         announce(value == "---" ? "Horizontal rule" : "Code block")
         return true
     }
 
-    private func applySpaceShortcut(caret: Int) {
-        guard let view, !editingSource, selection(of: view) == NSRange(location: caret, length: 0),
+    /// The space that completes a Markdown shortcut at the start of a line converts the line within the same change:
+    /// the editor types the space and then converts the line, as two undo steps, and the text view doesn't type it.
+    /// Nothing is left for later, so keys the keyboard already has on their way arrive after both, where the caret
+    /// then is. Build 15's first fix converted on a later turn of the run loop, and letters typed in between could
+    /// land in the item above or leave the marker as typed. Returns false when the space completes no shortcut.
+    private func convertShortcut(typingSpaceAt location: Int) -> Bool {
+        guard let view, parent.editable else { return false }
+        let text = storage(of: view)
+        guard let line = MarkdownShortcuts.plainParagraph(text, at: location), location > line.location,
+            location <= NSMaxRange(line)
+        else { return false }
+        let marker = (text.string as NSString).substring(
+            with: NSRange(location: line.location, length: location - line.location))
+        guard MarkdownShortcuts.style(forMarker: marker + " ") != nil else { return false }
+        // The space as typed, its own undo step.
+        beginOwnUndoStep(view)
+        replace(
+            NSAttributedString(string: " ", attributes: view.typingAttributes),
+            range: NSRange(location: location, length: 0), actionName: "Typing")
+        let caret = location + 1
+        select(NSRange(location: caret, length: 0), in: view)
+        guard
             let conversion = MarkdownShortcuts.afterSpace(
                 storage(of: view), caret: caret, size: parent.fontSize, images: parent.images,
                 width: max(40, view.bounds.width - 20))
-        else { return }
+        else { return true }
         let original = storage(of: view).attributedSubstring(from: conversion.range)
         // The typing and the conversion are separate steps, so ⌘Z first gives back what was typed.
-        breakTypingUndo(view)
+        beginOwnUndoStep(view)
         replace(conversion.replacement, range: conversion.range, actionName: conversion.announcement)
         select(NSRange(location: conversion.caret, length: 0), in: view)
         view.typingAttributes = conversion.typing
         shortcutRevert = MarkdownShortcuts.Revert(
             range: NSRange(location: conversion.range.location, length: conversion.replacement.length),
             original: original, caret: caret, convertedCaret: conversion.caret, length: storage(of: view).length)
+        revealOnTheMac()
         announce(conversion.announcement)
+        return true
     }
 
     /// Return in a list item or quote, and deletions that join lines when an item is one of them, as the editor's own
@@ -102,6 +127,7 @@ extension NativeEditor.Coordinator {
         replace(action.replacement, range: action.range)
         if let caret = action.caret { select(NSRange(location: caret, length: 0), in: view) }
         view.typingAttributes = RichText.typing(after: action, in: storage(of: view), size: parent.fontSize)
+        revealOnTheMac()
         return true
     }
 
@@ -117,6 +143,7 @@ extension NativeEditor.Coordinator {
         if let revert, revert.convertedCaret == 0, storage(of: view).length == revert.length {
             replace(revert.original, range: revert.range, actionName: "Typing")
             select(NSRange(location: revert.caret, length: 0), in: view)
+            revealOnTheMac()
             return true
         }
         return removeItemFormatting(deleting: NSRange(location: 0, length: 0), atStart: true)
@@ -135,8 +162,23 @@ extension NativeEditor.Coordinator {
         replace(edit.text, range: edit.range, actionName: edit.actionName)
         select(NSRange(location: edit.caret, length: 0), in: view)
         view.typingAttributes = edit.typing
+        revealOnTheMac()
         announce(edit.announcement)
         return true
+    }
+    /// iPhone and iPad reveal the caret after every edit of the editor's own (SelectionReveal.swift).
+    private func revealOnTheMac() {
+        #if os(macOS)
+            revealCaretAfterKey()
+        #endif
+    }
+    /// Makes the next change an undo step of its own, also within one key press, whose changes the undo manager
+    /// would otherwise undo together.
+    private func beginOwnUndoStep(_ view: JournalTextView) {
+        breakTypingUndo(view)
+        guard let undo = view.undoManager, undo.groupsByEvent, undo.groupingLevel == 1 else { return }
+        undo.endUndoGrouping()
+        undo.beginUndoGrouping()
     }
     private func breakTypingUndo(_ view: JournalTextView) {
         #if os(macOS)

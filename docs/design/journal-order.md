@@ -312,3 +312,36 @@ A throwaway SwiftUI app (a `List` with `ForEach.onMove` and `.contextMenu` on th
 - **A key holding an invalid rank** is kept and the journal stays unranked (after the ranked ones, by name) until it is moved.
 - **iPad sidebar:** it now has a large "Journals" title, because the sidebar's bar has no room for the title beside New Journal, Edit and the sidebar button. In its edit mode the rows show the journal's name without the book icon and a 32-point-wide (44-point-tall) ⋯ button, so names fit the 210-point sidebar. At accessibility text sizes, edit rows on iPhone also show the name without the icon, as the rows outside edit mode do.
 - **Restoring a journal** without a rank, once journals are arranged, puts it at the end.
+
+## Rows keep their height in edit mode (owner, 4 October 2026)
+
+Status: reviewed 2026-10-04 (outcome below), built the same day.
+
+Owner, on build 14: "For some reason when you go into edit mode the height of the journals increases. This makes it awkward. It would be better if the journal list items stay the same height and simply the right part of the item changes to the three dots and the draggable handle." The reference is Notes' Folders on iOS 26, where rows keep their height and only the trailing end changes.
+
+**Cause, measured** (row heights in points, outside → in edit mode, iOS 26.5 simulators, from `PinnedOrderUITests.testJournalRowsKeepTheirHeightInEditMode`):
+
+| | iPhone 17 | iPad Pro 11-inch sidebar |
+| --- | --- | --- |
+| Journal rows, default text | 52 → 74 | 52 → 66 |
+| Fixed rows, default text | 52 → 52 | 52 → 52 |
+| Journal rows, largest text | 156 → 93.3 | 156 → 93.5 (stacked layout) |
+| Fixed rows, largest text | 156 → 93.3 | 156 → 93.5 |
+
+- At standard sizes the ⋯ button's frame (`minHeight: 44`) is taller than the row's text, and the list adds its own vertical margins around it: 44 plus the margins is 74 (iPhone) or 66 (iPad). The reorder handle and the thin separator add nothing.
+- At accessibility sizes the row outside edit mode puts the count on a second line under the name ("2 entries"), because there's no room at the trailing end. Edit mode drops that line, so the rows shrink by a line; the fixed rows also gain their icon, which the accessibility layout leaves out.
+
+**Design:**
+
+- Every row keeps exactly the height it has outside edit mode. Only the trailing end changes: for a journal, the count and chevron give way to ⋯, the thin separator and the reorder handle; for a fixed row, they go and the row is dimmed. The leading content (icon, name, and at accessibility sizes the count line under the name) stays as it is, so nothing moves vertically when Edit or Done is tapped; the trailing controls slide in with the system's edit animation (none with Reduce Motion).
+- **⋯ keeps a 44-point hit area** (44 × 44 on iPhone, 32 × 44 in the iPad sidebar, as now) without growing the row: the extra height overhangs the row's own top and bottom margins, inside the row. Rows are at least 44 points tall (52 at the default text size), so the hit area never reaches a neighbouring row.
+- **Accessibility sizes:** journal rows in edit mode keep the name and the "‹n› entries" line under it, without the icon, as outside edit mode. Fixed rows keep the same two lines, dimmed. This is the only case where a row's height can change: a name that only just fits outside edit mode can wrap to one more line in edit mode, because ⋯ and the handle need more room than the chevron. Names are never truncated. At accessibility sizes the count line stays visible in edit mode, while at standard sizes the count is hidden with the trailing end; that is intended, as the price of a stable height.
+- **iPad sidebar:** unchanged apart from the height: in edit mode journal names show without the book icon, so that names fit beside ⋯ and the handle in the narrow sidebar (implementation notes above). This is a leading change the owner's words don't ask for, and the names move sideways when Edit is tapped; it's kept as a known deviation (keeping the icon leaves about 50 points for the name, so most names would truncate). **Decided (4 October 2026):** keep hiding the icon in the iPad sidebar's edit mode.
+- VoiceOver, Move Up and Move Down, and copy are unchanged.
+
+**Test:** `PinnedOrderUITests.testJournalRowsKeepTheirHeightInEditMode` measures every visible row outside and in edit mode at the default and the largest text size and asserts equal heights (it runs on iPhone and iPad). It also taps ⋯ near the top of its 44-point target, outside the drawn symbol, and expects the journal's actions. Its journal names fit in edit mode.
+
+**Review outcome (independent design agent, 4 October 2026): approve with required changes, all adopted.** The hit area's overhang is verified by the UI test, as a list row might not hit-test outside its content; "at least 44 points" replaces "at least 52"; the wrapping exception is stated as the only height change, and the test's names fit; the visible count line at accessibility sizes is recorded as intended. The reviewer judged the iPad sidebar's missing icon a contradiction of the owner's "simply the right part of the item changes": either keep the icon and truncate names, or record it as a deviation for the owner. It is recorded above as a decision, settled on 4 October 2026: the icon stays hidden. The visible count line and the wrapping exception at accessibility sizes were accepted the same day.
+
+**Built (4 October 2026).** `JournalSidebarView`: ⋯ and the separator sit in a 44-point-tall group with negative vertical padding of half its height, so they add nothing to the row's height; the leading part in edit mode is the row's own label without its trailing count. Measured after the change, outside → in edit mode: iPhone 17 52 → 52 (default text) and 156 → 156 (largest); iPad Pro 11-inch 52 → 52 and 156 → 156 (Recently Deleted, which wraps in the narrow sidebar, 64.5 → 64.5). A tap 3.5 points from the top of ⋯'s target opens the journal's actions on both.
+

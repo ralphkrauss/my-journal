@@ -49,7 +49,8 @@ struct ScreenshotLibrary {
         let store = try JournalStore(
             directory: directory.appendingPathComponent(folder), key: key, protection: recovery.contentProtection)
         var templates: [String: UUID] = [:]
-        for template in BuiltInTemplates.all {
+        // The person's own templates: four with the questions earlier builds started with, and Book Notes.
+        for template in BuiltInTemplates.asEarlierBuildsCreated() {
             try await store.save(template)
             templates[template.title] = template.id
         }

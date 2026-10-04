@@ -124,6 +124,18 @@ import SwiftUI
             let original = RichText.document(text.attributedSubstring(from: paragraph)).blocks.first,
             let change = removingOneLevel(original)
         else { return nil }
+        if original.listIndents?.isEmpty == false,
+            let outdent = ListIndentation.edit(
+                .decrease, text: text, selection: NSRange(location: caret, length: 0), size: size, images: images),
+            outdent.range.location <= caret, outdent.text.length > caret - outdent.range.location
+        {
+            // A nested item moves out a level with the items nested under it, as Decrease Indent moves it.
+            return Edit(
+                text: outdent.text, range: outdent.range, caret: paragraph.location,
+                typing: HiddenMarkers.typingAttributes(
+                    outdent.text.attributes(at: caret - outdent.range.location, effectiveRange: nil), size: size),
+                actionName: change.actionName, announcement: change.announcement)
+        }
         let block = change.block
         let replacement = RichText.paragraphReplacement(
             [block], replacing: paragraph, in: text, size: size, images: images)

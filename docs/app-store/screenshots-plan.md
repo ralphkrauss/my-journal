@@ -158,7 +158,7 @@ Synthetic and written for this set. It must not contain real people's data. Date
 - Encrypted library. Use a generated test master password stored only in the seeding script's local, untracked configuration (never commit it, never type it into the chat).
 - Journals, in this order: **Personal** (rename the default journal), **Work**, **Travel**.
 - Default templates: Personal → Daily Reflection; Work → Workday Log; Travel → none.
-- The four built-in templates exist in every new library. Add one custom template, **Book Notes**:
+- New libraries have no templates (no-built-in-templates-2026-10-04.md). The seeded library has five of the person's own: Daily Reflection, Gratitude, Workday Log and Weekly Reflection, with the questions earlier builds included, and **Book Notes**:
 
 ```markdown
 ## Title and author

@@ -7,14 +7,14 @@
 
     @MainActor
     final class TitleEditingTests: XCTestCase {
-        func testNativePastePreservesLineBreaksWithoutSubmitting() async throws {
+        func testPastePreservesLineBreaksWithoutSubmitting() async throws {
             let state = TitleState()
             let host = UIHostingController(rootView: TitleHarness(state: state))
             let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 402, height: 874))
             window.rootViewController = host
             window.makeKeyAndVisible()
-            // The title pastes as UIKit does, from the general pasteboard. Reading what was there before could ask to
-            // allow pasting, when the simulator has copied the Mac's clipboard in, so it's only written.
+            // The paste goes to the title's paste delegate, as UIKit hands it pasted text. Reading the general pasteboard
+            // here could ask to allow pasting when the simulator has copied the Mac's clipboard in.
             defer { window.isHidden = true }
             await Task.yield()
             host.view.layoutIfNeeded()
@@ -28,8 +28,9 @@
                 title.selectedRange = selection
                 let original = state.text
                 let expected = (original as NSString).replacingCharacters(in: selection, with: pasted)
-                UIPasteboard.general.string = pasted
-                title.paste(nil)
+                let range = try XCTUnwrap(title.selectedTextRange)
+                _ = title.textPasteConfigurationSupporting(
+                    title, performPasteOf: NSAttributedString(string: pasted), to: range)
                 for _ in 0..<100 {
                     if state.text == expected { break }
                     try await Task.sleep(for: .milliseconds(10))

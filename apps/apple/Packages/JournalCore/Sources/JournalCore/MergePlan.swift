@@ -7,14 +7,16 @@ import Foundation
 struct MergePlan {
     /// The server identity the derived identities belong to: its `serverId`, or its address for older servers.
     let server: String
-    /// Where each identity the device's items use ends up: a server record or a derived identity. An unedited
-    /// built-in template with no server template of its name, and no versions of its own, has none.
+    /// Where each identity the device's items use ends up: a server record or a derived identity.
     private(set) var identities: [UUID: UUID] = [:]
     /// Device items whose current version isn't imported: journals combined with a server journal, and templates the
     /// server already has. Their earlier versions are still kept under the server's record.
     private(set) var skipped = Set<UUID>()
     /// Device templates kept for review against the server's template of the same name.
     private(set) var reviewed = Set<UUID>()
+    /// Unedited built-ins whose name the server has only in Recently Deleted: imported there too, with the server
+    /// template's deletion date, so a deletion isn't undone and nothing is lost.
+    private var deletedOnImport: [UUID: Date] = [:]
     /// New names for device journals added next to a server journal of the same name, or next to another device
     /// journal of that name (docs/design/journal-name-uniqueness.md §4.5).
     private(set) var titles: [UUID: String] = [:]
@@ -55,7 +57,10 @@ struct MergePlan {
             }
         }
         planJournals(local, server: serverItems.filter { $0.kind == "journal" }, combinable: combinable)
-        planTemplates(local, server: serverItems.filter { $0.kind == "template" }, versioned: versioned)
+        planTemplates(
+            local, server: serverItems.filter { $0.kind == "template" },
+            recentlyDeleted: items.filter { $0.kind == "template" && $0.deletedAt != nil && !$0.isPermanentlyDeleted },
+            versioned: versioned)
         for item in local where item.kind != "journal" && item.kind != "template" && identities[item.id] == nil {
             identities[item.id] = derived(item.id)
         }
@@ -109,11 +114,17 @@ struct MergePlan {
             taken.insert(JournalNames.key(title))
         }
     }
-    /// Unedited built-ins and templates the server has with the same name and content aren't imported. A template
-    /// that differs from the only server template of its name, being the only one of that name here, is reviewed;
-    /// with more than one of that name on either side, each is added.
-    private mutating func planTemplates(_ local: [JournalItem], server: [JournalItem], versioned: Set<UUID>) {
+    /// Unedited built-ins whose name the server has, and templates the server has with the same name and content,
+    /// aren't imported. A template that differs from the only server template of its name, being the only one of that
+    /// name here, is reviewed; with more than one of that name on either side, each is added. An unedited built-in
+    /// the server has no template of its name for is added: a server set up by a build that no longer creates them has
+    /// none (docs/design/no-built-in-templates-2026-10-04.md). If the server has that name only in Recently Deleted,
+    /// the built-in is added there too, unless a deleted copy there has the same text.
+    private mutating func planTemplates(
+        _ local: [JournalItem], server: [JournalItem], recentlyDeleted: [JournalItem], versioned: Set<UUID>
+    ) {
         let byName = Dictionary(grouping: server) { Self.nameKey($0.title) }
+        let deletedByName = Dictionary(grouping: recentlyDeleted) { Self.nameKey($0.title) }
         let candidates = local.filter {
             $0.kind == "template" && $0.deletedAt == nil && !$0.isPermanentlyDeleted
                 && !BuiltInTemplates.isUnedited($0)
@@ -125,10 +136,23 @@ struct MergePlan {
             let identical = sameName.first { $0.document.sameText(as: template.document) }
             if template.deletedAt != nil || template.isPermanentlyDeleted {
                 identities[template.id] = derived(template.id)
-            } else if BuiltInTemplates.isUnedited(template), !versioned.contains(template.id) {
-                // The person didn't write it: it points at the server's template of its name, if any.
+            } else if BuiltInTemplates.isUnedited(template), !versioned.contains(template.id),
+                let target = identical ?? Self.oldest(sameName)
+            {
+                // The person didn't write it, and the server has its own: it points at the server's template.
                 skipped.insert(template.id)
-                identities[template.id] = identical?.id ?? Self.oldest(sameName)?.id
+                identities[template.id] = target.id
+            } else if BuiltInTemplates.isUnedited(template), !versioned.contains(template.id),
+                let deleted = deletedByName[key], let deletedAt = deleted.compactMap(\.deletedAt).max()
+            {
+                if let same = deleted.first(where: { $0.document.sameText(as: template.document) }) {
+                    // The server's deleted copy has the same text: nothing to add.
+                    skipped.insert(template.id)
+                    identities[template.id] = same.id
+                } else {
+                    identities[template.id] = derived(template.id)
+                    deletedOnImport[template.id] = deletedAt
+                }
             } else if let identical {
                 skipped.insert(template.id)
                 identities[template.id] = identical.id
@@ -147,11 +171,12 @@ struct MergePlan {
         guard let identity = identities[item.id], !purged.contains(item.id) else { return nil }
         var merged = item
         if current, let title = titles[item.id] { merged.title = title }
+        if current, merged.deletedAt == nil, let deletedAt = deletedOnImport[item.id] { merged.deletedAt = deletedAt }
         // A new record here: nothing was read from this store.
         merged.storedVersion = nil
         merged.id = identity
         merged.journalID = item.journalID.map { identities[$0] ?? derived($0) }
-        // A default template the server doesn't have, such as an unmatched built-in, is left unset.
+        // A default template that isn't in this library is left unset.
         merged.defaultTemplateID = item.defaultTemplateID.flatMap { identities[$0] }
         try merged.document.remapAttachments(images)
         return merged

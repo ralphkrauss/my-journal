@@ -234,16 +234,29 @@ public struct JournalItem: Codable, Equatable, Sendable, Identifiable {
         return document.firstLine ?? "New Entry"
     }
 }
+/// The templates builds up to 14 saved in every new library. New libraries start without templates
+/// (docs/design/no-built-in-templates-2026-10-04.md), but libraries made earlier keep theirs, so they're still recognized
+/// when libraries connect or merge.
 public enum BuiltInTemplates {
-    public static let all: [JournalItem] = [
-        template("Daily Reflection", ["What went well?", "What felt difficult?", "What will I carry into tomorrow?"]),
-        template("Gratitude", ["What am I grateful for today?"]),
-        template(
-            "Workday Log",
-            ["What I worked on", "Decisions and context", "Blockers and open questions", "Where to pick up tomorrow"]),
-        template(
-            "Weekly Reflection", ["What stood out this week?", "What did I learn?", "What would I like to change?"]),
-    ]
+    /// The templates as an earlier build created them in a new library, each with a new identity. Only for checking
+    /// that such libraries still connect and merge as before; nothing creates them in a library anymore.
+    public static func asEarlierBuildsCreated() -> [JournalItem] {
+        [
+            template(
+                "Daily Reflection", ["What went well?", "What felt difficult?", "What will I carry into tomorrow?"]),
+            template("Gratitude", ["What am I grateful for today?"]),
+            template(
+                "Workday Log",
+                [
+                    "What I worked on", "Decisions and context", "Blockers and open questions",
+                    "Where to pick up tomorrow",
+                ]
+            ),
+            template(
+                "Weekly Reflection", ["What stood out this week?", "What did I learn?", "What would I like to change?"]
+            ),
+        ]
+    }
     /// Every built-in template text that has ever shipped, as Markdown lines without blank ones. Append an entry when
     /// the wording changes and never edit or remove one, so a template someone never touched is still recognized as
     /// unedited (docs/design/join-with-local-journals.md §2.3).

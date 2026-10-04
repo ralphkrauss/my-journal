@@ -20,7 +20,7 @@ enum EntryTextInset {
     import AppKit
 
     struct NativeEditor: NSViewRepresentable {
-        @Environment(\.colorScheme) private var colorScheme
+        @Environment(\.colorScheme) var colorScheme
         @Binding var document: JournalDocument
         var itemID: UUID
         var images: [UUID: Data]
@@ -36,7 +36,8 @@ enum EntryTextInset {
         var imageHandler: (Data) async -> DocumentBlock?
 
         func makeNSView(context: Context) -> NSScrollView {
-            let scroll = NSScrollView()
+            let scroll = EntryScrollView()
+            scroll.textSize = fontSize
             scroll.borderType = .noBorder
             scroll.hasVerticalScroller = true
             scroll.autohidesScrollers = true
@@ -116,9 +117,17 @@ enum EntryTextInset {
             weak var savePanel: NSSavePanel?
             let pictureMenuTarget = MenuActionTarget()
             let pictureMenuItems = PictureMenuItems()
+            /// The entry's text as an undo or redo on the window's undo manager started.
+            private var textBeforeUndo: String?
             init(_ parent: NativeEditor) {
                 self.parent = parent
                 super.init()
+                for name in [
+                    Notification.Name.NSUndoManagerWillUndoChange, Notification.Name.NSUndoManagerWillRedoChange,
+                ] {
+                    NotificationCenter.default.addObserver(
+                        self, selector: #selector(undoStarting(_:)), name: name, object: nil)
+                }
                 for name in [
                     Notification.Name.NSUndoManagerDidUndoChange, Notification.Name.NSUndoManagerDidRedoChange,
                 ] {
@@ -126,12 +135,21 @@ enum EntryTextInset {
                         self, selector: #selector(undoCompleted(_:)), name: name, object: nil)
                 }
             }
+            @objc private func undoStarting(_ notification: Notification) {
+                guard let view, let manager = notification.object as? UndoManager, manager === view.undoManager
+                else { return }
+                textBeforeUndo = view.string
+            }
             @objc private func undoCompleted(_ notification: Notification) {
+                let before = textBeforeUndo
+                textBeforeUndo = nil
                 guard let view, !applying, parent.editable,
                     let manager = notification.object as? UndoManager, manager === view.undoManager
                 else { return }
                 textDidChange(notification)
                 refreshImages(force: true)
+                // Pins and journal moves share the window's undo manager: undoing them leaves the entry where it is.
+                if before != view.string { revealCaretAfterKey() }
             }
             func update(_ parent: NativeEditor) {
                 if lastID != parent.itemID || self.parent.editable != parent.editable
@@ -143,6 +161,7 @@ enum EntryTextInset {
                 thumbnails.keep(parent.images)
                 guard let view else { return }
                 view.isEditable = parent.editable
+                (view.enclosingScrollView as? EntryScrollView)?.textSize = parent.fontSize
                 configureTables()
                 limitUndo()
                 view.compositionEnded = { [weak self] in self?.compositionEnded() }
@@ -253,41 +272,9 @@ enum EntryTextInset {
                     guard let view else { return FormattingState() }
                     return FormattingState(
                         text: view.attributedString(), range: view.selectedRange(), typing: view.typingAttributes,
-                        source: self?.showsSource)
+                        source: self?.showsSource, size: self?.parent.fontSize ?? 17)
                 }
 
-            }
-            func refreshImages(force: Bool = false) {
-                guard let view, view.bounds.width.isFinite, view.bounds.width > 20 else { return }
-                let width = max(40, view.bounds.width - 20)
-                guard
-                    force || abs(imageWidth - width) > 0.5 || imageIDs != Set(parent.images.keys)
-                        || loadingIDs != parent.loadingImages
-                        || appearance != parent.colorScheme
-                else { return }
-                guard !applying, !view.hasMarkedText(), let storage = view.textStorage,
-                    let layout = view.layoutManager, let container = view.textContainer
-                else { return }
-                applying = true
-                defer { applying = false }
-                let selection = view.selectedRange()
-                let typing = view.typingAttributes
-                let origin = view.visibleRect.origin
-                let anchor = ImagePresentation.visibleAnchor(
-                    storage, layout: layout, container: container, viewport: view.visibleRect)
-                let before = ImagePresentation.anchorY(anchor, layout: layout, container: container)
-                view.undoManager?.disableUndoRegistration()
-                ImagePresentation.update(storage, images: parent.images, size: parent.fontSize, layout: imageLayout)
-                view.undoManager?.enableUndoRegistration()
-                view.setSelectedRange(selection)
-                view.typingAttributes = typing
-                if let before, let after = ImagePresentation.anchorY(anchor, layout: layout, container: container) {
-                    view.scroll(NSPoint(x: origin.x, y: max(0, origin.y + after - before)))
-                }
-                appearance = parent.colorScheme
-                imageIDs = Set(parent.images.keys)
-                loadingIDs = parent.loadingImages
-                imageWidth = max(40, view.bounds.width - 20)
             }
 
             func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
@@ -312,6 +299,7 @@ enum EntryTextInset {
                 replace(action.replacement, range: action.range)
                 if let caret = action.caret { view.setSelectedRange(NSRange(location: caret, length: 0)) }
                 view.typingAttributes = RichText.typing(after: action, in: storage, size: parent.fontSize)
+                revealCaretAfterKey()
                 return true
             }
             func textViewDidChangeSelection(_ notification: Notification) {
@@ -468,6 +456,7 @@ enum EntryTextInset {
                     text.append(rendered)
                     replace(text, range: selection)
                     if insertingQuietly { return }
+                    revealCaretAfterPicture()
                 }
                 view.window?.makeFirstResponder(view)
             }
@@ -477,7 +466,7 @@ enum EntryTextInset {
     import UIKit
 
     struct NativeEditor: UIViewRepresentable {
-        @Environment(\.colorScheme) private var colorScheme
+        @Environment(\.colorScheme) var colorScheme
         @Binding var document: JournalDocument
         var itemID: UUID
         var images: [UUID: Data]
@@ -662,7 +651,7 @@ enum EntryTextInset {
                     guard let view else { return FormattingState() }
                     return FormattingState(
                         text: view.textStorage, range: view.selectedRange, typing: view.typingAttributes,
-                        source: self?.showsSource)
+                        source: self?.showsSource, size: self?.parent.fontSize ?? 17)
                 }
 
                 view.receiveImages = { [weak self] images in self?.receiveImages(images) }
@@ -762,44 +751,6 @@ enum EntryTextInset {
                     }
                 }
 
-            }
-            func refreshImages(force: Bool = false) {
-                guard let view, view.bounds.width.isFinite, view.bounds.width > 20 else { return }
-                let width = max(40, view.bounds.width - 20)
-                guard
-                    force || abs(imageWidth - width) > 0.5 || imageIDs != Set(parent.images.keys)
-                        || loadingIDs != parent.loadingImages
-                        || appearance != parent.colorScheme
-                else { return }
-                guard !applyingImages, view.markedTextRange == nil else { return }
-                applyingImages = true
-                defer { applyingImages = false }
-                let selection = view.selectedRange
-                let typing = view.typingAttributes
-                let origin = view.contentOffset
-                let layout = view.layoutManager
-                let container = view.textContainer
-                let viewport = CGRect(
-                    x: origin.x, y: origin.y - view.textContainerInset.top, width: view.bounds.width,
-                    height: view.bounds.height)
-                let anchor = ImagePresentation.visibleAnchor(
-                    view.textStorage, layout: layout, container: container, viewport: viewport)
-                let before = ImagePresentation.anchorY(anchor, layout: layout, container: container)
-                view.undoManager?.disableUndoRegistration()
-                ImagePresentation.update(
-                    view.textStorage, images: parent.images, size: parent.fontSize, layout: imageLayout)
-                view.undoManager?.enableUndoRegistration()
-                view.selectedRange = selection
-                view.typingAttributes = typing
-                if let before, let after = ImagePresentation.anchorY(anchor, layout: layout, container: container) {
-                    view.setContentOffset(
-                        CGPoint(x: origin.x, y: max(-view.adjustedContentInset.top, origin.y + after - before)),
-                        animated: false)
-                }
-                appearance = parent.colorScheme
-                imageIDs = Set(parent.images.keys)
-                loadingIDs = parent.loadingImages
-                imageWidth = max(40, view.bounds.width - 20)
             }
 
             func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String)

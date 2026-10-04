@@ -39,7 +39,7 @@ Recommendation: **Lifestyle** primary, **Productivity** secondary.
 Apple asks for the category that describes the app's main purpose, where people would look for it, and where similar apps are ([Choosing a category](https://developer.apple.com/app-store/categories/)).
 
 - Lifestyle is "general-interest subject matter", and personal journaling is the main use. Journey is listed under Lifestyle.
-- Productivity lists note taking among its examples, and My Journal is for work notes too (the Workday Log template, separate work journals). It fits as the secondary category, where the app still appears in category browsing and filters. As primary, it would put a deliberately small journal among task managers, email clients and large note and document tools.
+- Productivity lists note taking among its examples, and My Journal is for work notes too (templates for work notes, separate work journals). It fits as the secondary category, where the app still appears in category browsing and filters. As primary, it would put a deliberately small journal among task managers, email clients and large note and document tools.
 - Apple's Journal and Day One are listed under Health & Fitness (checked 2026-09-28). That category suits mood and wellbeing tracking, which My Journal doesn't have, and in the EU it requires a declaration about regulated medical devices ([App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information)). Not recommended.
 - The Mac app already declares `LSApplicationCategoryType` = `public.app-category.lifestyle` in `apps/apple/project.yml`, which matches.
 
@@ -61,7 +61,7 @@ My Journal is a private journal with a clean, simple interface. Write, add photo
 SIMPLE ON PURPOSE
 • Write with headings, lists, checklists, quotes, links, tables and images. Markdown shortcuts work as you type, and your spelling and correction settings apply.
 • Keep separate journals, for example one for personal notes and one for work.
-• Start from a template: Daily Reflection, Gratitude, Workday Log and Weekly Reflection are included, and you can save your own. Each journal can have a default template.
+• Save your own templates and start entries from them. Each journal can have a default template.
 • Search your entries, restore an earlier version from Version History, and bring back what you deleted from Recently Deleted.
 • Works offline. Everything is saved on your device first.
 
@@ -134,7 +134,7 @@ My Journal is a private journal with a clean, simple interface that fits in on t
 SIMPLE ON PURPOSE
 • Write with headings, lists, checklists, quotes, links, tables and images. Markdown shortcuts work as you type, and your spelling and correction settings apply.
 • Keep separate journals, for example one for personal notes and one for work.
-• Start from a template: Daily Reflection, Gratitude, Workday Log and Weekly Reflection are included, and you can save your own. Each journal can have a default template.
+• Save your own templates and start entries from them. Each journal can have a default template.
 • Search your entries, restore an earlier version from Version History, and bring back what you deleted from Recently Deleted.
 • Works offline. Everything is saved on your Mac first.
 

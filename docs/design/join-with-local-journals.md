@@ -168,7 +168,10 @@ After a grant is received, the staged library is built in this order, all before
 A local template is handled by the first rule that applies:
 
 1. **Built-in and never edited, with no earlier versions or change awaiting review:** not imported. The person
-   didn't write it, and the server has its own. This holds even when the server's copy was edited.
+   didn't write it, and the server has its own. This holds even when the server's copy was edited. *Amended
+   2026-10-04 by [no-built-in-templates-2026-10-04.md](no-built-in-templates-2026-10-04.md): only when the server has
+   a template of that name; if it has one only in Recently Deleted, the built-in goes there too (unless that copy has
+   the same text), and otherwise it's added, since new libraries no longer have built-ins.*
    - "Never edited" means its title and text equal an entry in `BuiltInTemplates.shipped`: literal title and Markdown
      text pairs, only ever appended to, so a later wording change can't make an old untouched template look edited.
      Text is compared as Markdown lines without blank ones, so a template read back as Markdown still matches.
@@ -184,7 +187,8 @@ A local journal's default template follows its template:
 
 - to the server template, if it was skipped or became a review;
 - to its derived ID, if it was added;
-- to none, if it was an unmatched unedited built-in.
+- to none, if it was an unmatched unedited built-in (since 2026-10-04 such a built-in is added, and the default
+  follows it).
 
 When the journal was combined, the server journal's own setting is kept.
 
@@ -252,7 +256,8 @@ template it becomes "Keep Both saves the versions as separate templates."
 - there's no library, or it has exactly one journal, titled "Default", with no default template set and not in
   Recently Deleted;
 - there are no entries at all, including Recently Deleted ones;
-- every template is an unedited built-in (per `BuiltInTemplates.shipped`) and none is in Recently Deleted;
+- every template, if any, is an unedited built-in (per `BuiltInTemplates.shipped`) and none is in Recently Deleted.
+  Since 2026-10-04 a new library has no templates, which also counts (no-built-in-templates-2026-10-04.md);
 - there are no pending conflicts;
 - it isn't connected.
 

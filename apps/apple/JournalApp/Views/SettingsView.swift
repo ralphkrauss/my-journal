@@ -12,6 +12,9 @@ struct SettingsView: View {
         @State private var panes: [AppSettingsTab] = []
     #endif
     @AppStorage(MarkdownShortcuts.settingKey) private var formatAsYouType = true
+    #if os(macOS)
+        @Environment(\.openWindow) private var openWindow
+    #endif
     var body: some View {
         Group {
             if model.locked {
@@ -176,9 +179,26 @@ struct SettingsView: View {
     }
     private var privacySettings: some View {
         Form {
-            EncryptionSettingsSection(upgrade: model.encryption) { connect = ConnectionRequest() }
-            AppLockSettingsSection { dismiss() }
+            // Without a library (just erased, while Settings closes) there is no protection to describe.
+            if model.configuration != nil {
+                EncryptionSettingsSection(upgrade: model.encryption) { connect = ConnectionRequest() }
+                AppLockSettingsSection { dismiss() }
+            }
+            EraseSection { closeAfterErasing() }
         }.formStyle(.grouped)
+    }
+    /// After Erase Journals and Settings, the window shows the first-launch screen; Settings has nothing to show.
+    private func closeAfterErasing() {
+        #if os(macOS)
+            if !model.hasJournalWindow { openWindow(id: JournalApp.windowID) }
+        #else
+            Task {
+                // Once the sheet has gone, VoiceOver moves to the first-launch screen.
+                try? await Task.sleep(for: .milliseconds(600))
+                JournalAccessibility.screenChanged()
+            }
+        #endif
+        dismiss()
     }
     /// Agents connect through the sync server's MCP endpoint (docs/design/agent-access-simplified.md).
     private var agentSettings: some View {

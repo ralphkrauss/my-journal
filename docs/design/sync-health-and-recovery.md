@@ -255,7 +255,8 @@ with or without a password.
 **Different library: merges** with derived identities ([join-with-local-journals.md](join-with-local-journals.md)
 §2.1).
 
-- Unedited built-ins are skipped (MergePlan.swift:117).
+- Unedited built-ins are skipped when the server has a template of their name, and added otherwise (amended by
+  [no-built-in-templates-2026-10-04.md](no-built-in-templates-2026-10-04.md)).
 - Same-name journals are combined.
 - Retries are idempotent.
 
@@ -396,7 +397,7 @@ same library by identity. The guide says so.
 |---|---|---|---|---|
 | 1 | Server stopped while A writes, then restarted | A, B | Temporary | Automatic; B receives A's entries |
 | 3 | **Reset**: stop, wipe the data folder, restart. A and B each have offline edits | A, B, then C | A and B: Server changed (not set up) | A sets up again with the new setup code. B: Server changed (restored or replaced), then Connect Again: password, same library, **no Merge step**; B's offline edits are sent. C joins and receives everything |
-| 4 | Reset, then B sets the server up with a different library | A, B | A: Server changed (restored or replaced) | A: Connect Again, password, then **Merge Journals**; same-name journals combined, unedited built-ins not added |
+| 4 | Reset, then B sets the server up with a different library | A, B | A: Server changed (restored or replaced) | A: Connect Again, password, then **Merge Journals**; same-name journals combined, unedited built-ins once each (no-built-in-templates-2026-10-04.md) |
 | 5 | `--restore` from an older backup | A, B | Server changed (restored or replaced) | Both Connect Again with no Merge step; edits made after the backup are sent back; differing versions reviewed |
 | 7 | B revokes A | A, B | A: No access | A: Connect Again, password, no Merge step; A's waiting edits sent |
 | 10 | Stop Syncing on A, write on A, reconnect to the same server: once with a password, once without | A, B | | Same library by lineage; no duplicate entries or templates; A's new entries arrive at B |

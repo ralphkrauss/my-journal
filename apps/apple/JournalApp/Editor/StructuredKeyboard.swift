@@ -14,6 +14,10 @@ import SwiftUI
         let kind = text.attribute(.journalKind, at: position, effectiveRange: nil) as? String ?? "paragraph"
         if kind == "codeBlock" { return code(key, text: text, selection: selection, size: size) }
         guard key != .down else { return nil }
+        if key == .indent || key == .outdent {
+            return ListIndentation.edit(
+                key == .indent ? .increase : .decrease, text: text, selection: selection, size: size, images: images)
+        }
         let source = text.string as NSString
         let range = source.paragraphRange(for: selection)
         let result = NSMutableAttributedString(attributedString: text.attributedSubstring(from: range))
@@ -164,17 +168,48 @@ extension NativeEditor.Coordinator {
         else {
             return false
         }
-        if edit.range.length > 0 || edit.text.length > 0 { replace(edit.text, range: edit.range) }
+        // Increase and Decrease Indent of list items; in code a tab is typed or removed.
+        let inCode =
+            text.attribute(.journalKind, at: min(selection.location, text.length - 1), effectiveRange: nil) as? String
+            == "codeBlock"
+        let indenting = (key == .indent || key == .outdent) && !inCode
+        if edit.range.length > 0 || edit.text.length > 0 {
+            replace(
+                edit.text, range: edit.range,
+                actionName: indenting ? (key == .indent ? "Increase Indent" : "Decrease Indent") : nil)
+        } else if indenting {
+            #if os(macOS)
+                // Tab or Shift-Tab where the item can't move, as AppKit answers a command that can't apply.
+                NSSound.beep()
+            #endif
+        }
         #if os(macOS)
             if let selection = edit.selection { view.setSelectedRange(selection) }
         #else
             if let selection = edit.selection { view.selectedRange = selection }
         #endif
-        if edit.text.length > 0 {
+        if indenting, edit.text.length > 0, let level = ListIndentation.level(text, at: selection.location) {
+            // The text doesn't change, so VoiceOver is told where the item is now.
+            JournalAccessibility.announce("Level \(level)")
+        }
+        if indenting, edit.text.length > 0 {
+            // Typing continues the caret's line, which may not be the last line the change renumbered.
+            let caret = min(selection.location, text.length - 1)
+            let before =
+                caret > 0 && (text.string as NSString).character(at: caret - 1) != 0x0A ? caret - 1 : caret
+            view.typingAttributes =
+                RichText.typingAttributes(text, at: selection.location, size: parent.fontSize)
+                ?? HiddenMarkers.typingAttributes(
+                    text.attributes(at: before, effectiveRange: nil), size: parent.fontSize)
+        } else if edit.text.length > 0 {
             view.typingAttributes = edit.text.attributes(at: edit.text.length - 1, effectiveRange: nil).filter {
                 $0.key != .journalOwnEnd
             }
         }
+        #if os(macOS)
+            // Down out of a code block moves the caret as AppKit's own Down does, which shows it.
+            if key == .down { revealCaretAfterKey() }
+        #endif
         return true
     }
 }

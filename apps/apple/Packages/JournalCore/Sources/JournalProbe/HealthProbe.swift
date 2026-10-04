@@ -44,8 +44,8 @@ extension Probe {
         return true
     }
 
-    /// A sets up the server with built-in templates, a journal, an entry and an image; B joins (with the password,
-    /// or by pairing on a server without one). Both sync.
+    /// A, a library an earlier build made with its built-in templates, sets up the server with a journal, an entry and
+    /// an image; B joins (with the password, or by pairing on a server without one). Both sync.
     static func healthSetUp(address: String, code: String, root: URL) async throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let (master, phrase, envelope, secret) = try recoveryFixture()
@@ -57,7 +57,7 @@ extension Probe {
             code: code, envelope: envelope, recoverySecret: secret, deviceName: "Probe a")
         state.devices["a"] = .init(folder: "a", key: master, token: grant.token, deviceID: grant.deviceId)
         let deviceA = try open("a", state, root: root, address: address)
-        for template in freshBuiltInTemplates() { try await deviceA.store.save(template) }
+        for template in BuiltInTemplates.asEarlierBuildsCreated() { try await deviceA.store.save(template) }
         let journal = JournalItem(kind: "journal", title: "Default")
         try await deviceA.store.save(journal)
         let image = try await deviceA.store.addAttachment(Data(repeating: 7, count: 2048))

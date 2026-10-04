@@ -8,7 +8,7 @@ Answers for App Store Connect > App Information > Age Rating. The rating is set 
 
 Apple's current questionnaire (updated July 2025, with social media questions added in July 2026 that must be answered from September 2026) asks about in-app controls, capabilities, mature themes, medical or wellness topics, sexuality or nudity, violence and chance-based activities, then shows the calculated rating ([Set an app age rating](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating), [Updated age ratings in App Store Connect](https://developer.apple.com/news/?id=ks775ehf)). The definitions below are Apple's ([Age ratings values and definitions](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions)). The order of the steps in App Store Connect may differ; answer by name.
 
-What the app ships with: no content of its own apart from four templates made of neutral questions (Daily Reflection, Gratitude, Workday Log, Weekly Reflection), and no built-in AI. Everything else is what the person writes, for themselves.
+What the app ships with: no content of its own (new libraries start without templates since 2026-10-04), and no built-in AI. Everything else is what the person writes, for themselves.
 
 ### In-app controls
 
@@ -44,7 +44,7 @@ The app contains none of these. What a person writes in their own journal isn't 
 | Item | Answer | Why |
 | --- | --- | --- |
 | Medical or Treatment Information | None | No diagnoses or treatment guidance. |
-| Health or Wellness Topics | None | Defined as self-care or lifestyle recommendations, such as calorie tracking, dieting or exercise advice. The templates ask open questions ("What went well?", "What am I grateful for today?") and make no recommendations. If App Review reads the Gratitude and reflection templates as wellness content, this becomes Infrequent, and the rating 9+. |
+| Health or Wellness Topics | None | Defined as self-care or lifestyle recommendations, such as calorie tracking, dieting or exercise advice. The app includes no templates or prompts and makes no recommendations; templates are only what the person saves. |
 
 ### Sexuality or nudity
 

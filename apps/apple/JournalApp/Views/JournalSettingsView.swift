@@ -34,8 +34,10 @@ struct JournalSettingsView: View {
                         ForEach(model.templates) {
                             Text($0.title.isEmpty ? "Untitled Template" : $0.title).tag(Optional($0.id))
                         }
-                    }.disabled(hasConflict(journal) || model.replacingVault)
-                        .accessibilityIdentifier("journal-default-template-\(journal.id.uuidString)")
+                    }.disabled(
+                        hasConflict(journal) || model.replacingVault || !model.offersDefaultTemplateChoice(for: journal)
+                    )
+                    .accessibilityIdentifier("journal-default-template-\(journal.id.uuidString)")
                     reviewActions(journal)
                     Button("Delete Journal…", role: .destructive) { deletionRequest = journal.id }.foregroundStyle(.red)
                         .disabled(model.replacingVault)

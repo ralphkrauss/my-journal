@@ -56,6 +56,56 @@ final class MarkdownShortcutTests: XCTestCase {
         XCTAssertEqual(second.document.text, "- stays literal")
     }
 
+    /// A fast burst of keystrokes, “- Milk⏎Eggs”, keeps every letter in order and in its own item, whenever the run
+    /// loop turns between keys, and on iPhone and iPad also between the keyboard asking to type a key and typing it
+    /// where it asked. Build 15's first fix converted the line on a later turn, so letters already on their way could
+    /// land in the item above (“Milks” and “Egg”) or the marker stay as typed.
+    func testABurstOfKeystrokesKeepsEachLetterInItsItem() throws {
+        let keys = "- Milk\nEggs".map(String.init)
+        #if os(macOS)
+            // The Mac's text view types each key as it's asked: the run loop only turns between keys.
+            let points = keys.indices.map { Pause(key: $0, beforeTyping: false) }
+        #else
+            let points = keys.indices.flatMap {
+                [Pause(key: $0, beforeTyping: true), Pause(key: $0, beforeTyping: false)]
+            }
+        #endif
+        // No turn at all, a turn at every point, and one turn at each single point.
+        let timings: [Set<Pause>] = [[], Set(points)] + points.map { [$0] }
+        for timing in timings {
+            let fixture = ShortcutFixture()
+            defer { fixture.close() }
+            for (index, key) in keys.enumerated() {
+                fixture.keystroke(key, turnBeforeTyping: timing.contains(Pause(key: index, beforeTyping: true)))
+                if timing.contains(Pause(key: index, beforeTyping: false)) { fixture.settle() }
+            }
+            fixture.settle()
+            let name = timing.map { "\($0.key)\($0.beforeTyping ? "a" : "t")" }.sorted().joined(separator: ",")
+            XCTAssertEqual(fixture.document.blocks.map(\.kind), ["bullet", "bullet"], "turns at [\(name)]")
+            XCTAssertEqual(
+                fixture.document.blocks.map { $0.runs.map(\.text).joined() }, ["Milk", "Eggs"], "turns at [\(name)]")
+        }
+    }
+
+    /// Where the run loop turns while keys are typed: after key `key` was asked about (`beforeTyping`) or typed.
+    private struct Pause: Hashable {
+        let key: Int
+        let beforeTyping: Bool
+    }
+
+    /// ⌘Z after a shortcut first gives back what was typed, the marker and its space, then the space alone.
+    func testUndoAfterAShortcutGivesBackWhatWasTyped() throws {
+        let fixture = ShortcutFixture()
+        defer { fixture.close() }
+        fixture.type("- ")
+        fixture.settle()
+        XCTAssertEqual(fixture.document.blocks.first?.kind, "bullet")
+        fixture.view.undoManager?.undo()
+        fixture.settle()
+        XCTAssertEqual(fixture.document.blocks.first?.kind, "paragraph")
+        XCTAssertEqual(fixture.document.text, "- ")
+    }
+
     func testReturnAfterACodeFenceOrRuleCreatesThatBlock() throws {
         let fence = ShortcutFixture()
         defer { fence.close() }
@@ -125,6 +175,23 @@ private final class ShortcutFixture {
                 }
             #endif
         }
+    }
+    /// One key as the keyboard types it. On iPhone and iPad the keyboard asks first and types the key where it
+    /// asked, which may be after the run loop has turned (`turnBeforeTyping`).
+    func keystroke(_ key: String, turnBeforeTyping: Bool) {
+        #if os(macOS)
+            if key == "\n" {
+                pressReturn()
+            } else {
+                view.insertText(key, replacementRange: view.selectedRange())
+            }
+        #else
+            let range = view.selectedRange
+            guard coordinator.textView(view, shouldChangeTextIn: range, replacementText: key) else { return }
+            if turnBeforeTyping { settle() }
+            view.selectedRange = NSRange(location: min(range.location, view.textStorage.length), length: 0)
+            view.insertText(key)
+        #endif
     }
     func pressReturn() {
         #if os(macOS)

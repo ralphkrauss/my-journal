@@ -1,6 +1,6 @@
 # Choosing the journal for a new entry from the Templates list
 
-Status: current, built 2026-10-03. Reviewed twice by an independent design agent; the outcome is recorded at the end.
+Status: current, built 2026-10-03. Reviewed twice by an independent design agent; the outcome is recorded at the end. Revised 2026-10-04 at the owner's request: New Entry In ▸ is a plain list of the journals, without a suggested first item ("Owner decision, 4 October 2026" at the end).
 
 Supersedes: the last bullet of default-journal.md's "Rule" (a template's menu "names and uses the Default Journal"), and the "Which journal" rule and the "New Entry in “‹Journal›”" copy of new-entry-template-suggestion.md, for templates started from the Templates list or File ▸ New Entry from Template… outside a journal. Those sections now point here.
 
@@ -24,7 +24,7 @@ Owner: "When you use a template from the Templates list, it should allow me to c
 
 In a template's context menu and in its Entry Actions, the first item depends on the journals in use:
 
-- **Two or more journals:** a submenu, **New Entry In**, with the symbol `square.and.pencil`. Its items are journal names. The suggested journal (below) comes first, then a separator, then every other journal in use in the order of the sidebar (the person's order, journal-order.md). This is the layout of Finder's "Open With" submenu: the likely choice first, the rest below.
+- **Two or more journals:** a submenu, **New Entry In**, with the symbol `square.and.pencil`. Its items are the names of every journal in use, in the order of the sidebar (the person's order, journal-order.md), with no separators and nothing first or marked. It is the same list as the sidebar's Journals section.
 - **One journal:** a plain item, **New Entry from Template**, which creates the entry in that journal, as today. A submenu with one choice would be a needless step.
 - **No journal in use:** the plain item **New Entry from Template**, disabled. This is deliberate: the state is rare (every journal deleted), a template can only start an entry in a journal, and New Journal is in the toolbar and the File menu. New Entry, which opens New Journal in this state, is unchanged.
 
@@ -34,21 +34,15 @@ Names: a journal without a name is listed as "Untitled Journal". Names are not t
 
 The item is **hidden** for a template in Recently Deleted or in a format this version can't edit, and **disabled** while the template has changes to review, while saving is blocked (after a save failure), and while My Journal is locked or replacing its library, as today.
 
-### The suggested journal
+### No suggested journal
 
-The first item of the submenu, in this order:
-
-1. **The journal whose Default Template is this template.** If several journals use it, the first of them in the sidebar order.
-2. Otherwise **the journal last opened** on this device, if it's in use: the journal relaunching would reopen (`lastJournalID`). In All Entries that is the open entry's journal; showing Templates or Recently Deleted doesn't change it. All Mac windows share it.
-3. Otherwise **the Default Journal** (Settings ▸ Default Journal, or its fallback: the oldest journal in use).
-
-The suggestion is only an order: nothing is preselected or checked, and choosing is one tap or click either way. There is no checkmark, because a checkmark in a menu means a current state (as in Default Template ▸), and nothing here is a state.
+The submenu has no suggested journal (owner, 4 October 2026). Nothing is preselected, checked or listed first, and there are no separators between journals: a checkmark in a menu means a current state (as in Default Template ▸), and nothing here is a state. A journal's Default Template doesn't change the menu.
 
 ### Choosing a journal
 
 - The entry is created in the chosen journal from the template as it is now (edits to an open template are saved first, as today). It always creates a new entry in the journal that was picked: it doesn't resolve New Entry's journal again, and it never fills an open empty entry.
 - The app then shows the entry inside its journal, as New Entry from Template does today: the sidebar selects the journal, the list shows it, the entry opens with its title focused, and VoiceOver focus moves to the title. On iPhone the stack becomes the journal's entries and the entry, so Back leads to the journal the entry was filed in.
-- The choice isn't remembered as a setting. Opening the new entry makes its journal the last opened one, so the next template without a Default Template suggests it first (rule 2). That gives "the journal I'm working in" without another setting.
+- The choice isn't remembered as a setting, and it doesn't change the menu's order.
 - No confirmation, no message.
 
 ### Errors and changes while choosing
@@ -66,7 +60,7 @@ Opened from a journal, the chooser is unchanged: the entry goes to that journal.
 
 - **Layout, both platforms:** a labelled row above the search field, pinned with it: "Journal" on the leading side and a menu picker showing the journal on the trailing side, like Settings ▸ Default Journal. On the Mac it reads "Journal:" with a pop-up button, as the Save panel's "Where:", above the search field with a divider; the sheet grows by one row.
 - **Options:** journals in use in the sidebar order; "Untitled Journal" for one without a name.
-- **Initial value:** the journal last opened on this device if it's in use, else the Default Journal: the owner's suggested order without its first step, since no template is chosen yet. It doesn't change as the highlight moves between templates.
+- **Initial value:** a picker always shows a value, so it starts on the journal last opened on this device if it's in use, else the Default Journal. Its options are the same plain list in the sidebar order; the system's pop-up menu marks the current value, as any picker does. It doesn't change as the highlight moves between templates.
 - Choosing a template (click, Return, or tap) creates the entry in the picked journal. The picker doesn't close the sheet.
 - **Filling in place:** if the open entry is this session's untouched new entry and it's in the picked journal, the template fills it, as today. Otherwise a new entry is created in the picked journal; the untouched entry is discarded on leaving, as today.
 - **Where it shows:** as New Entry from Template, the new entry opens in its journal. From All Entries the list stays on All Entries, with the entry's journal label, as New Entry does there.
@@ -92,7 +86,6 @@ Opened from a journal, the chooser is unchanged: the entry goes to that journal.
 ## Accessibility
 
 - Standard SwiftUI `Menu` in the context menu and an `NSMenu` submenu in the Mac toolbar (the shared `MenuAction` catalog). VoiceOver reads "New Entry In, menu"; each item reads its journal name. Full Keyboard Access and the Mac's keyboard menu navigation work as for any submenu.
-- The separator after the suggested journal is a menu divider, which VoiceOver skips.
 - Dynamic Type, Increase Contrast and Reduce Transparency come from the system menus.
 
 ## Platforms
@@ -103,8 +96,8 @@ Opened from a journal, the chooser is unchanged: the entry goes to that journal.
 
 ## Tests
 
-- **Model:** the suggestion order: a journal using the template as its Default Template wins over the last journal; without one, the last journal opened wins; without that, the Default Journal. With Templates shown and the Default Journal set to A, creating in B puts one entry in B with the template's text and shows B. A chosen journal that is no longer in use creates nothing and reports the error.
-- **iOS UI, one journey:** on the Templates list, long press a template, choose New Entry In ▸ a journal other than the Default Journal; the new entry opens with the template's text, and Back leads to the chosen journal (iPhone). This replaces the assertion in `PreReleaseUITests.testNewEntryFromTheTemplatesScreen` that expected "New Entry from Template" with several journals.
+- **Model:** with Templates shown and the Default Journal set to A, creating in B puts one entry in B with the template's text and shows B. A chosen journal that is no longer in use creates nothing and reports the error.
+- **iOS UI, one journey:** on the Templates list, long press a template, the submenu lists the journals in the sidebar order, even though one of them uses the template as its Default Template; choose a journal other than the Default Journal; the new entry opens with the template's text, and Back leads to the chosen journal (iPhone). This replaces the assertion in `PreReleaseUITests.testNewEntryFromTheTemplatesScreen` that expected "New Entry from Template" with several journals.
 - No tests for the menu's composition beyond that journey.
 
 ## Review outcome
@@ -123,3 +116,14 @@ An independent design agent reviewed the proposal twice, given the requirements 
 - A picked journal that disappears is kept and reported inline, not silently replaced.
 - The picker is a labelled row at the top on both platforms (a bottom toolbar would hide its label and sit under the keyboard on iPad).
 - The initial value is the last opened journal, else the Default Journal; All Entries stays in view; the Mac keyboard and VoiceOver details were corrected; "window" was removed from the iPad message.
+
+## Owner decision (4 October 2026)
+
+The owner, on build 14's New Entry In ▸: "When selecting a template to use it, I don't see a reason to split it up with extra dividers like you did here. I guess this is because the first one is the default journal, I think? We don't need that. Just the normal journal list will do (simple is better here)."
+
+- New Entry In ▸ lists the journals in use in the sidebar order, with no suggested first item and no separators. The suggestion rules (Default Template, then last opened, then Default Journal) are removed.
+- File ▸ New Entry from Template…'s Journal picker already listed the journals in the sidebar order without a split. It keeps its initial value (last opened, else the Default Journal), because a picker always shows a value.
+- One journal, no journal, the errors, and where the new entry opens are unchanged.
+
+Review (independent design agent, 4 October 2026): approved as it is. The reviewer recommended telling the owner that the File menu sheet's picker still starts on the journal last opened; starting on the Default Journal would be the simplest alternative. **Decided (4 October 2026):** the picker keeps starting on the journal last opened.
+

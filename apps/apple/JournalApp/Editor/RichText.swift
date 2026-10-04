@@ -159,6 +159,8 @@ final class EditorActions: ObservableObject {
     @Published var requestImage = false
     /// Whether the caret is on a checked (true) or unchecked (false) task, for Mark as Checked; nil elsewhere.
     @Published var caretTaskChecked: Bool?
+    /// Whether Format ▸ Increase and Decrease Indent apply to the selection (ListIndentation.swift).
+    @Published var caretIndentation = ListIndentation.Availability()
     /// Where Insert Image takes the picture from; the photo library unless the person chose otherwise.
     enum ImageSource { case photos, camera, files }
     var imageSource: ImageSource = .photos
@@ -295,11 +297,12 @@ enum RichText {
     /// line up with that text. One width for every kind of list, so they line up with each other, and it grows
     /// with the text (docs/design/checklists-2026-10-03.md).
     nonisolated static func listColumn(size: CGFloat) -> CGFloat { (size * 1.5).rounded() }
-    /// How far list `levels` deep moves in: a column per level, as many as fit in 160 points, so deep nesting at a
-    /// large text size still leaves its text room on the line.
+    /// How many list levels are drawn further in at `size`: as many columns as fit in 160 points, so deep nesting at
+    /// a large text size still leaves its text room on the line. Increase Indent goes no deeper (ListIndentation).
+    nonisolated static func visibleNestingLevels(size: CGFloat) -> Int { max(1, Int(160 / listColumn(size: size))) }
+    /// How far list `levels` deep moves in: a column per level, up to `visibleNestingLevels`.
     nonisolated static func nestingIndent(levels: Int, size: CGFloat) -> CGFloat {
-        let column = listColumn(size: size)
-        return CGFloat(min(levels, max(1, Int(160 / column)))) * column
+        CGFloat(min(levels, visibleNestingLevels(size: size))) * listColumn(size: size)
     }
     /// Blocks drawn in a bold font by their style. That weight isn't the Bold format: it isn't saved as bold and
     /// doesn't turn on the Bold button.

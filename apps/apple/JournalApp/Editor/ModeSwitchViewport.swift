@@ -20,7 +20,9 @@ extension NativeEditor.Coordinator {
     func restoreCaretViewportOffset(_ offset: CGFloat?) {
         guard let view, let offset, let caret = caretLineTop(in: view) else { return }
         #if os(macOS)
-            let maximum = max(0, view.frame.height - view.visibleRect.height)
+            // The room below the line being typed is part of the visible rectangle and can be scrolled into.
+            let room = view.enclosingScrollView?.contentInsets.bottom ?? 0
+            let maximum = max(0, view.frame.height - view.visibleRect.height + room)
             view.scroll(NSPoint(x: 0, y: min(maximum, max(0, caret - offset))))
         #else
             let minimum = -view.adjustedContentInset.top

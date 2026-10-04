@@ -39,36 +39,47 @@ import SwiftUI
     static let touchHeight: CGFloat = 44
     static func touchHeight(for font: PlatformFont) -> CGFloat { max(touchHeight, (font.pointSize * 1.3).rounded(.up)) }
 
+    /// Places a checkbox for every checklist item in view, and just beyond it, so items scrolling in already have
+    /// theirs. An item keeps its checkbox while it stays in that area; only the boxes of items that left it are used
+    /// for items that arrived.
     func synchronize(editable: Bool) {
         guard let host else { return }
         #if os(macOS)
             guard let storage = host.textStorage, let layout = host.layoutManager, let container = host.textContainer
             else { return }
+            observeScrolling(of: host)
+            self.editable = editable
             let origin = host.textContainerOrigin
             let visible = host.visibleRect
+            // A screen ahead in each direction: the scroll view draws the text there ahead of time as well.
+            let area = visible.insetBy(dx: 0, dy: -max(Self.touchHeight, visible.height))
         #else
             let storage = host.textStorage
             let layout = host.layoutManager
             let container = host.textContainer
             let origin = CGPoint(x: host.textContainerInset.left, y: host.textContainerInset.top)
-            let visible = host.bounds
+            // UIKit lays the text view out for every frame it scrolls.
+            let area = host.bounds.insetBy(dx: 0, dy: -Self.touchHeight)
         #endif
-        let items = Self.items(
-            in: visible.insetBy(dx: 0, dy: -Self.touchHeight), storage: storage, layout: layout, container: container,
-            origin: origin)
-        for (index, item) in items.enumerated() {
-            let button = index < buttons.count ? buttons[index] : makeButton()
+        let items = Self.items(in: area, storage: storage, layout: layout, container: container, origin: origin)
+        let locations = Set(items.map(\.location))
+        var kept: [Int: TaskButton] = [:]
+        var free: [TaskButton] = []
+        for button in buttons {
+            if locations.contains(button.tag), kept[button.tag] == nil {
+                kept[button.tag] = button
+            } else {
+                free.append(button)
+            }
+        }
+        var shown: [TaskButton] = []
+        for index in items.indices {
+            let item = items[index]
+            let button = kept[item.location] ?? free.popLast() ?? makeButton()
+            shown.append(button)
             button.tag = item.location
             #if os(macOS)
-                button.controlSize =
-                    item.placement.font.pointSize < 14 ? .small : item.placement.font.pointSize > 20 ? .large : .regular
-                let height = button.cell?.cellSize.height ?? 16
-                button.frame = CGRect(
-                    x: item.placement.boxX, y: item.placement.capCenter - height / 2,
-                    width: max(height, item.placement.textX - item.placement.boxX), height: height)
-                button.state = item.checked ? .on : .off
-                button.setAccessibilityLabel(item.label)
-                button.isEnabled = editable
+                place(button, for: item, editable: editable)
             #else
                 let previous = index > 0 ? items[index - 1].placement.capCenter : nil
                 let next = index + 1 < items.count ? items[index + 1].placement.capCenter : nil
@@ -80,13 +91,55 @@ import SwiftUI
                     editable: editable)
             #endif
         }
-        for button in buttons.dropFirst(items.count) { button.removeFromSuperview() }
-        buttons.removeLast(max(0, buttons.count - items.count))
+        for button in free { button.removeFromSuperview() }
+        buttons = shown
         #if os(iOS)
             // VoiceOver reaches the checkboxes after the entry's text, top to bottom.
-            (host.superview as? JournalWritingView)?.checkboxElements = Array(buttons.prefix(items.count))
+            (host.superview as? JournalWritingView)?.checkboxElements = shown
         #endif
     }
+
+    #if os(macOS)
+        /// Whether the checkboxes respond, as last synchronized.
+        private var editable = true
+        private weak var observedClip: NSClipView?
+
+        /// The checkboxes follow the scroll view as it scrolls, which doesn't lay the text view out: build 14 placed
+        /// them only on layout, so items scrolled into view showed no checkbox, or showed it late.
+        private func observeScrolling(of host: JournalTextView) {
+            guard let clip = host.enclosingScrollView?.contentView, clip !== observedClip else { return }
+            if let observedClip {
+                NotificationCenter.default.removeObserver(
+                    self, name: NSView.boundsDidChangeNotification, object: observedClip)
+            }
+            clip.postsBoundsChangedNotifications = true
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(scrolled(_:)), name: NSView.boundsDidChangeNotification, object: clip)
+            observedClip = clip
+        }
+
+        @objc private func scrolled(_ notification: Notification) {
+            // A scroll in the middle of an edit waits for the layout that follows it.
+            guard host?.textStorage?.editedMask.isEmpty != false else { return }
+            synchronize(editable: editable)
+        }
+
+        /// Sets only what changed, so a checkbox that stays where it is isn't redrawn while the entry scrolls.
+        private func place(_ button: NSButton, for item: Item, editable: Bool) {
+            let size: NSControl.ControlSize =
+                item.placement.font.pointSize < 14 ? .small : item.placement.font.pointSize > 20 ? .large : .regular
+            if button.controlSize != size { button.controlSize = size }
+            let height = button.cell?.cellSize.height ?? 16
+            let frame = CGRect(
+                x: item.placement.boxX, y: item.placement.capCenter - height / 2,
+                width: max(height, item.placement.textX - item.placement.boxX), height: height)
+            if button.frame != frame { button.frame = frame }
+            let state: NSControl.StateValue = item.checked ? .on : .off
+            if button.state != state { button.state = state }
+            if button.accessibilityLabel() != item.label { button.setAccessibilityLabel(item.label) }
+            if button.isEnabled != editable { button.isEnabled = editable }
+        }
+    #endif
 
     struct Item {
         /// Where the item's paragraph starts.
@@ -141,13 +194,13 @@ import SwiftUI
         let glyph = layout.glyphIndexForCharacter(at: location)
         guard glyph < layout.numberOfGlyphs else { return nil }
         let line = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
-        let point = layout.location(forGlyphAt: glyph)
+        let baseline = ListMarkers.baseline(ofCharacter: location, glyph: glyph, layout: layout)
         let style = storage.attribute(.paragraphStyle, at: location, effectiveRange: nil) as? NSParagraphStyle
         let column = ListMarkers.columnStart(
             style: style, size: first.pointSize, padding: container.lineFragmentPadding,
             column: storage.attribute(.journalListColumn, at: location, effectiveRange: nil) as? CGFloat)
         return Placement(
-            boxX: origin.x + line.minX + column, baseline: origin.y + line.minY + point.y,
+            boxX: origin.x + line.minX + column, baseline: origin.y + line.minY + baseline,
             textX: origin.x + container.lineFragmentPadding + (style?.headIndent ?? 0), font: font)
     }
 
@@ -167,6 +220,9 @@ import SwiftUI
     private func makeButton() -> TaskButton {
         #if os(macOS)
             let button = NSButton(checkboxWithTitle: "", target: self, action: #selector(activate(_:)))
+            // A click toggles the item and the caret stays in the text, also with Keyboard Navigation on, which
+            // would otherwise give the checkbox the focus. Format ▸ Mark as Checked is the keyboard's way.
+            button.refusesFirstResponder = true
         #else
             let button = ChecklistBox()
             button.addAction(
@@ -176,7 +232,6 @@ import SwiftUI
                 }, for: .touchUpInside)
         #endif
         host?.addSubview(button)
-        buttons.append(button)
         return button
     }
     #if os(macOS)

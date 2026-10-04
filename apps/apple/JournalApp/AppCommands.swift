@@ -173,7 +173,9 @@ struct JournalCommands: Commands {
             Button("Block Quote") { editor.perform(.paragraph("quote")) }.keyboardShortcut("'")
             Divider()
             Button("Increase Indent") { editor.perform(.indent) }.keyboardShortcut("]")
+                .disabled(!editor.caretIndentation.increase)
             Button("Decrease Indent") { editor.perform(.outdent) }.keyboardShortcut("[")
+                .disabled(!editor.caretIndentation.decrease)
             Divider()
             Menu("Insert") {
                 Button("Code Block") { editor.perform(.insert("```\n\n```\n")) }

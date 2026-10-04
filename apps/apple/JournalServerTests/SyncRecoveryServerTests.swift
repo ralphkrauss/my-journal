@@ -141,7 +141,7 @@
 
         // MARK: Support
 
-        /// A library with built-in templates and one entry, set up on a new server from the app.
+        /// A library as this build creates it, without templates, with one entry, set up on a new server from the app.
         private func connectedLibrary(encrypted: Bool = true) async throws -> (DisposableServer, AppModel) {
             let server = try DisposableServer()
             self.server = server
@@ -181,7 +181,8 @@
                 try await owner.revoke(device.id)
             }
         }
-        /// Another library, with its own built-in templates, a Default journal and an entry, sets the server up.
+        /// Another library, made by an earlier build with its built-in templates, a Default journal and an entry, sets
+        /// the server up.
         private func setUpAnotherLibrary(_ server: DisposableServer, encrypted: Bool) async throws {
             let key = try VaultCrypto.generateKey()
             let recovery =
@@ -192,11 +193,7 @@
                 code: server.setupCode(), envelope: recovery.0, recoverySecret: recovery.1, deviceName: "Other")
             let directory = server.root.appendingPathComponent("other-library")
             let store = try JournalStore(directory: directory, key: key, protection: try recovery.0.contentProtection)
-            for template in BuiltInTemplates.all {
-                var copy = template
-                copy.id = UUID()
-                try await store.save(copy)
-            }
+            for template in BuiltInTemplates.asEarlierBuildsCreated() { try await store.save(template) }
             let journal = JournalItem(kind: "journal", title: "Default")
             try await store.save(journal)
             try await store.save(JournalItem(kind: "entry", journalID: journal.id, title: "Other library's entry"))
