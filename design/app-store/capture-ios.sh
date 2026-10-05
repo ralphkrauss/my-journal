@@ -18,10 +18,7 @@ design/app-store/seed-library.sh "$library" >/dev/null
 xcrun simctl boot "$device" 2>/dev/null || true
 xcrun simctl bootstatus "$device" -b >/dev/null
 xcrun simctl status_bar "$device" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 \
-  --cellularMode active --cellularBars 4 --batteryState discharging --batteryLevel 100 --operatorName ''
-# Enrolled Face ID or Touch ID, so Privacy can show "Unlock with Face ID" turned on.
-xcrun simctl spawn "$device" notifyutil -s com.apple.BiometricKit.enrollmentChanged 1
-xcrun simctl spawn "$device" notifyutil -p com.apple.BiometricKit.enrollmentChanged
+  --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 --operatorName ''
 scripts/generate-apple.sh apps/apple/screenshots.yml JournalScreenshots >/dev/null
 derived="${JOURNAL_SCREENSHOT_DERIVED_DATA:-artifacts/DD-shots}"
 run() {

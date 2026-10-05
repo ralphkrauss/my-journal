@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-routine_lanes=(hygiene lint backend audit core mac sync sync-health sync-efficiency local-server ios-ui recovery-ui)
+routine_lanes=(hygiene lint backend audit core mac sync sync-health sync-efficiency server-recovery ios-ui recovery-ui)
 known_lanes=" ${routine_lanes[*]} accessibility "
 # A full run is due after this many days or selective runs since the last one.
 full_after_days=7
@@ -186,7 +186,7 @@ classify() {
       select_lane sync "$path"
       select_lane sync-health "$path"
       select_lane sync-efficiency "$path"
-      select_lane local-server "$path"
+      select_lane server-recovery "$path"
       select_lane recovery-ui "$path"
       # The UI tests that use a disposable server: pairing, setting one up, agent access and merging.
       select_ui_tests "$path" JournalIOSUITests/JournalUITests/testPairDeviceAndDownloadEncryptedEntry \
@@ -194,7 +194,7 @@ classify() {
       ;;
     apps/apple/JournalApp/Views/Mac/* | apps/apple/MacResources/* | apps/apple/JournalServerTests/* | apps/apple/Signing/*)
       select_lane mac "$path"
-      select_lane local-server "$path"
+      select_lane server-recovery "$path"
       ;;
     apps/apple/JournalTests/*)
       select_lane mac "$path"
@@ -205,7 +205,7 @@ classify() {
       ;;
     apps/apple/JournalApp/* | apps/apple/project.yml | scripts/generate-apple.sh)
       select_lane mac "$path"
-      select_lane local-server "$path"
+      select_lane server-recovery "$path"
       select_lane recovery-ui "$path"
       select_ui_all "$path"
       ;;
@@ -216,7 +216,7 @@ classify() {
     scripts/test-sync.sh) select_lane sync "$path" ;;
     scripts/test-sync-health.sh) select_lane sync-health "$path" ;;
     scripts/test-sync-efficiency.sh | scripts/sync-fault-proxy.py) select_lane sync-efficiency "$path" ;;
-    scripts/test-local-server.sh) select_lane local-server "$path" ;;
+    scripts/test-server-recovery.sh) select_lane server-recovery "$path" ;;
     scripts/test-native-pairing.sh) select_ui_all "$path" ;;
     scripts/test-sync-recovery-ui.sh) select_lane recovery-ui "$path" ;;
     scripts/test-native-accessibility.sh) select_lane accessibility "$path" ;;
@@ -227,11 +227,11 @@ classify() {
     scripts/test-*) require_full "$path" ;;
     scripts/package-server.sh | packaging/*)
       select_lane sync-health "$path"
-      select_lane local-server "$path"
+      select_lane server-recovery "$path"
       select_lane recovery-ui "$path"
       ;;
     scripts/prepare-simulator.sh | scripts/verify-test-results.py)
-      select_lane local-server "$path"
+      select_lane server-recovery "$path"
       select_lane recovery-ui "$path"
       select_ui_all "$path"
       ;;
@@ -375,7 +375,7 @@ lane_command() {
     sync) JOURNAL_TEST_RESULTS="$run/results/sync" scripts/test-sync.sh ;;
     sync-health) JOURNAL_SERVER_PACKAGE="$package" JOURNAL_TEST_RESULTS="$run/results/sync-health" scripts/test-sync-health.sh ;;
     sync-efficiency) JOURNAL_TEST_RESULTS="$run/results/sync-efficiency" scripts/test-sync-efficiency.sh ;;
-    local-server) JOURNAL_TEST_RESULTS="$run/results/local-server" scripts/test-local-server.sh ;;
+    server-recovery) JOURNAL_TEST_RESULTS="$run/results/server-recovery" scripts/test-server-recovery.sh ;;
     ios-ui) JOURNAL_TEST_RESULTS="$run/results/ios-ui" scripts/test-native-pairing.sh ${ui_args[@]+"${ui_args[@]}"} ;;
     recovery-ui)
       JOURNAL_SERVER_PACKAGE="$package" JOURNAL_TEST_RESULTS="$run/results/recovery-ui" scripts/test-sync-recovery-ui.sh
@@ -397,7 +397,7 @@ run_lane() {
   local lane="$1" started status=0 took
   # These pick servers' ports from the fixed loopback range 18950-18959 when they start, and sync-health restarts its
   # servers on the ports it picked, so another lane could take one in between. They never overlap with sync-health.
-  if [[ "$lane" == recovery-ui || "$lane" == local-server ]] && has_lane sync-health; then
+  if [[ "$lane" == recovery-ui || "$lane" == server-recovery ]] && has_lane sync-health; then
     while [[ ! -e "$run/passed-sync-health" ]]; do
       [[ ! -e "$run/failed" ]] || return 1
       sleep 2
@@ -565,7 +565,7 @@ lanes_of() {
 }
 
 needs_project=0
-for lane in mac local-server ios-ui recovery-ui accessibility; do
+for lane in mac server-recovery ios-ui recovery-ui accessibility; do
   if has_lane "$lane"; then needs_project=1; fi
 done
 [[ -z "$build_number" ]] || needs_project=1
@@ -574,7 +574,7 @@ gate_a="$(lanes_of hygiene lint)"
 gate_b="$(lanes_of backend)"
 if has_lane sync-health || has_lane recovery-ui; then gate_b+="package "; fi
 host="$(lanes_of sync-health sync core mac sync-efficiency audit)"
-sim="$(lanes_of local-server ios-ui recovery-ui accessibility)"
+sim="$(lanes_of server-recovery ios-ui recovery-ui accessibility)"
 archive_pending=0
 [[ -z "$build_number" ]] || archive_pending=1
 

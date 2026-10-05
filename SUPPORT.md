@@ -6,8 +6,8 @@ Get help with My Journal, report a problem or suggest an improvement. Questions 
 
 ## Find an answer
 
-- [User guide](docs/guide/README.md): getting started, sync, devices, backups, App Lock and agent access.
-- [Troubleshooting](docs/guide/troubleshooting.md): a forgotten master password or PIN, changes that need review, sync problems, moving to a new device and deleting your data.
+- [User guide](docs/guide/README.md): getting started, writing and organizing, sync, devices, backups, App Lock and agent access.
+- [Troubleshooting](docs/guide/troubleshooting.md): a forgotten master password, unlocking, changes that need review, sync problems, moving to a new device, and erasing or deleting your data.
 
 ## Ask a question or report a problem
 
@@ -16,7 +16,7 @@ Get help with My Journal, report a problem or suggest an improvement. Questions 
 Include the app version, your device and system version, and the steps that lead to the problem. To find the app version:
 
 - Mac: My Journal > About My Journal.
-- iPhone and iPad: in the Settings app, General > iPhone Storage (or iPad Storage) > My Journal.
+- iPhone and iPad: in My Journal, Settings, at the end of the About section.
 
 No GitHub account? Email [ralph@krauss.be](mailto:ralph@krauss.be).
 

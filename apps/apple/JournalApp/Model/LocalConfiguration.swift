@@ -32,6 +32,9 @@ struct LocalConfiguration: Codable {
     var passwordChecked: Bool?
     /// Turning on encryption that hasn't finished (EncryptionOperations.swift).
     var encryptionUpgrade: EncryptionUpgradeMarker?
+    /// This Mac stopped syncing with the server earlier Mac builds ran (FormerMacServer.swift); Sync explains it
+    /// until the library connects to a server.
+    var stoppedSyncingWithFormerMacServer: Bool?
 }
 
 extension LocalConfiguration {

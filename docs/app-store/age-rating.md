@@ -1,14 +1,14 @@
 # Age rating answers
 
-Answers for App Store Connect > App Information > Age Rating. The rating is set once for the app and applies to iPhone, iPad and Mac ([App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information)). Checked 2026-09-28.
+Answers for App Store Connect > App Information > Age Rating. The rating is set once for the app and applies to iPhone, iPad and Mac ([App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information)). Checked on 2026-10-05 against build 16's code and Apple's current questionnaire.
 
 **Result: 4+.** Nothing in the app requires a higher rating.
 
 ## The questionnaire
 
-Apple's current questionnaire (updated July 2025, with social media questions added in July 2026 that must be answered from September 2026) asks about in-app controls, capabilities, mature themes, medical or wellness topics, sexuality or nudity, violence and chance-based activities, then shows the calculated rating ([Set an app age rating](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating), [Updated age ratings in App Store Connect](https://developer.apple.com/news/?id=ks775ehf)). The definitions below are Apple's ([Age ratings values and definitions](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions)). The order of the steps in App Store Connect may differ; answer by name.
+Apple's current questionnaire (the 13+, 16+ and 18+ ratings and the in-app controls, capabilities and wellness questions from July 2025, required for every app since January 31, 2026; the social media questions added on July 9, 2026, required for new apps and updates since September 2026 ([news](https://developer.apple.com/news/?id=tlur8uvi))) asks about in-app controls, capabilities, mature themes, medical or wellness topics, sexuality or nudity, violence and chance-based activities, then shows the calculated rating ([Set an app age rating](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating), [Updated age ratings in App Store Connect](https://developer.apple.com/news/?id=ks775ehf)). The definitions below are Apple's ([Age ratings values and definitions](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions)). The order of the steps in App Store Connect may differ; answer by name.
 
-What the app ships with: no content of its own (new libraries start without templates since 2026-10-04), and no built-in AI. Everything else is what the person writes, for themselves.
+What the app ships with: no content of its own (new libraries start without templates since build 15), no built-in AI, no web view and no way for people to reach each other. Everything else is what the person writes, for themselves.
 
 ### In-app controls
 
@@ -21,9 +21,10 @@ What the app ships with: no content of its own (new libraries start without temp
 
 | Item | Answer | Why |
 | --- | --- | --- |
-| Unrestricted Web Access | No | Defined as navigating to any webpage within the app, such as an embedded browser. The app has no web view or browser. A link in an entry opens in the person's default browser only when they choose it, and images linked from the web aren't loaded. |
-| User-Generated Content | No | Defined as "broad distribution" of content created by users. Entries are private: they stay on the person's devices and their own server, and nobody else can see them. |
-| Social Media | No | No feed, discovery, likes, comments or sharing between people. |
+| Unrestricted Web Access | No | Defined as navigating to any webpage within the app, such as an embedded browser. The app has no web view or browser (no WKWebView or SFSafariViewController in the code). A link in an entry opens in the person's default browser only when they choose it, images linked from the web aren't loaded, and an agent's approval page opens in the person's own browser. |
+| User-Generated Content | No | Defined as "broad distribution" of content created by users. Entries are private: they stay on the person's devices and their own server, and nobody else can see them. Share… on an image hands one picture to the system share sheet, at the person's choice, like any app that saves photos; nothing is published. |
+| Social Media | No | No feed, profiles, discovery, likes, comments or sharing between people. |
+| Social Media Disabled for Users Under 13 | Not applicable (No) | Asked only for apps with social media features. |
 | Messaging and Chat | No | People can't communicate with each other through the app. Sync connects one person's own devices; agent access is one person's own agent reading their journals. |
 | Advertising | No | No ads. |
 
@@ -44,7 +45,7 @@ The app contains none of these. What a person writes in their own journal isn't 
 | Item | Answer | Why |
 | --- | --- | --- |
 | Medical or Treatment Information | None | No diagnoses or treatment guidance. |
-| Health or Wellness Topics | None | Defined as self-care or lifestyle recommendations, such as calorie tracking, dieting or exercise advice. The app includes no templates or prompts and makes no recommendations; templates are only what the person saves. |
+| Health or Wellness Topics | No | A Yes or No question. Defined as self-care or lifestyle recommendations, such as calorie tracking, dieting or exercise advice. The app includes no templates or prompts and makes no recommendations; templates are only what the person saves. |
 
 ### Sexuality or nudity
 

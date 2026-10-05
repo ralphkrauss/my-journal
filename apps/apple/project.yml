@@ -208,20 +208,18 @@ schemes:
         JOURNAL_TEST_HEALTH_CONTROL: "$(JOURNAL_TEST_HEALTH_CONTROL)"
     archive:
       customArchiveName: My Journal
-  # A team-signed, sandboxed app with the bundled server (scripts/test-mac-sandbox.sh).
+  # A team-signed, sandboxed app (scripts/test-mac-sandbox.sh).
   JournalMacSandbox:
     build:
       targets:
         JournalMac: all
     test:
-      targets: [JournalMacSandboxTests, JournalMacServerTests]
-      environmentVariables:
-        JOURNAL_LOCAL_SERVER_EXECUTABLE: "$(JOURNAL_LOCAL_SERVER_EXECUTABLE)"
-  JournalLocalServer:
+      targets: [JournalMacSandboxTests]
+  JournalServerRecovery:
     build:
       targets:
         JournalMac: all
     test:
       targets: [JournalMacServerTests]
       environmentVariables:
-        JOURNAL_LOCAL_SERVER_EXECUTABLE: "$(JOURNAL_LOCAL_SERVER_EXECUTABLE)"
+        JOURNAL_SERVER_EXECUTABLE: "$(JOURNAL_SERVER_EXECUTABLE)"

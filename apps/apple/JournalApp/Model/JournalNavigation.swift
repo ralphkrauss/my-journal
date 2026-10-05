@@ -205,9 +205,16 @@ extension AppModel {
         return true
     }
     private func applySelection(_ id: UUID?) {
+        let left = draft.flatMap { $0.id != id && isListedEntry($0.id) ? $0.id : nil }
         selectedID = id
         draft = items.first { $0.id == id }
         rememberSelection()
+        // Leaving an edited entry this way is a pause in writing; deleting or moving it is not.
+        reviewRequests.selectionChanged(leaving: left)
+    }
+    private func isListedEntry(_ id: UUID) -> Bool {
+        guard let item = items.first(where: { $0.id == id }), item.kind == "entry" else { return false }
+        return lifecycle.location(of: item).isInLiveJournal
     }
     @discardableResult func switchJournal(_ id: UUID) async -> Bool {
         endEntryCreation()

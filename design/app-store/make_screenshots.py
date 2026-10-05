@@ -451,11 +451,23 @@ def mac_single(number: str, window: Image.Image, dark: bool = False) -> Image.Im
 
 
 def mac_with_settings(
-    number, main, front, dark=False, main_at=(240, 430), front_corner=(2640, 1730), extra=None
+    number,
+    main,
+    front,
+    dark=False,
+    main_at=(240, 430),
+    front_corner=(2640, 1730),
+    extra=None,
+    front_height=None,
 ):
+    """The main window with a window or page in front, its bottom right corner at front_corner.
+
+    A front element taller than front_height at the usual scale is scaled down to that height."""
     layout, theme = MAC, DARK if dark else LIGHT
     back = scaled(main, 0.70)
     element = scaled(front, 0.82)
+    if front_height and element.height > front_height:
+        element = scaled(front, front_height / front.height)
     canvas = background(layout, theme, (layout.size[0] / 2, 1100))
     draw_text(canvas, layout, number, theme, False, (36, main_at[1] - 36))
     place(canvas, back, main_at, theme["shadow"])
@@ -524,8 +536,8 @@ def build() -> dict[str, list[Path]]:
         ("01", "01-writing-light", "01-hero", False),
         ("02", "02-privacy-light", "02-privacy", False),
         ("03", "03-devices-light", "03-sync", False),
-        ("04", "04-search-light", "04-find", False),
-        ("05", "05-journals-list", "05-journals", False),
+        ("04", "04-pinned-light", "04-find", False),
+        ("05", "05-journals-edit-light", "05-journals", False),
         ("06", "06-dark", "06-dark", True),
     ]
     for number, capture, name, dark in phone:
@@ -563,10 +575,19 @@ def build() -> dict[str, list[Path]]:
             "03-sync",
         )
     )
-    agents = mac_window("04-settings-agents-dark", traffic="close")
+    # The agent's page is a sheet of Settings, without a title bar. It takes the place of the
+    # Agent Access pane of the 2026-09-28 set, at most as tall (877 px, top at y 843).
+    agent_page = mac_window("04-agent-detail-dark", traffic="none")
     main_dark = mac_window("04-main-dark", traffic="none")
     four = mac_with_settings(
-        "04-mac", main_dark, agents, True, (200, 430), (2680, 1720), agent_card
+        "04-mac",
+        main_dark,
+        agent_page,
+        True,
+        (200, 430),
+        (2680, 1720),
+        agent_card,
+        front_height=877,
     )
     outputs["mac"].append(save(four, "mac", "04-insights"))
     sheet = mac_window("05-sheet-light", traffic="none")

@@ -94,12 +94,29 @@ struct ScreenshotLibrary {
         if includesHistory, let bread = saved["Bread, attempt four"] {
             try await addHistory(to: store, key: key, entry: bread, loaf: images["loaf.jpg"])
         }
+        try await arrange(store, journals: journals, saved: saved)
         try await store.close()
         guard let first = saved["Slow Sunday"] else { throw MeasurementError.contentMismatch }
         let configuration = Configuration(
             recovery: recovery, storageFolder: folder, lastJournalID: journals[0].id, lastEntryID: first.id)
         try JournalCoding.encoder().encode(configuration).write(
             to: directory.appendingPathComponent("configuration.json"), options: .atomic)
+    }
+
+    /// Pins one entry in Personal and one in Work, and puts the journals in the seeded order rather than the app's
+    /// default name order, so the frames show that people choose both.
+    private func arrange(_ store: JournalStore, journals: [JournalItem], saved: [String: JournalItem]) async throws {
+        for title in Self.pinnedTitles {
+            guard let entry = saved[title] else { throw MeasurementError.contentMismatch }
+            try await store.setPinned(true, entry: entry.id)
+        }
+        // Each move places one journal at its index among the others, so the final order matches `journals`.
+        for (index, journal) in journals.enumerated() {
+            let shown = try await store.arrangedJournals().map(\.id)
+            try await store.moveJournal(journal.id, shown: shown, to: index)
+        }
+        let arranged = try await store.arrangedJournals().map(\.id)
+        guard arranged == journals.map(\.id) else { throw MeasurementError.contentMismatch }
     }
 
     /// Three earlier versions of the bread entry, as edits from the iPad that this device took over: the table
@@ -167,6 +184,8 @@ struct ScreenshotLibrary {
             minute: minute)
     }
 
+    private static let pinnedTitles = ["Books for the autumn", "Offsite ideas"]
+
     private static let entries: [Entry] = [
         Entry(
             journal: 0, title: "Slow Sunday", date: day(27, 9, 12),
@@ -176,17 +195,17 @@ struct ScreenshotLibrary {
 
                 [image: coffee.jpg]
 
-                ## Worth keeping from this week
-
-                - The evening walk along the river on Tuesday
-                - Finally fixing the wobbly kitchen chair
-                - Saying no to one more commitment, and meaning it
-
                 ## Today
 
                 - [x] Feed the sourdough starter
                 - [ ] Call my sister
                 - [ ] Leave the evening empty
+
+                ## Worth keeping from this week
+
+                - The evening walk along the river on Tuesday
+                - Finally fixing the wobbly kitchen chair
+                - Saying no to one more commitment, and meaning it
 
                 > Nothing is in a hurry today, including me.
 
@@ -205,6 +224,20 @@ struct ScreenshotLibrary {
                 ## What will I carry into tomorrow?
 
                 Close the laptop by six. Walk first, then decide what the evening is for.
+
+                """),
+        Entry(
+            journal: 0, title: "Books for the autumn", date: day(20, 16, 30),
+            markdown: """
+                One chapter a night, with the phone in the other room.
+
+                - [x] The island novel, finished on the train
+                - [ ] Something about walking
+                  - [ ] The one Priya mentioned by the river
+                - [ ] A book of short poems for the bedside table
+                - [ ] Reread an old favorite
+
+                When I finish one, notes go in a Book Notes entry.
 
                 """),
         Entry(
@@ -369,6 +402,8 @@ struct ScreenshotLibrary {
             markdown: """
                 - [x] Passport
                 - [x] Chargers
+                  - [x] Phone and watch
+                  - [ ] Camera battery
                 - [x] Walking shoes
                 - [x] Rain jacket
                 - [ ] Book for the train

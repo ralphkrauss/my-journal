@@ -35,8 +35,6 @@ enum EraseWarning: Equatable {
 
 /// Why Erase Journals and Settings is unavailable at the moment.
 enum EraseBlock: Equatable {
-    /// This Mac runs the sync server for the person's devices (§4.2).
-    case serverOnThisMac
     /// Another operation is changing the library, or a save failed (§4.3).
     case busy
 }
@@ -54,10 +52,6 @@ enum EraseOutcome: Equatable {
 
 extension AppModel {
     var eraseBlock: EraseBlock? {
-        #if os(macOS)
-            if localServer.hasSetup || localServer.isConfigured { return .serverOnThisMac }
-            if localServer.busy { return .busy }
-        #endif
         if replacingVault || connectingToServer || deleteAllPhase != .idle || saveFailure || encryption.busy
             || erasingLibrary
         {
@@ -114,7 +108,7 @@ extension AppModel {
     func eraseLibrary(shown: EraseWarning) async -> EraseOutcome {
         guard !locked, configuration != nil, store != nil, eraseBlock == nil else { return .cancelled }
         if appLockOn {
-            guard await authenticateToErase() else { return .cancelled }
+            guard await authenticateDeviceOwner(reason: "Erase journals on this device") else { return .cancelled }
         }
         // Pause: nothing writes to the library or syncs it from here on.
         vaultReplacement = true
@@ -138,21 +132,6 @@ extension AppModel {
         return .erased
     }
 
-    /// The device's own authentication when App Lock is on, as turning App Lock off asks for it.
-    private func authenticateToErase() async -> Bool {
-        refreshDeviceOwnerAvailability()
-        let lockCount = unlockState.lockCount
-        unlockState.authenticating = true
-        let outcome = await deviceOwner.authenticate(
-            reason: Self.authenticationReason("Erase journals on this device"))
-        unlockState.authenticating = false
-        guard !locked, lockCount == unlockState.lockCount else { return false }
-        switch outcome {
-        case .success, .noPasscode: return true
-        case .cancelled, .failed: return false
-        }
-    }
-
     /// After the commit: the Keychain items go first, then the library's files move aside before the first-launch
     /// screen can start a new library; the deletion and the sign-out continue in the background.
     private func finishErasing(list: ErasureList, folder: URL) async {
@@ -164,6 +143,7 @@ extension AppModel {
         try? await previousStore?.close()
         LocalErasure.moveListed(list, from: directory, into: folder, protected: [])
         UserDefaults.standard.removeObject(forKey: MarkdownShortcuts.settingKey)
+        UserDefaults.standard.removeObject(forKey: ReviewUsageStore.defaultsKey)
         erasingLibrary = false
         Task.detached(priority: .utility) {
             LocalErasure.delete(folder, list: list, keysRemoved: keysRemoved)

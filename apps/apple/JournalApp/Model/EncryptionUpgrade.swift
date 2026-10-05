@@ -57,18 +57,7 @@ final class EncryptionUpgrade: ObservableObject {
     /// Cancel stops the work, until the server is being changed.
     var canCancel: Bool { phase != .updatingServer && !unfinished }
     var synced: Bool { model?.connection != nil }
-    /// The server this Mac runs itself, which the intro doesn't name separately.
-    var ownServer: Bool {
-        #if os(macOS)
-            model?.localServer.isConfigured == true
-        #else
-            false
-        #endif
-    }
-    var host: String {
-        if ownServer { return "the server on this Mac" }
-        return model?.connection.map { ServerAddress.host($0.address) } ?? ""
-    }
+    var host: String { model?.connection.map { ServerAddress.host($0.address) } ?? "" }
     private var capitalizedHost: String { host.prefix(1).uppercased() + host.dropFirst() }
     var needsCurrentPassword: Bool { model?.configuration?.recovery.formatVersion == 3 }
     /// Sign In is offered while this device's journals aren't encrypted and its server's are.

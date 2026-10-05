@@ -53,13 +53,8 @@ struct ServerAgentsSections: View {
 
     @ViewBuilder private var connect: some View {
         if model.connection == nil {
-            #if os(macOS)
-                Text("To let agents read your journals, use this Mac as your server or connect to one.")
-                Button("Set Up Sync…") { model.settingsTab = .sync }
-            #else
-                Text("To let agents read your journals, connect to a sync server.")
-                Button("Set Up Sync…") { controller.connecting = true }
-            #endif
+            Text("To let agents read your journals, connect to a server.")
+            Button("Connect to a Server…") { controller.connecting = true }
         } else {
             switch controller.phase {
             case .loading where !controller.loaded:

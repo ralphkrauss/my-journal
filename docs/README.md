@@ -5,7 +5,7 @@
 - [User guide](guide/README.md): getting started, sync, devices, backups, App Lock, agent access and troubleshooting.
 - [Support](../SUPPORT.md) and [Privacy Policy](../PRIVACY.md).
 - [Distribution and installation](distribution.md): channels, supported systems, setup choices and updates.
-- [Self-hosting](self-hosting/README.md): run the server in a container, with Tailscale, or behind public HTTPS ([HTTPS example](self-hosting/https.md)).
+- [Self-hosting](self-hosting/README.md): run the server in a container, on a home server or a Mac, with Tailscale, or behind public HTTPS ([HTTPS example](self-hosting/https.md)).
 - [Security model](../SECURITY.md): what is protected, what the server can see, and how to report a vulnerability.
 
 ## Working on the code

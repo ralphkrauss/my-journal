@@ -172,11 +172,14 @@ extension AppModel {
     }
 }
 
-/// Removes archive copies that earlier builds left behind when the save dialog was cancelled or the app quit during an
-/// export: packages named `export-<UUID>.journalarchive` in the data folder, and the save dialog's
-/// `Journal Archive <yyyy-MM-dd>.journalarchive` copies in the app's own temporary folder. Nothing else is touched.
+/// Removes export copies left behind when the save dialog was cancelled or the app quit during an export: packages
+/// named `export-<UUID>.journalarchive` and Markdown folders named `markdown-<UUID>` in the data folder, and the save
+/// dialog's `Journal Archive <yyyy-MM-dd>.journalarchive` and `Journal Markdown <yyyy-MM-dd>` copies in the app's own
+/// temporary folder. Nothing else is touched.
 enum ArchiveExportLeftovers {
     @MainActor private static var removed = false
+    /// Export as Markdown's folder while it is prepared (MarkdownExportOperations.swift).
+    static let markdownPrefix = "markdown-"
 
     /// Once per launch, before any window can start an export.
     @MainActor static func removeAtLaunch(dataDirectory: URL) async {
@@ -194,14 +197,23 @@ enum ArchiveExportLeftovers {
     }
 
     static func isStagedExport(_ name: String) -> Bool {
+        if name.hasPrefix(markdownPrefix) {
+            return UUID(uuidString: String(name.dropFirst(markdownPrefix.count))) != nil
+        }
         guard name.hasPrefix("export-"), name.hasSuffix(".journalarchive") else { return false }
         let identifier = name.dropFirst("export-".count).dropLast(".journalarchive".count)
         return UUID(uuidString: String(identifier)) != nil
     }
 
     static func isDialogCopy(_ name: String) -> Bool {
+        if name.hasPrefix("Journal Markdown ") {
+            return isDate(name.dropFirst("Journal Markdown ".count))
+        }
         guard name.hasPrefix("Journal Archive "), name.hasSuffix(".journalarchive") else { return false }
-        let date = name.dropFirst("Journal Archive ".count).dropLast(".journalarchive".count)
+        return isDate(name.dropFirst("Journal Archive ".count).dropLast(".journalarchive".count))
+    }
+
+    private static func isDate(_ date: Substring) -> Bool {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"

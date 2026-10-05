@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --from=build /out .
 # The same license and notices as the server packages.
 COPY LICENSE NOTICE ./
-COPY apps/apple/JournalApp/Resources/ThirdPartyNotices.txt THIRD-PARTY-NOTICES.txt
+COPY packaging/server-THIRD-PARTY-NOTICES.txt THIRD-PARTY-NOTICES.txt
 # APP_UID is the base image's nonroot "app" user. A numeric user lets orchestrators verify runAsNonRoot.
 RUN mkdir /data && chown "$APP_UID:$APP_UID" /data
 # `docker compose exec journal setup-code` shows the setup code. Owned by root, so the app user can't change it.

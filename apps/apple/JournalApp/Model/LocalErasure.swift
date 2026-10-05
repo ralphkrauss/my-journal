@@ -69,10 +69,11 @@ enum LocalErasure {
     }
 
     /// A name the app gives a library's files in its data folder. Never a path, the configuration, an erase's own
-    /// folder, or the Mac's local server, which erasing doesn't touch.
+    /// folder, or what the server earlier Mac builds ran left behind, which may hold the only copy of changes from
+    /// other devices (docs/design/client-only-mac-lists-markdown-2026-10-05.md §1.2).
     static func isMovable(_ name: String) -> Bool {
         !name.isEmpty && !name.contains("/") && !name.hasPrefix(".") && !name.hasPrefix(prefix)
-            && !name.hasPrefix("local-server") && name != configurationName
+            && !name.hasPrefix(FormerMacServer.filePrefix) && name != configurationName
     }
 
     /// Deletes what the erased folder holds and the temporary copies; the folder itself, with the configuration and

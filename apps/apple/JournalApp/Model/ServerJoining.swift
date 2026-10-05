@@ -50,6 +50,7 @@ extension AppModel {
         try Keychain.write(JournalCoding.encoder().encode(value), account: account)
         let previous = configuration
         configuration?.connectionKeyID = account
+        configuration?.stoppedSyncingWithFormerMacServer = nil
         do { try persistConfiguration() } catch {
             configuration = previous
             try? Keychain.remove(account)
@@ -65,7 +66,7 @@ extension AppModel {
     /// `replacingEmptyLibrary` replaces a library with nothing written in it instead of uploading it.
     func recoverServer(
         address: String, phrase: String, uploadLocal: Bool, shown: RecoveryParameters? = nil,
-        recoveringOwnedServer: Bool = false, replacingEmptyLibrary: Bool = false
+        replacingEmptyLibrary: Bool = false
     ) async throws {
         guard !locked else { throw JournalError.locked }
         guard await flush() else { throw JournalError.server("Save your changes before connecting.") }
@@ -86,11 +87,9 @@ extension AppModel {
                 uploadLocal: uploadLocal, replacingEmptyLibrary: replacingEmptyLibrary)
             return
         }
-        // A known connection or our managed local server belongs to this library. Retain its
-        // plaintext record IDs, revision baselines and pending edits when replacing a device credential.
-        let retainedKey =
-            configuration?.recovery.formatVersion == 4 && (connection != nil || recoveringOwnedServer)
-            ? masterKey : nil
+        // A known connection belongs to this library. Retain its plaintext record IDs, revision baselines and
+        // pending edits when replacing a device credential.
+        let retainedKey = configuration?.recovery.formatVersion == 4 && connection != nil ? masterKey : nil
         let key: Data
         let grant: DeviceGrant
         if let pending = retryGrant, pending.address == address {

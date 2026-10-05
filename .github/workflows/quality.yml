@@ -103,9 +103,9 @@ jobs:
       - run: scripts/test-sync.sh
         env:
           JOURNAL_TEST_RESULTS: artifacts/ci/sync
-      - run: scripts/test-local-server.sh
+      - run: scripts/test-server-recovery.sh
         env:
-          JOURNAL_TEST_RESULTS: artifacts/ci/local-server
+          JOURNAL_TEST_RESULTS: artifacts/ci/server-recovery
       - if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

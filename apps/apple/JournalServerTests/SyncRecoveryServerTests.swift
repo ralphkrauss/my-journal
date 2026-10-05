@@ -8,7 +8,7 @@
     /// The app's own recovery paths (docs/design/sync-health-and-recovery.md §3.2): `AppModel` sets up, joins, stops
     /// syncing and syncs against the published server at a fixed loopback port, which each test stops, wipes, restores
     /// or replaces with another library. Each ends with a new device downloading every entry, journal name and
-    /// template exactly once. Run by scripts/test-local-server.sh.
+    /// template exactly once. Run by scripts/test-server-recovery.sh.
     @MainActor
     final class SyncRecoveryServerTests: XCTestCase {
         private let password = "a disposable library password"
@@ -223,7 +223,7 @@
         }
     }
 
-    /// The published server (JOURNAL_LOCAL_SERVER_EXECUTABLE) at a fixed loopback port between 18950 and 18959, so
+    /// The published server (JOURNAL_SERVER_EXECUTABLE) at a fixed loopback port between 18950 and 18959, so
     /// stopping, wiping and restoring it keeps the address a library knows.
     @MainActor
     final class DisposableServer {
@@ -236,7 +236,7 @@
 
         init() throws {
             executable = URL(
-                fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["JOURNAL_LOCAL_SERVER_EXECUTABLE"]))
+                fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["JOURNAL_SERVER_EXECUTABLE"]))
             data = root.appendingPathComponent("data")
             port = try XCTUnwrap((18950...18959).first(where: Self.isFree), "No free port between 18950 and 18959")
         }

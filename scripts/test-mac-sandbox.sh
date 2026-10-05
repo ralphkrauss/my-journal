@@ -1,7 +1,6 @@
 #!/bin/bash
-# Separate native lane for the Mac App Store configuration: a sandboxed, team-signed test host with the bundled
-# server. Requires Xcode signed in
-# to the team's Apple Account (see build-mac-development.sh). JOURNAL_TEST_RESULTS keeps the result bundle in a
+# Separate native lane for the Mac App Store configuration: a sandboxed, team-signed test host. Requires Xcode signed
+# in to the team's Apple Account (see build-mac-development.sh). JOURNAL_TEST_RESULTS keeps the result bundle in a
 # chosen new directory.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -14,17 +13,6 @@ results="$(cd "$results" && pwd)"
   echo "Choose a new JOURNAL_TEST_RESULTS directory." >&2
   exit 2
 }
-case "$(uname -m)" in
-  arm64) runtime=osx-arm64 ;;
-  x86_64) runtime=osx-x64 ;;
-  *)
-    echo "Run this check on macOS." >&2
-    exit 2
-    ;;
-esac
-# The published server (over 100 MB) is only needed until it is embedded.
-trap 'rm -rf "$work/server"' EXIT
-scripts/package-server.sh "$runtime" "$work/server"
 scripts/generate-apple.sh
 derived=artifacts/DerivedDataMacSandbox
 xcode=(xcodebuild -jobs 2 -project apps/apple/Journal.xcodeproj -scheme JournalMacSandbox -destination 'platform=macOS'
@@ -48,11 +36,8 @@ resign_without() {
   codesign --force --sign "$identity" --preserve-metadata=identifier,requirements,flags,runtime \
     --entitlements "$entitlements" "$code"
 }
-scripts/embed-mac-server.sh "$app" "$work/server"
 resign_without "$app" files.absolute-path.read-only
 codesign --verify --deep --strict "$app"
-"${xcode[@]}" -resultBundlePath "$results/MacSandbox.xcresult" \
-  JOURNAL_LOCAL_SERVER_EXECUTABLE="$app/Contents/Helpers/JournalServer.app/Contents/MacOS/Journal.Api" \
-  test-without-building
+"${xcode[@]}" -resultBundlePath "$results/MacSandbox.xcresult" test-without-building
 python3 scripts/verify-test-results.py "$results/MacSandbox.xcresult"
 printf 'Mac sandbox results: %s\n' "$results/MacSandbox.xcresult"

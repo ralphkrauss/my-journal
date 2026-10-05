@@ -73,6 +73,8 @@ extension AppModel {
 
     func recordSyncHealth(_ health: SyncHealth?, failure: Error?) {
         if syncHealth != health { syncHealth = health }
+        // Being offline or out of reach is quiet; a state the person must act on isn't (ReviewRequestTiming.swift).
+        if let health, health.kind != .temporary { reviewRequests.noteProblem() }
         // Sign In… opens Connect to a Server, which signs in to this device's server straight away; any other state,
         // or a sync that succeeds, ends that.
         let signIn = health == .signInNeeded
@@ -141,8 +143,8 @@ extension AppModel {
 
     /// Stop Syncing… (docs/design/sync-health-and-recovery.md §4.4): this device stops using its server and keeps its
     /// library as it is, including what hasn't been sent and the identity it last synced with, so connecting again
-    /// later joins by identity. Its access is given up when the server still accepts it.
-    func stopSyncing() {
+    /// later joins by identity. Its access is given up when the server still accepts it, unless `revoking` is false.
+    func stopSyncing(revoking: Bool = true) {
         guard let previous = connection, !replacingVault else { return }
         try? Keychain.remove(configuration?.connectionKeyID ?? keyAccount + "-connection")
         connection = nil
@@ -150,6 +152,7 @@ extension AppModel {
         syncTiming.afterWriting?.cancel()
         syncActivity.pendingItems = 0
         encryption.turnedOnElsewhere = false
+        guard revoking else { return }
         Task {
             try? await ServerClient(address: previous.address, token: previous.token).revoke(previous.deviceID)
         }

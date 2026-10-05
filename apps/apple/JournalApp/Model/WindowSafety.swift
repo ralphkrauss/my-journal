@@ -32,9 +32,6 @@
                 if await model.flush() {
                     // Writing reaches the server now rather than at the next launch, unless that takes long.
                     await model.sendWritingBeforeQuitting(within: 3)
-                    // The server is stopped, forcibly if it doesn't stop in time. Quitting, logging out or
-                    // restarting never waits on it; a server that somehow survives is stopped at the next launch.
-                    await model.localServer.stopForQuit()
                     sender.reply(toApplicationShouldTerminate: true)
                 } else {
                     model.presentSaveRecovery()

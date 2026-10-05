@@ -2,30 +2,24 @@
 
 Sync keeps your journals the same on all your devices. It’s optional: without it, My Journal works fully on one device, offline.
 
-There is no My Journal account or company server. Your devices sync through a server you run, and you choose where it runs.
+There is no My Journal account or company server. To sync, you run a small server of your own, and each device connects to it. The server is also how an AI agent you choose can [read your journals](agent-access.md). With encryption on, it stores your journals in a form it can’t read.
 
 ## Choose where your server runs
 
+The server runs on a computer you control that stays on while your devices sync, such as a home server, a NAS, a VPS, or a Mac or PC you leave on. The My Journal apps don’t run a server; they only connect to one.
+
 | Option | What you need | Keep in mind |
 | --- | --- | --- |
-| [This Mac](#use-this-mac-as-your-server) | A Mac with macOS 14 or later, and [Tailscale](https://tailscale.com) on it and on your other devices | Other devices sync only while this Mac is awake and My Journal is open on it. |
-| [Your own server with Tailscale](#use-your-own-server) | A home server or other computer that runs containers, and Tailscale | Available whenever that computer is on, and only your devices can reach it. |
-| [A public HTTPS server](#use-your-own-server) | A host with a domain name | Reachable from anywhere. Anyone can try to guess your master password through it, so it must be long. |
+| [A server with Tailscale](../self-hosting/README.md#tailscale) | A computer that runs containers, such as a home server, a NAS or a Mac with Docker, and [Tailscale](https://tailscale.com) on it and on your devices | Available whenever that computer is on, and only your devices can reach it. |
+| [A public HTTPS server](../self-hosting/https.md) | A host with a domain name | Reachable from anywhere. Anyone can try to guess your master password through it, so it must be long. |
 
 Tailscale is a separate service that connects your devices privately. My Journal doesn’t require it, but it is the simplest way to reach a server without putting it on the public internet.
 
-## Use this Mac as your server
-
-1. On the Mac, choose Settings > Sync > **Use This Mac…**.
-2. Enter your master password and choose **Start Server**.
-3. To connect your other devices, install Tailscale on this Mac and on them. In Settings > Sync, open **Connection Details**, copy the `tailscale serve` command shown there and run it in Terminal. Tailscale then gives the server an HTTPS address ending in `.ts.net`.
-4. [Add your other devices](devices.md#add-a-device). An iPhone or iPad scans a code; other devices use that HTTPS address.
-
-The server runs while My Journal is open. It stops when you quit and starts again when you open My Journal, unless you chose **Stop Server**. Keep the Mac awake while your other devices need to sync.
+A Mac can be the server if it stays on and awake while your devices sync: run the container there with Docker Desktop or OrbStack. See [running the server on a Mac](../self-hosting/README.md#running-the-server-on-a-mac). [Self-hosting](../self-hosting/README.md) covers every setup, backups and updates.
 
 ## Use your own server
 
-1. Set up the server by following [self-hosting](../self-hosting/README.md): a container on a home server, privately with Tailscale, or behind [public HTTPS](../self-hosting/https.md).
+1. Set up the server by following [self-hosting](../self-hosting/README.md): a container on a home server or another computer, privately with Tailscale, or behind [public HTTPS](../self-hosting/https.md).
 2. On the server, run `setup-code` to see its one-time setup code, for example `docker compose exec journal setup-code`. It looks like `K7Q-M4X`.
 3. On your first device, choose **Connect to a Server…** (on the first screen, or in Settings > Sync). Choose your server under **Servers on This Network**, or enter its address and choose **Continue**. With Tailscale, use its HTTPS address while the device is connected to your tailnet.
 4. Enter the **Setup Code** and choose **Continue**.
@@ -33,6 +27,20 @@ The server runs while My Journal is open. It stops when you quit and starts agai
 6. When **Server Is Ready** appears, choose **Add Another Device…** or [add your other devices](devices.md#add-a-device) later. An iPhone or iPad only has to scan a code.
 
 The setup code works once. After many wrong codes the server makes people wait longer between tries, so set it up before making it reachable beyond your tailnet or home network.
+
+## If you used Use This Mac
+
+Earlier test versions of My Journal for Mac could run a server inside the app, with **Use This Mac…**. The app no longer includes a server. A Mac that synced with it stopped syncing when the new version first opened, and Settings > Sync says so. Its journals stay on the Mac, including changes that weren’t sent. Other devices that synced through that Mac show that they can’t reach the server.
+
+To sync again:
+
+1. Set up a server elsewhere; see [Choose where your server runs](#choose-where-your-server-runs).
+2. On the Mac, choose Settings > Sync > **Connect to a Server…** and connect to the new server. The Mac’s journals are uploaded to it.
+3. On each other device, choose Settings > Sync > **Stop Syncing…**, then **Connect to a Server…** with the new server, and join it with the device’s journals. Changes that weren’t sent are kept, and nothing is overwritten.
+4. On the Mac, turn off the old Tailscale Serve rule in Terminal: `tailscale serve --https=443 off`, or `tailscale serve reset` if it was the only rule.
+5. [Connect your agents](agent-access.md#connect-an-agent) again. Their access belonged to the old server.
+
+The Mac keeps the old server’s files, and Erase Journals and Settings doesn’t remove them. Instead of moving to a new server, you can also [keep using the old server’s data](troubleshooting.md#keep-using-the-old-servers-data) at the same address, so your other devices and agents keep working and only the Mac signs in again. To delete the files, see [Remove the old server’s files](troubleshooting.md#remove-the-old-servers-files).
 
 ## How sync works
 

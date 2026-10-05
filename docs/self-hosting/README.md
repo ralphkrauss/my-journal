@@ -1,6 +1,6 @@
 # Self-hosting
 
-The server supports one owner and one running instance on persistent local storage. It does not require Tailscale. The same container runs on a home Linux server, VPS, or suitable container host. Do not place the SQLite data directory on a network filesystem or run multiple replicas against it.
+The server supports one owner and one running instance on persistent local storage. It does not require Tailscale. The same container runs on a home Linux server, a NAS, a VPS, a [Mac](#running-the-server-on-a-mac) or another suitable container host. The My Journal apps only connect to it; they don't run a server. Do not place the SQLite data directory on a network filesystem or run multiple replicas against it.
 
 ## Local container
 
@@ -34,6 +34,20 @@ The optional `lan` Compose profile announces the server on your local network, s
 The announcer is a small Avahi container on the host network: it runs without root or capabilities, with a read-only file system and no D-Bus, and only uses the mDNS port 5353. `setup-code` also prints `JOURNAL_URL` with the code, so you can check you're setting up the server you meant. The profile announces that a My Journal server exists, the host's name and its HTTPS address, including a tailnet name, to everyone on that network. The announcement doesn't cross Tailscale. Leave the profile off if that isn't acceptable; you can always type the address instead. A discovered server is only a suggestion: check the address the app shows before you enter a setup code or password.
 
 The Tailscale sidecar is pinned to an exact version and image digest in `deploy/compose.tailscale.yaml`, so the moving `stable` tag cannot change a deployment silently. Dependabot proposes updates to the pin; review them before deploying.
+
+## Running the server on a Mac
+
+The My Journal apps are only clients, so to sync through a Mac, run the container there with [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [OrbStack](https://orbstack.dev). It runs on Apple silicon and Intel Macs. From the project root, use the Tailscale example above:
+
+    docker compose -f deploy/compose.tailscale.yaml up -d --build
+    docker compose -f deploy/compose.tailscale.yaml exec tailscale tailscale up
+    docker compose -f deploy/compose.tailscale.yaml exec journal setup-code
+
+The Tailscale container joins your tailnet as its own machine, named `journal` unless you set `JOURNAL_HOSTNAME`, and gives the server a private HTTPS address ending in `.ts.net`. Connect every device that syncs to that address, including this Mac if you also write on it; each needs Tailscale. To try the server on this Mac alone, `deploy/compose.yaml` is enough: connect My Journal on the Mac to `http://127.0.0.1:8080`, which other devices can't reach.
+
+- Your devices sync only while the Mac is on and awake. Set it not to sleep automatically, and set Docker Desktop or OrbStack to open when you log in; the containers then start again by themselves.
+- The server's data is in the `journal-data` volume, inside Docker Desktop's or OrbStack's storage, not in your user folder. Make [backups](#backups) as on any other host and copy them off the Mac.
+- On a Mac, containers run in a virtual machine, so the `lan` profile's announcement doesn't reliably reach your network. Type the server's address instead.
 
 ## Public hosting
 

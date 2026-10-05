@@ -20,6 +20,7 @@ struct JournalApp: App {
                 .environmentObject(editor)
                 .modifier(EncryptionPresentation(model: model, upgrade: model.encryption))
                 .modifier(AppLockTurnedOffAlert(model: model))
+                .modifier(ReviewRequestPresenter(model: model))
                 .overlay {
                     // Not while App Lock's own request is showing, which makes the app briefly inactive, nor while
                     // its panel closes after the answer.
@@ -34,11 +35,11 @@ struct JournalApp: App {
                         PrivacyCover.shared.watch(model)
                     #endif
                     await model.load()
+                    model.reviewRequests.noteLaunch()
                     await ArchiveExportLeftovers.removeAtLaunch(dataDirectory: model.directory)
                     #if os(macOS)
                         model.startInactivityLock()
                         LocalAgentCleanup.run(dataDirectory: model.directory)
-                        await model.localServer.resumeIfNeeded()
                     #endif
                 }
                 // Restarted when the app returns from the background, which syncs at once.

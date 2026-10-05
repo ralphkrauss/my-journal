@@ -65,7 +65,7 @@ import XCTest
         XCTAssertEqual(harness.document.markdown, "- One\n- Two\n  - Three")
 
         // At most as deep as the editor draws: 6 levels at this size. "Five b" could go to 6, but its nested items
-        // would go to 7.
+        // would go to 7. The list inset comes on top of the 160-point nesting allowance, so it costs no level.
         let deepest = RichText.visibleNestingLevels(size: 17)
         XCTAssertEqual(deepest, 6)
         let lines =

@@ -27,22 +27,15 @@ if (Path.Exists(Path.Combine(root, BackupArchive.RestoreMarker)))
     return;
 }
 bool forwardedHeaders;
-bool parentRunning;
 try
 {
     forwardedHeaders = NetworkPolicy.ConfigureForwardedHeaders(builder);
     PublicOrigin.Validate(builder.Configuration);
-    parentRunning = ParentProcessWatchdog.Configure(builder);
 }
 catch (FormatException error)
 {
     Console.Error.WriteLine(error.Message);
     Environment.ExitCode = 1;
-    return;
-}
-if (!parentRunning)
-{
-    Console.Error.WriteLine("The app that started the server is no longer running.");
     return;
 }
 NetworkPolicy.ConfigureHostFiltering(builder);

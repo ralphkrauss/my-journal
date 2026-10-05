@@ -202,13 +202,13 @@ struct AddDeviceView: View {
                     Button("Copy Address") { copy(address) }
                 }
             } else {
-                // Only the Mac's own local server is reached over plain HTTP; other devices use its HTTPS address.
-                #if os(macOS)
-                    Section {
-                        Text("Other devices connect to this Mac using the HTTPS address from Connection Details.")
-                            .foregroundStyle(.secondary)
-                    }
-                #endif
+                // Plain HTTP is only accepted for a server on this device, such as the container on this Mac.
+                Section {
+                    Text(
+                        "Other devices can’t connect to \(ServerAddress.host(address)). To add devices, connect this device to the server’s HTTPS address."
+                    )
+                    .foregroundStyle(.secondary)
+                }
             }
         }
     }

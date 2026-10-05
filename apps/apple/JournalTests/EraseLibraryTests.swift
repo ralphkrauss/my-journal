@@ -105,8 +105,8 @@ import os
         let configuration = try XCTUnwrap(model.configuration)
         let folder = try XCTUnwrap(configuration.storageFolder)
         let deviceID = try XCTUnwrap(model.connection?.deviceID)
-        // An earlier copy waiting for removal, leftovers of an import and an export, the Mac's local server, and
-        // another library's Keychain item.
+        // An earlier copy waiting for removal, leftovers of an import and an export, the files of the server earlier
+        // Mac builds ran, and another library's Keychain item.
         let manager = FileManager.default
         for name in ["vault-earlier", "import-" + UUID().uuidString, "local-server-data"] {
             try manager.createDirectory(
@@ -142,6 +142,7 @@ import os
         }
         XCTAssertFalse(
             try manager.contentsOfDirectory(atPath: model.directory.path).contains { $0.hasPrefix("import-") })
+        // The server earlier Mac builds ran may hold the only copy of other devices' changes.
         XCTAssertTrue(exists(model, "local-server-data"))
         XCTAssertTrue(exists(model, "local-server.json"))
         for account in [configuration.keyID, configuration.connectionKeyID, earlierKey].compactMap({ $0 }) {

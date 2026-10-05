@@ -45,6 +45,8 @@ struct JournalCommands: Commands {
                 .disabled(model.locked)
             Button("Export Archive…") { inJournalWindow { model.archiveExportPresented = true } }
                 .disabled(!model.isReady || model.locked)
+            Button("Export Journals as Markdown…") { inJournalWindow { model.markdownExportPresented = true } }
+                .disabled(!model.isReady || model.locked)
         }
         #if os(macOS)
             CommandGroup(after: .importExport) {
@@ -80,9 +82,9 @@ struct JournalCommands: Commands {
             Button("Actual Size") { model.textSize = AppModel.defaultTextSize }.keyboardShortcut("0")
                 .disabled(model.textSize == AppModel.defaultTextSize)
         }
+        // There is no help book: the user guide and the project's pages are on the web (AboutLinks.swift).
+        CommandGroup(replacing: .help) { HelpMenuItems() }
         #if os(macOS)
-            // There is no help book; the system item would only say help isn't available.
-            CommandGroup(replacing: .help) {}
             CommandGroup(before: .systemServices) {
                 Button("Lock My Journal") { Task { await model.lock() } }
                     .keyboardShortcut("l", modifiers: [.command, .control]).disabled(!model.appLockOn)

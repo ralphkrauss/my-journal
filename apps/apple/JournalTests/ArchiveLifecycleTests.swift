@@ -227,6 +227,9 @@ final class ArchiveLifecycleTests: XCTestCase {
         let leftovers = [
             try folder(data.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
             try folder(temporary.appendingPathComponent("Journal Archive 2026-09-30.journalarchive")),
+            // Export as Markdown's prepared folder and the save dialog's copy of it, which hold readable journals.
+            try folder(data.appendingPathComponent("markdown-\(UUID().uuidString.lowercased())")),
+            try folder(temporary.appendingPathComponent("Journal Markdown 2026-10-05")),
         ]
         let kept = [
             try folder(data.appendingPathComponent("vault-\(UUID().uuidString.lowercased())")),
@@ -238,6 +241,8 @@ final class ArchiveLifecycleTests: XCTestCase {
             try folder(temporary.appendingPathComponent("Journal Archive 2026-13-45.journalarchive")),
             try folder(temporary.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
             try folder(elsewhere.appendingPathComponent("Journal Archive 2026-09-29.journalarchive")),
+            try folder(data.appendingPathComponent("markdown-notes")),
+            try folder(temporary.appendingPathComponent("Journal Markdown 2026-10-05 2")),
         ]
         let configuration = data.appendingPathComponent("configuration.json")
         try Data("{}".utf8).write(to: configuration)

@@ -61,12 +61,17 @@ struct EraseSection: View {
     private var enabled: Bool { model.store != nil && model.eraseBlock == nil && !checking && !erasing }
 
     private var footer: String {
-        if model.eraseBlock == .serverOnThisMac {
-            return "Your other devices sync through this Mac, so its journals can’t be erased here."
-        }
-        return model.connection != nil
+        let footer =
+            model.connection != nil
             ? "Removes your journals, settings and server connection from this device, as if My Journal had just been installed. Journals already on your server stay there."
             : "Removes your journals and settings from this device, as if My Journal had just been installed. This device isn’t syncing, so export an archive first to keep them."
+        #if os(macOS)
+            // Erase leaves them: they may hold the only copy of other devices' changes (FormerMacServer.swift).
+            if model.formerMacServerFilesExist {
+                return footer + " A copy of your journals from the server this Mac used to run isn’t removed."
+            }
+        #endif
+        return footer
     }
 
     /// Whenever something isn't safely on a server, the message starts with what to do about it.

@@ -108,6 +108,7 @@ final class AppModel: ObservableObject {
     }
     var initialInsertion: InitialEditorInsertion?
     private var entryCreationID: UUID?
+    var creatingEntry: Bool { entryCreationID != nil }
     /// The search. Typing in the search field updates the list once the results are ready; views update at once only
     /// where a search starts or ends, or in Recently Deleted, which filters its journals by name as it's typed.
     var query: String {
@@ -126,11 +127,16 @@ final class AppModel: ObservableObject {
     @Published var showingAllEntries = false
     /// Where Delete All in Recently Deleted is, for every window and the menu bar (PermanentDeletionOperations.swift).
     @Published var deleteAllPhase = DeleteAllPhase.idle
-    @Published var error: String?
-    @Published var saveFailure = false
+    @Published var error: String? {
+        didSet { if error != nil { reviewRequests.noteProblem() } }
+    }
+    @Published var saveFailure = false {
+        didSet { if saveFailure { reviewRequests.noteProblem() } }
+    }
     @Published var locked = false {
         didSet {
             if locked {
+                reviewRequests.noteLocked()
                 vaultSessionID = UUID()
                 imageInsertionGeneration = UUID()
                 initialInsertion = nil
@@ -154,7 +160,10 @@ final class AppModel: ObservableObject {
     private var imageSubscription: AnyCancellable?
     @Published var journalHistoryIDs: Set<UUID> = []
     @Published var conflicts: [ConflictVersion] = [] {
-        didSet { lists.invalidate() }
+        didSet {
+            lists.invalidate()
+            if !conflicts.isEmpty { reviewRequests.noteProblem() }
+        }
     }
     @Published var pendingSync = false
     /// Pins and journal ranks (LibraryOperations.swift), and what Settings ▸ Sync says about them.
@@ -174,7 +183,9 @@ final class AppModel: ObservableObject {
     /// once it succeeds.
     @Published var syncHealth: SyncHealth?
     /// Changes have waited more than a day while sync fails (`updateSyncLongWait`): Sync Status asks for attention.
-    @Published var syncLongWait = false
+    @Published var syncLongWait = false {
+        didSet { if syncLongWait { reviewRequests.noteProblem() } }
+    }
     @Published var connection: SyncConnection? {
         didSet { syncActivity.connectionChanged(connection) }
     }
@@ -186,6 +197,8 @@ final class AppModel: ObservableObject {
     @Published var newJournalRequested = false
     @Published var archiveImportRequested = false
     @Published var archiveExportPresented = false
+    /// File ▸ Export Journals as Markdown…'s sheet.
+    @Published var markdownExportPresented = false
     @Published var settingsPresented = false
     @Published var journalsPresented = false
     @Published var templateChooserPresented = false
@@ -206,9 +219,14 @@ final class AppModel: ObservableObject {
     private var activitySubscriptions: [AnyCancellable] = []
     /// Turn On Encryption, which outlasts the sheet that shows it (EncryptionUpgrade.swift).
     lazy var encryption = EncryptionUpgrade(model: self)
+    /// The system's rating request at a pause in writing (ReviewRequestTiming.swift).
+    lazy var reviewRequests: ReviewRequests = {
+        let requests = ReviewRequests.forApp(hostsTests: Self.hostsTests)
+        requests.momentIsClear = { [weak self] in self?.reviewMomentIsClear ?? false }
+        return requests
+    }()
 
     #if os(macOS)
-        lazy var localServer = LocalServerController(model: self)
         /// Locks after a time without use (InactivityLock.swift); started once the app has launched.
         var inactivityLock: InactivityLock?
         /// The journal window; menu commands that need it open it again after it was closed.
@@ -373,6 +391,9 @@ final class AppModel: ObservableObject {
                 saveMigratedConfiguration()
             }
         }
+        #if os(macOS)
+            retireFormerMacServer()
+        #endif
         configureSync()
     }
     func start(password: String? = nil, encrypted: Bool = true) async {
@@ -488,6 +509,7 @@ final class AppModel: ObservableObject {
         guard canEdit, draft?.id == item.id, textOnly || item.document.isEditable else { return }
         // Only the editor's edits arrive here, including Dictation's, which sends no key presses.
         noteUse()
+        reviewRequests.noteEdit(entry: item.id)
         var item = item
         item.modifiedAt = Date()
         item.storedVersion = draft?.storedVersion
@@ -547,6 +569,7 @@ final class AppModel: ObservableObject {
             return false
         }
         if generation == saveGeneration, saveFailure { saveFailure = false }
+        reviewRequests.noteSaved(entry: item.id)
         if !pendingSync { pendingSync = true }
         syncWhenWritingPauses()
         rememberSelection()
@@ -568,6 +591,7 @@ final class AppModel: ObservableObject {
             return
         }
         let creationID = UUID()
+        reviewRequests.interrupt()
         var selection = selectedID
         var context = selectedJournalID
         let allEntries = showingAllEntries
@@ -720,9 +744,6 @@ final class AppModel: ObservableObject {
         editingJournals = false
         SensitivePasteboard.clear()
         mutationTask?.cancel()
-        #if os(macOS)
-            localServer.requestSetupCancellation()
-        #endif
         if let agentCopies { Task { await agentCopies.stop() } }
         items = []
         conflicts = []
@@ -935,6 +956,7 @@ extension AppModel {
         lists.clear()
         locked = false
         vaultReplacement = false
+        reviewRequests.reset()
     }
 }
 

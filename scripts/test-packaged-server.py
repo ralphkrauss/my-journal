@@ -11,8 +11,6 @@ if len(sys.argv) != 2:
     raise SystemExit("Usage: test-packaged-server.py <server-package-directory>")
 package = pathlib.Path(sys.argv[1]).resolve()
 launcher = package / "journal-server"
-if package.suffix == ".app":
-    launcher = package / "Contents/MacOS/Journal.Api"
 if not launcher.is_file():
     raise SystemExit("The packaged server launcher is missing")
 with tempfile.TemporaryDirectory(prefix="journal-packaged-") as fixture:

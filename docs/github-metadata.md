@@ -1,10 +1,10 @@
 # GitHub repository settings
 
-GitHub is the project’s only website, so the repository’s settings matter for how people find it. These aren’t stored in files; apply them on GitHub under the repository’s About panel (the gear next to About) and Settings > General. GitHub’s search weighs the repository name, description and topics above the README, and Google uses the description as the page summary.
+GitHub is the project’s only website, so the repository’s settings matter for how people find it. These aren’t stored in files; apply them on GitHub under the repository’s About panel (the gear next to About) and Settings > Private, end-to-end encrypted journal and diary app for Mac, iPhone and iPad. No account, no subscription, no company server: sync through your own server, or not at all. Markdown entries, checklists, photos, pinned entries, App Lock, and read-only MCP access for your own AI agent. Open source, with a self-hosted ASP.NET Core server for Docker.
 
 ## Description
 
-332 characters; the limit is 350.
+346 characters; the limit is 350.
 
 > Private, end-to-end encrypted journal and diary app for Mac, iPhone and iPad, with optional self-hosted sync. No account, no company server. Native SwiftUI apps, Markdown entries, templates, images, version history, App Lock, and read-only MCP access for your own AI agent. Self-hosted ASP.NET Core server with Docker and Tailscale.
 

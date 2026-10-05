@@ -108,8 +108,7 @@ private struct EncryptionStepView: View {
         case .done: done
         }
     }
-    /// The intro names the server, except the one this Mac runs itself.
-    private var namesServer: Bool { upgrade.synced && !upgrade.ownServer }
+    private var namesServer: Bool { upgrade.synced }
 
     // MARK: Steps
 

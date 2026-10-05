@@ -13,8 +13,8 @@ The first public version of the source code. No release has been published yet.
 - Encryption on the device by default, protected by a master password, with the option to create journals without encryption.
 - App Lock with the device's own Face ID, Touch ID or Optic ID and passcode or Mac login password. There is no separate PIN; an App Lock PIN from an earlier build is replaced by the device's authentication at the first launch.
 - Backup archives for export, restore and import. Before the first export the app checks that you still know your master password, and a library that isn't on a server can get a new password after the device owner authenticates (Forgot Password?).
-- A server bundled in the Mac app (macOS 14 or later), a standalone server for Linux and macOS, a non-root container image, and Compose examples for local, Tailscale and public HTTPS hosting.
-- Agent access through the sync server on every platform: the server is a remote MCP server (Streamable HTTP, protocol revisions 2026-07-28, 2025-11-25 and 2025-06-18) with standard MCP authorization (OAuth 2.1 with PKCE, dynamic client registration and client ID metadata documents, audience-bound, rotating tokens). The agent's request appears in Settings > Agent Access; you allow it by entering the two-digit number its page shows and choosing All Journals (including ones you create later) or selected journals, and you can change its journals, name and end date afterwards. It reads a copy of those journals kept current by your devices, encrypted with a key only its tokens unlock, and you can revoke it at any time (protocol capability `agent-access-2`). Agents on the same Mac use the server built into the Mac app; the earlier Mac-only local connection was removed, and the app deletes its leftover connection files.
+- A standalone server for Linux and macOS, a non-root container image, and Compose examples for local, Tailscale and public HTTPS hosting.
+- Agent access through the sync server on every platform: the server is a remote MCP server (Streamable HTTP, protocol revisions 2026-07-28, 2025-11-25 and 2025-06-18) with standard MCP authorization (OAuth 2.1 with PKCE, dynamic client registration and client ID metadata documents, audience-bound, rotating tokens). The agent's request appears in Settings > Agent Access; you allow it by entering the two-digit number its page shows and choosing All Journals (including ones you create later) or selected journals, and you can change its journals, name and end date afterwards. It reads a copy of those journals kept current by your devices, encrypted with a key only its tokens unlock, and you can revoke it at any time (protocol capability `agent-access-2`). The earlier Mac-only local connection was removed, and the app deletes its leftover connection files.
 - Versioned protocol documentation with interoperability test vectors, including the record and archive formats.
 - The server supports adding a device with a code scanned from a connected device instead of a typed pairing code (protocol capability `pairing-invite`). The scanned code carries a secret the server never sees, so no check code is needed.
 - Connecting devices is simpler: a new iPhone or iPad scans a code on a device that already syncs, with no address to type or code to compare; any device can sign in with the master password; and the typed pairing code remains as an alternative. Connect to a Server lists servers announced on the local network (optional `lan` Compose profile), and setting up a new server asks for the setup code and a new master password in one step.
@@ -22,6 +22,7 @@ The first public version of the source code. No release has been published yet.
 - Version History keeps earlier versions of ordinary edits: the version before each editing session and one every ten minutes while you write, up to 50 per entry, on the device.
 - Encryption can be turned on for journals created without it: Settings > Privacy > Turn On Encryption…, with the same master password steps as a new journal. When synced, the server replaces its readable copy (protocol capability `encryption-upgrade`) and other devices sign in again. Encryption can't be turned off.
 - Connect to a Server takes one step at a time: the setup code (formatted as you type), whether to encrypt, then a new master password entered twice, ending with Server Is Ready and Add Another Device. Joining a server that's set up asks for its master password on a screen of its own, and a new server can be set up without encryption.
+- Export as Markdown (Settings > Backup, or File > Export Journals as Markdown… on the Mac and iPad) saves a folder per journal with one Markdown file per entry, YAML front matter and the images, for other Markdown apps. HEIC images are converted to JPEG, and App Lock asks for authentication first. The files aren't encrypted, and it isn't a backup you can import; the format is documented in `protocol/markdown-export.md`.
 
 ### Fixed
 
@@ -35,7 +36,6 @@ The first public version of the source code. No release has been published yet.
 - A mistyped setup code or recovery code is reported as such instead of as lost access.
 - Import Archive… on the iPhone and iPad welcome screen opens the file picker again.
 - A device approved just before its pairing code expired still receives its approval.
-- The server bundled in the Mac app stops when the app quits or ends unexpectedly, and quitting is never refused.
 - Search Entries is ⌥⌘F and Find and Replace is ⇧⌘F, as in Notes, on the Mac and on iPad.
 - Backspace at the start of a list item, task or quote removes one level at a time instead of joining it with the line above.
 - On iPhone and iPad, the archive save dialog suggests "Journal Archive" with the date instead of a temporary file name.
@@ -56,7 +56,7 @@ The first public version of the source code. No release has been published yet.
 - Images lose where they were taken (GPS coordinates and place names) when they're added; the image itself is kept unchanged where its format allows.
 - After connecting to a server or importing an archive, the previous copy of the library and its keys are deleted once the new copy works.
 - A new device uses a pairing only after you confirm the check code on it too (Connect), and accepts a key only from the approving device behind the code it shows.
-- The Mac app and its bundled server run in the App Sandbox.
+- The Mac app runs in the App Sandbox.
 - The app never sends a typed password to a server, refuses to upload encrypted journals to a server without encryption, and stops if the server's settings change during connecting.
 - With App Lock on, iPhone and iPad hide journal content in the app switcher, including sheets and alerts.
 - A copied recovery key stays on the device and is removed from the clipboard after two minutes. The wait after wrong PINs continues after relaunching.
@@ -68,7 +68,7 @@ The first public version of the source code. No release has been published yet.
 
 ### Changed
 
-- The Mac app requires macOS 14 or later, as its bundled server already did. Its window now uses the system's split view and toolbar, as Notes does: New Journal sits beside the sidebar button and leaves with the sidebar, the list shows the collection's name and count with a Journal Actions menu, New Entry and Templates… lead the editor's controls, and search comes last. A window too narrow for all three columns hides the sidebar, and Show Sidebar from editor only shows every column.
+- The Mac app requires macOS 14 or later. Its window now uses the system's split view and toolbar, as Notes does: New Journal sits beside the sidebar button and leaves with the sidebar, the list shows the collection's name and count with a Journal Actions menu, New Entry and Templates… lead the editor's controls, and search comes last. A window too narrow for all three columns hides the sidebar, and Show Sidebar from editor only shows every column.
 - Server errors are problem details with a stable `code`, and GET /v1/server reports the protocol versions, server version and capabilities.
 - Setup codes are 6 characters without look-alikes, shown as `K7Q-M4X`, and can be typed in either case. The setup-code file holds the code in the same form, so it can be read directly; a server that starts with an older 8-character code writes a new one. `docker compose exec journal setup-code` (or `--setup-code`) shows the code, including the server's address when `JOURNAL_URL` is set.
 - Passwords are normalized to Unicode NFC, so accented letters work however they were typed or pasted; passwords set earlier keep working.
@@ -77,6 +77,9 @@ The first public version of the source code. No release has been published yet.
 - Automatic sync waits longer after each failed attempt, up to five minutes.
 - Agent access can be managed in Settings without a journal window; agents can read only while one is open.
 - Image descriptions are one line.
+- The Mac app is only a client, like the iPhone and iPad apps: it no longer includes a sync server, so Use This Mac… and its controls are gone, and Settings > Sync matches iPhone and iPad. Run the server as the container or the standalone server instead, on any computer, a Mac included. The app now runs fully on Intel Macs, and its download is over 100 MB smaller. A Mac that synced with the removed server stops syncing once, keeps its journals and the old server's files (Erase Journals and Settings keeps them too), and Learn More explains how to sync again. The server no longer watches a parent process (`Journal__ParentProcessId`), which it needed only inside the app, and the apps and the server each ship their own third-party notices.
+- Settings > Sync, when not connected, links to How to Set Up a Server. Agent Access without a server says "To let agents read your journals, connect to a server." and offers Connect to a Server…. Add Device on a plain HTTP connection to a server on this device says other devices can't connect to it and asks for the server's HTTPS address.
+- Lists start indented: bullets, numbers and checkboxes sit 18 points in from the text, at the same inset as quotes, and nested items line up with their parent's text. The stored Markdown is unchanged.
 - The Mac app is distributed through the Mac App Store, with one purchase for iPhone, iPad and Mac, instead of as notarized disk images. Its library moves into the app's container the first time it opens. iPhone, iPad and Mac builds are uploaded to TestFlight by a manually started workflow, GitHub releases hold the standalone Linux server, and development packages are built only on request.
 - Large libraries unlock, open entries and search much faster, and typing no longer slows down with library size. Automatic sync sends an entry once writing pauses, and a new device shows its entries before all images have downloaded.
 - The Devices list says how each device was added and which device approved it.

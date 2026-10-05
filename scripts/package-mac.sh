@@ -4,14 +4,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 architecture="${1:?Usage: package-mac.sh <arm64|x86_64> <new-output-directory>}"
 output="${2:?Choose a new output directory}"
-case "$architecture" in
-  arm64) runtime=osx-arm64 ;;
-  x86_64) runtime=osx-x64 ;;
-  *)
-    echo "Unsupported Mac architecture." >&2
-    exit 2
-    ;;
-esac
+[[ "$architecture" == arm64 || "$architecture" == x86_64 ]] || {
+  echo "Unsupported Mac architecture." >&2
+  exit 2
+}
 [[ ! -e "$output" ]] || {
   echo "Output already exists; choose a new directory." >&2
   exit 2
@@ -24,9 +20,6 @@ xcodebuild -jobs 2 -project apps/apple/Journal.xcodeproj -scheme 'My Journal (Ma
   -onlyUsePackageVersionsFromResolvedFile ARCHS="$architecture" ONLY_ACTIVE_ARCH=NO \
   CODE_SIGN_IDENTITY=- build
 cp -R "$output/build/Build/Products/Release/My Journal.app" "$output/My Journal.app"
-# The server joins the Xcode build in Contents/Helpers.
-scripts/package-server.sh "$runtime" "$output/server-publish"
-scripts/embed-mac-server.sh "$output/My Journal.app" "$output/server-publish"
 mkdir "$output/dmg"
 cp -R "$output/My Journal.app" "$output/dmg/My Journal.app"
 ln -s /Applications "$output/dmg/Applications"

@@ -142,6 +142,102 @@ final class ChecklistGeometryTests: XCTestCase {
         }
     }
 
+    /// Lists start the list inset (the quote indent) in from the body text at every text size, with their text a
+    /// column further in. Nesting and the content of an item move with it: a nested marker sits under its parent's
+    /// text, and an item's second paragraph lines up with the item's text. A list in a quote starts its inset after
+    /// the quote's own indent. Only the presentation moves: an edit saves the Markdown as written
+    /// (docs/design/client-only-mac-lists-markdown-2026-10-05.md).
+    func testListsStartAtTheListInsetAndTheirContentMovesWithThem() throws {
+        let harness = EditorHarness(JournalDocument(), width: 402)
+        defer { harness.close() }
+        #if os(macOS)
+            let sizes: [CGFloat] = [13, 16, 30]
+        #else
+            let sizes: [CGFloat] = [17, 53]
+        #endif
+        let markdown = """
+            Body text \(Self.long)
+
+            - Bullet \(Self.long)
+
+              Second paragraph \(Self.long)
+              - Nested bullet
+
+            1. Numbered
+
+            - [ ] Unchecked
+
+            > Quoted text
+            > - Quoted item
+            """
+        for size in sizes {
+            show(markdown, size: size, in: harness)
+            let body = try XCTUnwrap(try lineStarts(of: "Body text", in: harness).first)
+            let items = try paragraphs(harness)
+            XCTAssertEqual(items.map(\.kind), ["bullet", "bullet", "numbered", "task", "bullet"])
+            for index in [0, 2, 3] {
+                XCTAssertEqual(
+                    items[index].markerX, body + RichText.listInset, accuracy: 0.5,
+                    "\(items[index].kind) marker at \(size) pt")
+                XCTAssertEqual(
+                    items[index].textX, body + RichText.listInset + RichText.listColumn(size: size), accuracy: 0.5,
+                    "\(items[index].kind) text at \(size) pt")
+            }
+            XCTAssertEqual(items[1].markerX, items[0].textX, accuracy: 0.5, "Nested marker at \(size) pt")
+            let second = try lineStarts(of: "Second paragraph", in: harness)
+            XCTAssertGreaterThan(second.count, 1, "The second paragraph wraps at \(size) pt")
+            for line in second {
+                XCTAssertEqual(line, items[0].textX, accuracy: 0.5, "Second paragraph at \(size) pt")
+            }
+            // A quote's "> " moves what it holds in by half an em per character; its list's inset comes after that.
+            XCTAssertEqual(
+                items[4].markerX, body + size + RichText.listInset, accuracy: 0.5, "Quoted list at \(size) pt")
+            let quote = try XCTUnwrap(try lineStarts(of: "Quoted text", in: harness).first)
+            XCTAssertGreaterThan(items[4].markerX, quote, "The quoted list starts inside the quote at \(size) pt")
+        }
+        harness.caret(at: (harness.text.string as NSString).range(of: "Nested bullet").upperBound)
+        harness.type("!")
+        XCTAssertEqual(
+            harness.document.markdown, markdown.replacingOccurrences(of: "Nested bullet", with: "Nested bullet!"))
+    }
+
+    /// A tap or click on a checkbox where it is drawn, at the list inset, reaches the checkbox and toggles its item,
+    /// a nested item's too.
+    func testCheckboxTapsToggleTheirItems() throws {
+        let harness = EditorHarness(JournalDocument(), width: 402)
+        defer { harness.close() }
+        #if os(macOS)
+            let sizes: [CGFloat] = [13, 30]
+        #else
+            let sizes: [CGFloat] = [17, 53]
+        #endif
+        for size in sizes {
+            show("- [ ] Parent item\n  - [ ] Nested item", size: size, in: harness)
+            let (storage, layout, container, origin) = try parts(harness)
+            for name in ["Parent item", "Nested item"] {
+                let location = (storage.string as NSString).range(of: name).location
+                let placement = try XCTUnwrap(
+                    InlineTasks.placement(
+                        at: location, storage: storage, layout: layout, container: container, origin: origin))
+                let point = CGPoint(x: placement.boxX + placement.font.capHeight / 2, y: placement.capCenter)
+                #if os(macOS)
+                    let hit = harness.view.hitTest(harness.view.convert(point, to: harness.view.superview))
+                    let button = try XCTUnwrap(hit as? NSButton, "\(name)'s checkbox is hit at \(size) pt")
+                    button.performClick(nil)
+                #else
+                    let hit = harness.view.hitTest(point, with: nil)
+                    let button = try XCTUnwrap(hit as? ChecklistBox, "\(name)'s checkbox is hit at \(size) pt")
+                    button.sendActions(for: .touchUpInside)
+                #endif
+                harness.settle(0.05)
+                XCTAssertEqual(
+                    harness.text.attribute(.journalKind, at: location, effectiveRange: nil) as? String, "checked",
+                    "\(name) at \(size) pt")
+            }
+            XCTAssertEqual(harness.document.markdown, "- [x] Parent item\n  - [x] Nested item", "at \(size) pt")
+        }
+    }
+
     /// Bullets and numbers are drawn, not stored, and they must look exactly as the characters the text system drew
     /// in their place did: same glyph, size, position and colour.
     func testDrawnBulletsAndNumbersMatchTheCharactersTheyReplace() throws {
@@ -156,15 +252,16 @@ final class ChecklistGeometryTests: XCTestCase {
             for (markdown, marker, text) in [("- Bullet", "•", "Bullet"), ("1. Number", "1.", "Number")] {
                 show(markdown, size: size, in: harness)
                 let (_, layout, container, _) = try parts(harness)
-                let margin = container.lineFragmentPadding + RichText.listColumn(size: size) - 1
-                let drawn = try XCTUnwrap(ink(of: layout, width: container.size.width, before: margin))
-                // The same line as the text system laid it out with the marker's characters, as build 13 stored it.
                 let column = RichText.listColumn(size: size)
+                let margin = container.lineFragmentPadding + RichText.listInset + column - 1
+                let drawn = try XCTUnwrap(ink(of: layout, width: container.size.width, before: margin))
+                // The same line as the text system laid it out with the marker's characters, as build 13 stored it,
+                // moved in by the list inset.
                 var attributes = RichText.attributes(kind: "bullet", size: size)
                 let style = NSMutableParagraphStyle()
                 style.setParagraphStyle(try XCTUnwrap(attributes[.paragraphStyle] as? NSParagraphStyle))
-                style.firstLineHeadIndent = 0
-                style.tabStops = [NSTextTab(textAlignment: .left, location: column)]
+                style.firstLineHeadIndent = RichText.listInset
+                style.tabStops = [NSTextTab(textAlignment: .left, location: RichText.listInset + column)]
                 attributes[.paragraphStyle] = style
                 let storage = NSTextStorage(string: marker + "\t" + text, attributes: attributes)
                 let reference = NSLayoutManager()
@@ -284,6 +381,22 @@ final class ChecklistGeometryTests: XCTestCase {
                     firstLineHeight: heights.first ?? 0))
         }
         return result
+    }
+
+    /// Where each line of the paragraph that holds `string` starts.
+    private func lineStarts(of string: String, in harness: EditorHarness) throws -> [CGFloat] {
+        let (storage, layout, _, origin) = try parts(harness)
+        let source = storage.string as NSString
+        let found = source.range(of: string)
+        XCTAssertNotEqual(found.location, NSNotFound, string)
+        var lines: [CGFloat] = []
+        layout.enumerateLineFragments(
+            forGlyphRange: layout.glyphRange(
+                forCharacterRange: source.paragraphRange(for: found), actualCharacterRange: nil)
+        ) { rect, _, _, glyphs, _ in
+            lines.append(origin.x + rect.minX + layout.location(forGlyphAt: glyphs.location).x)
+        }
+        return lines
     }
 
     private func parts(_ harness: EditorHarness) throws -> (NSTextStorage, NSLayoutManager, NSTextContainer, CGPoint) {

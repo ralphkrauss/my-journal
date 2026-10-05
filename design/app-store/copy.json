@@ -1,36 +1,36 @@
 {
   "frames": {
     "01": {
-      "headline": "A calm place to write",
-      "subline": "Clean and simple, with everything you need."
+      "headline": "End-to-end encrypted",
+      "subline": "No account, no tracking, and open source."
     },
     "02": {
-      "headline": "Encrypted by default",
-      "subline": "No account, no company server, no tracking."
+      "headline": "Locked when you step away",
+      "subline": "App Lock with Face ID or Touch ID."
     },
     "03": {
-      "headline": "Sync through your own server",
-      "subline": "Your Mac, a home server, or none at all."
+      "headline": "Your server, or none at all",
+      "subline": "Sync through your own server, at home or online."
     },
     "04-mac": {
-      "headline": "Insights from your own writing",
-      "subline": "Let your own AI agent read the journals you choose."
+      "headline": "Insights on your terms",
+      "subline": "Your AI agent, read-only, for the journals you choose."
     },
     "04": {
       "headline": "Find it again",
-      "subline": "Search, Version History and Recently Deleted."
+      "subline": "Pinned entries, search and Version History."
     },
     "05": {
-      "headline": "Separate journals, simple templates",
-      "subline": "Keep personal and work apart. Start from a template."
+      "headline": "Separate journals, your own templates",
+      "subline": "Keep personal and work apart, in the order you choose."
     },
     "06": {
-      "headline": "At home on iPhone, iPad and Mac",
-      "subline": "Follows your appearance and accessibility settings."
+      "headline": "Native and simple",
+      "subline": "Made for iPhone, iPad and Mac, in light and dark."
     }
   },
   "agent": {
-    "caption": "Asked in your agent",
+    "caption": "Asked in your AI agent",
     "question": "What patterns do you see in my September entries?",
     "answer": "Two habits keep coming back: walks, often in the evening after dinner, and keeping evenings free. At work, you prefer short meetings and writing decisions down first."
   }

@@ -39,14 +39,9 @@ Unsigned or ad-hoc-signed Mac builds keep their keys in the login keychain, whic
 mise exec -- scripts/build-mac-development.sh <team-id>
 ```
 
-It uses `apps/apple/Signing/JournalMac-Development.entitlements`, so keys live in the data protection keychain and rebuilds don't prompt. Xcode must be signed in to the team's Apple Account; the first build registers the Mac as a development device. The script prints the path of the built app. A sandboxed app can only start a server inside its bundle, so to try Use This Mac…, publish a server first and pass its folder:
+It uses `apps/apple/Signing/JournalMac-Development.entitlements`, so keys live in the data protection keychain and rebuilds don't prompt. Xcode must be signed in to the team's Apple Account; the first build registers the Mac as a development device. The script prints the path of the built app. To sync, run a server from source (below) or the container, and connect the app to it.
 
-```sh
-mise exec -- scripts/package-server.sh osx-arm64 artifacts/local-server
-mise exec -- scripts/build-mac-development.sh <team-id> Debug artifacts/local-server
-```
-
-`mise exec -- scripts/test-mac-sandbox.sh <team-id>` checks the sandboxed configuration: the bundled server and the data protection keychain. It needs the same team signing, so it runs locally, not in CI.
+`mise exec -- scripts/test-mac-sandbox.sh <team-id>` checks the sandboxed app's configuration and its data protection keychain. It needs the same team signing, so it runs locally, not in CI.
 
 ## Server
 
@@ -89,12 +84,12 @@ git config core.hooksPath .githooks
 
 ## End-to-end checks
 
-These are slower. In CI, the sync and local server checks run in the Integration job, the iOS unit and UI tests in the iOS UI job, and the accessibility flows in the iOS Accessibility job. Run the ones related to your change.
+These are slower. In CI, the sync and server recovery checks run in the Integration job, the iOS unit and UI tests in the iOS UI job, and the accessibility flows in the iOS Accessibility job. Run the ones related to your change.
 
 | Command | What it covers |
 | --- | --- |
 | `mise exec -- scripts/test-sync.sh` | A real server process and several Swift clients: sync, images, pairing, offline conflicts, recovery, revocation, backup and restore. Set `JOURNAL_TEST_RECOVERY_VERSION` (for example `2` for a password library or `4` for one without encryption) to test another library format. |
-| `mise exec -- scripts/test-local-server.sh` | The server bundled in the Mac app: setup, restart, stop and recovery, using a freshly packaged server. |
+| `mise exec -- scripts/test-server-recovery.sh` | The Mac app's own sync recovery against real published servers: setting up, joining, stopping syncing, and a server that was stopped, wiped, restored or replaced. |
 | `mise exec -- scripts/test-native-pairing.sh` | The complete iOS unit and UI test scheme, including pairing through the app, against a disposable server. |
 | `mise exec -- scripts/test-native-accessibility.sh` | Recovery and restoration flows at the largest text size in dark mode. |
 | `mise exec -- python3 scripts/test-https-deployment.py` | The public HTTPS Compose example with a temporary local certificate authority. Needs Docker. |

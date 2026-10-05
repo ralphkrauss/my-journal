@@ -34,11 +34,42 @@ Your changes are always saved on the device first; sync never deletes them. **Sy
 - **“This device no longer has access to the server.”** The device was removed in Settings > Devices on another device. Choose **Connect Again…**.
 - **“The server now uses encryption or was replaced. Sign in to keep syncing.”** Choose **Sign In…** and enter the master password your other devices use. Changes that hadn’t synced are kept.
 - **“Update My Journal to sync with this server.”**, **“The server needs an update…”**, a certificate that isn’t valid, or an address that doesn’t lead to a My Journal server: fix the app or the server, then choose **Check Again**. My Journal also checks every few minutes.
+- **“My Journal no longer runs a server on this Mac, so this Mac stopped syncing.”** See [If you used Use This Mac](#if-you-used-use-this-mac).
 - **“My Journal couldn’t read its data on this device.”** Your journals haven’t been changed. Export an archive in Settings > Backup to keep a copy, then quit and reopen My Journal.
 
 **Your server moved to a new address.** Choose Settings > Sync > **Stop Syncing…**, then **Connect to a Server…** with the new address. Your journals stay on the device, and nothing is copied twice.
 
 After a server is reset or restored, agents need access again in Settings > Agent Access.
+
+## If you used Use This Mac
+
+Earlier test versions of My Journal for Mac could run a sync server inside the app. The app no longer includes one, so a Mac that used it stopped syncing, and devices that synced through it can’t reach their server. To sync again, follow [If you used Use This Mac](sync.md#if-you-used-use-this-mac) in the sync guide:
+
+1. Set up a server elsewhere.
+2. On the Mac, connect to it. The Mac’s journals are uploaded.
+3. On each other device, choose **Stop Syncing…**, then connect to the new server and join it with the device’s journals. Changes that weren’t sent are kept.
+4. On the Mac, turn off the old Tailscale Serve rule: `tailscale serve --https=443 off`, or `tailscale serve reset` if it was the only rule.
+5. Connect your agents again. Their access belonged to the old server.
+
+### The old server’s files
+
+My Journal keeps the old server’s files on the Mac, in the app’s container: `~/Library/Containers/io.github.ralphkrauss.myjournal/Data/Library/Application Support/PrivateJournal` (in Finder, choose Go > Go to Folder…). They are `local-server.json`, `local-server-process.json`, `local-server.log`, the `local-server-data` folder, and `local-server-retired`, which records that the Mac already stopped syncing with that server. `local-server-data` may hold the only copy of changes another device sent that the Mac never received.
+
+Erase Journals and Settings keeps these files, and on such a Mac its footer says so.
+
+### Keep using the old server’s data
+
+Instead of moving to a new server, you can run the old server’s data on the same Mac at the same address. Your other devices and agents then keep working, and only the Mac signs in again.
+
+1. Quit My Journal and copy the `local-server-data` folder to a folder of your own, such as one in your Documents folder.
+2. Start the [standalone server](../distribution.md#building-packages-locally) (`scripts/package-server.sh` builds it for macOS) with that copy as its data directory, on the old port: `Journal__DataDirectory=<copy> ASPNETCORE_URLS=http://127.0.0.1:46371 ./journal-server`. Your Tailscale Serve rule still forwards to that port; if you use another port, point the rule at it instead. Keep the server running and the Mac awake while your devices sync.
+3. Open My Journal and choose Settings > Sync > **Connect to a Server…**. Enter `http://127.0.0.1:46371`, and sign in with your master password. For a library without a password, run the server once with `--recovery-code` (with the same `Journal__DataDirectory`) and use that code. Changes from your other devices download to the Mac.
+
+The Mac stopped syncing by itself only once, so it stays connected this time.
+
+### Remove the old server’s files
+
+If the library on the Mac matters to you, [export an archive](backups.md#export-an-archive) first. Then quit My Journal and, in the folder above, delete `local-server.json`, `local-server-process.json`, `local-server.log`, the `local-server-data` folder and `local-server-retired`. Don’t delete the whole `io.github.ralphkrauss.myjournal` folder: it also holds your journals.
 
 ## An entry or image is too large to sync
 
@@ -55,14 +86,15 @@ Unavailable Journals appears in the sidebar when some entries can’t be shown i
 - **If you sync:** [add the new device](devices.md#add-a-device). Your journals download to it.
 - **If you don’t sync:** [export an archive](backups.md#export-an-archive) on the old device, copy the file to the new one, and choose **Import Archive…** on its first screen.
 
-Then turn on App Lock and set up agent access again; they aren’t copied. Check that your journals arrived before you erase the old device, and [revoke its access](devices.md#remove-a-device).
+Then turn on App Lock and set up agent access again; they aren’t copied. Check that your journals arrived before you [erase the old device](#delete-your-data), and [revoke its access](devices.md#remove-a-device) if you don’t erase it.
 
 ## Delete your data
 
 Nothing is deleted automatically.
 
 - **Entries, journals and templates.** Deleting one moves it to Recently Deleted. There, choose **Delete Permanently…** to remove it and its earlier versions from this device, and from your other devices when they sync. Copies may remain in archives, backups and your server’s history, and images stay in the app’s storage.
-- **Everything on a device.** If you sync, first choose Settings > Devices on another device and **Revoke Access…** for this one. Then delete the app. On a Mac, also delete the PrivateJournal folder inside your user Library folder; if that Mac is your sync server, the folder also holds the server’s data.
+- **Everything on a device.** Choose **Erase Journals and Settings…** at the end of Settings (on the Mac, at the end of Settings > General). It removes your journals, settings and server connection from this device, as if My Journal had just been installed, and signs the device out of your server. Journals already on your server stay there, and your other devices aren’t changed. If something isn’t on your server yet, or you don’t sync, My Journal says so first and offers **Export Archive…**; you can’t undo erasing. With App Lock on, you confirm with Face ID, Touch ID or your passcode. On a Mac that used Use This Mac, it keeps [the old server’s files](#the-old-servers-files).
+- **Deleting the app** removes its data on iPhone and iPad. If you sync, first choose Settings > Devices on another device and **Revoke Access…** for this one. On the Mac, deleting the app leaves its data behind: to remove it too, quit My Journal, delete the app, and delete the `io.github.ralphkrauss.myjournal` folder in the Containers folder inside your user Library folder.
 - **Your server.** Delete the server’s data and its backups, and any archives you exported.
 - **Agent access.** Revoke it in Settings > Agent Access. Ask the agent’s provider about data it already received.
 

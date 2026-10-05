@@ -17,14 +17,14 @@ Until October 2026 every lane ran one after another before each build: hygiene, 
 ```text
 gate     hygiene, lint, generate project  |  backend, publish server once      (side by side)
 then     host: sync-health, sync, core, mac, sync-efficiency, audit             (one after another)
-         simulator: local-server, ios-ui, recovery-ui                           (one after another)
+         simulator: server-recovery, ios-ui, recovery-ui                        (one after another)
 then     archive: iOS, then Mac — starts once ios-ui and the host lanes passed, beside recovery-ui
 ```
 
 - At most one simulator lane runs at a time, and at most two heavy processes overlap: the simulator lane and one host lane, or the simulator lane and one archive. Xcode builds keep `-jobs 2`. On a Mac short on memory, `--serial` runs one lane at a time in the same order.
-- The Mac tests use `artifacts/DerivedDataMacTests`, so they build beside the lanes that share `artifacts/DerivedData` (local-server, ios-ui and recovery-ui, which therefore run one after another). The archives use their own derived data.
+- The Mac tests use `artifacts/DerivedDataMacTests`, so they build beside the lanes that share `artifacts/DerivedData` (server-recovery, ios-ui and recovery-ui, which therefore run one after another). The archives use their own derived data.
 - The backend lane builds the server before any lane starts one, so lanes never build the same .NET project at once. The server is published once and given to the lanes that accept a published server (`JOURNAL_SERVER_PACKAGE`).
-- local-server and recovery-ui wait for sync-health, because all three take servers' ports from the fixed loopback range 18950–18959.
+- server-recovery and recovery-ui wait for sync-health, because all three take servers' ports from the fixed loopback range 18950–18959.
 
 The first failure stops everything: the other lanes are interrupted as Control-C would, so lane scripts stop their servers and restore simulator settings. The check prints when each lane starts, passes or fails, the failed lane's log, and at the end a table of lane times with the total and the time the same lanes take one after another. Logs of the five newest runs stay in `artifacts/release-check/runs`; result bundles are kept only when a run fails.
 
@@ -39,10 +39,10 @@ The check compares the tree with the last tree that passed on this Mac (`artifac
 | `protocol/`, JournalCore sources (sync, storage, crypto), `Package.swift`/`Package.resolved`, `mise.toml`, `mise.lock`, `global.json`, any path without a rule | Every routine lane (a full run) |
 | JournalCore tests or `JournalMeasure` | core |
 | `JournalProbe` | core and the three sync lanes |
-| `server/` sources, `Directory.Build.props`, `.editorconfig` | backend, the three sync lanes, local-server, recovery-ui, and the UI tests that use a server: pairing, connection setup, agent access, merge |
+| `server/` sources, `Directory.Build.props`, `.editorconfig` | backend, the three sync lanes, server-recovery, recovery-ui, and the UI tests that use a server: pairing, connection setup, agent access, merge |
 | `server/tests/` | backend |
-| App code (`apps/apple/JournalApp/`), `project.yml`, `generate-apple.sh` | lint, mac, local-server, every iOS unit and UI test, recovery-ui |
-| Mac-only code (`JournalApp/Views/Mac`, `MacResources`, `Signing`, `JournalServerTests`) | lint, mac, local-server |
+| App code (`apps/apple/JournalApp/`), `project.yml`, `generate-apple.sh` | lint, mac, server-recovery, every iOS unit and UI test, recovery-ui |
+| Mac-only code (`JournalApp/Views/Mac`, `MacResources`, `Signing`, `JournalServerTests`) | lint, mac, server-recovery |
 | Shared unit tests (`apps/apple/JournalTests/`) | lint, mac, the iOS unit tests |
 | A UI test file holding only test classes | lint and those classes (`SyncRecoveryUITests` runs in recovery-ui) |
 | Another UI test file (shared helpers) | lint, every iOS unit and UI test, recovery-ui |
@@ -66,7 +66,7 @@ Measured on the owner's Mac with warm build caches on 2 October 2026 (before the
 | --- | --- |
 | Gate: hygiene, lint, backend, publish server | about 1.5 min |
 | Host lanes together | about 7–8 min |
-| local-server | under 1 min |
+| server-recovery | under 1 min |
 | ios-ui (60 tests, about 41 min running tests) | about 45 min |
 | recovery-ui | about 4.7 min |
 | Both archives, one after another | about 3 min |
@@ -82,6 +82,6 @@ The iOS UI lane is the critical path: every minute saved there shortens a typica
 
 ## Constraints for lane and build changes
 
-- The simulator lanes and local-server share `artifacts/DerivedData`, so they can't overlap. If a lane gets its own derived data path, the release check can move it to another track.
-- local-server publishes its own server and doesn't accept `JOURNAL_SERVER_PACKAGE`; archive-mac publishes one too.
+- The simulator lanes and server-recovery share `artifacts/DerivedData`, so they can't overlap. If a lane gets its own derived data path, the release check can move it to another track.
+- server-recovery publishes its own server and doesn't accept `JOURNAL_SERVER_PACKAGE`.
 - The archives run beside recovery-ui only because they use their own derived data. If an archive script starts sharing `artifacts/DerivedData`, the archives have to wait for recovery-ui.

@@ -29,6 +29,6 @@ cp packaging/journal-server "$output/journal-server"
 chmod 755 "$output/journal-server"
 cp LICENSE NOTICE "$output/"
 # The self-contained server redistributes the .NET runtime and NuGet packages; their notices travel with it.
-cp apps/apple/JournalApp/Resources/ThirdPartyNotices.txt "$output/THIRD-PARTY-NOTICES.txt"
+cp packaging/server-THIRD-PARTY-NOTICES.txt "$output/THIRD-PARTY-NOTICES.txt"
 cp packaging/server-README.md "$output/README.md"
 printf 'Self-contained server %s: %s\n' "$version" "$output"

@@ -151,6 +151,7 @@ struct RootView: View {
             archiveToImport = url
         }
         .sheet(isPresented: $model.archiveExportPresented) { ArchiveExportSheet() }
+        .sheet(isPresented: $model.markdownExportPresented) { MarkdownExportSheet() }
         .onValueChange(of: editor.requestImage) { requested in
             guard requested else { return }
             editor.requestImage = false

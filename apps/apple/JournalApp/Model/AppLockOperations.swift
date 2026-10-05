@@ -69,6 +69,21 @@ extension AppModel {
         #endif
     }
 
+    /// The device's own authentication before something App Lock protects leaves the app or is erased, as turning
+    /// App Lock off asks for it. False when cancelled, failed, or the app locked meanwhile.
+    func authenticateDeviceOwner(reason: String) async -> Bool {
+        refreshDeviceOwnerAvailability()
+        let lockCount = unlockState.lockCount
+        unlockState.authenticating = true
+        let outcome = await deviceOwner.authenticate(reason: Self.authenticationReason(reason))
+        unlockState.authenticating = false
+        guard !locked, lockCount == unlockState.lockCount else { return false }
+        switch outcome {
+        case .success, .noPasscode: return true
+        case .cancelled, .failed: return false
+        }
+    }
+
     /// Reads again what the device can authenticate with, for Settings and the lock screen.
     func refreshDeviceOwnerAvailability() {
         let availability = deviceOwner.availability()
@@ -202,6 +217,7 @@ extension AppModel {
     /// applied at once. The Mac waits: a window stays visible behind the app the person may have switched to.
     func applicationResignedActive() {
         applicationActive = false
+        reviewRequests.interrupt()
         #if os(iOS)
             if unlockState.authenticating { unlockState.inactiveForRequest = true }
         #endif

@@ -61,6 +61,8 @@ struct SettingsView: View {
                         row(.backup, "Backup", symbol: "externaldrive")
                         row(.agents, "Agent Access", symbol: "person.badge.key")
                     }
+                    // The privacy policy and the project's pages (docs/design/about-and-ratings-2026-10-05.md §1).
+                    AboutSection()
                     // A standalone function, in a last section of its own, as iOS Settings ends General with Transfer
                     // or Reset iPhone (docs/design/erase-device-2026-10-04.md §1).
                     EraseSection { closeAfterErasing() }
@@ -108,7 +110,11 @@ struct SettingsView: View {
         case .sync: syncSettings
         case .devices: DevicesView()
         case .privacy: privacySettings
-        case .backup: Form { ArchiveControls() }.formStyle(.grouped)
+        case .backup:
+            Form {
+                ArchiveControls()
+                MarkdownExportSection()
+            }.formStyle(.grouped)
         case .agents: agentSettings
         }
     }
@@ -156,36 +162,42 @@ struct SettingsView: View {
     }
     private var syncSettings: some View {
         Form {
-            #if os(macOS)
-                LocalServerSection(controller: model.localServer)
-                if model.connection != nil && !model.localServer.isConfigured {
-                    StopSyncingSection(activity: model.syncActivity)
+            Section {
+                if let connection = model.connection {
+                    Text(connection.address).textSelection(.enabled)
+                    SyncNowRows(activity: model.syncActivity) { connect = ConnectionRequest() }
+                } else {
+                    Button("Connect to a Server…") { connect = ConnectionRequest() }
                 }
-            #else
-                Section {
-                    if let connection = model.connection {
-                        Text(connection.address).textSelection(.enabled)
-                        SyncNowRows(activity: model.syncActivity) { connect = ConnectionRequest() }
-                    } else {
-                        Button("Connect to a Server…") { connect = ConnectionRequest() }
-                    }
-                } header: {
-                    Text("Server")
-                } footer: {
-                    if model.connection != nil && model.saveFailure {
-                        Text(SyncPauseNotice.saveFailed)
-                    } else if let error = model.syncError {
-                        Text(error)
-                    } else if model.connection == nil {
-                        Text("Your journals are saved on this device.")
-                    } else if let footer = model.libraryFooter {
-                        Text(footer)
-                    }
+            } header: {
+                Text("Server")
+            } footer: {
+                if model.connection != nil && model.saveFailure {
+                    Text(SyncPauseNotice.saveFailed)
+                } else if let error = model.syncError {
+                    Text(error)
+                } else if model.connection == nil {
+                    notConnectedFooter
+                } else if let footer = model.libraryFooter {
+                    Text(footer)
                 }
-                if model.connection != nil { StopSyncingSection(activity: model.syncActivity) }
-            #endif
+            }
+            if model.connection != nil { StopSyncingSection(activity: model.syncActivity) }
             ConflictSettingsSection { reviewingConflict = $0 }
         }.formStyle(.grouped)
+    }
+    /// Where a server comes from, or why this Mac stopped syncing with the server it once ran
+    /// (docs/design/client-only-mac-lists-markdown-2026-10-05.md §1.1–1.2).
+    private var notConnectedFooter: Text {
+        #if os(macOS)
+            if model.configuration?.stoppedSyncingWithFormerMacServer == true {
+                return Text(
+                    "My Journal no longer runs a server on this Mac, so this Mac stopped syncing. Your journals are saved on this Mac. To sync again, connect to a server.\n"
+                ) + AboutLink.link("Learn More", to: AboutLink.formerMacServerGuide)
+            }
+        #endif
+        return Text("Your journals are saved on this device.\n")
+            + AboutLink.link("How to Set Up a Server", to: AboutLink.syncGuide)
     }
     private var privacySettings: some View {
         Form {

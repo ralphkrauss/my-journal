@@ -61,9 +61,6 @@ final class ConnectionSetupUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["On the new device, choose Connect to a Server, then Add This Device."].waitToAppear(
                 timeout: 10))
-        // This test server is reached over plain HTTP, which only the Mac's own local server explains.
-        XCTAssertFalse(
-            app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "this Mac")).firstMatch.exists)
         app.navigationBars["Add Device"].buttons["Cancel"].tap()
         app.buttons["Done"].tap()
         XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitToAppear(timeout: 10))

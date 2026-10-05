@@ -143,7 +143,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
         return (owner, key, version)
     }
 
-    /// Frame 4: search on iPhone, Version History on iPad.
+    /// Frame 4: the Personal list with its Pinned section, then search, on iPhone; Version History on iPad.
     @MainActor func test4FindAgain() throws {
         let app = try launch()
         if isPad {
@@ -157,8 +157,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
         } else {
             NavigationTestSupport.selectCollection("Personal", app: app)
             let search = app.searchFields["Search Personal"]
-            if !search.isHittable { app.swipeDown() }
-            try require(search, timeout: 5)
+            try capturePinned(app, search: search)
             search.tap()
             search.typeText("walk\n")
             XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
@@ -166,7 +165,18 @@ final class ScreenshotCaptureUITests: XCTestCase {
         }
     }
 
-    /// Frame 5: templates on iPhone, the Work journal with a table on iPad.
+    /// The Personal list from the top: its search field shown but not focused, then the Pinned section.
+    @MainActor private func capturePinned(_ app: XCUIApplication, search: XCUIElement) throws {
+        for _ in 0..<3 where !(search.exists && search.isHittable) {
+            app.swipeDown()
+        }
+        try require(search, timeout: 5)
+        try require(app.staticTexts["Pinned"].firstMatch, timeout: 10)
+        XCTAssertFalse(app.keyboards.firstMatch.exists, "The search field isn't focused")
+        try capture(app, "04-pinned-light")
+    }
+
+    /// Frame 5: the journals in their chosen order, in edit mode, on iPhone; the Work journal with a table on iPad.
     @MainActor func test5Journals() throws {
         let app = try launch()
         if isPad {
@@ -178,19 +188,21 @@ final class ScreenshotCaptureUITests: XCTestCase {
             try capture(app, "05-work-list")
             NavigationTestSupport.showJournals(app)
             try capture(app, "05-journals-list")
-            NavigationTestSupport.selectCollection("Work", app: app)
-            let create = app.buttons["New Entry"].firstMatch
-            try require(create, timeout: 5)
-            create.tap()
-            let suggestion = app.buttons["Use a Template"].firstMatch
-            try require(suggestion, timeout: 10)
-            suggestion.tap()
-            try require(app.searchFields["Search Templates"], timeout: 5)
-            // The search field takes focus when the chooser opens; a drag on the list puts the keyboard away.
-            let list = app.collectionViews.firstMatch
-            if app.keyboards.firstMatch.waitForExistence(timeout: 2) { list.swipeUp(velocity: .slow) }
-            try capture(app, "05-templates-light")
+            try captureJournalsInEditMode(app)
         }
+    }
+
+    /// Edit in Journals, captured once the reorder handles show, then Done.
+    @MainActor private func captureJournalsInEditMode(_ app: XCUIApplication) throws {
+        let edit = app.buttons["Edit"].firstMatch
+        try require(edit, timeout: 5)
+        edit.tap()
+        let handle = app.collectionViews["Journals"].descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Reorder")).firstMatch
+        try require(handle, timeout: 5)
+        try capture(app, "05-journals-edit-light")
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(edit.waitForExistence(timeout: 5))
     }
 
     /// Frame 6 runs with the simulator in dark appearance.

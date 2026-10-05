@@ -561,7 +561,13 @@ extension RichText {
                 (result.attribute(.paragraphStyle, at: local.location, effectiveRange: nil) as? NSParagraphStyle)?
                 .mutableCopy() as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
             style.textLists = [list]
-            style.firstLineHeadIndent = 0
+            // The marker where the editor draws it, then a tab to the item's text, so wrapped lines line up with it
+            // in other apps too.
+            let column =
+                result.attribute(.journalListColumn, at: local.location, effectiveRange: nil) as? CGFloat
+                ?? listColumn(size: size ?? 17)
+            style.firstLineHeadIndent = max(0, style.headIndent - column)
+            style.tabStops = [NSTextTab(textAlignment: .natural, location: style.headIndent)]
             result.addAttribute(.paragraphStyle, value: style, range: local)
             result.insert(
                 NSAttributedString(

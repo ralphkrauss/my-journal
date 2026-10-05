@@ -9,6 +9,9 @@ import XCTest
 /// Hosted in the app, it opens the library in the app's own journal window and Settings window, arranges them as each
 /// frame needs and renders the windows at 2x. design/app-store/capture-mac.sh seeds the library and names it with
 /// `JOURNAL_DATA_DIR`; `JOURNAL_SCREENSHOT_PASSWORD_FILE` and `JOURNAL_SCREENSHOT_OUTPUT` come from the same script.
+/// For frame 4 it also starts a disposable server and passes `JOURNAL_SCREENSHOT_SERVER` (its loopback address),
+/// `JOURNAL_SCREENSHOT_SETUP_CODE` and `JOURNAL_SCREENSHOT_PUBLIC_URL` (the public address the server is configured
+/// with, which Agent Access shows).
 @MainActor
 final class MacScreenshotCapture: XCTestCase {
     private var environment: [String: String] { ProcessInfo.processInfo.environment }
@@ -23,6 +26,8 @@ final class MacScreenshotCapture: XCTestCase {
         // Shown on without asking: the capture runs unattended. Not saved.
         model.configuration?.appLock = true
         try await capture(try await openSettings(.privacy, model: model), "02-settings-privacy-light")
+        // Off again, so no later frame is captured with App Lock on or behind its cover.
+        model.configuration?.appLock = false
         try await capture(try await openSettings(.sync, model: model), "03-settings-sync-light")
 
         try await show("Offsite ideas", in: "Work", model: model, window: window)
@@ -36,27 +41,32 @@ final class MacScreenshotCapture: XCTestCase {
         NSApp.appearance = NSAppearance(named: .darkAqua)
         try await show("Slow Sunday", in: "Personal", model: model, window: window)
         try await capture(window, "04-main-dark")
-        // The Agent Access frame needs an agent connected through a sync server, which this capture doesn't run
-        // (docs/design/agent-access-simplified.md, section 8).
+        let read = try XCTUnwrap(model.items.first { $0.kind == "entry" && $0.title == "Slow Sunday" }?.id)
         try await show("Porto, day two", in: "Travel", model: model, window: window)
         try await capture(window, "06-main-dark")
+        // Last, since it connects the library to a server.
+        try await captureAgentAccess(model: model, reading: read)
     }
 
     // MARK: - Arranging
 
     private func openLibrary() async throws -> (AppModel, NSWindow) {
-        guard let passwordFile = environment["JOURNAL_SCREENSHOT_PASSWORD_FILE"] else {
-            throw CaptureError("Run design/app-store/capture-mac.sh, which seeds the library.")
-        }
+        let phrase = try password()
         let window = try XCTUnwrap(journalWindow(), "The journal window isn't open.")
         let delegate = NSApp.delegate.flatMap { Self.find(ApplicationDelegate.self, in: $0, depth: 0) }
         if delegate == nil, let appDelegate = NSApp.delegate { Self.dump(appDelegate, depth: 0) }
         let model = try XCTUnwrap(delegate?.model ?? Self.find(AppModel.self, in: window.contentView as Any, depth: 0))
         await model.load()
-        let password = try String(contentsOfFile: passwordFile, encoding: .utf8)
-        await model.unlockWithRecovery(password.trimmingCharacters(in: .whitespacesAndNewlines))
+        await model.unlockWithRecovery(phrase)
         XCTAssertFalse(model.locked, model.error ?? "")
         return (model, window)
+    }
+
+    private func password() throws -> String {
+        guard let passwordFile = environment["JOURNAL_SCREENSHOT_PASSWORD_FILE"] else {
+            throw CaptureError("Run design/app-store/capture-mac.sh, which seeds the library.")
+        }
+        return try String(contentsOfFile: passwordFile, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func journalWindow() -> NSWindow? {
@@ -89,6 +99,113 @@ final class MacScreenshotCapture: XCTestCase {
 
     private func settle(_ seconds: Double = 1.5) async throws {
         try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+
+    // MARK: - Agent Access
+
+    /// Frame 4: the library on a disposable server set up by "MacBook Pro", "Writing Assistant" allowed to read
+    /// Personal and Work and used once, then Settings > Agent Access and the agent's page.
+    private func captureAgentAccess(model: AppModel, reading entryID: UUID) async throws {
+        guard let address = environment["JOURNAL_SCREENSHOT_SERVER"], address.hasPrefix("http://127.0.0.1:"),
+            let publicURL = environment["JOURNAL_SCREENSHOT_PUBLIC_URL"]
+        else { throw CaptureError("Run design/app-store/capture-mac.sh, which starts the server.") }
+        try await connect(model, to: address)
+        let controller = ServerAgentsController()
+        await controller.load(model)
+        guard controller.phase == .ready, let mcpURL = controller.mcpURL else {
+            throw CaptureError("Agent Access isn't ready: \(controller.phase)")
+        }
+        // Agent Access shows the server's public address, without the note about agents on this Mac.
+        guard mcpURL == publicURL + "/mcp", ServerAgentText.reachability(mcpURL) == nil else {
+            throw CaptureError("Agent Access shows \(mcpURL) instead of \(publicURL)/mcp.")
+        }
+        var agent = ScreenshotAgent(
+            server: try PublicHostConnection(loopbackAddress: address, publicURL: publicURL))
+        try await agent.register()
+        let page = try await agent.openAuthorizationPage()
+        try await allow(controller, model: model, number: page.number)
+        try await agent.redeem(handle: page.handle)
+        try await use(agent, reading: entryID)
+        let settings = try await openSettings(.agents, model: model)
+        let row = try await agentRow(in: settings)
+        try await capture(settings, "04-settings-agents-dark")
+        XCTAssertTrue(row.accessibilityPerformPress(), "The agent's row didn't open its page.")
+        for _ in 0..<20 where settings.attachedSheet == nil {
+            try await settle(0.25)
+        }
+        let agentPage = try XCTUnwrap(settings.attachedSheet, "The agent's page didn't open.")
+        // No insertion point in the Name field.
+        agentPage.makeFirstResponder(nil)
+        try await settle()
+        try await capture(agentPage, "04-agent-detail-dark")
+    }
+
+    /// Sets up the server with the library as the device "MacBook Pro", as the iPhone and iPad captures do, so the
+    /// Mac's own name never appears, and synchronizes the library to it. The connection isn't saved.
+    private func connect(_ model: AppModel, to address: String) async throws {
+        guard let code = environment["JOURNAL_SCREENSHOT_SETUP_CODE"], let envelope = model.configuration?.recovery
+        else { throw CaptureError("No setup code for the server.") }
+        let secret = try VaultCrypto.recover(envelope, phrase: try password()).1
+        let grant = try await ServerClient(address: address).initialize(
+            code: code, envelope: envelope, recoverySecret: secret, deviceName: "MacBook Pro")
+        model.connection = SyncConnection(address: address, deviceID: grant.deviceId, token: grant.token)
+        model.configureSync()
+        let synchronized = await model.sync()
+        XCTAssertTrue(synchronized, "The library didn't synchronize with the server.")
+    }
+
+    /// Allows the agent's request for Personal and Work as Allow in the Allow Access sheet does
+    /// (AllowAgentView.allow): the request's details, then the controller's approval with the page's number.
+    private func allow(_ controller: ServerAgentsController, model: AppModel, number: Int) async throws {
+        var summary: AgentRequest?
+        for _ in 0..<40 where summary == nil {
+            await controller.refreshRequests(model)
+            summary = controller.requests.first { $0.clientName == ScreenshotAgent.clientName }
+            if summary == nil { try await settle(0.5) }
+        }
+        guard let summary else { throw CaptureError("The agent's request didn't arrive.") }
+        let request = try await controller.request(model, id: summary.id)
+        let journals = Set(model.journals.filter { ["Personal", "Work"].contains($0.title) }.map(\.id))
+        guard journals.count == 2 else { throw CaptureError("Personal and Work aren't both in the library.") }
+        try await controller.approve(model, request: request, number: number, allJournals: false, journalIDs: journals)
+    }
+
+    /// Lists the journals, searches and reads an entry, so the agent's Recent Activity has real requests.
+    private func use(_ agent: ScreenshotAgent, reading entryID: UUID) async throws {
+        let journals = try await agent.callTool("list_journals", [:])
+        guard journals.contains("Personal"), journals.contains("Work"), !journals.contains("Travel") else {
+            throw CaptureError("The agent lists other journals than Personal and Work: \(journals)")
+        }
+        guard try await agent.callTool("search_entries", ["query": "walk"]).contains("Rainy walk") else {
+            throw CaptureError("The agent's search didn't find \"Rainy walk\".")
+        }
+        let entry = try await agent.callTool("read_entry", ["entry_id": entryID.uuidString])
+        guard entry.contains("Woke up before the alarm") else {
+            throw CaptureError("The agent couldn't read \"Slow Sunday\".")
+        }
+    }
+
+    /// The agent's row in Settings > Agent Access, found as VoiceOver finds it, once the pane has loaded the list.
+    private func agentRow(in settings: NSWindow) async throws -> NSAccessibilityProtocol {
+        for _ in 0..<40 {
+            if let row = Self.agentRow(in: settings, depth: 0) { return row }
+            try await settle(0.5)
+        }
+        throw CaptureError("Agent Access doesn't list \(ScreenshotAgent.clientName).")
+    }
+
+    private static func agentRow(in element: NSAccessibilityProtocol, depth: Int) -> NSAccessibilityProtocol? {
+        let names = [element.accessibilityLabel(), element.accessibilityTitle()].compactMap { $0 }
+        if element.accessibilityRole() == .button, names.contains(where: { $0.contains(ScreenshotAgent.clientName) }) {
+            return element
+        }
+        guard depth < 40 else { return nil }
+        for child in element.accessibilityChildren() ?? [] {
+            if let child = child as? NSAccessibilityProtocol, let row = agentRow(in: child, depth: depth + 1) {
+                return row
+            }
+        }
+        return nil
     }
 
     // MARK: - Capturing

@@ -1,10 +1,9 @@
 #!/bin/bash
-# Builds the Mac App Store archive: the universal Release app with the bundled
-# server in Contents/Helpers. It needs no signing credentials. Every executable is signed to run locally, which
-# records its entitlements; the export signs each one again with the distribution identity and profile and keeps
-# them (upload-app-store.sh, or Distribute App in Xcode's Organizer). Archiving from Xcode would leave out the server.
+# Builds the Mac App Store archive: the universal Release app. It needs no signing credentials. Every executable is
+# signed to run locally, which records its entitlements; the export signs each one again with the distribution
+# identity and profile and keeps them (upload-app-store.sh, or Distribute App in Xcode's Organizer).
 # JOURNAL_SIGNING_TEAM is the team ID that prefixes the app group and the keychain group. JOURNAL_BUILD_NUMBER sets the
-# build number (CFBundleVersion) and JOURNAL_VERSION the version the bundled server reports. JOURNAL_SIGNING_IDENTITY
+# build number (CFBundleVersion). JOURNAL_SIGNING_IDENTITY
 # (for example an Apple Development identity) signs the archive for the team, which Xcode's Organizer needs to
 # distribute it; without it every executable is signed ad hoc, as in CI.
 set -euo pipefail
@@ -52,15 +51,6 @@ sed "s/\$(TeamIdentifierPrefix)/$team./; s/\$(AppIdentifierPrefix)/$team./" \
 codesign --force --sign "$identity" --preserve-metadata=identifier,requirements,flags,runtime \
   --entitlements "$output/Journal.entitlements" "$app"
 rm "$output/Journal.entitlements"
-# Apple silicon only until the owner decides how Intel Macs get the server (docs/design/mac-app-store-sandbox.md).
-scripts/package-server.sh osx-arm64 "$output/server"
-scripts/embed-mac-server.sh "$app" "$output/server"
-rm -rf "$output/server"
-# Symbols for the embedded server's native code, so the upload finds a dSYM for every binary it contains.
-server_code="$app/Contents/Helpers/JournalServer.app/Contents/MacOS"
-for binary in "$server_code/Journal.Api" "$server_code/libe_sqlite3.dylib"; do
-  dsymutil "$binary" -o "$output/My Journal.xcarchive/dSYMs/$(basename "$binary").dSYM"
-done
 # The App Store refuses an executable outside the sandbox, and the export keeps the entitlements recorded here.
 check_entitlements() {
   codesign -d --entitlements - --xml "$1" 2>/dev/null | python3 -c '
@@ -73,10 +63,11 @@ keychain = claimed.get("keychain-access-groups", [f"{team}.org.privatejournal.va
 expected = ([f"{team}.io.github.ralphkrauss.myjournal"], [f"{team}.org.privatejournal.vault"])
 if not set(required) <= set(claimed) or (group, keychain) != expected:
     raise SystemExit(code + " has unexpected entitlements: " + " ".join(sorted(claimed)))
-if code.endswith("JournalServer.app") and set(claimed) != set(required):
-    raise SystemExit("The server must only inherit the app sandbox.")
 ' "$1" "$team" "${@:2}"
 }
-check_entitlements "$app/Contents/Helpers/JournalServer.app" com.apple.security.app-sandbox com.apple.security.inherit
+plutil -lint -s "$app/Contents/Resources/PrivacyInfo.xcprivacy" || {
+  echo "Missing or invalid privacy manifest." >&2
+  exit 1
+}
 check_entitlements "$app" com.apple.security.app-sandbox com.apple.security.application-groups keychain-access-groups
 printf 'Mac App Store archive, pending signing at export: %s\n' "$output/My Journal.xcarchive"

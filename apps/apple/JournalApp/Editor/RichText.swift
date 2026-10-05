@@ -297,6 +297,11 @@ enum RichText {
     /// line up with that text. One width for every kind of list, so they line up with each other, and it grows
     /// with the text (docs/design/checklists-2026-10-03.md).
     nonisolated static func listColumn(size: CGFloat) -> CGFloat { (size * 1.5).rounded() }
+    /// How far in from the body text a list starts: its first-level marker sits this far in, and the content of its
+    /// items moves in with it. The quote indent, so a marker lines up with a quote's text, and fixed rather than
+    /// scaled, so large text keeps its width (docs/design/client-only-mac-lists-markdown-2026-10-05.md). Only the
+    /// presentation moves; the Markdown is unchanged.
+    static let listInset = BlockDecorations.quoteIndent
     /// How many list levels are drawn further in at `size`: as many columns as fit in 160 points, so deep nesting at
     /// a large text size still leaves its text room on the line. Increase Indent goes no deeper (ListIndentation).
     nonisolated static func visibleNestingLevels(size: CGFloat) -> Int { max(1, Int(160 / listColumn(size: size))) }
@@ -327,9 +332,10 @@ enum RichText {
             style.headIndent = BlockDecorations.codeInset
             style.tailIndent = -BlockDecorations.codeInset
         }
-        if ["bullet", "numbered", "task", "checked"].contains(kind) {
-            // The bullet, number or checkbox is drawn in the column before the text (ListLayout.swift).
-            let indent = listColumn(size: size)
+        if ListIndentation.kinds.contains(kind) {
+            // The bullet, number or checkbox is drawn in the column before the text (ListLayout.swift), which
+            // starts at the list inset.
+            let indent = listInset + listColumn(size: size)
             style.firstLineHeadIndent = indent
             style.headIndent = indent
         }
@@ -380,10 +386,12 @@ enum RichText {
         {
             // Each list level moves in by one list column, so a nested item's marker lines up with its parent's
             // text however many spaces the Markdown uses; other prefixes, such as a quote's "> ", by half an em
-            // per character.
+            // per character. Content inside a list item that isn't an item itself, such as its second paragraph,
+            // moves in by the list inset too, as the item's text does, so it stays aligned with that text.
             let levels = block.listIndents ?? []
             let other = max(0, prefix.count - levels.reduce(0, +))
-            let indent = nestingIndent(levels: levels.count, size: size) + CGFloat(other) * size * 0.5
+            let inset = !levels.isEmpty && !ListIndentation.kinds.contains(block.kind) ? listInset : 0
+            let indent = nestingIndent(levels: levels.count, size: size) + CGFloat(other) * size * 0.5 + inset
             style.firstLineHeadIndent += indent
             style.headIndent += indent
             style.tabStops = style.tabStops.map {

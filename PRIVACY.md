@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Effective September 29, 2026
+Effective October 5, 2026
 
 I’m Ralph Krauss, and I make My Journal. This policy explains what happens to your information when you use the My Journal apps for iPhone, iPad and Mac, and this project on GitHub, which is the app’s website.
 
@@ -37,11 +37,11 @@ App Lock hides your journals until you authenticate with Face ID, Touch ID or yo
 
 Backups of your device, such as iCloud Backup or Time Machine, can include the app’s data. With encryption on, journal content in them stays encrypted.
 
-The app connects to the internet only to reach a server you set up. Images linked from the web aren’t downloaded, and a link in an entry opens only when you choose it. System features you use while writing, such as Dictation, Writing Tools or a third-party keyboard, are provided by Apple or the keyboard’s developer under their own privacy policies.
+The app connects to the internet only to reach a server you set up. To find servers on your local network, it looks for ones that announce themselves (Bonjour); it doesn’t announce itself. Images linked from the web aren’t downloaded, and a link in an entry opens only when you choose it. System features you use while writing, such as Dictation, Writing Tools or a third-party keyboard, are provided by Apple or the keyboard’s developer under their own privacy policies.
 
 ## Sync with your own server
 
-Sync is off until you connect to a server. The server is one you run: on your Mac, on a home server or with a hosting provider you choose. I don’t operate a server for My Journal and have no access to yours.
+Sync is off until you connect to a server. The server is one you run, separately from the app: on a home server, on a computer of your own or with a hosting provider you choose. I don’t operate a server for My Journal and have no access to yours.
 
 Your master password never leaves your device. The server stores a copy of your journals’ key, locked with your master password, so your other devices can use it. Anyone with the server’s data could try to guess your password, so use a long one from a password manager.
 
@@ -76,6 +76,8 @@ Export Archive creates a copy of your journals, including images and earlier ver
 
 Agent access is off until you allow an agent in Settings > Agent Access. An AI agent you allow reads only the journals you choose (with **All Journals**, also ones you create later), through your own server, and can’t change anything. To make that possible, your devices keep a copy of those journals on your server for that agent. With encryption on, the copy is encrypted with a key that only the agent’s access unlocks, so your server can read the shared journals while it answers the agent; your other journals stay end-to-end encrypted.
 
+When an agent connects, your server may download the agent’s public description (its name and where it returns to) from the web address the agent gives; nothing about you or your journals is sent with that request.
+
 What the agent reads is sent to it. If the agent uses an online service, such as a cloud AI model or a connector in its provider’s app, that service receives what it reads and keeps its access until you revoke it, under its own privacy policy. Your server records which tools each agent used and when, not what it searched for or read. Revoking access deletes the agent’s copy and access on your server; it doesn’t remove what the agent already read. The [security model](SECURITY.md#agent-access-through-mcp) has the details.
 
 ## Apple
@@ -101,7 +103,7 @@ Nothing is deleted automatically. Deleted items stay in Recently Deleted until y
 I don’t hold your journals or any account for you. If you emailed me or opened an issue, you can ask me to delete your messages or the issue. Your journals are on your devices and, if you sync, on your server:
 
 - Delete entries or journals in the app. They move to Recently Deleted. Choose Delete Permanently to remove them and their version history from this device, and from your other devices when they sync. This doesn’t erase every copy: their images stay in the app’s storage, and your server, its backups and any archives you exported keep earlier versions.
-- To remove everything from a device, delete the app. If you sync, first go to Settings > Devices on another device and choose Revoke Access for this one. On a Mac, also delete the PrivateJournal folder inside your user Library folder. If that Mac is your sync server, the folder also holds the server’s data.
+- To remove everything from a device, choose Erase Journals and Settings… at the end of Settings (on the Mac, at the end of Settings > General). It removes your journals, settings and server connection from that device and signs it out of your server; your server and your other devices keep their copies. You can also delete the app; if you sync, first go to Settings > Devices on another device and choose Revoke Access for this one. Deleting the Mac app doesn’t remove its data: also delete the `io.github.ralphkrauss.myjournal` folder in the Containers folder inside your user Library folder.
 - To remove your data from your server, delete the server’s data and its backups. Delete any archives you exported.
 - To stop an agent’s access, revoke it in Settings > Agent Access. Ask the agent’s provider about data it already received.
 

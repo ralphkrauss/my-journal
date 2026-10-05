@@ -302,7 +302,7 @@ final class ListItemEditingTests: XCTestCase {
             let style =
                 harness.text.attribute(
                     .paragraphStyle, at: ("Milk\n" as NSString).length, effectiveRange: nil) as? NSParagraphStyle
-            XCTAssertEqual(style?.headIndent, RichText.listColumn(size: 17), markdown)
+            XCTAssertEqual(style?.headIndent, RichText.listInset + RichText.listColumn(size: 17), markdown)
         }
     }
 

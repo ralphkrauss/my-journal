@@ -14,7 +14,7 @@ Agents read the version of each entry that last synced. They don’t get images,
 
 ## Connect an agent
 
-You need a sync server (see [Sync](sync.md)) and My Journal on a device that syncs with it.
+You need a sync server (see [Sync](sync.md)) and My Journal on a device that syncs with it. Without one, Agent Access says so and offers **Connect to a Server…**.
 
 1. In My Journal, open Settings > Agent Access. Under **MCP Server Address**, choose **Copy** (on iPhone or iPad you can also **Share** it to your computer).
 2. In your agent, add an MCP server (sometimes called a custom connector) with that address. For example:
@@ -30,7 +30,7 @@ You need a sync server (see [Sync](sync.md)) and My Journal on a device that syn
 ### Which agents can reach your server
 
 - **An address on your tailnet** (`https://….ts.net`) works for agents on devices in your tailnet, such as Claude Code or VS Code on your computer. Agents that connect from their provider’s cloud — ChatGPT, and custom connectors in the Claude apps and claude.ai — can’t reach it.
-- **This Mac’s own server** (`http://127.0.0.1:…`) works only for agents on the same Mac.
+- **A server on the same computer** (`http://127.0.0.1:…`), such as the container on your Mac, works only for agents on that computer.
 - **A public HTTPS address** works for every agent. Making your server public exposes its whole sync API to the internet, which is protected by device credentials, rate limits and the setup-code limits. To expose only what agents need, publish just `/mcp`, `/oauth/` and `/.well-known/` through your proxy. With Tailscale Funnel, which publishes a whole host and port, use a separate Funnel port (such as 8443) that forwards only those paths, and set `JOURNAL_URL` to that address.
 
 If Agent Access says your server doesn’t know its HTTPS address, or asks you to set its public address, set `JOURNAL_URL` (or `Journal__PublicUrl`) for the server to its HTTPS address, such as `https://journal.example.ts.net`, and connect My Journal to that address. The `compose.https.yaml` example sets it from `JOURNAL_DOMAIN`.
@@ -59,7 +59,7 @@ When you allow an agent, your device keeps a copy of the chosen journals on your
 
 ## Agents on the same Mac
 
-Agents running on your Mac connect the same way. If your Mac doesn’t sync with a server, choose Settings > Sync > **Use This Mac…** first: the server built into My Journal then gives agents on this Mac an MCP address, while My Journal is running. Agents read what has synced; with This Mac’s server, that’s your entries a moment after you write them. A Mac that syncs with a server on your network over plain HTTP needs that server to have an HTTPS address, such as one from Tailscale Serve, before agents can connect.
+Agents running on your Mac connect the same way, through your sync server’s MCP address. If you don’t sync yet, set up a server first; see [Sync](sync.md). It can run on the same Mac, in a container; see [running the server on a Mac](../self-hosting/README.md#running-the-server-on-a-mac). Agents read what has synced, so your entries reach them once My Journal syncs, a moment after you write them.
 
 ## Before you share
 
