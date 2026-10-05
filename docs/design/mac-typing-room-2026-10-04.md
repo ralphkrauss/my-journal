@@ -69,3 +69,8 @@ Outcomes of the two checkbox conditions:
 ### QA follow-up: the find bar (4 October 2026)
 
 Edit ▸ Find (⌘F) showed the find bar over the entry's first line, and with the editor's own insets nothing could scroll that line into view, so a match in it stayed hidden under the bar (build 14 behaved the same). The editor's scroll view now gives the find bar its own room above the text while it shows, as TextEdit does, and the text returns to the top when it closes. `TypingRoomTests.testTheFindBarDoesntCoverTheFirstLine` covers it; the room below the line being typed is unchanged.
+
+## Owner check (5 October 2026)
+
+The owner tested build 15 on the Mac and found everything good, including the two lines of room below the line being
+typed. The value stays at two lines.

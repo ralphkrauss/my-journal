@@ -70,8 +70,29 @@ extension AppModel {
     func eraseWarning() async -> EraseWarning? {
         guard store != nil, !locked else { return nil }
         _ = await flush()
+        #if DEBUG
+            if let shown = Self.uiTestEraseWarning { return shown }
+        #endif
         return await currentEraseWarning()
     }
+
+    #if DEBUG
+        /// A warning a UI test chooses (`JOURNAL_UI_TEST_ERASE_WARNING`: onServer, unsent:<count>, unconfirmed,
+        /// notSyncing, nothingWritten), so each alert can be seen without a server. It is only shown: Erase checks
+        /// what would really be lost, and a library with more to lose than shown gets the real alert instead.
+        private static var uiTestEraseWarning: EraseWarning? {
+            guard let value = ProcessInfo.processInfo.environment["JOURNAL_UI_TEST_ERASE_WARNING"] else { return nil }
+            let host = "journal.example.com"
+            switch value.split(separator: ":").first {
+            case "onServer": return .onServer(host: host)
+            case "unsent": return .unsent(count: Int(value.split(separator: ":").last ?? "") ?? 1, host: host)
+            case "unconfirmed": return .unconfirmed(host: host)
+            case "notSyncing": return .notSyncing
+            case "nothingWritten": return .nothingWritten
+            default: return nil
+            }
+        }
+    #endif
 
     /// What erasing would lose now, from the store's own count of what the server hasn't accepted.
     private func currentEraseWarning() async -> EraseWarning? {

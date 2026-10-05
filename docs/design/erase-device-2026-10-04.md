@@ -1,6 +1,6 @@
 # Erase Journals and Settings on this device — 2026-10-04
 
-Status: current, built 2026-10-04 (reviewed: approve with required changes, addressed in section 9; implementation check in section 10).
+Status: current. Built 2026-10-04 (reviewed, section 9; implementation check, section 10). Placement and copy revised 2026-10-05 after the owner tested build 15 (section 11).
 
 ## Request
 
@@ -10,23 +10,29 @@ Today there is no way back to the first screen short of deleting the app. Stop S
 
 ## 1. Where it lives
 
-**Settings ▸ Privacy, in a last section of its own**, on iPhone, iPad and in the Mac Settings window (Privacy tab). Privacy already holds the device's protection (Encryption, App Lock), it's where someone handing on or clearing a device looks, and both platforms have the same pane, so the instructions are the same everywhere. A single destructive button at the end of a settings pane is the familiar place for this in Apple's apps (General ▸ Transfer or Reset ▸ Erase All Content and Settings; Safari's Clear History and Website Data).
+Revised 2026-10-05 (section 11): a standalone place, not Privacy.
+
+- **iPhone and iPad: the last section of the Settings list, on its own**, below Writing, Sync, Devices, Privacy, Backup and Agent Access, as iOS Settings ▸ General ends with Transfer or Reset iPhone. It is a red button in the list itself, as Sign Out ends the Apple Account page, rather than a row that opens a page: one action, already behind an alert.
+- **Mac: the end of the General tab, in a group of its own.** System Settings keeps Transfer or Reset at the end of General, and General is the Mac pane for the app as a whole; the Mac has no list of panes to end with a standalone section, and a tab of its own for one button would be out of proportion.
 
 ```
-Settings ▸ Privacy
-  ENCRYPTION …
-  APP LOCK …
- ┌──────────────────────────────────────────┐
- │ Erase Journals and Settings…             │   red text (destructive role)
- └──────────────────────────────────────────┘
-  Removes your journals, settings and server
-  connection from this device, as if My Journal
-  had just been installed. Your server and your
-  other devices aren’t changed.
+Settings (iPhone)                         Settings ▸ General (Mac)
+  ✎ Writing                         ›      Default journal          [Default ⌄]
+  ⟳ Sync                            ›      Format Markdown as you type   [✓]
+  ▭ Devices                         ›      …
+  ✋ Privacy                         ›     ┌────────────────────────────────────┐
+  ⌸ Backup                          ›     │ Erase Journals and Settings…        │
+  ⚿ Agent Access                    ›     └────────────────────────────────────┘
+ ┌──────────────────────────────────┐      footer
+ │ Erase Journals and Settings…      │  red
+ └──────────────────────────────────┘
+  footer
 ```
 
 - Button: **Erase Journals and Settings…** (`role: .destructive`; the ellipsis because a confirmation follows). Title case on both platforms, as other buttons.
-- Footer, connected: **“Removes your journals, settings and server connection from this device, as if My Journal had just been installed. Your server and your other devices aren’t changed.”** Not connected: **“Removes your journals and settings from this device, as if My Journal had just been installed.”**
+- Footer, connected to a server: **“Removes your journals, settings and server connection from this device, as if My Journal had just been installed. Journals already on your server stay there.”**
+- Footer, not connected: **“Removes your journals and settings from this device, as if My Journal had just been installed. This device isn’t syncing, so export an archive first to keep them.”**
+- Footer on a Mac that runs the sync server (button disabled): **“Your other devices sync through this Mac, so its journals can’t be erased here.”**
 - No keyboard shortcut and no menu item.
 
 ## 2. Flow
@@ -36,11 +42,11 @@ Settings ▸ Privacy
 
    | Case | Message | Buttons |
    | --- | --- | --- |
-   | Connected, syncing normally, nothing waiting | “Your journals stay on host and your other devices, and this device is signed out of host. To use them here again, connect to host.” | Erase · Cancel |
-   | Connected, N items not on the server yet (everything waiting to be sent, including changes waiting for a review or refused by the server; an entry waiting for its image counts) | “N items haven’t reached host yet. They’re only on this device and will be lost. Export an archive first to keep a copy. You can’t undo this.” | Export Archive… · Erase · Cancel |
-   | Connected, but the last sync failed or the server needs attention (any sync problem state, never synced, or encryption turned on elsewhere) | “This device couldn’t confirm that your journals are on host. Anything that isn’t will be lost. Export an archive first to keep a copy. You can’t undo this.” | Export Archive… · Erase · Cancel |
-   | Not syncing, with journals written | “Your journals aren’t synced to a server, so they’ll be deleted permanently. Export an archive first to keep a copy. You can’t undo this.” | Export Archive… · Erase · Cancel |
-   | Not syncing, nothing written yet | “This removes the empty journal and your settings from this device.” | Erase · Cancel |
+   | Connected, syncing normally, nothing waiting | “Your journals stay on host and come back when you connect this device again. This device will be signed out of host.” | Erase · Cancel |
+   | Connected, N items not on the server yet (everything waiting to be sent, including changes waiting for a review or refused by the server; an entry waiting for its image counts) | “Export an archive first to keep everything. N items haven’t reached host yet and will be lost. You can’t undo this.” (one item: “1 item hasn’t reached host yet and will be lost.”) | Export Archive… · Erase · Cancel |
+   | Connected, but the last sync failed or the server needs attention (any sync problem state, never synced, or encryption turned on elsewhere) | “Export an archive first to keep everything. Your journals may not all be on host, and anything that isn’t will be lost. You can’t undo this.” | Export Archive… · Erase · Cancel |
+   | Not syncing, with journals written | “Export an archive first to keep your journals. This device isn’t syncing with a server, so they’ll be lost. You can’t undo this.” | Export Archive… · Erase · Cancel |
+   | Not syncing, nothing written yet | “This removes your settings and any empty journals from this device.” | Erase · Cancel |
 
    Erase has the destructive role; Cancel is the cancel role (Escape). On the Mac Return must never choose Erase: the two-button alert has no default button (as Delete All, checked in ios-delete-all-and-settings-2026-10-03.md); in the three-button alert Return may only choose Export Archive… (checked in the real UI). **Export Archive…** opens the existing Export Archive sheet (the same one as File ▸ Export Archive…, with its one-time password check) over Settings; nothing is erased, and the person chooses Erase again afterwards, which counts again.
 3. **Erase** → if App Lock is on, the device's own authentication (Face ID, Touch ID, passcode or Mac login password) with the reason **“Erase journals on this device”** (the Mac shows “My Journal is trying to erase journals on this device”). Cancelling or failing it erases nothing and leaves Settings as it was. With App Lock off there is no extra step: the alert is the confirmation, as for Delete Journal.
@@ -115,11 +121,11 @@ There is no state in which the old library is partly removed but still opened: b
 - **Interrupted after the commit**: an erased folder left behind is finished at the next load, before a new library is created; its Keychain items are removed, other libraries' items and the current configuration's aren't; a library started right after erasing survives the background deletion; a Keychain removal that fails doesn't let a new library pick up the old connection.
 - **Mac**: the local server's files are left in place.
 - **App Lock**: a cancelled authentication erases nothing.
-- iOS UI test: Settings ▸ Privacy ▸ Erase Journals and Settings… ▸ Erase ▸ the first-launch screen; starting a new journal works. Mac: inspected in a scratch copy with its own data folder.
+- iOS UI test: Settings ▸ Erase Journals and Settings… ▸ Erase ▸ the first-launch screen; starting a new journal works. Each warning's alert, with a warning a debug build's UI test chooses (it is only shown; Erase still checks what would really be lost). Mac: inspected in a scratch copy with its own data folder.
 
 ## 8. For the owner
 
-1. The name and place: “Erase Journals and Settings…” in Settings ▸ Privacy. The reviewer suggested General (where iOS keeps Transfer or Reset); on iPhone that pane is “Writing”, so Privacy keeps one place on every device.
+1. The name and place: decided by the owner on 2026-10-05, a standalone place (section 11).
 2. Signing this device out of the server when it can be reached (4.1).
 3. A Mac that runs the sync server can't be erased this way for now (4.2); the footer says why but offers no way forward.
 4. Erasing from the lock screen when the device key and the recovery key are both lost (today only deleting the app starts over there), and while an encryption upgrade waits for a server that never answers, aren't offered. Possible follow-ups.
@@ -146,4 +152,28 @@ Suggestions taken: the encryption qualifier and device backups under “Not touc
 - Tests: `EraseLibraryTests` (6, Mac and iOS: everything removed and a new library starts, warnings per state, a larger count stops the erase, a failure before the commit leaves the library that opens again, an interrupted erase finished at the next launch, cancelled authentication), `UnsentItemsTests` (JournalCore: a change waiting for a review counts), `EraseUITests` (iPhone 17: Privacy ▸ Erase ▸ the warning ▸ Erase ▸ the first screen ▸ a new journal starts empty).
 - Screenshots: iPhone Privacy with the row, the warning for a library that isn't synced, the first screen after erasing; the Mac Privacy pane (light and dark), rendered from the real views.
 - Not verified on the Mac's real window (the screen was locked during this work): the alert on the Settings window, the Return key with three buttons, and the journal window opening after Settings closes. The two-button alert follows Delete All's checked behaviour.
-- While Settings closes after erasing, Privacy shows only the erase row (the encryption and App Lock sections describe a library and are hidden without one).
+- Without a library (while Settings closes after erasing), Privacy hides its encryption and App Lock sections, which describe a library.
+
+## 11. Revision after build 15 (owner, 2026-10-05)
+
+Owner, testing build 15 on iOS: “The erase journals button is really in the wrong place. It is not related to ‘Privacy’. It is a standalone function, and it works if you are synced or not. The warning message should be adapted to make it clear that if you are not synced, you should take a backup first.”
+
+**Decision:** Erase Journals and Settings is a standalone function. It moves out of Privacy to the last section of the Settings list on iPhone and iPad, and to its own group at the end of General on the Mac (section 1). Every warning where something isn't safely on a server starts with the action to take, exporting an archive, and keeps the Export Archive… button; when everything is confirmed on the server, the message says the journals stay there and come back when the device connects again (section 2). The footer no longer reads as part of Privacy and, when not connected, says to export an archive first.
+
+Build 15 copy, replaced:
+
+- Footer: “Removes your journals, settings and server connection from this device, as if My Journal had just been installed. Your server and your other devices aren’t changed.” / “Removes your journals and settings from this device, as if My Journal had just been installed.”
+- On the server: “Your journals stay on host and your other devices, and this device is signed out of host. To use them here again, connect to host.”
+- Not on the server yet: “N items haven’t reached host yet. They’re only on this device and will be lost. Export an archive first to keep a copy. You can’t undo this.”
+- Can't confirm: “This device couldn’t confirm that your journals are on host. Anything that isn’t will be lost. Export an archive first to keep a copy. You can’t undo this.”
+- Not syncing: “Your journals aren’t synced to a server, so they’ll be deleted permanently. Export an archive first to keep a copy. You can’t undo this.”
+
+Nothing else changes: the order of the steps, what is erased, the authentication and the tests' behaviour.
+
+**Review** (independent, 2026-10-05): approve with required changes. The placement was accepted on both platforms (Mac: General is the only tab about the app as a whole, and matches System Settings; a tab of its own would be out of proportion; Backup would read as part of backup, which the owner rejected). Required, all made: “They aren’t on a server” could be false after Stop Syncing, when the server keeps its copy, so the not-connected footer and alert describe the device (“This device isn’t syncing…”) and say “will be lost” rather than “deleted permanently”; stale Privacy references in section 7 and the code; and the Mac's real window checked (section 12). Suggestions taken: an explicit section for the six rows; “already” in the connected footer; the host named less often; “may not all be on host” instead of “couldn’t confirm”; “any empty journals”, since a library with several empty journals counts as nothing written.
+
+## 12. Revision check (2026-10-05)
+
+- Code: `SettingsView` (the iPhone and iPad list's six rows in their own section and Erase in a last section; Erase at the end of the Mac's General tab; Privacy no longer has it), `EraseSection` (footers and messages above). A debug build's UI tests can choose the warning shown (`JOURNAL_UI_TEST_ERASE_WARNING`); it is only shown, and Erase still compares it with what would really be lost.
+- iPhone 17 (iOS 26.5): `EraseUITests` (erasing from the Settings list, and each warning: the four that can lose content start with “Export an archive first” and offer Export Archive…, the other two don't; Cancel keeps Settings open), `AppLockUITests`, `EraseLibraryTests`, all passing.
+- Mac, in the real window of a scratch copy with its own bundle identifier and data folder: the row at the end of General; the alert on the Settings window. With two buttons (nothing written) neither is the default, so Return doesn't erase; with three (not syncing) Export Archive… is the default, so Return exports. Erase closed Settings, the journal window showed the first screen, the data folder was empty and the scratch library's Keychain item was gone. This closes the open point of section 10.

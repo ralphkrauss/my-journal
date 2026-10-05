@@ -53,12 +53,17 @@ struct SettingsView: View {
                 }
             #else
                 List {
-                    row(.general, "Writing", symbol: "square.and.pencil")
-                    row(.sync, "Sync", symbol: "arrow.triangle.2.circlepath")
-                    row(.devices, "Devices", symbol: "laptopcomputer.and.iphone")
-                    row(.privacy, "Privacy", symbol: "hand.raised")
-                    row(.backup, "Backup", symbol: "externaldrive")
-                    row(.agents, "Agent Access", symbol: "person.badge.key")
+                    Section {
+                        row(.general, "Writing", symbol: "square.and.pencil")
+                        row(.sync, "Sync", symbol: "arrow.triangle.2.circlepath")
+                        row(.devices, "Devices", symbol: "laptopcomputer.and.iphone")
+                        row(.privacy, "Privacy", symbol: "hand.raised")
+                        row(.backup, "Backup", symbol: "externaldrive")
+                        row(.agents, "Agent Access", symbol: "person.badge.key")
+                    }
+                    // A standalone function, in a last section of its own, as iOS Settings ends General with Transfer
+                    // or Reset iPhone (docs/design/erase-device-2026-10-04.md §1).
+                    EraseSection { closeAfterErasing() }
                 }
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             #endif
@@ -121,6 +126,11 @@ struct SettingsView: View {
                     "Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it. Press Delete right after to keep what you typed."
                 )
             }
+            #if os(macOS)
+                // At the end of General in a group of its own, as System Settings ends General with Transfer or
+                // Reset (docs/design/erase-device-2026-10-04.md §1).
+                EraseSection { closeAfterErasing() }
+            #endif
         }.formStyle(.grouped)
     }
     /// Where New Entry files an entry outside a journal (docs/design/default-journal.md).
@@ -184,7 +194,6 @@ struct SettingsView: View {
                 EncryptionSettingsSection(upgrade: model.encryption) { connect = ConnectionRequest() }
                 AppLockSettingsSection { dismiss() }
             }
-            EraseSection { closeAfterErasing() }
         }.formStyle(.grouped)
     }
     /// After Erase Journals and Settings, the window shows the first-launch screen; Settings has nothing to show.

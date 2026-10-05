@@ -1,7 +1,8 @@
 import JournalCore
 import SwiftUI
 
-/// Erase Journals and Settings… at the end of Settings ▸ Privacy (docs/design/erase-device-2026-10-04.md): removes
+/// Erase Journals and Settings…, a standalone section at the end of Settings on iPhone and iPad and of General on the
+/// Mac (docs/design/erase-device-2026-10-04.md): removes
 /// this device's journals, settings and server connection, and returns to the first-launch screen. The server and
 /// other devices aren't changed.
 struct EraseSection: View {
@@ -64,29 +65,31 @@ struct EraseSection: View {
             return "Your other devices sync through this Mac, so its journals can’t be erased here."
         }
         return model.connection != nil
-            ? "Removes your journals, settings and server connection from this device, as if My Journal had just been installed. Your server and your other devices aren’t changed."
-            : "Removes your journals and settings from this device, as if My Journal had just been installed."
+            ? "Removes your journals, settings and server connection from this device, as if My Journal had just been installed. Journals already on your server stay there."
+            : "Removes your journals and settings from this device, as if My Journal had just been installed. This device isn’t syncing, so export an archive first to keep them."
     }
 
+    /// Whenever something isn't safely on a server, the message starts with what to do about it.
     static func message(_ warning: EraseWarning) -> String {
-        let archive = "Export an archive first to keep a copy. You can’t undo this."
+        let undo = "You can’t undo this."
         switch warning {
         case .onServer(let host):
             return
-                "Your journals stay on \(host) and your other devices, and this device is signed out of \(host). To use them here again, connect to \(host)."
+                "Your journals stay on \(host) and come back when you connect this device again. This device will be signed out of \(host)."
         case .unsent(let count, let host):
             let items =
-                count == 1
-                ? "1 item hasn’t reached \(host) yet. It’s only on this device and will be lost."
-                : "\(count) items haven’t reached \(host) yet. They’re only on this device and will be lost."
-            return items + " " + archive
+                count == 1 ? "1 item hasn’t reached \(host) yet" : "\(count) items haven’t reached \(host) yet"
+            return "Export an archive first to keep everything. \(items) and will be lost. " + undo
         case .unconfirmed(let host):
-            return "This device couldn’t confirm that your journals are on \(host). Anything that isn’t will be lost. "
-                + archive
+            return
+                "Export an archive first to keep everything. Your journals may not all be on \(host), and anything that isn’t will be lost. "
+                + undo
         case .notSyncing:
-            return "Your journals aren’t synced to a server, so they’ll be deleted permanently. " + archive
+            return
+                "Export an archive first to keep your journals. This device isn’t syncing with a server, so they’ll be lost. "
+                + undo
         case .nothingWritten:
-            return "This removes the empty journal and your settings from this device."
+            return "This removes your settings and any empty journals from this device."
         }
     }
 
