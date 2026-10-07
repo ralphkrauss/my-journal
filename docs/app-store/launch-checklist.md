@@ -28,17 +28,14 @@ If the owner ships build 16 as is, 0.1 is the item most likely to block: check t
 
 | # | Item | Where | Status |
 | --- | --- | --- | --- |
-| 1.1 | Sign the **Paid Apps Agreement** (the Account Holder only). It must be Active before a paid app can be submitted. | App Store Connect > Business > Agreements | Prepared, owner action |
-| 1.2 | **Tax forms** for the Paid Apps Agreement (outside the U.S., usually the U.S. W-8BEN form, plus any others App Store Connect asks for). | Business > Agreements > Tax Forms | Prepared, owner action |
-| 1.3 | **Bank account** for payments. | Business > Agreements > Bank Accounts | Prepared, owner action |
-| 1.4 | **EU Digital Services Act trader status.** Selling a paid app is likely trader activity; then the address, phone number and email entered are shown on the EU product page. Without a declaration the app isn't available in the EU. | Business > Digital Services Act (or App Information > Digital Services Act Compliance) | Prepared, owner action |
-| 1.5 | Optional: enroll in the **App Store Small Business Program** for a 15% commission instead of 30% on paid apps, for developers under $1 million a year. Takes effect after approval. | developer.apple.com > Account | Prepared, owner action |
+| 1.1 | **Free Apps Agreement** Active. My Journal is free, with no in-app purchases, tips or ads (owner decision, 2026-10-07), so the Paid Apps Agreement, tax forms and bank account aren't needed for launch. | App Store Connect > Business > Agreements | Done |
+| 1.2 | **EU Digital Services Act status:** declared **not a trader**, so no contact details are shown on the EU product page. This holds only while the app earns nothing; any paid price, in-app purchase, tip or ad means re-declaring as a trader first. | Business > Compliance > Digital Services Act | Done (2026-10-07) |
 
 Sources: [Sign and update agreements](https://developer.apple.com/help/app-store-connect/manage-agreements/sign-and-update-agreements), [DSA trader requirements](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements).
 
 ## 2. The app record
 
-One app record for iOS and macOS, so one purchase covers both (universal purchase).
+One app record for iOS and macOS, so one app covers both (universal purchase). The app is free.
 
 | # | App Store Connect label | Value | Status |
 | --- | --- | --- | --- |
@@ -80,7 +77,7 @@ Trust & Safety > App Privacy (or General > App Privacy). Answers in [app-privacy
 
 ## 5. Pricing and Availability
 
-Monetization > Pricing and Availability. Prices are set once for the app; universal purchase covers both platforms.
+Monetization > Pricing and Availability. The price (Free) is set once for the app and covers both platforms.
 
 | # | App Store Connect label | Value | Status |
 | --- | --- | --- | --- |
@@ -91,15 +88,7 @@ Monetization > Pricing and Availability. Prices are set once for the app; univer
 | 5.5 | **iPhone and iPad Apps on Apple Silicon Macs** | Off: the Mac app is the Mac version | Prepared, owner action (decision) |
 | 5.6 | **Apple Vision Pro** ("Make this app available") | Off unless tested on visionOS | Prepared, owner action (decision) |
 
-Price options (one-time, U.S. price points; the App Store shows local prices elsewhere):
-
-| Price | For | Against |
-| --- | --- | --- |
-| $4.99 | Low barrier for a first purchase; easy to try | Little room for a later launch discount; funds less development |
-| $9.99 | A common price for a complete one-time app on three platforms; still an easy decision | |
-| $14.99 to $19.99 | Signals a lasting tool bought once instead of a recurring cost | Fewer impulse purchases from people who don't know the project yet |
-
-A launch price that later rises is possible (Price Schedule allows dated changes). Free with a paid upgrade isn't an option without in-app purchases, which the owner ruled out.
+Price: **Free** in all countries (owner decision, 2026-10-07). It replaces the earlier one-time price, so that the app stays a non-trader hobby project under the EU Digital Services Act.
 
 Sources: [Set a price](https://developer.apple.com/help/app-store-connect/manage-app-pricing/set-a-price).
 
@@ -173,7 +162,7 @@ In App Information and on each platform version, add **English (U.K.)** with the
 
 ## 10. Final check before Submit for Review
 
-- [ ] Paid Apps Agreement Active; tax and banking complete; trader status declared.
+- [x] Free Apps Agreement Active; DSA status declared (not a trader).
 - [ ] Build 17 decision made for items 0.1 to 0.4; if a new build, its number selected on both platforms and the claims in listing.md rechecked.
 - [ ] Screenshots recaptured, reviewed and uploaded for iPhone 6.9", iPad 13" and Mac; none shows a PIN, round checkboxes, Add Access… or private details.
 - [ ] Every field in sections 3 to 7 filled; counts unchanged or recounted ([listing.md](listing.md#limits-and-counts)).
@@ -185,7 +174,6 @@ In App Information and on each platform version, add **English (U.K.)** with the
 
 ## Owner-only actions
 
-- Sign the Paid Apps Agreement, and enter tax, banking and trader details.
-- Decide the price, availability, secondary category, release option and build 17.
+- Decide availability, secondary category, release option and build 17.
 - Enter the review contact phone number, and decide on the demo server.
 - Press **Submit for Review**, and later **Release This Version** if releasing manually.

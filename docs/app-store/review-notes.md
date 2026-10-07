@@ -20,7 +20,7 @@ Nothing private belongs here: no tailnet names, host names, personal paths or re
 Paste into the Notes field of the iOS version. Edit or delete the bracketed demo server block first. (3190 bytes with the placeholders.)
 
 ```text
-My Journal is a private journal for iPhone, iPad and Mac (one universal purchase). There is no account, sign-in or login, and everything except sync works offline without a server.
+My Journal is a private journal for iPhone, iPad and Mac (one universal app). There is no account, sign-in or login, and everything except sync works offline without a server.
 
 TRY IT WITHOUT A SERVER
 1. Choose Start a Journal > Use Encryption. Enter any master password in Master Password and Verify, and choose Create. A journal named Default opens.
@@ -58,7 +58,7 @@ No analytics, advertising or tracking. The app sends nothing to us.
 Paste into the Notes field of the macOS version. (2949 bytes with the placeholders.)
 
 ```text
-My Journal is a private journal for Mac, iPhone and iPad (one universal purchase). There is no account, sign-in or login, and everything except sync works offline without a server.
+My Journal is a private journal for Mac, iPhone and iPad (one universal app). There is no account, sign-in or login, and everything except sync works offline without a server.
 
 TRY IT WITHOUT A SERVER
 1. Choose Start a Journal > Use Encryption, enter any master password in Master Password and Verify, and choose Create.

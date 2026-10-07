@@ -1,6 +1,6 @@
 # App Store material
 
-What to enter in App Store Connect for My Journal (bundle ID `io.github.ralphkrauss.myjournal`, one universal purchase for iPhone, iPad and Mac), ready to paste. Updated on 2026-10-05 for version 1.0, build 16, against the code and Apple's current documentation; each file links its sources.
+What to enter in App Store Connect for My Journal (bundle ID `io.github.ralphkrauss.myjournal`, one free universal app for iPhone, iPad and Mac), ready to paste. Updated on 2026-10-05 for version 1.0, build 16, against the code and Apple's current documentation; each file links its sources.
 
 Start with [launch-checklist.md](launch-checklist.md): it lists every step in order, every App Store Connect field with its value, and what only the owner can do.
 
