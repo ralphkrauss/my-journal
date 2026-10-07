@@ -9,9 +9,9 @@ import XCTest
 /// Hosted in the app, it opens the library in the app's own journal window and Settings window, arranges them as each
 /// frame needs and renders the windows at 2x. design/app-store/capture-mac.sh seeds the library and names it with
 /// `JOURNAL_DATA_DIR`; `JOURNAL_SCREENSHOT_PASSWORD_FILE` and `JOURNAL_SCREENSHOT_OUTPUT` come from the same script.
-/// For frame 4 it also starts a disposable server and passes `JOURNAL_SCREENSHOT_SERVER` (its loopback address),
-/// `JOURNAL_SCREENSHOT_SETUP_CODE` and `JOURNAL_SCREENSHOT_PUBLIC_URL` (the public address the server is configured
-/// with, which Agent Access shows).
+/// For frames 4 and 3 it also starts a disposable server and passes `JOURNAL_SCREENSHOT_SERVER` (its loopback
+/// address), `JOURNAL_SCREENSHOT_SETUP_CODE` and `JOURNAL_SCREENSHOT_PUBLIC_URL` (the public address the server is
+/// configured with, which Agent Access and Settings > Sync show).
 @MainActor
 final class MacScreenshotCapture: XCTestCase {
     private var environment: [String: String] { ProcessInfo.processInfo.environment }
@@ -28,7 +28,7 @@ final class MacScreenshotCapture: XCTestCase {
         try await capture(try await openSettings(.privacy, model: model), "02-settings-privacy-light")
         // Off again, so no later frame is captured with App Lock on or behind its cover.
         model.configuration?.appLock = false
-        try await capture(try await openSettings(.sync, model: model), "03-settings-sync-light")
+        try await capture(try await openSettings(.backup, model: model), "07-settings-backup-light")
 
         try await show("Offsite ideas", in: "Work", model: model, window: window)
         try await capture(window, "05-main-light")
@@ -44,8 +44,11 @@ final class MacScreenshotCapture: XCTestCase {
         let read = try XCTUnwrap(model.items.first { $0.kind == "entry" && $0.title == "Slow Sunday" }?.id)
         try await show("Porto, day two", in: "Travel", model: model, window: window)
         try await capture(window, "06-main-dark")
-        // Last, since it connects the library to a server.
-        try await captureAgentAccess(model: model, reading: read)
+        // Last, since they connect the library to a server.
+        let agentPage = try await captureAgentAccess(model: model, reading: read)
+        try await close(agentPage)
+        NSApp.appearance = NSAppearance(named: .aqua)
+        try await captureConnectedSync(model: model)
     }
 
     // MARK: - Arranging
@@ -104,8 +107,9 @@ final class MacScreenshotCapture: XCTestCase {
     // MARK: - Agent Access
 
     /// Frame 4: the library on a disposable server set up by "MacBook Pro", "Writing Assistant" allowed to read
-    /// Personal and Work and used once, then Settings > Agent Access and the agent's page.
-    private func captureAgentAccess(model: AppModel, reading entryID: UUID) async throws {
+    /// Personal and Work and used once, then Settings > Agent Access and the agent's page. Returns the agent's page,
+    /// still open.
+    private func captureAgentAccess(model: AppModel, reading entryID: UUID) async throws -> NSWindow {
         guard let address = environment["JOURNAL_SCREENSHOT_SERVER"], address.hasPrefix("http://127.0.0.1:"),
             let publicURL = environment["JOURNAL_SCREENSHOT_PUBLIC_URL"]
         else { throw CaptureError("Run design/app-store/capture-mac.sh, which starts the server.") }
@@ -126,10 +130,13 @@ final class MacScreenshotCapture: XCTestCase {
         try await allow(controller, model: model, number: page.number)
         try await agent.redeem(handle: page.handle)
         try await use(agent, reading: entryID)
+        try await waitForAgent(controller, model: model)
         let settings = try await openSettings(.agents, model: model)
-        let row = try await agentRow(in: settings)
+        // The pane loads the same list for itself.
+        try await settle(3)
         try await capture(settings, "04-settings-agents-dark")
-        XCTAssertTrue(row.accessibilityPerformPress(), "The agent's row didn't open its page.")
+        // The first row of the pane's first section, Agents, with nothing waiting under Requests.
+        click(settings, at: try firstRow(of: settings))
         for _ in 0..<20 where settings.attachedSheet == nil {
             try await settle(0.25)
         }
@@ -138,6 +145,38 @@ final class MacScreenshotCapture: XCTestCase {
         agentPage.makeFirstResponder(nil)
         try await settle()
         try await capture(agentPage, "04-agent-detail-dark")
+        return agentPage
+    }
+
+    /// Closes the agent's page with Return, which presses its default button, Done.
+    private func close(_ agentPage: NSWindow) async throws {
+        for type in [NSEvent.EventType.keyDown, .keyUp] {
+            let event = NSEvent.keyEvent(
+                with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: agentPage.windowNumber, context: nil, characters: "\r", charactersIgnoringModifiers: "\r",
+                isARepeat: false, keyCode: 36)
+            if let event { NSApp.postEvent(event, atStart: false) }
+        }
+        for _ in 0..<20 where agentPage.isVisible {
+            try await settle(0.25)
+        }
+        XCTAssertFalse(agentPage.isVisible, "Return didn't close the agent's page.")
+    }
+
+    /// Frame 3: Settings > Sync connected to the server that frame 4 set up. The server's public address is
+    /// https://journal.example.net, as Agent Access shows, but that name doesn't lead to the disposable server, so the
+    /// library keeps syncing with it on its loopback port while the connection names the public address. Then it
+    /// syncs once more, so Last Synced is a real synchronization with that server.
+    private func captureConnectedSync(model: AppModel) async throws {
+        guard let connection = model.connection, let publicURL = environment["JOURNAL_SCREENSHOT_PUBLIC_URL"] else {
+            throw CaptureError("The library isn't connected to the server.")
+        }
+        // Not configureSync(): the sync engine keeps its client for the loopback port.
+        model.connection = SyncConnection(address: publicURL, deviceID: connection.deviceID, token: connection.token)
+        let synchronized = await model.sync()
+        XCTAssertTrue(synchronized, "The library didn't synchronize with the server.")
+        XCTAssertNil(model.syncError)
+        try await capture(try await openSettings(.sync, model: model), "03-settings-sync-light")
     }
 
     /// Sets up the server with the library as the device "MacBook Pro", as the iPhone and iPad captures do, so the
@@ -185,27 +224,35 @@ final class MacScreenshotCapture: XCTestCase {
         }
     }
 
-    /// The agent's row in Settings > Agent Access, found as VoiceOver finds it, once the pane has loaded the list.
-    private func agentRow(in settings: NSWindow) async throws -> NSAccessibilityProtocol {
-        for _ in 0..<40 {
-            if let row = Self.agentRow(in: settings, depth: 0) { return row }
+    /// Waits until the server lists the agent as allowed.
+    private func waitForAgent(_ controller: ServerAgentsController, model: AppModel) async throws {
+        for _ in 0..<20 {
+            await controller.load(model)
+            if controller.agents.contains(where: { $0.name == ScreenshotAgent.clientName }) { return }
             try await settle(0.5)
         }
-        throw CaptureError("Agent Access doesn't list \(ScreenshotAgent.clientName).")
+        throw CaptureError("The server doesn't list \(ScreenshotAgent.clientName).")
     }
 
-    private static func agentRow(in element: NSAccessibilityProtocol, depth: Int) -> NSAccessibilityProtocol? {
-        let names = [element.accessibilityLabel(), element.accessibilityTitle()].compactMap { $0 }
-        if element.accessibilityRole() == .button, names.contains(where: { $0.contains(ScreenshotAgent.clientName) }) {
-            return element
+    /// Where the first row of a grouped Settings pane is, in window coordinates: the pane's content isn't exposed to
+    /// accessibility in the app's own process while no assistive app is running, so the row is found by its place.
+    private func firstRow(of window: NSWindow) throws -> NSPoint {
+        let content = window.contentLayoutRect
+        guard content.height > 120 else { throw CaptureError("The Settings pane is too small.") }
+        return NSPoint(x: content.midX, y: content.maxY - Self.firstRowCenter)
+    }
+
+    /// Points from the top of the pane's content to the middle of its first row, below the first section header.
+    private static let firstRowCenter: CGFloat = 60
+
+    /// A click, queued like one from the mouse, so the window handles it as it would a person's.
+    private func click(_ window: NSWindow, at point: NSPoint) {
+        for (type, pressure) in [(NSEvent.EventType.leftMouseDown, Float(1)), (.leftMouseUp, Float(0))] {
+            let event = NSEvent.mouseEvent(
+                with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: pressure)
+            if let event { NSApp.postEvent(event, atStart: false) }
         }
-        guard depth < 40 else { return nil }
-        for child in element.accessibilityChildren() ?? [] {
-            if let child = child as? NSAccessibilityProtocol, let row = agentRow(in: child, depth: depth + 1) {
-                return row
-            }
-        }
-        return nil
     }
 
     // MARK: - Capturing

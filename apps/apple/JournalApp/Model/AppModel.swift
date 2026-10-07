@@ -14,6 +14,29 @@ enum ServerConnectionPause: Equatable { case connecting, waitingForRetry }
 final class AppModel: ObservableObject {
     @Published var loaded = false
     private var starting = false
+    /// Why the journals on this device can't be opened, if they can't (LibraryProblem.swift). While it is set the
+    /// model has no live library, never locks, and refuses every change of the configuration.
+    @Published var libraryProblem: LibraryProblem?
+    /// The last problem set, so the screen keeps describing it while Try Again runs.
+    var lastLibraryProblem: LibraryProblem?
+    /// Try Again is running (the screen shows progress in place of its buttons).
+    @Published var retryingOpen = false
+    /// How many taps of Try Again ended in a problem again, in memory: Erase is offered after one.
+    @Published var failedRetries = 0
+    /// The library opened, and its first read hasn't succeeded yet: a failed read then is a failed open.
+    var firstReadPending = false
+    /// A library closed after a failed open or first read, which the next open waits for.
+    var libraryClosing: Task<Void, Never>?
+    /// iPhone and iPad: files and Keychain items aren't readable before the first unlock or while the device is
+    /// locked, so a failed open then ends by itself and offers nothing that removes anything.
+    @Published var protectedDataAvailable = true
+    /// Erase lists the app's Keychain items to remove what the configuration doesn't name, for the app's own data
+    /// folder only (never under test, so erasing there can't remove a real library's keys).
+    var sweepsKeychain = false
+    /// The preferences Erase removes its own keys from; tests use a suite of their own.
+    var preferences = UserDefaults.standard
+    /// Lists the Keychain's accounts for Erase; replaced by tests.
+    var keychainListing: () throws -> [String] = { try Keychain.accounts() }
     /// The library is being replaced (connecting, pairing or importing); this starts a new vault session.
     /// Set while connecting (ServerJoining.swift) or importing replaces the library.
     @Published var vaultReplacement = false {
@@ -202,7 +225,7 @@ final class AppModel: ObservableObject {
     @Published var settingsPresented = false
     @Published var journalsPresented = false
     @Published var templateChooserPresented = false
-    @Published var settingsTab: AppSettingsTab = .sync
+    @Published var settingsTab: AppSettingsTab = .general
     /// The pane Settings opens at on iPhone and iPad, once (Sync Settings… in Sync Status).
     var settingsRequestedTab: AppSettingsTab?
     /// When the device owner last authenticated to set a new password without the current one.
@@ -241,6 +264,8 @@ final class AppModel: ObservableObject {
                 initialInsertion = nil
                 titleFocus = nil
                 entryCreationID = nil
+                // A library opened at launch sets it again, after assigning the store (LibraryOpening.swift).
+                firstReadPending = false
                 // The journals list leaves edit mode (journal-order.md). Committing a change, such as deleting a
                 // journal in edit mode, keeps it.
                 editingJournals = false
@@ -284,6 +309,10 @@ final class AppModel: ObservableObject {
         } else {
             directory = Self.defaultDirectory
         }
+        sweepsKeychain =
+            explicitDirectory == nil && !Self.hostsTests
+            && ProcessInfo.processInfo.environment["JOURNAL_DATA_DIR"] == nil
+            && ProcessInfo.processInfo.environment["JOURNAL_UI_TEST_ID"] == nil
         deviceOwner = SystemDeviceOwner.make()
         imageSubscription = imageLoader.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
@@ -307,7 +336,27 @@ final class AppModel: ObservableObject {
                 Task { @MainActor in self?.applicationResignedActive() }
             },
         ]
+        #if os(iOS)
+            observeProtectedData(center)
+        #endif
     }
+    #if os(iOS)
+        /// A launch before the first unlock, or while the device is locked, can't open the library; it opens by
+        /// itself once protected data is available (LibraryProblem.swift).
+        private func observeProtectedData(_ center: NotificationCenter) {
+            protectedDataAvailable = UIApplication.shared.isProtectedDataAvailable
+            activitySubscriptions += [
+                center.publisher(for: UIApplication.protectedDataDidBecomeAvailableNotification)
+                    .receive(on: RunLoop.main).sink { [weak self] _ in
+                        Task { @MainActor in await self?.protectedDataBecameAvailable() }
+                    },
+                center.publisher(for: UIApplication.protectedDataWillBecomeUnavailableNotification)
+                    .receive(on: RunLoop.main).sink { [weak self] _ in
+                        Task { @MainActor in self?.protectedDataAvailable = false }
+                    },
+            ]
+        }
+    #endif
     /// Application Support inside the app's container when the app is sandboxed.
     private static var defaultDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -320,84 +369,10 @@ final class AppModel: ObservableObject {
     var keyAccount: String {
         "master-" + SHA256.hash(data: Data(directory.path.utf8)).map { String(format: "%02x", $0) }.joined()
     }
-    private var configURL: URL { directory.appendingPathComponent("configuration.json") }
-    func load() async {
-        guard !loaded else { return }
-        defer { loaded = true }
-        // An erase an earlier run didn't finish is finished before anything is read (EraseOperations.swift).
-        finishEarlierErasures()
-        do {
-            guard FileManager.default.fileExists(atPath: configURL.path) else { return }
-            configuration = try JournalCoding.decoder().decode(
-                LocalConfiguration.self, from: Data(contentsOf: configURL))
-            // Before anything is shown: App Lock's PIN becomes the device's own authentication.
-            retireAppLockPIN()
-            // A copy staged by a connection that the app quit during is never used.
-            removeAbandonedCopies()
-            // A copy made while turning on encryption that the server never saw is removed.
-            discardUnsentEncryptionCopy()
-            locked = true
-            let account = configuration?.keyID ?? keyAccount
-            var savedKey = try Keychain.read(account)
-            if savedKey == nil && configuration?.requiresPassword == false {
-                savedKey = try VaultCrypto.generateKey()
-                if let savedKey { try Keychain.write(savedKey, account: account) }
-            }
-            if savedKey != nil { rememberKeyAccount(account) }
-            guard let key = savedKey else {
-                locked = true
-
-                throw JournalError.server(
-                    "Your device key is unavailable. Use your recovery key to unlock your journals.")
-            }
-            masterKey = key
-            try openLibrary(key: key, protection: configuration?.recovery.contentProtection ?? .encrypted)
-            // The server may have switched to encryption while the app last ran; writing waits until that's known.
-            if encryptionUnfinished {
-                pauseWriting(true)
-                encryption.finishAfterLaunch()
-            } else {
-                await numberDuplicateJournalsWithoutServer()
-            }
-            locked = appLockOn
-            unlockState.promptPending = locked
-            if !locked {
-                if configuration?.recoveryConfirmed == false { try await replaceUnconfirmedRecoveryKey() }
-                try await refresh()
-                selectInitialEntry(reveal: true)
-            }
-        } catch { self.error = error.localizedDescription }
-    }
-    /// Journals an earlier version named alike get numbers each time a library without a server opens
-    /// (docs/design/journal-name-uniqueness.md §4.6); a connected library does this after synchronizing.
-    private func numberDuplicateJournalsWithoutServer() async {
-        guard connection == nil, let store else { return }
-        do { try await store.numberDuplicateJournals() } catch {
-            Logger(subsystem: "org.privatejournal", category: "journals").error(
-                "Could not number journals that share a name.")
-        }
-    }
-    /// Opens the store with the device key and resumes the saved server connection. Loading and recovering a
-    /// missing device key both use it, so either way the library is ready to sync.
-    private func openLibrary(key: Data, protection: ContentProtection) throws {
-        store = try JournalStore(
-            directory: configuration?.storageFolder.map { directory.appendingPathComponent($0) } ?? directory,
-            key: key, protection: protection)
-        let connectionAccount = configuration?.connectionKeyID ?? keyAccount + "-connection"
-        if let data = try Keychain.read(connectionAccount) {
-            connection = try JournalCoding.decoder().decode(SyncConnection.self, from: data)
-            if configuration?.connectionKeyID == nil {
-                configuration?.connectionKeyID = connectionAccount
-                saveMigratedConfiguration()
-            }
-        }
-        #if os(macOS)
-            retireFormerMacServer()
-        #endif
-        configureSync()
-    }
+    var configURL: URL { directory.appendingPathComponent("configuration.json") }
     func start(password: String? = nil, encrypted: Bool = true) async {
-        guard configuration == nil, !starting else { return }
+        // Starting a journal overwrites the configuration; not while the one there couldn't be read or opened.
+        guard configuration == nil, !starting, libraryProblem == nil else { return }
         starting = true
         defer { starting = false }
         var staged: NewVault?
@@ -425,10 +400,10 @@ final class AppModel: ObservableObject {
             try await refresh()
         } catch {
             if configuration == nil { await staged?.discard() }
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
         }
     }
-    private func replaceUnconfirmedRecoveryKey() async throws {
+    func replaceUnconfirmedRecoveryKey() async throws {
         guard let key = masterKey else { throw JournalError.locked }
         let phrase = try VaultCrypto.recoveryPhrase()
         let envelope = try await Task.detached { try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0 }.value
@@ -442,10 +417,23 @@ final class AppModel: ObservableObject {
             try persistConfiguration()
             recoveryKey = nil
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
         }
     }
+    /// Saves the configuration. Every overwrite of the file goes through here, so while the journals can't be opened
+    /// (or the settings read) it refuses: nothing replaces a file the app couldn't read, or abandons a library it
+    /// couldn't open (docs/design/build-18-fixes-2026-10-06.md §2.1, rule 1).
     func persistConfiguration() throws {
+        guard libraryProblem == nil else { throw LibraryNotOpenError() }
+        try writeConfiguration()
+    }
+    /// The archive install's own save, which is the one change allowed over a library that can't be opened or whose
+    /// key is missing: it was verified first, and the person chose it.
+    func persistRestoredConfiguration() throws {
+        if let problem = libraryProblem, !problem.offersImport { throw LibraryNotOpenError() }
+        try writeConfiguration()
+    }
+    private func writeConfiguration() throws {
         guard let configuration else { return }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try JournalCoding.encoder().encode(configuration).write(to: configURL, options: .atomic)
@@ -463,9 +451,18 @@ final class AppModel: ObservableObject {
         let writes = draftWrites
         let received = await store.receivedChangeCount()
         await store.rememberDecodedRecords()
-        let snapshot = try await store.viewSnapshot()
+        let snapshot: JournalViewSnapshot
+        do { snapshot = try await store.viewSnapshot() } catch {
+            // Damage inside the records is found here, not when the store opens: until the first read succeeds, a
+            // failed read is a failed open (LibraryProblem.swift).
+            guard firstReadPending, isCurrent() else { throw error }
+            await failOpening(error)
+            throw LibraryOpenHandled()
+        }
         let libraryState = try? await store.librarySyncState()
         guard isCurrent() else { return }
+        firstReadPending = false
+        failedRetries = 0
         items = snapshot.items
         conflicts = snapshot.conflicts
         journalHistoryIDs = snapshot.journalHistoryIDs
@@ -536,7 +533,18 @@ final class AppModel: ObservableObject {
     func awaitEntryAutosave() async throws {
         guard await entryAutosaveSettled() else { throw ImageDescriptionError.entrySaveRequired }
     }
-    @discardableResult func flush(whileEditing entryID: UUID? = nil) async -> Bool {
+    /// How a failed write is announced in the alert. Writing again after each keystroke would otherwise repeat it.
+    enum SaveFailureAnnouncement {
+        /// The first failure only; the Not Saved notice carries the rest.
+        case firstFailure
+        /// Every failure: the person asked to try again.
+        case always
+        /// None, because the caller shows its own message.
+        case never
+    }
+    @discardableResult func flush(
+        whileEditing entryID: UUID? = nil, announcing announcement: SaveFailureAnnouncement = .firstFailure
+    ) async -> Bool {
         let session = vaultSessionID
         let destination = store
         func canContinue() -> Bool {
@@ -560,12 +568,15 @@ final class AppModel: ObservableObject {
         let failure = await writeDraft(item, to: store)
         guard canContinue() else { return false }
         guard failure == nil else {
+            let firstFailure = !saveFailure
             saveFailure = true
-            // The lock screen can show this message, so it doesn't name the entry there.
-            self.error =
-                locked
-                ? "Couldn’t save your changes. Unlock My Journal to try again."
-                : "Couldn’t save “\(item.displayTitle)”. Keep it open and try again."
+            if announcement == .always || (announcement == .firstFailure && firstFailure) {
+                // The lock screen can show this message, so it doesn't name the entry there.
+                self.error =
+                    locked
+                    ? "Couldn’t save your changes. Unlock My Journal to try again."
+                    : "Couldn’t save “\(item.displayTitle)”. Keep it open and try again."
+            }
             return false
         }
         if generation == saveGeneration, saveFailure { saveFailure = false }
@@ -573,7 +584,7 @@ final class AppModel: ObservableObject {
         if !pendingSync { pendingSync = true }
         syncWhenWritingPauses()
         rememberSelection()
-        if generation != saveGeneration { return await flush(whileEditing: entryID) }
+        if generation != saveGeneration { return await flush(whileEditing: entryID, announcing: announcement) }
         return true
     }
     /// A new entry in `chosen`, or where New Entry puts it. A template chosen for an empty entry fills that entry
@@ -632,7 +643,7 @@ final class AppModel: ObservableObject {
             draft = stored
             rememberSelection()
         } catch {
-            if isCurrent(cancellable: false) { self.error = error.localizedDescription }
+            if isCurrent(cancellable: false) { self.error = error.shown(.saving) }
         }
     }
     func saveTemplate(name: String) async {
@@ -643,7 +654,7 @@ final class AppModel: ObservableObject {
             let template = JournalItem(kind: "template", title: trimmed, document: draft.document)
             try await store.save(template)
             try await refresh()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.shown(.saving) }
     }
     /// Synchronizes the current library with its connection and keeps agents' copies current from it. Every step that
     /// opens a library or commits a connection calls this, so a library that just joined publishes like one opened at
@@ -730,7 +741,8 @@ final class AppModel: ObservableObject {
     /// saved afterwards by `saveWhileLocked()`.
     /// `prompting` asks the system without a tap once the app is active again, as after the background on iOS.
     @discardableResult func lockImmediately(prompting: Bool = false) -> Bool {
-        guard appLockOn else { return false }
+        // A library that can't be opened has no store to unlock: locking would put up a screen that leads nowhere.
+        guard appLockOn, libraryProblem == nil, !retryingOpen else { return false }
         // A request still showing belongs to the earlier lock; its answer is ignored.
         deviceOwner.cancel()
         unlockState.lockCount += 1
@@ -752,23 +764,37 @@ final class AppModel: ObservableObject {
         query = ""
         lists.clear()
         if let store { Task { await store.forgetDecodedRecords() } }
-        // A sync problem can name an entry.
-        syncError = nil
+        // A sync problem can name an entry. A health message names none, so the state keeps its own sentence.
+        if syncHealth == nil { syncError = nil }
         return true
     }
     func unlockWithRecovery(_ phrase: String) async {
         guard let envelope = configuration?.recovery else { return }
+        let result: (Data, RecoveryEnvelope)
+        do { result = try await recoverKey(envelope, phrase: phrase) } catch {
+            self.error = error.shown(.reading)
+            return
+        }
         do {
-            let result = try await recoverKey(envelope, phrase: phrase)
             let account = configuration?.keyID ?? keyAccount
             try Keychain.write(result.0, account: account)
             configuration?.keyID = account
             configuration?.recovery = result.1
             masterKey = result.0
-            if store == nil {
-                try openLibrary(key: result.0, protection: envelope.contentProtection)
-                await numberDuplicateJournalsWithoutServer()
+        } catch {
+            self.error = error.shown(.saving)
+            return
+        }
+        if store == nil {
+            do { try await openLibrary(key: result.0, protection: envelope.contentProtection) } catch {
+                await failOpening(error)
+                return
             }
+            await numberDuplicateJournalsWithoutServer()
+        }
+        // The key is back: the missing key is no longer a problem, and the configuration can be saved.
+        if libraryProblem == .needsKey { setLibraryProblem(nil) }
+        do {
             // App Lock stays on: the device's authentication can't be forgotten the way a PIN could.
             configuration?.pinRetiredNotice = nil
             unlockState.problem = false
@@ -778,7 +804,7 @@ final class AppModel: ObservableObject {
             error = nil
             try await readJournalsAfterUnlocking()
             if draft == nil { selectInitialEntry(reveal: true) }
-        } catch { self.error = error.localizedDescription }
+        } catch { report(error, .reading) }
     }
 
 }
@@ -807,90 +833,6 @@ extension AppModel {
             self.error = "Encryption is on, but your journals couldn’t be displayed. Reopen My Journal to try again."
         }
         try? await previous?.close()
-    }
-
-    func installArchive(_ restored: VaultArchive.Restored) async throws {
-        guard !locked, !replacingVault else { throw JournalError.locked }
-        guard await finishPendingSave() else {
-            throw JournalError.server("Save your changes before importing journals.")
-        }
-        try Task.checkCancellation()
-        guard !locked, !replacingVault else { throw JournalError.locked }
-        vaultReplacement = true
-        defer { vaultReplacement = false }
-        var stagedDirectory: URL?
-        var stagedStore: JournalStore?
-        var stagedAccount: String?
-        do {
-            let destination: JournalStore
-            var nextConfiguration: LocalConfiguration
-            let nextKey: Data
-            if let store, let configuration, let masterKey {
-                let folder = "vault-" + UUID().uuidString.lowercased()
-                let path = directory.appendingPathComponent(folder)
-                guard !FileManager.default.fileExists(atPath: path.path) else { throw JournalError.invalidData }
-                stagedDirectory = path
-                try await store.snapshot(to: path)
-                destination = try JournalStore(
-                    directory: path, key: masterKey, protection: configuration.recovery.contentProtection)
-                stagedStore = destination
-                try await destination.importAsNewJournals(from: restored.store)
-                nextConfiguration = configuration
-                nextConfiguration.storageFolder = folder
-                nextConfiguration.supersededLibraries = librariesSuperseded(by: configuration)
-                nextKey = masterKey
-            } else {
-                destination = restored.store
-                nextKey = restored.key
-                // Opening the archive needed its password.
-                nextConfiguration = LocalConfiguration(
-                    recovery: restored.recovery, recoveryConfirmed: true,
-                    storageFolder: await restored.store.directory.lastPathComponent,
-                    passwordChecked: restored.recovery.formatVersion == 2 ? true : nil)
-            }
-            try Task.checkCancellation()
-            guard !locked else { throw JournalError.locked }
-            let account = keyAccount + "-" + UUID().uuidString.lowercased()
-            stagedAccount = account
-            try Keychain.write(nextKey, account: account)
-            nextConfiguration.keyID = account
-            // A new library names its connection item, as `start` does.
-            if nextConfiguration.connectionKeyID == nil, configuration == nil {
-                nextConfiguration.connectionKeyID = account + "-connection"
-            }
-            let previous = configuration
-            configuration = nextConfiguration
-            do { try persistConfiguration() } catch {
-                configuration = previous
-                throw error
-            }
-            // Ownership transfers only after the configuration pointer is durably committed.
-            stagedDirectory = nil
-            stagedStore = nil
-            stagedAccount = nil
-            masterKey = nextKey
-            let replaced = store
-            store = destination
-            configureSync()
-            selectedID = nil
-            draft = nil
-            selectedJournalID = nil
-            items = []
-            imageLoader.clear()
-            // The configuration pointer already committed the import. A display failure must not invite reimport.
-            do {
-                try await refresh()
-                selectInitialEntry()
-            } catch {
-                self.error = "Your journals were imported, but couldn’t be displayed. Reopen My Journal to try again."
-            }
-            try? await replaced?.close()
-        } catch {
-            if let stagedStore { try? await stagedStore.close() }
-            if let stagedDirectory { try? FileManager.default.removeItem(at: stagedDirectory) }
-            if let stagedAccount { try? Keychain.remove(stagedAccount) }
-            throw error
-        }
     }
 }
 
@@ -942,6 +884,10 @@ extension AppModel {
         editingJournals = false
         openingJournals = false
         error = nil
+        // The problem screen doesn't follow the welcome screen (docs/design/build-18-fixes-2026-10-06.md §2.1).
+        setLibraryProblem(nil)
+        failedRetries = 0
+        firstReadPending = false
         saveFailure = false
         syncActivity.pendingItems = 0
         encryption.turnedOnElsewhere = false

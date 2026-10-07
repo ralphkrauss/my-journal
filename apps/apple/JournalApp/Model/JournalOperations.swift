@@ -124,7 +124,7 @@ extension AppModel {
             await placeJournalAtEnd(journal.id)
             try await refresh()
             if !editingJournals { await switchJournal(journal.id) }
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.shown(.saving) }
     }
     func createRecoveryJournal(_ name: String, entryID: UUID?) async throws -> Bool {
         guard !locked, !replacingVault, entryID == nil || draft?.id == entryID else { throw JournalError.locked }

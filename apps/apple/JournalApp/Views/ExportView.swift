@@ -58,7 +58,7 @@ struct SaveRecoveryKeyButton: View {
                 isPresented: $exporting, document: JournalFile(bytes: Data((key + "\n").utf8)), contentType: .plainText,
                 defaultFilename: "Journal Recovery Key.txt"
             ) { result in
-                if case .failure(let failure) = result { error = failure.localizedDescription }
+                if case .failure = result { error = "Couldn’t save the key. Try again, or choose another location." }
             }
             .alert(
                 "Couldn’t Save Recovery Key",

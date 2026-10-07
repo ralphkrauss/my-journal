@@ -108,6 +108,7 @@ final class SyncHealthTests: XCTestCase {
             (ServerRateLimited(retryAfter: 30), .unavailable),
             (ServerUnavailable(), .unavailable),
             (DatabaseError(resultCode: .SQLITE_CORRUPT), .localDataUnreadable),
+            (DatabaseError(resultCode: .SQLITE_BUSY), .localDataUnavailable),
             (JournalError.unauthorized, .accessRemoved),
             (JournalError.unsupportedFormat, .appUpdateNeeded),
             (SyncFailure(.serverNotSetUp), .serverNotSetUp),

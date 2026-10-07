@@ -73,14 +73,48 @@ import UniformTypeIdentifiers
         var showPictureMenu: (() -> Bool)?
         /// The view leaves the window, as when the app locks.
         var leavingWindow: (() -> Void)?
+        /// Keyboard focus came to or left the view, which the Format menu follows.
+        var focusChanged: ((Bool) -> Void)?
+        override func becomeFirstResponder() -> Bool {
+            let accepted = super.becomeFirstResponder()
+            if accepted { focusChanged?(true) }
+            return accepted
+        }
+        override func resignFirstResponder() -> Bool {
+            let resigned = super.resignFirstResponder()
+            if resigned { focusChanged?(false) }
+            return resigned
+        }
         override func viewWillMove(toWindow newWindow: NSWindow?) {
-            if newWindow == nil { leavingWindow?() }
+            if newWindow == nil {
+                leavingWindow?()
+                focusChanged?(false)
+            }
             super.viewWillMove(toWindow: newWindow)
         }
+        /// Edit Link… and Remove Link for the link under the pointer, placed with the system's own link items.
+        var linkItems: ((NSEvent) -> [NSMenuItem])?
+        /// The system's own items for editing a link in a text view (Edit Link… and Remove Link). They don't know
+        /// the entry's link titles or Markdown, so they give way to the app's two items, which do the same.
+        private static let systemLinkEditing: Set<Selector> = [
+            #selector(NSTextView.orderFrontLinkPanel(_:)), Selector(("_removeLinkFromMenu:")),
+        ]
         override func menu(for event: NSEvent) -> NSMenu? {
             // The text view's own handling selects a picture that was clicked, so it goes first.
             let standard = super.menu(for: event)
-            return pictureMenu?(event) ?? standard
+            if let picture = pictureMenu?(event) { return picture }
+            guard let standard, let items = linkItems?(event), !items.isEmpty else { return standard }
+            for item in standard.items.reversed() where item.action.map(Self.systemLinkEditing.contains) == true {
+                standard.removeItem(item)
+            }
+            let existing = standard.items.lastIndex { $0.title.localizedCaseInsensitiveContains("Link") }
+            var position = existing.map { $0 + 1 } ?? 0
+            for item in items {
+                standard.insertItem(item, at: position)
+                position += 1
+            }
+            if existing == nil { standard.insertItem(.separator(), at: position) }
+            return standard
         }
         override func accessibilityPerformShowMenu() -> Bool {
             showPictureMenu?() == true || super.accessibilityPerformShowMenu()

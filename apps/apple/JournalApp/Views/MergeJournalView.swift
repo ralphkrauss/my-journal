@@ -243,7 +243,7 @@ struct MergeJournalView: View {
                 showError("“\(name)” is no longer available. Choose another journal.")
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
-                showError(error.localizedDescription)
+                showError(error.shown(.saving))
             }
         }
     }

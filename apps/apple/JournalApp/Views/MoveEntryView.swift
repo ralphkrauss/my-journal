@@ -128,8 +128,10 @@ struct MoveEntryView: View {
                     } label: {
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(journal.title).foregroundStyle(ambiguous(journal) ? .secondary : .primary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(JournalNames.displayName(journal.title)).foregroundStyle(
+                                    ambiguous(journal) ? .secondary : .primary
+                                )
+                                .fixedSize(horizontal: false, vertical: true)
                                 if ambiguous(journal) {
                                     Text("Same name as another journal").foregroundStyle(.secondary)
                                 }
@@ -171,7 +173,7 @@ struct MoveEntryView: View {
                 showError("These changes need review before you can continue.")
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
-                showError(error.localizedDescription)
+                showError(error.shown(.saving))
             }
         }
     }

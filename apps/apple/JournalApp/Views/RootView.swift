@@ -95,6 +95,8 @@ struct RootView: View {
                 ProgressView("Opening Journal…")
             } else if model.locked {
                 UnlockView()
+            } else if model.showsLibraryProblem, let problem = model.shownLibraryProblem {
+                LibraryProblemView(problem: problem)
             } else if model.store == nil {
                 welcome
             } else if let key = model.recoveryKey {
@@ -104,12 +106,12 @@ struct RootView: View {
             }
         }
         .alert(
-            "Journal",
+            "My Journal",
             isPresented: Binding(
                 get: { model.error != nil && !model.locked && !creatingLibrary }, set: { if !$0 { model.error = nil } })
         ) {
             if model.saveFailure {
-                Button("Try Again") { Task { _ = await model.flush() } }
+                Button("Try Again") { Task { _ = await model.flush(announcing: .always) } }
             }
             Button("OK", role: .cancel) { model.error = nil }
         } message: {
@@ -147,7 +149,7 @@ struct RootView: View {
         .onAppear { model.windowUndoManager = undoManager }
         .fileImporter(isPresented: $model.archiveImportRequested, allowedContentTypes: [.journalArchive]) { result in
             // A choice made as the app locked, or while the journals are being replaced, isn't imported.
-            guard !model.locked, !model.replacingVault, case .success(let url) = result else { return }
+            guard !model.lockBlocksImport, !model.replacingVault, case .success(let url) = result else { return }
             archiveToImport = url
         }
         .sheet(isPresented: $model.archiveExportPresented) { ArchiveExportSheet() }
@@ -182,6 +184,8 @@ struct RootView: View {
             // The open panel would otherwise stay over the lock screen.
             if locked { closePresentations() }
         }
+        // As the app locks: a sheet over the journals would stay over the screen that says they can't be opened.
+        .onValueChange(of: model.showsLibraryProblem) { if $0 { closePresentations() } }
         // Erasing this device's journals closes what every window shows of them (erase-device-2026-10-04.md).
         .onValueChange(of: model.erasingLibrary) { erasing in
             if erasing { closePresentations() }
@@ -222,6 +226,7 @@ struct RootView: View {
         }
         .onValueChange(of: model.loaded) { _ in openPendingArchive() }
         .onValueChange(of: model.locked) { _ in openPendingArchive() }
+        .onValueChange(of: model.libraryProblem) { _ in openPendingArchive() }
         .onValueChange(of: model.committingMutation) { _ in openPendingArchive() }
         // Someone who gave up unlocking isn't shown the archive hours later.
         .onValueChange(of: scenePhase) { if $0 == .background { pendingArchive = nil } }
@@ -278,8 +283,12 @@ struct RootView: View {
     /// Opens a waiting archive once the journals are shown, as after unlocking, and after a change being stored. While
     /// connecting or turning on encryption replaces the journals, it can't be imported, and the person is told so.
     private func openPendingArchive() {
-        guard let url = pendingArchive, model.loaded, !model.locked, !model.committingMutation else { return }
+        guard let url = pendingArchive, model.loaded, !model.committingMutation, !model.retryingOpen else { return }
+        // Journals a newer version wrote, and settings that couldn't be read, are never imported over. Locked: it
+        // waits for the unlock (the lock screen of a missing device key offers the import itself).
+        guard model.refusesImport || !model.lockBlocksImport else { return }
         pendingArchive = nil
+        guard !model.refusesImport else { return }
         guard !model.replacingVault else {
             model.error = "My Journal is updating your journals. Try again when it’s finished."
             return
@@ -558,10 +567,7 @@ struct RootView: View {
     }
     /// An entry's actions, in its row's context menu and the Entry Actions menu.
     func entryActionCatalog(_ entry: JournalItem) -> [MenuAction] {
-        let location = model.lifecycle.location(of: entry)
-        let editable =
-            entry.document.isEditable && entry.deletedAt == nil
-            && (entry.kind == "template" || location.isInLiveJournal)
+        let editable = model.offersDelete(entry)
         var actions: [MenuAction] = []
         // First in the entry's group, as Pin Note is in Notes.
         if entry.kind == "entry", model.canPin(entry) {
@@ -634,7 +640,7 @@ struct RootView: View {
     @ViewBuilder private func swipeActions(_ entry: JournalItem) -> some View {
         if model.isRecentlyDeleted(entry) {
             Button("Delete", systemImage: "trash", role: .destructive) { swipePermanentDeletion(entry.id) }
-        } else if entry.document.isEditable, entry.deletedAt == nil {
+        } else if model.offersDelete(entry) {
             Button("Delete", systemImage: "trash", role: .destructive) { delete(entry.id) }
         }
     }
@@ -930,7 +936,7 @@ struct RootView: View {
                 await session.insert(try result.get(), into: model)
             } catch {
                 guard session.isCurrent(in: model), (error as? CocoaError)?.code != .userCancelled else { return }
-                model.error = error.localizedDescription
+                model.error = error.shown(.saving)
             }
         }
     }

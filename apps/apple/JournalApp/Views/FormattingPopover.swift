@@ -123,7 +123,8 @@ struct FormattingPopover: View {
                 Button("Code Block") { apply(.insert("```\n\n```\n")) }
                 Button("Horizontal Rule") { apply(.insert("---\n")) }
                 Button("Table") { apply(.insert("|  |  |\n| --- | --- |\n|  |  |\n")) }
-                Button("Link…") { apply(.linkDialog) }
+                Button(state.link.edit ? "Edit Link…" : "Add Link…") { apply(.linkDialog) }
+                Button("Remove Link") { apply(.removeLink(nil)) }.disabled(!state.link.remove)
                 Button("Image…") { apply(.imagePicker) }
             } label: {
                 rowLabel("Insert", opensMenu: true)

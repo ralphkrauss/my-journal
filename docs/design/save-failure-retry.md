@@ -4,7 +4,7 @@ Current RootView presents a save-error alert with Try Again, Export Entry… and
 
 ## Proposed presentation and interaction
 
-Use one shared save-failure notice on Mac and iOS. Show the existing exact warning “Changes haven’t been saved. Keep Journal open.” first, wrapping vertically, then native Try Again and Export Entry… buttons in a leading-aligned vertical stack. Keep the existing alert unchanged. The notice exists only while saving has failed.
+Use one shared save-failure notice on Mac and iOS. Show the existing exact warning “Changes haven’t been saved. Keep Journal open.” first, wrapping vertically, then native Try Again and Export Entry… buttons in a leading-aligned vertical stack. Keep the existing alert unchanged. The notice exists only while saving has failed. As of build 18 the alert shows once, when saving first fails, and again only for a retry the person asked for (Try Again in the alert or in the notice); later failures while typing leave the notice showing and say nothing more, and the notice is announced to VoiceOver once, when it appears. Closing the Mac window or quitting flushes without the alert, so only the modal “Couldn’t save changes on this Mac.” appears.
 
 On iOS place this notice first in the scrollable entry header, before the title/recovery/conflict contents, with the existing padding. On transition into failure, scroll the header without animation to the notice. The modal alert remains the initial accessible announcement; after dismissal the warning and its recovery actions remain in the header. Do not steal focus from the alert or repeat announcements on every edit. On Mac replace the existing below-editor warning/export pair with this same component in the same location.
 

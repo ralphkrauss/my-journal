@@ -37,6 +37,23 @@ final class EntryActionTests: XCTestCase {
             XCTAssertEqual(document, before)
         }
     #endif
+    /// The swipe and the context menu share one rule, so an entry whose journal is unavailable can't be deleted
+    /// from either, which would otherwise change something the list never shows.
+    func testDeleteIsOnlyOfferedForEntriesInAJournalInUse() {
+        let journal = JournalItem(kind: "journal", title: "Personal")
+        let listed = JournalItem(kind: "entry", journalID: journal.id, title: "Listed")
+        let orphan = JournalItem(kind: "entry", journalID: UUID(), title: "Journal is missing")
+        let template = JournalItem(kind: "template", title: "Template")
+        var deleted = listed
+        deleted.deletedAt = Date()
+        let model = AppModel(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+        model.items = [journal, listed, orphan, template, deleted]
+        XCTAssertTrue(model.offersDelete(listed))
+        XCTAssertTrue(model.offersDelete(template))
+        XCTAssertFalse(model.offersDelete(orphan))
+        XCTAssertFalse(model.offersDelete(deleted))
+    }
     func testContextTargetFlushesPreviousDraftAndDatePatchPreservesContent() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

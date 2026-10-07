@@ -21,9 +21,7 @@ struct ContentImport: Sendable {
                     "Update My Journal to import this archive as new journals. You can still restore it on a device with no journals."
                 )
             case .merge:
-                throw JournalError.server(
-                    "Update My Journal to merge the journals on this device. Some of them were saved by a newer version."
-                )
+                throw JournalError.mergeNeedsUpdate
             }
         }
         self.items = items

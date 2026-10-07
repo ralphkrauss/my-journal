@@ -28,6 +28,27 @@ import XCTest
         harness.actions.finishPresentation(refocus: false)
     }
 
+    /// Image… in the panel has no source of its own: it must not reopen the camera chosen the time before.
+    func testImageInTheFormatPanelAsksForThePhotoLibraryAfterTheCamera() {
+        let harness = EditorHarness(markdown: "Words")
+        defer { harness.close() }
+        harness.actions.insertImage(from: .camera)
+        XCTAssertEqual(harness.actions.imageSource, .camera)
+        harness.actions.requestImage = false
+
+        harness.actions.performFormatting(.imagePicker)
+        XCTAssertEqual(harness.actions.imageSource, .photos)
+        XCTAssertTrue(harness.actions.requestImage)
+
+        harness.actions.insertImage(from: .files)
+        harness.actions.requestImage = false
+        harness.actions.beginFormattingPresentation()
+        harness.actions.pendingPresentation = .image
+        harness.actions.finishPresentation(refocus: false)
+        XCTAssertEqual(harness.actions.imageSource, .photos)
+        XCTAssertTrue(harness.actions.requestImage)
+    }
+
     func testTheShownStateFollowsTheSelection() {
         let harness = EditorHarness(markdown: "Plain and **strong** words")
         defer { harness.close() }

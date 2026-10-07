@@ -17,6 +17,7 @@ struct SaveFailureNotice: View {
             }.disabled(operation != nil)
             if operation != nil { ProgressView("Saving…") }
         }
+        .onAppear { JournalAccessibility.announce("Not Saved") }
         .onDisappear { cancel() }
         .onValueChange(of: model.locked) { if $0 { cancel() } }
         .onValueChange(of: model.replacingVault) { if $0 { cancel() } }
@@ -37,7 +38,7 @@ struct SaveFailureNotice: View {
             guard operationID == requestID, !Task.isCancelled, model.vaultSessionID == session,
                 !model.locked, !model.replacingVault, model.draft?.id == entryID
             else { return }
-            _ = await model.flush(whileEditing: entryID)
+            _ = await model.flush(whileEditing: entryID, announcing: .always)
         }
     }
     private func cancel() {

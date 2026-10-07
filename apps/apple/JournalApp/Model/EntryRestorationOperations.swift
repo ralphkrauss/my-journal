@@ -11,7 +11,7 @@ extension AppModel {
         // Restoring works on the open entry; Undo and the list's Restore may name another one.
         if draft?.id != item.id { guard await selectEntryForAction(item.id) else { return } }
         do { try await moveEntry(item.id, to: journalID, restoring: true) } catch {
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
         }
     }
     /// Return to the exact current entry for a new review, without repeating a restoration mutation.

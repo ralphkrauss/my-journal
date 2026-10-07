@@ -3,6 +3,8 @@ import Foundation
 public enum JournalError: Error, LocalizedError {
     case unsupportedFormat, invalidData, invalidRecoveryKey, locked, unauthorized, server(String), conflict,
         invalidAddress, newerVersion, invalidSetupCode
+    /// Journals on this device were saved by a newer version, so they can't be merged with a server's yet.
+    case mergeNeedsUpdate
     public var errorDescription: String? {
         switch self {
         case .unsupportedFormat: return "Update My Journal to edit this entry."
@@ -16,6 +18,8 @@ public enum JournalError: Error, LocalizedError {
         case .conflict: return "This entry has changes from another device."
         case .invalidAddress: return "Enter a valid HTTPS server address."
         case .invalidSetupCode: return "That setup code isn’t valid. Check it and try again."
+        case .mergeNeedsUpdate:
+            return "Update My Journal to merge the journals on this device. Some of them were saved by a newer version."
         }
     }
 }

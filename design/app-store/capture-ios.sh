@@ -9,7 +9,7 @@ device="${1:?Usage: capture-ios.sh <simulator-id> <new-output-directory> [tests]
 output="${2:?Choose an output directory}"
 shift 2
 tests=("$@")
-[[ ${#tests[@]} -gt 0 ]] || tests=(test1Writing test4FindAgain test5Journals test6Dark test9Privacy)
+[[ ${#tests[@]} -gt 0 ]] || tests=(test1Writing test4FindAgain test5Journals test6Dark test7Backup test9Privacy)
 mkdir -p "$output"
 output="$(cd "$output" && pwd)"
 work="$(mktemp -d -t journal-screenshots)"
@@ -33,7 +33,8 @@ run() {
 if [[ -z "${JOURNAL_SCREENSHOT_SKIP_BUILD:-}" ]]; then
   run build-for-testing | grep -E "error:|BUILD" || true
 fi
-for appearance in light dark; do
+# Dark first: the light run ends with test9Privacy, which turns App Lock on.
+for appearance in dark light; do
   selected=()
   for test in "${tests[@]}"; do
     if [[ "$appearance" == dark && "$test" == test6Dark ]] || [[ "$appearance" == light && "$test" != test6Dark ]]; then

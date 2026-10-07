@@ -14,12 +14,20 @@ struct SupersededLibrary: Codable, Equatable {
 extension AppModel {
     /// The libraries a switch away from `previous` leaves to remove: that library, and any it replaced that aren't
     /// removed yet. They're saved in the same configuration write that switches to the new library.
-    func librariesSuperseded(by previous: LocalConfiguration?) -> [SupersededLibrary]? {
+    /// A new configuration that doesn't keep `previous`'s unfinished encryption copy leaves that copy to remove too
+    /// (`includingEncryptionCopy`).
+    func librariesSuperseded(
+        by previous: LocalConfiguration?, includingEncryptionCopy: Bool = false
+    ) -> [SupersededLibrary]? {
         guard let previous else { return nil }
         let library = SupersededLibrary(
             storageFolder: previous.storageFolder, keyID: previous.keyID ?? keyAccount,
             connectionKeyID: previous.connectionKeyID ?? keyAccount + "-connection")
-        return (previous.supersededLibraries ?? []) + [library]
+        var superseded = (previous.supersededLibraries ?? []) + [library]
+        if includingEncryptionCopy, let upgrade = previous.encryptionUpgrade {
+            superseded.append(SupersededLibrary(storageFolder: upgrade.storageFolder, keyID: upgrade.keyID))
+        }
+        return superseded
     }
 
     /// Removes earlier copies of the library once the current one has opened and, when it's connected, synchronized

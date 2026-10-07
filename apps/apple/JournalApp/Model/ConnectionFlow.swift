@@ -32,7 +32,17 @@ final class ConnectionFlow: ObservableObject {
     /// Try Again never asks for it twice.
     @Published var newPassword = "" { didSet { if newPassword != oldValue { clearPasswordErrors() } } }
     @Published var verifyPassword = "" { didSet { if verifyPassword != oldValue { clearPasswordErrors() } } }
-    @Published var phrase = "" { didSet { if phrase != oldValue { fieldErrors[.phrase] = nil } } }
+    @Published var phrase = "" {
+        didSet {
+            if phrase != oldValue {
+                fieldErrors[.phrase] = nil
+                codeUsedNotice = nil
+            }
+        }
+    }
+    /// Shown above the recovery code field after Back from Merge Journals spent the code it was entered with, until
+    /// a new one is typed (docs/design/build-18-fixes-2026-10-06.md §3.2).
+    @Published private(set) var codeUsedNotice: String?
     /// The journal this flow created before setting up the server. Its encryption and password can't change now.
     @Published private(set) var createdJournalHere = false
     @Published private(set) var fieldErrors: [Field: String] = [:]
@@ -75,6 +85,11 @@ final class ConnectionFlow: ObservableObject {
     private var pairingKey: Curve25519.KeyAgreement.PrivateKey?
     private var receivedDeviceID: UUID?
     private var operation: Task<Void, Never>?
+    /// The withdrawal of a pairing request, which a new request waits for so the other device can't answer the old
+    /// one's grant.
+    private var withdrawal: Task<Void, Never>?
+    /// The next code shown replaces one that was withdrawn, so VoiceOver says it is new.
+    private var announcesNewCode = false
 
     var host: String { ServerAddress.host(address) }
     /// What the busy row says, including what merging is doing.
@@ -333,6 +348,8 @@ final class ConnectionFlow: ObservableObject {
         error = nil
         operation = Task {
             defer { busy = false }
+            await withdrawal?.value
+            withdrawal = nil
             do {
                 let client = try ServerClient(address: address)
                 guard try await client.status().supports(PairingCheck.feature) else {
@@ -347,6 +364,10 @@ final class ConnectionFlow: ObservableObject {
                 }
                 ticket = request
                 pairingKey = key
+                if announcesNewCode {
+                    announcesNewCode = false
+                    announceForAccessibility("New code.")
+                }
                 try await awaitApproval(client, ticket: request, key: key)
             } catch is CancellationError {} catch { show(error) }
         }
@@ -512,9 +533,11 @@ final class ConnectionFlow: ObservableObject {
                     abandon()
                     path = []
                 }
-                self.error = refusal.localizedDescription
+                self.error = refusal.shown(.saving)
             } else if let interrupted = error as? MergeInterrupted {
                 self.error = mergeFailure(sent: interrupted.sent)
+            } else if (error as? JournalError)?.refusesMerge == true {
+                self.error = error.shown(.saving)
             } else if model.store == nil {
                 self.error = "Couldn’t finish connecting."
             } else if model.replacingVault {
@@ -537,7 +560,7 @@ final class ConnectionFlow: ObservableObject {
         operation = nil
         busy = false
         if let ticket, let client = try? ServerClient(address: address) {
-            Task { try? await client.cancelPairing(ticket) }
+            withdrawal = Task { try? await client.cancelPairing(ticket) }
         }
         // Approved but never connected, for example because the codes didn't match: the new access this device
         // received is given up, so it doesn't stay in the Devices list. If this fails, the other device can revoke it.
@@ -559,12 +582,43 @@ final class ConnectionFlow: ObservableObject {
     /// The failure to show on a step; nil is the first screen.
     func errorMessage(on step: Step?) -> String? { errorStep == step ? error : nil }
     /// Leaving Add This Device, by Back or otherwise, withdraws its request. Back from Merge Journals forgets a
-    /// scanned code; nothing was sent for it.
+    /// scanned code; nothing was sent for it. Back from a Merge Journals step that was pushed after access was
+    /// received gives that access up, as the merge was not agreed to (docs/design/sync-health-and-recovery.md §3.2).
     private func pathChanged(from old: [Step]) {
         if old.contains(.addThisDevice) && !path.contains(.addThisDevice) { abandon() }
         if old == [.merge], path.isEmpty, invite != nil {
             invite = nil
             error = nil
+        }
+        if old.last == .merge, path.count < old.count, resumeAfterMerge != nil { leaveMergeWithoutAgreeing() }
+    }
+    /// The step Back lands on starts as a new visit: the access it obtained is given up, so what it asks for again
+    /// is asked from the server again.
+    private func leaveMergeWithoutAgreeing() {
+        resumeAfterMerge = nil
+        abandon()
+        error = nil
+        switch path.last {
+        case .signIn:
+            phrase = ""
+            focusRequest = .phrase
+        case .recoveryCode:
+            phrase = ""
+            codeUsedNotice = "That code was used. Enter a new one."
+            focusRequest = .phrase
+            if let notice = codeUsedNotice {
+                // After focus moves, so VoiceOver doesn't cut the announcement off.
+                Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    announceForAccessibility(notice)
+                }
+            }
+        case .addThisDevice:
+            // The old code was withdrawn; its screen shows “Getting a code…” until a new one arrives.
+            announcesNewCode = true
+            beginPairing()
+        default:
+            break
         }
     }
     func cancel() {
@@ -640,7 +694,7 @@ final class ConnectionFlow: ObservableObject {
         case PairingError.insecureGrant where invite != nil:
             message = "Couldn’t add this device securely. Show a new code on your connected device and try again."
         default:
-            message = failure.localizedDescription
+            message = failure.shown(.saving)
         }
         error = message
         announceForAccessibility(message)

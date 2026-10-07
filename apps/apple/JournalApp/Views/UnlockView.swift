@@ -87,6 +87,24 @@ struct UnlockView: View {
                 model.error = nil
             }
         }
+        if model.libraryProblem == .needsKey { withoutCredential }
+    }
+
+    /// With the device key gone and the credential forgotten there is no other way on: restoring an archive, or erasing
+    /// and connecting to a server again (docs/design/build-18-fixes-2026-10-06.md §2.1). One group for VoiceOver, whose
+    /// label is the caption, so the buttons are read in its context.
+    private var withoutCredential: some View {
+        let caption = "Don’t have your \(credentialName)?"
+        return VStack(spacing: 12) {
+            Text(caption).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Button {
+                model.archiveImportRequested = true
+            } label: {
+                Text("Import Archive…").fixedSize(horizontal: false, vertical: true)
+            }.buttonStyle(.plain).foregroundStyle(.tint)
+            UnopenedEraseButton()
+        }
+        .accessibilityElement(children: .contain).accessibilityLabel(caption)
     }
 
     private func note(_ text: String) -> some View {

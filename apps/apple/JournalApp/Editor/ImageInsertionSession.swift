@@ -34,6 +34,13 @@ final class ImageInsertionSession: ObservableObject {
             && model.store === store && model.draft?.id == entryID && model.canEdit
     }
 
+    /// The same entry is still open in the same library, so it only stopped accepting changes: a connection started,
+    /// a sync brought content from a newer version, or it or its journal was deleted.
+    private func stayedOpen(in model: AppModel) -> Bool {
+        !finished && !Task.isCancelled && generation == model.imageInsertionGeneration && model.store === store
+            && model.draft?.id == entryID
+    }
+
     /// Ends the import without a message: Stop, locking, or another Insert Image.
     func cancel() {
         quiet = true
@@ -71,7 +78,7 @@ final class ImageInsertionSession: ObservableObject {
                 guard let block = try await model.importImage(result.get(), showing: total == 1) else { return false }
                 blocks.append(block)
             } catch {
-                if total == 1 { model.error = error.localizedDescription }
+                if total == 1 { model.error = error.shown(.saving) }
                 problems.append(.of(error))
             }
             self.read += 1
@@ -79,7 +86,9 @@ final class ImageInsertionSession: ObservableObject {
             return self.isCurrent(in: model)
         }
         guard isCurrent(in: model) else {
-            if !quiet, !model.locked { model.error = Self.leftMessage(total) }
+            if !quiet, !model.locked {
+                model.error = stayedOpen(in: model) ? Self.unchangeableMessage(total) : Self.leftMessage(total)
+            }
             return
         }
         finished = true
@@ -94,6 +103,13 @@ final class ImageInsertionSession: ObservableObject {
         total == 1
             ? "The image wasn’t added because you left the entry before it finished."
             : "The images weren’t added because you left the entry before they finished."
+    }
+
+    /// Said when the entry stays open but can't be changed before the chosen images were read.
+    static func unchangeableMessage(_ total: Int) -> String {
+        total == 1
+            ? "The image wasn’t added because this entry can’t be changed right now."
+            : "The images weren’t added because this entry can’t be changed right now."
     }
 
     /// One message for the images of several that couldn't be added, with their cause when they share one.

@@ -60,6 +60,7 @@ extension RichText {
         _ text: NSAttributedString, paragraph: NSRange, attributes: [NSAttributedString.Key: Any], size: CGFloat
     ) -> NewlineAction {
         let kind = attributes[.journalKind] as? String ?? "bullet"
+        if kind == "quote" { return leavingQuote(text, paragraph: paragraph, attributes: attributes, size: size) }
         var block = block(attributes) ?? DocumentBlock(kind: kind)
         let ownEnd = endsWithOwnEnd(text, paragraph: paragraph)
         if let indent = block.listIndents?.popLast() {
@@ -82,6 +83,32 @@ extension RichText {
                 string: ownEnd || NSMaxRange(paragraph) == text.length ? "" : "\n",
                 attributes: plain),
             nextKind: "paragraph", typing: plain, caret: paragraph.location)
+    }
+
+    /// Return in an empty quote line: it leaves the quote one level, as Backspace at the start of the line does
+    /// (`ItemFormattingRemoval.removingOneLevel`): the line of an outer quote, the text of the list item around it,
+    /// or a plain line where it is, so a quote cut in the middle splits in two. At the end of the text the quote's own
+    /// line break goes with it, as for a list.
+    private static func leavingQuote(
+        _ text: NSAttributedString, paragraph: NSRange, attributes: [NSAttributedString.Key: Any], size: CGFloat
+    ) -> NewlineAction {
+        let original = block(attributes) ?? DocumentBlock(kind: "quote")
+        let remaining = ItemFormattingRemoval.removingOneLevel(original)?.block ?? DocumentBlock()
+        let ownEnd = endsWithOwnEnd(text, paragraph: paragraph)
+        if remaining.kind == "quote" {
+            let line = itemAttributes(remaining, number: nil, size: size)
+            var ownLine = line
+            if ownEnd { ownLine[.journalOwnEnd] = true }
+            return NewlineAction(
+                range: paragraph, replacement: NSAttributedString(string: "\n", attributes: ownLine),
+                nextKind: "quote", typing: line, caret: paragraph.location)
+        }
+        let line = blockAttributes(remaining, size: size)
+        return NewlineAction(
+            range: paragraph,
+            replacement: NSAttributedString(
+                string: ownEnd || NSMaxRange(paragraph) == text.length ? "" : "\n", attributes: line),
+            nextKind: "paragraph", typing: line, caret: paragraph.location)
     }
 
     /// Return at the very start of an item's text: a new empty item goes above it, and the item keeps its identity

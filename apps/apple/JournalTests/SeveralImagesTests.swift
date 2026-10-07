@@ -76,6 +76,33 @@ final class SeveralImagesTests: XCTestCase {
         }
     }
 
+    /// An entry can stop accepting changes without the person leaving it, which the message must not say.
+    func testAnEntryThatBecomesReadOnlyMeanwhileIsNotReportedAsLeft() async throws {
+        let (harness, model, _) = try await setUp(markdown: "Text")
+        harness.caret(at: 4)
+        let session = try XCTUnwrap(ImageInsertionSession(model: model, actions: harness.actions))
+        let load = slow(try png(width: 10), seconds: 0.3)
+        let importing = Task { await session.insert([load], into: model) }
+        try await Task.sleep(for: .milliseconds(50))
+        model.draft?.deletedAt = Date()
+        await importing.value
+        XCTAssertEqual(harness.document.markdown, "Text")
+        XCTAssertEqual(model.error, ImageInsertionSession.unchangeableMessage(1))
+        XCTAssertEqual(
+            ImageInsertionSession.unchangeableMessage(2),
+            "The images weren’t added because this entry can’t be changed right now.")
+
+        model.error = nil
+        model.draft?.deletedAt = nil
+        let another = try XCTUnwrap(ImageInsertionSession(model: model, actions: harness.actions))
+        let slowLoad = slow(try png(width: 10), seconds: 0.3)
+        let leaving = Task { await another.insert([slowLoad], into: model) }
+        try await Task.sleep(for: .milliseconds(50))
+        model.draft = JournalItem(kind: "template")
+        await leaving.value
+        XCTAssertEqual(model.error, ImageInsertionSession.leftMessage(1), "Another entry is open: the person left.")
+    }
+
     func testTypingElsewhereMeanwhileKeepsThePersonsCaret() async throws {
         let (harness, model, _) = try await setUp(markdown: "First\n\nSecond")
         harness.caret(at: 5)

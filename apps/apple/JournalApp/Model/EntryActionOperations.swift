@@ -2,6 +2,12 @@ import Foundation
 import JournalCore
 
 extension AppModel {
+    /// Whether a row can be deleted: its context menu and its swipe ask the same. A template has no journal; an
+    /// entry needs one in use, since deleting one in an unavailable journal would change something nobody sees.
+    func offersDelete(_ entry: JournalItem) -> Bool {
+        entry.document.isEditable && entry.deletedAt == nil
+            && (entry.kind == "template" || lifecycle.location(of: entry).isInLiveJournal)
+    }
     /// Context actions capture a row, never whatever selection happens to exist later.
     func selectEntryForAction(_ id: UUID) async -> Bool {
         guard !locked, !replacingVault else { return false }

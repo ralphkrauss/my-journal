@@ -40,7 +40,8 @@ It also shows in Sync Status: the toolbar cloud button on the Mac, and the entry
 | Encryption turned on elsewhere, or the server was replaced by an encrypted one | "The server now uses encryption or was replaced. Sign in to keep syncing." | Sign In… |
 | App or server needs an update, or a broken certificate | For example: "The server needs an update before this device can sync. Your changes are saved on this device." | Check Again |
 | Something unexpected | "Couldn’t sync because of an unexpected problem. Your changes are saved on this device." | Try Again |
-| This device's own data can't be read | "My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup." | Try Again |
+| This device's own data is damaged | "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup." | Try Again |
+| This device's own data is busy or unavailable | "Couldn’t sync right now. My Journal will try again." (temporary; no claim about saving) | Try Again |
 
 - **Quiet.** While syncing normally or retrying by itself, Sync Status doesn't show, however many changes wait
   (amended 2026-10-02, [quiet-sync-and-title-alignment.md](quiet-sync-and-title-alignment.md); before, a plain cloud
@@ -102,7 +103,7 @@ entry.
 | 15 | Recovery format mismatch (a format this app doesn't know) | `contentProtection` throws `unsupportedFormat` | "Update My Journal to edit this entry." (Models.swift:8, an entry message) | Backoff |
 | 16 | A record or image refused | `SyncRejection` | "“‹title›” is too large to sync…", "Your server didn’t accept “‹title›”…" and the image equivalents (SyncEngine.swift:256, 456) | Item-level: the rest syncs. Works as designed |
 | 17 | Rate limited | 429, `ServerRateLimited` | "Too many attempts. Try again in a few minutes." | Shown as an error; `Retry-After` ignored by the schedule |
-| 18 | Local store can't be read or written | GRDB `DatabaseError` | The database's own text, for example "SQLite error 11: database disk image is malformed - while executing …", which can include SQL | Backoff. (A save failure already pauses syncing with its own notice.) |
+| 18 | Local store can't be read or written | GRDB `DatabaseError` | Damaged (`SQLITE_CORRUPT`, `SQLITE_NOTADB`): `localDataUnreadable`, "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup." Any other database failure (busy, locked, unavailable while the device is locked, a failing or full disk): `localDataUnavailable`, temporary, "Couldn’t sync right now. My Journal will try again." The database's own text, which can include SQL, is never shown (`LocalDataFailure`, build 18). | Backoff. (A save failure already pauses syncing with its own notice.) |
 | 19 | The server's identity changes twice within one sync | `ServerChanged` twice | "Couldn’t sync. Your changes are saved on this device." (SyncEngine.swift:121) | The next sync compares everything. Works as designed |
 | 20 | Anything else | `invalidData` (a faulty server's page), `ResponseTooLarge`, other errors | "This data couldn’t be read.", "The server sent more data than expected.", or the error's own text | Backoff |
 
@@ -215,7 +216,9 @@ these states has one action, which reuses existing flows.
     restored server, or a server another of this library's devices set up again.
   - **Different library:** **Merge Journals** appears now, with the grant held as for Try Again
     ([join-with-local-journals.md](join-with-local-journals.md) §2.7). Merge continues; Back or Cancel revokes the
-    grant, and nothing was sent.
+    grant, and nothing was sent. Back gives the grant up on purpose, which spends a one-time recovery code: the step it
+    lands on starts as a new visit and asks again (build 18, [build-18-fixes-2026-10-06.md](build-18-fixes-2026-10-06.md)
+    §3.2), so a later review doesn't reverse it.
 - On the merge path, the busy labels are "Checking…" while the server's records are read, then "Merging…".
 
 **Sign In…** (Needs you)
@@ -460,7 +463,8 @@ specific server. Each message shows in full in Settings > Sync and in Sync Statu
 | Fix: certificate | "Can’t connect securely to the server because its certificate isn’t valid. Your changes are saved on this device." | Check Again |
 | Fix: not a My Journal server | "The server address doesn’t lead to a My Journal server. Your changes are saved on this device." | Check Again |
 | Unexpected | "Couldn’t sync because of an unexpected problem. Your changes are saved on this device." | Try Again |
-| Unexpected: this device's data | "My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup." | Try Again |
+| Unexpected: this device's data is damaged | "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup." | Try Again |
+| Unexpected: this device's data is busy or unavailable | "Couldn’t sync right now. My Journal will try again." | Try Again |
 
 ### 7.2 Other copy
 
@@ -599,7 +603,7 @@ only where a real server can't produce the case. Each state's retry behavior is 
 | 15 | Unknown recovery format | SyncRecoveryTests table → Update My Journal, stops | Updating the app |
 | 16 | Refused record or image | Real: an entry too large to sync is explained and the rest syncs; an image the server refuses (413, which this app's own size limit keeps a real server from sending) in SyncRecoveryTests | Shorten or edit; Try Again sends it again |
 | 17 | Rate limited | Real: the server's limit reached → Temporary, its `Retry-After` kept (60 s); the wait follows it (SyncRecoveryTests) | Next sync after the wait |
-| 18 | Local store unreadable | Real: the records table's page overwritten in a copy of a device's library → "My Journal couldn't read its data on this device…", retries continue | Export Archive (existing) |
+| 18 | Local store unreadable | Real: the records table's page overwritten in a copy of a device's library → "My Journal can’t read your journals on this device…", retries continue | Export Archive (existing) |
 | 19 | Identity changes twice in one sync | SyncHealthTests (in memory; a real server can't change identity twice within one request sequence on demand) → Temporary | Next sync compares everything |
 | 20 | Anything else | A page that goes back → Unexpected, 6 s wait (SyncRecoveryTests table); classification table | Try Again |
 

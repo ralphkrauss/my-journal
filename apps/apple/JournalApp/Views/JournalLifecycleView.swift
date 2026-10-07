@@ -342,7 +342,7 @@ struct JournalLifecycleView: View {
         if case JournalLifecycleError.changed = failure {
             error = "This journal has changed. Review it again before continuing."
         } else {
-            error = failure.localizedDescription
+            error = failure.shown(.saving)
         }
     }
 }

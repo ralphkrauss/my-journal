@@ -2,7 +2,7 @@
 
 A designed set of App Store screenshots for iPhone, iPad and Mac, and an App Preview storyboard for later. Each screenshot is a composed frame: a real capture of the app with seeded sample content, placed in a device frame or as a floating window, on a background that echoes the app icon, with a short headline and a quiet sub-line. Everything here is specified so that another agent can seed the app, capture it and compose the frames with Python and Pillow at the exact App Store sizes.
 
-**Status (2026-10-05):** the set in [screenshots/](screenshots/) was made on 2026-09-28 and is outdated for build 16. [Recapture for build 16](#recapture-for-build-16) lists what changed, the script changes and the exact captures to run. The visual style, sizes, positions, fonts and icon stay exactly as before; the screens, the sample content, the captions and the upload order change.
+**Status (2026-10-06):** a new set for build 17 was captured on 2026-10-06 and is waiting for review: seven frames per platform in `artifacts/app-store-screenshots/build-17/` (not in the repository), described in [Build 17 set](#build-17-set). The set in [screenshots/](screenshots/), made on 2026-09-28, stays in place until the new one has been reviewed. The visual style, sizes, positions, fonts and icon are the same as in the 2026-09-28 set; the screens, the sample content, the captions and the upload order changed.
 
 ## Apple's requirements
 
@@ -14,7 +14,7 @@ From [Screenshot specifications](https://developer.apple.com/help/app-store-conn
 | iPad 13" display | **2752 × 2064** landscape | 2064 × 2752 portrait, 2048 × 2732 / 2732 × 2048 | Yes, for an app that runs on iPad |
 | Mac | **2880 × 1800** | 2560 × 1600, 1440 × 900, 1280 × 800 (16:10) | Yes, for Mac apps |
 
-- 1 to 10 screenshots per set; this plan uses 6.
+- 1 to 10 screenshots per set; this plan uses 7.
 - PNG or JPEG, **no alpha channel or transparency**. Use flattened sRGB, as JPEG at quality 94 without chroma subsampling (visually the same as PNG; with photos in the frames, PNGs would be about twice the size).
 - The first three are shown in search results when there's no preview, so they carry the story ([Creating your product page](https://developer.apple.com/app-store/product-page/)). Apple also suggests at least one Dark Mode screenshot.
 - Screenshots must show the app in use, not just title art or a login screen; text and image overlays are allowed (guideline [2.3.3](https://developer.apple.com/app-store/review/guidelines/)). No prices or pricing terms (2.3.7). Suitable for 4+ (2.3.8). No other mobile platforms (2.3.10).
@@ -39,75 +39,85 @@ Upload order and captions:
 | 4 (Mac) | `04-mac` | Insights on your terms | Your AI agent, read-only, for the journals you choose. | Agent Access and the agent's answer (Mac 4) | Dark |
 | 5 (iPhone, iPad) | `04` | Find it again | Pinned entries, search and Version History. | The Pinned section, Version History (iPhone 4, iPad 4) | Light |
 | 5 (Mac) | `02` | Locked when you step away | App Lock with Face ID or Touch ID. | Settings > Privacy with Lock when inactive (Mac 2) | Light |
-| 6 | `05` | Separate journals, your own templates | Keep personal and work apart, in the order you choose. | Journal order (Edit on iPhone), a table, templates you create (iPhone 5, iPad 5, Mac 5) | Light |
+| 6 | `05` | Separate journals, your own templates | Keep personal and work apart, in the order you choose. | Journals in the chosen order, a table, templates you create (iPhone 5, iPad 5, Mac 5) | Light |
+| 7 | `07` | Plain Markdown, yours to keep | Export your journals as Markdown files, with their images. | Settings > Backup with Export as Markdown… (iPhone 7, iPad 7, Mac 7) | Light |
 
-The frame numbers elsewhere in this plan (iPhone 1 to 6 and so on) and the file names in `screenshots/` (`01-hero.jpg` … `06-dark.jpg`) still name the captures. Upload them in the order above, or have `make_screenshots.py` also write copies named by position. With light, light, dark as the first three, the search result row still shows the dark appearance.
+The frame numbers elsewhere in this plan (iPhone 1 to 7 and so on) and the file names in `screenshots/` (`01-hero.jpg` … `06-dark.jpg`) still name the captures. Upload them in the order above, or have `make_screenshots.py` also write copies named by position. With light, light, dark as the first three, the search result row still shows the dark appearance.
 
 On the Mac, Insights takes position 4 because the agents people connect usually run on a computer, such as the Mac. iPhone and iPad use that place for App Lock, and the Mac shows App Lock at 5.
 
 Changed from the 2026-09-28 set: the order (the first three now lead with encryption, the server and native apps instead of "A calm place to write"); every headline except frames 4 and 5; and the card caption "Asked in your AI agent". The hero capture stays first: it shows the app in use, which Apple requires, under the headline people search for. Frame 3's sub-line says "Sync through your own server, at home or online." so it can't be read as syncing without a server; it no longer mentions the Mac, which stopped including a server on 2026-10-05. No frame mentions price or subscription (guideline 2.3.7).
 
+Frame 7 (added 2026-10-06) shows Export as Markdown, new in build 17: Markdown export is one of the reasons this audience picks the app ([Audience](listing.md#audience)), and the listing already says "Export your journals as Markdown files, with their images, for any app." It comes last, so the first six keep their order.
+
 Headlines stay at 6 words or fewer; sub-lines at 10 or fewer. No exclamation marks, no prices, no names of other apps or AI products.
 
-## Recapture for build 16
+## Build 17 set
 
-Checked on 2026-10-05 against build 16: the screenshot tests in `apps/apple/JournalScreenshots/`, the seed in `apps/apple/Packages/JournalCore/Sources/JournalMeasure/ScreenshotLibrary.swift`, the scripts in `design/app-store/` and the app's current UI. Nothing was captured; the simulator was in use by the build 16 release check.
+Captured on 2026-10-06 from the build 17 tree (commit 1367a1b plus the harness changes below), with Xcode 26.6, the iOS 26.5 simulator runtime and macOS on a Retina display. Nothing was uploaded.
 
-### Outdated frames
+### Where the images are
 
-| Frame | Why it's outdated |
-| --- | --- |
-| iphone/01-hero | Round checkboxes; checklists now have square checkboxes. |
-| iphone/02-privacy | Shows Change PIN…, Turn Off App Lock… and "Unlock with Face ID". App Lock has had no PIN since build 12: the switch is "Require Face ID", with Lock My Journal and a new footer. README.md's alt text already describes the new screen. |
-| iphone/03-sync | Still matches; recapture with the rest so dates and devices agree. |
-| iphone/04-find | Current, but doesn't show pinned entries; replaced by the Personal list with the Pinned section. |
-| iphone/05-journals | Settings and New Journal were one toolbar group (now Settings at the top left and New Journal at the top right), and the bottom bar had a template button that's gone. |
-| iphone/06-dark | Round checkboxes. |
-| ipad/01–06 | All show the template button in the entries bar, which is gone. 02 has the old Privacy screen. 06 has round checkboxes. |
-| mac/01–06 | All show the old toolbar (a template button and New Entry; now Journal Actions, New Entry after the divider, Editor Only and search), and separators under section headers, which are now only between rows. 02 has the old Privacy pane. 03 shows Use This Mac…, which was removed on 2026-10-05, and its iPhone inset has the old bottom bar. 06's iPhone and iPad insets have round checkboxes. |
-| mac/04-insights | The flow it shows was removed: Add Access…, Recent Activity in the pane, and agents connected to the Mac app rather than to a server. README.md no longer shows it. |
+`artifacts/app-store-screenshots/build-17/` (ignored by git), named by upload position:
 
-### Changes needed before capturing
+| Folder | Size | Files |
+| --- | --- | --- |
+| `iphone-6.9/` | 1320 × 2868 | `1-hero`, `2-sync`, `3-dark`, `4-privacy`, `5-find`, `6-journals`, `7-markdown` |
+| `ipad-13/` | 2752 × 2064 | the same names as iPhone |
+| `mac/` | 2880 × 1800 | `1-hero`, `2-sync`, `3-dark`, `4-insights`, `5-privacy`, `6-journals`, `7-markdown` |
 
-None of these files is part of the app, so they don't need a new build. Each is small; together they make the run complete and the frames current.
+`raw/` holds the captures they were composed from, and `contact-sheet.png` all frames at a glance. All are flattened sRGB JPEGs (quality 94, no chroma subsampling), checked for exact size and RGB mode.
 
-**Done (2026-10-05):** items 1 to 6 are made; both screenshot test targets build, and the seed was run once into a scratch folder. Nothing was captured yet. How frame 4 works: `capture-mac.sh` starts the server with `Journal__PublicUrl=https://journal.example.net` and adds that host to `AllowedHosts`; the test connects the library as "MacBook Pro" (in memory, not saved), checks that Agent Access shows `https://journal.example.net/mcp` without the note about agents on this Mac, and "Writing Assistant" (`JournalScreenshots/Mac/ScreenshotAgent.swift`) sends its requests to the loopback port with that host name, because a server with a public address answers agents only for its own host. The approval goes through `ServerAgentsController.approve`, as Allow does; the agent's page is opened by pressing its row through accessibility, as VoiceOver would. The Mac seed leaves out the bread entry's earlier versions (`JOURNAL_SCREENSHOT_HISTORY=0`), as for any library uploaded to a new server; no Mac frame shows them. A real agent can't reach `https://journal.example.net`, so step 5 of [Captures to run](#captures-to-run) needs an agent that can be pointed at the loopback address with that host name, or the answer from another run.
+### What each frame shows
 
-1. **Seed** (`apps/apple/Packages/JournalCore/Sources/JournalMeasure/ScreenshotLibrary.swift`):
-   - In "Slow Sunday", move the `## Today` checklist block above `## Worth keeping from this week`, as in [Sample content](#personal), so the iPhone hero shows the checkboxes above the writing toolbar.
-   - Add the entry "Books for the autumn" to Personal (`journal: 0`, `day(20, 16, 30)`) with the body in [Personal](#personal).
-   - Nest two items under "Chargers" in "Packing list", as in [Travel](#travel).
-   - After saving the entries, pin "Books for the autumn" and "Offsite ideas" with `store.setPinned(true, entry:)`, without force unwraps.
-   - Set the journal order Personal, Work, Travel with `store.moveJournal(_:shown:to:)` after the journals are saved. Without it the app sorts them by name.
-   - `seed-library.sh` needs no change; the five templates are already seeded as the person's own.
-2. **iOS capture test** (`apps/apple/JournalScreenshots/iOS/ScreenshotCaptureUITests.swift`):
-   - `test5Journals`, iPhone branch: delete the template-chooser steps (lines 181–192). Work's default template fills New Entry, so "Use a Template" never appears, the test fails, and `capture-ios.sh` stops before the dark run. Instead, after `05-journals-list`, tap **Edit** in Journals, wait for the reorder handles, capture `05-journals-edit-light`, then tap **Done**.
-   - `test4FindAgain`, iPhone branch: before the search, capture `04-pinned-light`: select Personal, swipe down until the search field shows without focusing it, and check that the "Pinned" header exists. Keep `04-search-light` as an alternative.
-   - `test9Privacy` and `test3Sync`: no change; every label they use still exists.
-3. **Mac capture** (`apps/apple/JournalScreenshots/Mac/MacScreenshotCapture.swift`):
-   - After the Privacy capture (line 25), turn App Lock off again (`model.configuration?.appLock = false`). Otherwise frames 05, 04 and 06 are captured with App Lock on, and an inactive capture window can show the lock cover.
-   - Frame 4 (lines 38–40): connect the library to a disposable server started by `capture-mac.sh` and set up by the test as "MacBook Pro" (as the iOS `approvingDevice` does), with the server's public URL set to `https://journal.example.net` (`Journal__PublicUrl`) so that Agent Access shows that address; check that it does. Register an MCP client named "Writing Assistant" (the client in `Packages/JournalCore/Sources/JournalProbe/AgentProbe.swift`), approve its request for Personal and Work through the same code path as the Allow Access sheet, call `list_journals`, a search and a read, then capture Settings > Agent Access as `04-settings-agents-dark` and the agent's page (journals, Access Ends, Recent Activity) as `04-agent-detail-dark`. Make sure no frame shows "Only agents running on this Mac, such as Claude Code…", which appears only for a server at a loopback address.
-4. **`design/app-store/capture-mac.sh`**: update the header comment (remove "and the agent transcript"); start and stop the disposable server as `capture-sync.sh` does (lines 37–55), and pass its address and setup code to the test.
-5. **`design/app-store/capture-ios.sh`**: line 20, use `--batteryState charged` to match this plan; lines 22–24, remove the biometric enrollment and its "Unlock with Face ID" comment (the test answers authentication itself with `JOURNAL_UI_TEST_DEVICE_AUTH=success`).
-6. **`design/app-store/make_screenshots.py`**:
-   - iPhone 4: read `04-pinned-light` instead of `04-search-light`. iPhone 5: read `05-journals-edit-light` (or `05-journals-list`).
-   - Mac 4 (lines 566–571): compose from `04-main-dark` (back), `04-agent-detail-dark` (front, where the old pane was; it holds the journals and Recent Activity) and the callout card, at the positions in [Composite frames](#composite-frames). If the agent's page is taller than the old pane, scale it to keep the same right edge and bottom. Today these lines open `04-settings-agents-dark`, which no capture produces, so the Mac set stops there.
-7. **`design/app-store/copy.json`**: already updated (captions as in [The story](#the-story)). Replace `agent.answer` with the real agent's answer after the frame 4 run.
+| Position (copy key) | iPhone | iPad (landscape) | Mac |
+| --- | --- | --- | --- |
+| 1 (`01`) | "Slow Sunday": photo, the Today checklist with square checkboxes, then the indented list | Three columns, Personal with its Pinned section, "Slow Sunday" open | Three columns, Personal with Pinned, "Slow Sunday" |
+| 2 (`03`) | Settings > Devices: MacBook Pro, iPad, iPhone (This Device) | Add Device at "Does iPhone show this code?" | Main window, Settings > Sync connected to `https://journal.example.net` (Last Synced Just now, Sync Now, Stop Syncing…), and the iPhone's Personal list |
+| 3 (`06`) | Dark, "Porto, day two" | Dark, three columns, "Porto, day two" | Dark Mac, iPad and iPhone on "Porto, day two" |
+| 4 | `02`: Settings > Privacy, Require Face ID on | `02`: the same over the three columns | `04-mac`: dark main window, the agent's page (Writing Assistant reading Personal and Work, Travel off, the read-only note) and the answer card |
+| 5 | `04`: Personal with "Books for the autumn" pinned, search field shown, keyboard hidden | `04`: Version History of "Bread, attempt four" over the Pinned list | `02`: Settings > Privacy, Require Touch ID on, Lock when inactive: For 30 minutes |
+| 6 (`05`) | Journals list: All Entries, Personal, Work, Travel, Templates | Work with "Offsite ideas" pinned and its table | Work with "Offsite ideas" and New Entry from Template… listing the five seeded templates |
+| 7 (`07`) | Settings > Backup: Archive and Markdown | The same over the three columns | Main window and Settings > Backup |
 
-### Captures to run
+No frame shows a loopback address, Use This Mac or a server running on the Mac. The only address shown is `https://journal.example.net` (Mac 3, and the spare `04-settings-agents-dark`).
 
-After build 16 is committed and the changes above are made, from the repository root, with cloned simulators set to English (US), region United States:
+### How Mac frame 3 shows a public address
 
-1. `design/app-store/capture-ios.sh "<iPhone 17 Pro Max clone>" design/screenshots/raw/iphone` seeds the library and captures iPhone frames 1, 2, 4 and 5 in light appearance and 6 in dark.
-2. `design/app-store/capture-ios.sh "<iPad Pro 13-inch (M5) clone>" design/screenshots/raw/ipad` does the same for iPad.
-3. `design/app-store/capture-sync.sh "<iPad clone>" "<iPhone clone>" design/screenshots/raw/ipad design/screenshots/raw/iphone` captures iPad 3, iPhone 3 and the iPhone's Personal list for Mac 3.
-4. `design/app-store/capture-mac.sh design/screenshots/raw/mac`, in a team-signed build on a Retina display, captures the Mac frames.
-5. Ask a real MCP agent the question in [Agent answer](#agent-answer) against the frame 4 server, and put its shortened answer in `copy.json`.
-6. `JOURNAL_SCREENSHOT_FONT=<Inter variable font> python3 design/app-store/make_screenshots.py --sheet <contact-sheet.png>`, then copy the results over `docs/app-store/screenshots/{iphone,ipad,mac}/` with the same file names.
-7. Inspect every frame at full size and at a quarter size, compare with the 2026-09-28 set for style, and have the set reviewed by someone other than its author ([Checklist before upload](#checklist-before-upload)).
-8. Update README.md's alt text for the frames it shows (iPhone 01, 02 and 06, Mac 01) if they changed.
+`capture-mac.sh` starts a disposable server with `Journal__PublicUrl=https://journal.example.net`. The test sets it up as "MacBook Pro" over the loopback port, connects "Writing Assistant" (Mac 4), then captures Settings > Sync. That name doesn't lead to the disposable server, so the library keeps syncing with it on the loopback port while the connection the pane shows names the public address, as a Mac connected to that server through its HTTPS name would. It syncs once more first, so Last Synced is a real synchronization; the test fails if sync reports an error. The connection isn't saved, and the disposable library is deleted afterwards.
 
-The previous set stays in place until the new one has been reviewed.
+The iPhone and iPad frames show no address: the simulators join the server on the loopback port, and no captured screen names it. Add Device on the iPad notes that "Other devices can't connect to 127.0.0.1:…" while the code is typed, but the frame is captured at the check-code step, which doesn't.
+
+### Harness changes for build 17
+
+- **Frame 7, Export as Markdown:** `test7Backup` (iOS) and the Mac test capture Settings > Backup; `make_screenshots.py` composes `07-markdown` like frame 2, and `copy.json` has the `07` caption.
+- **Mac 3:** captured last, after Agent Access, connected to the server as described above. The Mac test no longer captures Sync before a server is chosen.
+- **Mac frame 4:** the agent's row is opened with a queued mouse click at the first row of the pane, and the page is closed with Return. SwiftUI doesn't expose the pane's content to accessibility in the app's own process while no assistive app runs, so the earlier accessibility press never found the row. Recent Activity is a link on the agent's page in this build, so the page shows the name, the journals and the read-only note rather than the activity list.
+- **iPhone 5:** the Journals list (`05-journals-list`) instead of Edit mode, where every row has a blue More button and Templates and Recently Deleted are dimmed. The non-alphabetical order Personal, Work, Travel still shows the chosen order. `05-journals-edit-light` is still captured as a spare.
+- **`capture-ios.sh`:** runs the dark pass first, because the light pass ends with `test9Privacy`, which turns App Lock on; the dark run used to stop at the passcode prompt. Runs `test7Backup`.
+- **`capture-sync.sh`:** Approve on the iPad asks for Face ID through `LAContext` directly, which a test build doesn't script, so the script enrolls Face ID on the iPad simulator and sends a match once the test writes `ipad-approving`. The test finds the pairing code field by its prompt, since iOS 26 doesn't expose its label. On failure the script prints the iPad run's errors.
+- **Both server scripts** create `server.log` before starting the server; the wait loop could read it before it existed and stop the script.
+- **`capture-mac.sh`** copies the captures also after a failure (with `failed-*` files), and waits until the files written in the app's container are visible to it.
+- **`make_screenshots.py`** takes `--raw` and `--out`, so a set can be composed outside `docs/`.
+
+### Captures that were run
+
+With two cloned simulators (iPhone 17 Pro Max and iPad Pro 13-inch (M5), English (US), keyboard tips marked as shown), deleted afterwards:
+
+1. `JOURNAL_SIGNING_IDENTITY=… design/app-store/capture-mac.sh artifacts/app-store-screenshots/build-17/raw/mac`
+2. `design/app-store/capture-ios.sh <iPhone> artifacts/app-store-screenshots/build-17/raw/iphone`
+3. `design/app-store/capture-ios.sh <iPad> artifacts/app-store-screenshots/build-17/raw/ipad`
+4. `design/app-store/capture-sync.sh <iPad> <iPhone> …/raw/ipad …/raw/iphone`
+5. `JOURNAL_SCREENSHOT_FONT=<Inter variable font> python3 design/app-store/make_screenshots.py --raw …/raw --out <folder> --sheet <file>`, then the files were copied to the folders above by upload position.
+
+### Known differences, for review
+
+- **Mac switches are grey.** The Mac windows are captured while another app is frontmost, so switches that are on (Require Touch ID on Mac 2, Personal and Work on Mac 4) are drawn in the inactive style: grey, knob on the right. The 2026-09-28 set was captured the same way. The app can't be made frontmost from the test without interrupting whoever uses the Mac.
+- **Agent answer.** The card text on Mac 4 is still the 2026-09-28 text, written from what the scripted requests returned, not a real agent's answer to the question ([Agent answer](#agent-answer)). It matches the seeded entries.
+- **iPad Version History** shows the photo as a strip at the bottom of the version preview, as in the 2026-09-28 set.
+- **Dates.** "Added … on Oct 6, 2026" (iPhone 3), the iPad status bar date and Last Synced reflect the capture day.
+
+The set still needs review by someone other than its author ([Checklist before upload](#checklist-before-upload)). After that, copy the frames over `docs/app-store/screenshots/` and update README.md's alt text if needed.
 
 ## Visual style
 
@@ -177,9 +187,9 @@ Frame 1 on each platform replaces the accent bar with the app icon (`design/icon
 
 Positions are for the element's outer bounds on the canvas, drawn back to front.
 
-- **Mac 2, 3 and 5 (Settings or a sheet in front):** back: the main window at scale 0.70 (1792 × 1120) at x 240, y 430. Front: the Settings window (or sheet capture) at scale 0.82, its right edge at x 2640, its bottom at y 1730. Both with shadow; the front one with the stronger dark-frame shadow values even on light frames.
+- **Mac 2, 3, 5 and 7 (Settings or a sheet in front):** back: the main window at scale 0.70 (1792 × 1120) at x 240, y 430. Front: the Settings window (or sheet capture) at scale 0.82, its right edge at x 2640, its bottom at y 1730. Both with shadow; the front one with the stronger dark-frame shadow values even on light frames.
 - **Mac 3 also:** an iPhone device (as above) at scale 0.52 of the iPhone outer frame (508 × 1071), at x 2250, y 640, in front of both windows, showing the Personal entries list. It shows the same journals on the phone.
-- **Mac 4 (dark):** back: main window at scale 0.70 at x 200, y 430. Front: the agent's page in Settings > Agent Access (its journals and Recent Activity) at scale 0.82, right edge x 2680, bottom y 1720. Callout card: 980 × 380, radius 28, fill and text as in the colors table, at x 200, y 1330, over the main window's lower left, with the dark-frame shadow. Card content, 36 px left and right padding: a caption "Asked in your AI agent" (26 px, SF Pro Text Semibold, secondary color, 0.5 px tracking), the question (34 px Semibold), then the answer (32 px Regular, up to 4 lines). See [Agent answer](#agent-answer).
+- **Mac 4 (dark):** back: main window at scale 0.70 at x 200, y 430. Front: the agent's page in Settings > Agent Access (its journals) at scale 0.82, right edge x 2680, bottom y 1720. Callout card: 980 × 380, radius 28, fill and text as in the colors table, at x 200, y 1330, over the main window's lower left, with the dark-frame shadow. Card content, 36 px left and right padding: a caption "Asked in your AI agent" (26 px, SF Pro Text Semibold, secondary color, 0.5 px tracking), the question (34 px Semibold), then the answer (32 px Regular, up to 4 lines). See [Agent answer](#agent-answer).
 - **Mac 6 (dark):** main window at scale 0.66 (1690 × 1056), centered at x 595, y 420. iPad device at scale 0.42 of its outer frame (814 × 618) at x 1880, y 1080. iPhone device at scale 0.40 of its outer frame (390 × 824) at x 330, y 900. All three show the Travel entry "Porto, day two" in dark mode.
 
 ## Frames and UI state
@@ -194,8 +204,9 @@ Common setup for all captures: English (U.S.), region United States, 12-hour tim
 | 2 | Settings > Privacy | "Your Journals Are Encrypted", Change Password…; App Lock: Require Face ID on, Lock My Journal. | `02-privacy-light` |
 | 3 | Settings > Devices | Three devices: MacBook Pro (added during server setup), iPad (added by MacBook Pro), iPhone (This Device, added by iPad). | `03-devices-light` |
 | 4 | Personal entries list | The **Pinned** section with "Books for the autumn" at the top, then the dated entries. Search field visible but not focused; keyboard hidden. | `04-pinned-light` (new) |
-| 5 | Journals in Edit mode | All Entries, then Personal, Work, Travel in that order, with reorder handles. If Edit mode looks crowded (for example delete controls on every row), use `05-journals-list` and note it for review. | `05-journals-edit-light` (new) |
+| 5 | Journals | All Entries, then Personal, Work, Travel in that order, Templates and Recently Deleted. Edit mode (`05-journals-edit-light`, a spare) adds a More button to every row and dims the rest, so the list is used. | `05-journals-list` |
 | 6 | Dark mode, editor, Travel > "Porto, day two" | Photo and checklist with square checkboxes visible. | `06-dark` |
+| 7 | Settings > Backup | Archive (Export Archive…, Import Archive…) and Markdown (Export as Markdown…) with their footers. | `07-backup-light` |
 
 ### iPad (2752 × 2064, landscape)
 
@@ -207,6 +218,7 @@ Common setup for all captures: English (U.S.), region United States, 12-hour tim
 | 4 | Version History… of "Bread, attempt four" | Three earlier versions listed; the list column behind shows the Pinned section. | `04-history-light` |
 | 5 | Three columns: Work selected, "Offsite ideas" open | "Offsite ideas" pinned at the top of Work; the table in the editor; the sidebar shows Personal, Work, Travel in that order. | `05-journals-light` |
 | 6 | Dark mode, three columns: Travel, "Porto, day two" | | `06-dark` |
+| 7 | Settings sheet > Backup over the three columns | As iPhone 7. | `07-backup-light` |
 
 ### Mac (2880 × 1800)
 
@@ -214,12 +226,13 @@ Common setup for all captures: English (U.S.), region United States, 12-hour tim
 | --- | --- | --- | --- |
 | 1 | Main window, three columns, Personal > "Slow Sunday" | Window 1280 × 800 points. Sidebar about 220 points, list about 300 points, the Pinned section visible. Insertion point hidden (click in the list before capturing). | `01-main-light` |
 | 2 | Composite: main window + Settings > Privacy | App Lock on: Require Touch ID (Require Login Password on a Mac without Touch ID), Lock when inactive: For 30 minutes, Lock My Journal. | `02-settings-privacy-light` |
-| 3 | Composite: main window + Settings > Sync + iPhone | Settings > Sync before a server is chosen: Connect to a Server…, with the footer "Your journals are saved on this device." and How to Set Up a Server. The iPhone shows the Personal list with the Pinned section. | `03-settings-sync-light`, iPhone `03-personal-list-light` |
-| 4 | Composite, dark: main window + the agent's page in Agent Access + callout card | Agent Access on a disposable server set up as "MacBook Pro": "Writing Assistant" reading Personal and Work, with Recent Activity from a real run. | `04-main-dark`, `04-agent-detail-dark` (new), `04-settings-agents-dark` (new, spare) |
+| 3 | Composite: main window + Settings > Sync + iPhone | Settings > Sync connected to the frame 4 server under its public address `https://journal.example.net`: the address, Last Synced, Sync Now and Stop Syncing… ([How Mac frame 3 shows a public address](#how-mac-frame-3-shows-a-public-address)). The iPhone shows the Personal list with the Pinned section. | `03-settings-sync-light`, iPhone `03-personal-list-light` |
+| 4 | Composite, dark: main window + the agent's page in Agent Access + callout card | Agent Access on a disposable server set up as "MacBook Pro": the page of "Writing Assistant", allowed to read Personal and Work and used once. | `04-main-dark`, `04-agent-detail-dark`, `04-settings-agents-dark` (spare) |
 | 5 | Composite: main window with Work > "Offsite ideas" + New Entry from Template… sheet | The sheet lists the five seeded templates. | `05-main-light`, `05-sheet-light` |
 | 6 | Composite, dark: Mac, iPad and iPhone | All on Travel > "Porto, day two". | `06-main-dark`, iPad and iPhone `06-dark` |
+| 7 | Composite: main window + Settings > Backup | As Mac 2, with the Backup pane. | `07-settings-backup-light` |
 
-Don't show Tailscale commands, real server addresses, the Mac's real computer name, Bonjour servers found on the capture network, or a real person's name anywhere. A sync or MCP address, if visible, is `https://journal.example.net` or a loopback address. The Mac's computer name appears only when the Mac app itself joins a server (Connect to a Server… in the Mac app), so Mac frame 3 shows Sync before a server is chosen, and frame 4 uses a disposable server whose devices are named by the test.
+Don't show Tailscale commands, real server addresses, the Mac's real computer name, Bonjour servers found on the capture network, or a real person's name anywhere. A sync or MCP address, if visible, is `https://journal.example.net`, never a loopback address. The Mac's computer name appears only when the Mac app itself joins a server (Connect to a Server… in the Mac app), so Mac frames 3 and 4 use a disposable server that the test sets up as "MacBook Pro".
 
 ## Sample content
 
@@ -493,7 +506,7 @@ Rules: no identifiable people, no logos, brand names, readable text or other dev
 
 ### Agent answer
 
-For Mac frame 4, connect a real MCP agent to the seeded library on the disposable frame 4 server (see [Recapture for build 16](#recapture-for-build-16)): add the server's MCP address to the agent, approve its request in Settings > Agent Access with the number its page shows, name it "Writing Assistant", and choose Personal and Work. Then ask:
+For Mac frame 4, connect a real MCP agent to the seeded library on the disposable frame 4 server (see [Build 17 set](#build-17-set)): add the server's MCP address to the agent, approve its request in Settings > Agent Access with the number its page shows, name it "Writing Assistant", and choose Personal and Work. Then ask:
 
 > What patterns do you see in my September entries?
 
@@ -532,7 +545,7 @@ A script, `design/app-store/make_screenshots.py`, in the style of `design/icon/m
 
 ## Checklist before upload
 
-- [ ] Each set has 6 frames at exactly the sizes above, RGB without alpha.
+- [ ] Each set has 7 frames at exactly the sizes above, RGB without alpha.
 - [ ] Headline and sub-line text matches this plan and the copy in [listing.md](listing.md); nothing claims a feature the build doesn't have.
 - [ ] Only seeded content is visible; no real names, addresses, computer names, server addresses or Tailscale details.
 - [ ] Status bars show 9:41, full battery and Wi-Fi.
@@ -544,7 +557,7 @@ A script, `design/app-store/make_screenshots.py`, in the style of `design/icon/m
 
 ## The produced set
 
-This describes the set made on 2026-09-28, which build 16 makes outdated ([Recapture for build 16](#recapture-for-build-16)). Made on 2026-09-28 and saved in [screenshots/](screenshots/): six frames each for `iphone/`, `ipad/` and `mac/`, flattened sRGB JPEGs at 1320 × 2868, 2752 × 2064 and 2880 × 1800. To make them again, from the repository root:
+This describes the set made on 2026-09-28, which build 17 makes outdated ([Build 17 set](#build-17-set)). Made on 2026-09-28 and saved in [screenshots/](screenshots/): six frames each for `iphone/`, `ipad/` and `mac/`, flattened sRGB JPEGs at 1320 × 2868, 2752 × 2064 and 2880 × 1800. To make them again, from the repository root:
 
 1. `python3 design/app-store/make_photos.py <folder>` crops the generated PNGs in `<folder>` (made from `design/app-store/photos/PROMPTS.md`) to 4:3 and saves them as JPEG in `design/app-store/photos/`. Skip this step to reuse the photos already there.
 2. `design/app-store/capture-ios.sh <iPhone or iPad simulator> <folder>` seeds the library (`design/app-store/seed-library.sh`, which keeps its generated master password in the git-ignored `design/app-store/.seed-password`), sets the status bar and runs the opt-in `JournalScreenshotUITests` from `apps/apple/screenshots.yml` in light and dark appearance. Use simulators set to English (US), region United States (`xcrun simctl spawn <device> defaults write -g AppleLocale en_US`, then restart it); another region shows the status bar time as 09:41 and the iPad date as "Mon 28 Sep".
@@ -561,7 +574,7 @@ Differences from the plan above, for review:
 - **iPad 3** matches the plan ("Does iPhone show this code?"). iPhone 3 lists MacBook Pro, iPad and iPhone; the iPhone was added by the iPad. "MacBook Pro" is the device that set up the server, run from the capture test with JournalCore's client, since the Mac's own name must not appear.
 - **Mac captures.** Without screen recording permission, the Mac test captures its own windows from inside the app: the window server's image, and the views drawn at 2x. The current set was captured on a Retina display, where the window server's 2x image has everything and is used as it is. On a 1x display, `make_screenshots.py` uses the sharp 2x views below the toolbar and right of the sidebar and the enlarged 1x image for the toolbar and sidebar, which are slightly softer. The windows were captured inactive; the frontmost window's buttons are drawn in their active colors.
 - **Mac 2.** Unlock with Touch ID is off: the capture Mac had no Touch ID available.
-- **Mac 3** shows Settings > Sync before a server is chosen (Use This Mac…, Connect to a Server…) rather than a running local server, with the iPhone's Personal list.
+- **Mac 3** shows Settings > Sync before a server is chosen (Use This Mac…, Connect to a Server…) rather than a running local server, with the iPhone's Personal list. Use This Mac was removed on 2026-10-05; the build 17 set shows Sync connected to a server instead.
 - **Mac 4.** The agent requests went through the app's real bridge with the connector's own client code, from inside the test rather than a separate connector process. The answer on the card was written by the AI agent that made the captures, from what those requests returned; the transcript is in `design/screenshots/raw/mac/agent-transcript.json`. Recent Activity shows the capture time.
 - **Mac 5** shows New Entry from Template… attached to the window, as macOS shows a sheet, instead of a separate front element.
 

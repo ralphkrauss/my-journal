@@ -95,7 +95,24 @@ struct EraseSection: View {
                 + undo
         case .nothingWritten:
             return "This removes your settings and any empty journals from this device."
+        case .unopened(let credential, let host):
+            return unopenedMessage(credential: credential, host: host)
         }
+    }
+
+    /// Erasing journals that can't be opened: the consequence first, why no export is offered, and what the server
+    /// keeps. The app can't know whether a server holds the journals unless the saved connection could be read, so it
+    /// never says they will be lost or that the device isn't connected (docs/design/build-18-fixes-2026-10-06.md §2.1).
+    private static func unopenedMessage(credential: String?, host: String?) -> String {
+        let reason =
+            credential.map { "My Journal needs your \($0) to open them, so it can’t export them first." }
+            ?? "My Journal can’t open them, so it can’t export them first."
+        let server =
+            host.map {
+                "Journals that have synced stay on \($0), and this device is signed out. Changes that haven’t synced are lost."
+            }
+            ?? "If this device syncs with a server, journals that have synced stay there. Changes that haven’t synced are lost."
+        return "Erasing removes your journals and settings from this device. \(reason) \(server) You can’t undo this."
     }
 
     /// Saves the open writing and counts what erasing would lose, then asks.

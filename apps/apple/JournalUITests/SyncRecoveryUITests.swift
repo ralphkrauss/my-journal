@@ -118,7 +118,11 @@ final class SyncRecoveryUITests: XCTestCase {
         XCTAssertTrue(stop.waitToAppear(timeout: 5))
         capture(app, "7 Stop Syncing")
         stop.tap()
-        XCTAssertTrue(app.staticTexts["Your journals are saved on this device."].waitToAppear(timeout: 10))
+        // The footer continues with a How to Set Up a Server link in the same text.
+        let savedHere = app.staticTexts.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Your journals are saved on this device.")
+        ).firstMatch
+        XCTAssertTrue(savedHere.waitToAppear(timeout: 10))
         capture(app, "8 After Stop Syncing")
         tap(app.buttons["Connect to a Server…"])
         chooseServer(app)

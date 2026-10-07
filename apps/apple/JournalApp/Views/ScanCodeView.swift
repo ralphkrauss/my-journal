@@ -71,7 +71,7 @@
             } catch PairingInvite.ReadError.notInvite {
                 // Some other QR code: keep looking.
             } catch {
-                message = error.localizedDescription
+                message = error.shown(.reading)
             }
         }
     }

@@ -66,7 +66,7 @@ struct RecoveryJournalView: View {
                 } else {
                     error = "The journal was created, but couldn’t be displayed. Reopen My Journal to try again."
                 }
-            } catch { self.error = error.localizedDescription }
+            } catch { self.error = error.shown(.saving) }
         }
     }
 }

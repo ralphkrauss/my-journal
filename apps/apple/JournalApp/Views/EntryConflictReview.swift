@@ -188,7 +188,7 @@ struct EntryConflictReview: View {
                 await refreshReview(store, session: session)
             } catch {
                 guard valid(store, session: session) else { return }
-                self.error = error.localizedDescription
+                self.error = error.shown(.saving)
             }
         }
     }
@@ -210,7 +210,7 @@ struct EntryConflictReview: View {
             }
             do { try await refreshAfterCommit(store, session: session) } catch {
                 guard valid(store, session: session) else { return }
-                self.error = error.localizedDescription
+                self.error = error.shown(.reading)
             }
         }
     }

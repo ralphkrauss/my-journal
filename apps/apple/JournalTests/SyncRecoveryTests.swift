@@ -209,6 +209,81 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertNil(model.agreedMergeHost)
     }
 
+    /// Back from Merge Journals gives up the access obtained before it asked, so the person is asked for a new one
+    /// instead of the step reusing a spent one-time code (docs/design/sync-health-and-recovery.md §3.2).
+    func testBackFromMergeJournalsGivesUpTheAccessAndAsksForANewRecoveryCode() async throws {
+        let server = try await LibraryServer.start()
+        server.update {
+            $0.refusesDevices = true
+            $0.serverID = "another-library"
+        }
+        let model = try await library(address: server.address)
+        let flow = ConnectionFlow(model: model)
+        flow.address = server.address
+        flow.check()
+        try await settle(flow)
+        flow.path = [.addThisDevice, .recoveryCode]
+        let code = String(repeating: "ab", count: 32)
+        let requests = { (method: String, prefix: String) in
+            server.requests.filter { $0.method == method && $0.path.hasPrefix(prefix) }.count
+        }
+        flow.phrase = code
+        flow.signIn()
+        try await settle(flow) { flow.path.last == .merge }
+        XCTAssertEqual(flow.path, [.addThisDevice, .recoveryCode, .merge])
+        XCTAssertNotNil(model.retryGrant, "The one-time code's access waits for the person to agree.")
+        XCTAssertEqual(requests("POST", "/v1/recovery"), 1)
+        XCTAssertEqual(requests("DELETE", "/v1/devices/"), 0)
+
+        flow.path.removeLast()
+        for _ in 0..<100 where requests("DELETE", "/v1/devices/") == 0 { try await Task.sleep(nanoseconds: 25_000_000) }
+        XCTAssertEqual(requests("DELETE", "/v1/devices/"), 1, "Back gives the access up.")
+        XCTAssertNil(model.retryGrant)
+        XCTAssertEqual(flow.phrase, "", "The spent code isn't left in the field.")
+        XCTAssertEqual(flow.codeUsedNotice, "That code was used. Enter a new one.")
+        XCTAssertEqual(flow.path, [.addThisDevice, .recoveryCode])
+        flow.phrase = "typing a new code"
+        XCTAssertNil(flow.codeUsedNotice, "The line stays only until a new code is typed.")
+
+        flow.phrase = code
+        flow.signIn()
+        try await settle(flow) { flow.path.last == .merge }
+        XCTAssertEqual(requests("POST", "/v1/recovery"), 2, "A new code is spent, not the old access reused.")
+        flow.close()
+    }
+
+    /// The password step starts again too: nothing typed stays, and nothing is said about a wrong password.
+    func testBackFromMergeJournalsClearsThePasswordWithoutAnError() async throws {
+        let server = try await LibraryServer.start()
+        let password = "the other library's password"
+        let envelope = try VaultCrypto.makeRecovery(masterKey: VaultCrypto.generateKey(), phrase: password).0
+        server.update {
+            $0.refusesDevices = true
+            $0.serverID = "another-library"
+            $0.parameters = (try? JournalCoding.encoder().encode(RecoveryParameters(envelope))) ?? Data()
+        }
+        let model = try await library(address: server.address)
+        let flow = ConnectionFlow(model: model)
+        flow.address = server.address
+        flow.check()
+        try await settle(flow)
+        flow.phrase = password
+        flow.signIn()
+        try await settle(flow) { flow.path.last == .merge }
+        XCTAssertEqual(flow.path, [.signIn, .merge])
+
+        flow.path.removeLast()
+        XCTAssertEqual(flow.path, [.signIn])
+        XCTAssertEqual(flow.phrase, "")
+        XCTAssertNil(flow.errorMessage(on: .signIn))
+        XCTAssertNil(flow.codeUsedNotice)
+        flow.phrase = password
+        flow.signIn()
+        try await settle(flow) { flow.path.last == .merge }
+        XCTAssertEqual(flow.path, [.signIn, .merge], "Signing in asks for Merge Journals again.")
+        flow.close()
+    }
+
     func testTheSameLibraryRejoinsByIdentityAndAnotherOnlyWithAgreement() async throws {
         let server = try await LibraryServer.start()
         let model = try await library(address: server.address)
@@ -344,12 +419,12 @@ final class SyncRecoveryTests: XCTestCase {
         let states: [SyncHealth] = [
             .offline, .unreachable, .unavailable, .signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved,
             .appUpdateNeeded, .serverUpdateNeeded, .certificateInvalid, .notJournalServer, .localDataUnreadable,
-            .unexpected,
+            .localDataUnavailable, .unexpected,
         ]
         for state in states {
             model.syncHealth = state
             model.syncError = state.message()
-            let quiet = [.offline, .unreachable, .unavailable].contains(state)
+            let quiet = [.offline, .unreachable, .unavailable, .localDataUnavailable].contains(state)
             XCTAssertEqual(model.syncNeedsAttention, !quiet, "\(state)")
             XCTAssertEqual(model.showsSyncStatus, !quiet, "\(state)")
         }
@@ -418,6 +493,23 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertFalse(model.encryption.offersSignIn)
         XCTAssertFalse(model.syncNeedsAttention)
         XCTAssertFalse(model.showsSyncStatus)
+    }
+
+    /// A stopped state doesn't retry on unlock, so its own sentence must still be there afterwards.
+    func testLockingKeepsAStoppedSyncStatesMessageAndAction() async throws {
+        let server = try await LibraryServer.start()
+        let model = try await library(address: server.address)
+        await model.turnOnAppLockForTesting()
+        server.update { $0.refusesDevices = true }
+        await model.syncNow()
+        XCTAssertEqual(model.syncHealth, .accessRemoved)
+        let message = try XCTUnwrap(model.syncError)
+
+        await model.lock()
+        await model.unlockForTesting()
+        XCTAssertEqual(model.syncHealth, .accessRemoved)
+        XCTAssertEqual(model.syncError, message)
+        XCTAssertEqual(model.syncStatusAction, .connectAgain)
     }
 
     func testStopSyncingKeepsTheLibraryAndGivesUpAccess() async throws {

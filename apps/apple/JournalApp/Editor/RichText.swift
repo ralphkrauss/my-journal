@@ -16,6 +16,11 @@ import SwiftUI
 enum EditorCommand {
     case source, strikethrough, code, insert(String), linkDialog, imagePicker, toggleTask, indent, outdent
     case bold, italic, underline, paragraph(String), link(String, text: String? = nil), image(DocumentBlock), focus
+    /// Changes the address of the link `link` names, and its text when `text` is given and differs
+    /// (docs/design/build-18-fixes-2026-10-06.md §2.4).
+    case editLink(EditableLink, address: String, text: String?)
+    /// Takes the links the range touches off their text, or those at the selection when there is no range.
+    case removeLink(NSRange?)
 }
 /// What the formatting popover or panel shows, and whether it's shown. Only the formatting controls observe it, so
 /// opening, styling and closing don't redraw the window or the menu bar.
@@ -84,6 +89,12 @@ final class EditorActions: ObservableObject {
     private(set) var performingFormatting = false
     private var formattingRefreshPending = false
     @Published var linkText = ""
+    /// The link Edit Link… was chosen for, captured with the selection; nil while adding a link.
+    @Published var editingLink: EditableLink?
+    /// Which link commands apply to the caret or selection, for the menu bar.
+    @Published var caretLink = LinkAvailability()
+    /// The link at the selection, nil in Markdown source, in a table cell and where there is none.
+    var linkAtSelection: (() -> EditableLink?)?
     @Published var searchRequested = false
     @Published var requestLink = false
     /// Some text in the entry has keyboard focus. Set with `setEditing(_:by:)` by the focused view itself (the title,
@@ -188,7 +199,9 @@ final class EditorActions: ObservableObject {
         case .link:
             prepareLink()
             presentLink()
-        case .image: requestImage = true
+        case .image:
+            imageSource = .photos
+            requestImage = true
         }
     }
     func openLinkFromKeyboard() {
@@ -205,7 +218,8 @@ final class EditorActions: ObservableObject {
     /// Add Link applies to the selection as it is when it opens.
     private func prepareLink() {
         captureFormatting()
-        linkText = selectionText?() ?? ""
+        editingLink = linkAtSelection?()
+        linkText = editingLink?.text ?? selectionText?() ?? ""
     }
     /// Remembers the selection for commands that act after focus has moved, and reads its styles.
     func captureFormatting() {
@@ -226,6 +240,9 @@ final class EditorActions: ObservableObject {
             return
         }
         if case .imagePicker = command {
+            // Image… in the panel and the Format menu is the photo library; the camera and Files are chosen from
+            // the bars' own menus.
+            imageSource = .photos
             requestImage = true
             return
         }
@@ -618,7 +635,7 @@ enum RichText {
         }
         guard ListMarkers.itemKinds.contains(kind) else { return nil }
         let empty = content(text, in: line).length == 0
-        if empty, kind != "quote", selection.length == 0 {
+        if empty, selection.length == 0 {
             return leavingItem(text, paragraph: paragraph, attributes: attributes, size: size)
         }
         if selection.length == 0, selection.location == line.location, !empty {

@@ -14,11 +14,16 @@ enum EraseWarning: Equatable {
     case notSyncing
     /// Not syncing, and nothing was written yet.
     case nothingWritten
+    /// The journals can't be opened, so nothing can be exported first (docs/design/build-18-fixes-2026-10-06.md
+    /// §2.1). `credential` names what opening them needs when the device key is missing; `host` is the server the
+    /// saved connection names, when that item could be read. Absence of the item proves nothing: after restoring an
+    /// iPhone from a backup it is gone though the library synced.
+    case unopened(credential: String?, host: String?)
 
     /// Whether erasing loses journals that exist only on this device, so an archive is offered first.
     var losesJournals: Bool {
         switch self {
-        case .onServer, .nothingWritten: return false
+        case .onServer, .nothingWritten, .unopened: return false
         case .unsent, .unconfirmed, .notSyncing: return true
         }
     }
@@ -128,22 +133,59 @@ extension AppModel {
             Logger(subsystem: "org.privatejournal", category: "erase").error("The erase couldn't start.")
             return .failed
         }
-        await finishErasing(list: list, folder: folder)
+        await finishErasing(list: list, folder: folder, signingOutOf: connection)
         return .erased
+    }
+
+    /// The warning for erasing journals that can't be opened, after the device's authentication when App Lock is on or
+    /// can't be known; nil when cancelled or when there is nothing to erase from here.
+    func unopenedEraseWarning() async -> EraseWarning? {
+        guard store == nil, let problem = libraryProblem, problem.allowsErase, eraseBlock == nil else { return nil }
+        if removalNeedsAuthentication {
+            guard await authenticateDeviceOwner(reason: "Erase journals on this device") else { return nil }
+        }
+        guard store == nil, libraryProblem == problem else { return nil }
+        let credential = problem == .needsKey ? configuration?.credentialName : nil
+        return .unopened(credential: credential, host: savedConnection().map { ServerAddress.host($0.address) })
+    }
+
+    /// Erases what can't be opened. Nothing is read: the configuration moves as it is (a file that doesn't decode
+    /// leaves the same way), and everything else the app stored goes with it by the list built first. The alert's
+    /// Erase doesn't ask for authentication again.
+    func eraseUnopenedLibrary() async -> EraseOutcome {
+        guard store == nil, libraryProblem?.allowsErase == true, eraseBlock == nil else { return .cancelled }
+        // Read before the keys go: the sign-out needs the token only the connection item holds.
+        let previousConnection = savedConnection()
+        let list = erasureList(configuration)
+        let folder: URL
+        do { folder = try LocalErasure.commit(list, in: directory) } catch {
+            Logger(subsystem: "org.privatejournal", category: "erase").error("The erase couldn't start.")
+            return .failed
+        }
+        await finishErasing(list: list, folder: folder, signingOutOf: previousConnection)
+        return .erased
+    }
+
+    /// The connection the Keychain holds for the library the settings name, read independently of the store. Nil when
+    /// the settings can't be read, the item is absent or it doesn't decode.
+    private func savedConnection() -> SyncConnection? {
+        guard let configuration else { return nil }
+        let account = configuration.connectionKeyID ?? keyAccount + "-connection"
+        guard let data = try? Keychain.read(account) else { return nil }
+        return try? JournalCoding.decoder().decode(SyncConnection.self, from: data)
     }
 
     /// After the commit: the Keychain items go first, then the library's files move aside before the first-launch
     /// screen can start a new library; the deletion and the sign-out continue in the background.
-    private func finishErasing(list: ErasureList, folder: URL) async {
+    private func finishErasing(list: ErasureList, folder: URL, signingOutOf previousConnection: SyncConnection?) async {
         let keysRemoved = LocalErasure.removeAccounts(list, protected: [])
         let previousStore = store
-        let previousConnection = connection
         erasingLibrary = true
         clearErasedLibrary()
         try? await previousStore?.close()
         LocalErasure.moveListed(list, from: directory, into: folder, protected: [])
-        UserDefaults.standard.removeObject(forKey: MarkdownShortcuts.settingKey)
-        UserDefaults.standard.removeObject(forKey: ReviewUsageStore.defaultsKey)
+        preferences.removeObject(forKey: MarkdownShortcuts.settingKey)
+        preferences.removeObject(forKey: ReviewUsageStore.defaultsKey)
         erasingLibrary = false
         Task.detached(priority: .utility) {
             LocalErasure.delete(folder, list: list, keysRemoved: keysRemoved)
@@ -157,51 +199,89 @@ extension AppModel {
         }
     }
 
-    /// Everything the configuration names, with the older path-derived names, earlier copies, an unfinished
-    /// encryption copy and leftovers of imports and exports, fixed before the commit (§3).
-    func erasureList(_ configuration: LocalConfiguration) -> ErasureList {
+    /// What the library uses, from the configuration's own names only: its folder and Keychain accounts, with the older
+    /// path-derived names, earlier copies and an unfinished encryption copy. This is what finishing an earlier erase
+    /// protects; it is never the sweeping list, which would protect everything.
+    func libraryNames(_ configuration: LocalConfiguration) -> ErasureList {
         var list = ErasureList()
-        let legacyFiles = ["journal.sqlite", "journal.sqlite-wal", "journal.sqlite-shm", "attachments"]
-        list.names += configuration.storageFolder.map { [$0] } ?? legacyFiles
+        list.names += configuration.storageFolder.map { [$0] } ?? Self.legacyLibraryFiles
         list.accounts += [
             configuration.keyID ?? keyAccount, configuration.connectionKeyID ?? keyAccount + "-connection",
             keyAccount, keyAccount + "-connection",
         ]
         for library in configuration.supersededLibraries ?? [] {
-            list.names += library.storageFolder.map { [$0] } ?? legacyFiles
+            list.names += library.storageFolder.map { [$0] } ?? Self.legacyLibraryFiles
             list.accounts += [library.keyID, library.connectionKeyID].compactMap { $0 }
         }
         if let upgrade = configuration.encryptionUpgrade {
             list.names.append(upgrade.storageFolder)
             list.accounts.append(upgrade.keyID)
         }
+        list.names = Array(Set(list.names.filter(LocalErasure.isMovable))).sorted()
+        list.accounts = Array(Set(list.accounts)).sorted()
+        return list
+    }
+
+    private static let legacyLibraryFiles = [
+        "journal.sqlite", "journal.sqlite-wal", "journal.sqlite-shm", "attachments",
+    ]
+
+    /// Everything Erase removes, fixed before the commit and whether or not a configuration can be read: what the
+    /// library names, every entry of the data folder the app can move (copies, imports, exports and anything else it
+    /// left) and, in the app's own data folder, every Keychain item of its service (docs/design/build-18-fixes-2026-
+    /// 10-06.md §2.1). A listing that fails is logged and Erase goes on with the names it can derive.
+    func erasureList(_ configuration: LocalConfiguration?) -> ErasureList {
+        var list = configuration.map(libraryNames) ?? ErasureList()
+        list.accounts += [keyAccount, keyAccount + "-connection"]
         let manager = FileManager.default
-        let contents = (try? manager.contentsOfDirectory(atPath: directory.path)) ?? []
-        list.names += contents.filter { $0.hasPrefix("import-") || ArchiveExportLeftovers.isStagedExport($0) }.sorted()
+        list.names += ((try? manager.contentsOfDirectory(atPath: directory.path)) ?? []).filter(LocalErasure.isMovable)
         let temporary = manager.temporaryDirectory
         list.temporaryFiles =
             ((try? manager.contentsOfDirectory(atPath: temporary.path)) ?? []).filter(
                 ArchiveExportLeftovers.isDialogCopy
             )
             .sorted().map { temporary.appendingPathComponent($0) }
+        if sweepsKeychain { list.accounts += sweptKeychainAccounts() }
         list.names = Array(Set(list.names.filter(LocalErasure.isMovable))).sorted()
         list.accounts = Array(Set(list.accounts)).sorted()
         return list
     }
 
-    /// Finishes an erase an earlier run left, before the configuration is read (§5, step 7). The current library's
-    /// files and Keychain items are never touched.
-    func finishEarlierErasures() {
-        let current = (try? Data(contentsOf: directory.appendingPathComponent(LocalErasure.configurationName)))
-            .flatMap { try? JournalCoding.decoder().decode(LocalConfiguration.self, from: $0) }
-        var accounts: Set<String> = []
-        var names: Set<String> = []
-        if let current {
-            let inUse = erasureList(current)
-            accounts = Set(inUse.accounts)
-            names = Set(inUse.names)
+    /// The service's accounts that this erase removes. On the Mac only those of this data folder, and the legacy agent
+    /// ones: development and preview copies share the team's keychain group. On iPhone and iPad all of them, because
+    /// the container path, and so the folder's hash, changes after a reinstall and the orphans of earlier installs are
+    /// what the sweep is for.
+    private func sweptKeychainAccounts() -> [String] {
+        let listed: [String]
+        do { listed = try keychainListing() } catch {
+            let failure = error as NSError
+            Logger(subsystem: "org.privatejournal", category: "erase").error(
+                "The Keychain couldn’t be listed: \(failure.domain, privacy: .private) \(failure.code, privacy: .private)."
+            )
+            return []
         }
-        let leftovers = LocalErasure.leftovers(in: directory, protectedAccounts: accounts, protectedNames: names)
+        #if os(macOS)
+            let own = keyAccount
+            return listed.filter { $0.hasPrefix(own) || $0.hasPrefix("agent-") }
+        #else
+            return listed
+        #endif
+    }
+
+    /// Finishes an erase an earlier run left, before the configuration is read (§5, step 7). The current library's
+    /// files and Keychain items are never touched, and nothing is finished while the configuration exists but can't be
+    /// read: what the library uses can't be told then.
+    func finishEarlierErasures() {
+        var inUse = ErasureList()
+        let configurationFile = directory.appendingPathComponent(LocalErasure.configurationName)
+        if FileManager.default.fileExists(atPath: configurationFile.path) {
+            guard let data = try? Data(contentsOf: configurationFile),
+                let current = try? JournalCoding.decoder().decode(LocalConfiguration.self, from: data)
+            else { return }
+            inUse = libraryNames(current)
+        }
+        let leftovers = LocalErasure.leftovers(
+            in: directory, protectedAccounts: Set(inUse.accounts), protectedNames: Set(inUse.names))
         for leftover in leftovers {
             Task.detached(priority: .utility) {
                 LocalErasure.delete(leftover.folder, list: leftover.list, keysRemoved: leftover.keysRemoved)

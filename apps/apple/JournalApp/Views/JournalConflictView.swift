@@ -159,7 +159,7 @@ struct JournalMetadataConflictReview: View {
             remote = false
             confirming = nil
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.shown(.reading) }
     }
     private func resolve(_ snapshot: ConflictVersion, choice: ConflictChoice) {
         busy = true
@@ -176,7 +176,7 @@ struct JournalMetadataConflictReview: View {
                 error = "These changes have been updated. Review them again."
             } catch is CancellationError {
                 return
-            } catch { self.error = error.localizedDescription }
+            } catch { self.error = error.shown(.saving) }
         }
     }
 }

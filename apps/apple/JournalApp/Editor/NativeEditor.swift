@@ -116,6 +116,8 @@ enum EntryTextInset {
             var sharePicker: NSSharingServicePicker?
             weak var savePanel: NSSavePanel?
             let pictureMenuTarget = MenuActionTarget()
+            /// Handles Edit Link… and Remove Link in the right-click menu (LinkMenuMac.swift).
+            let linkMenuTarget = MenuActionTarget()
             let pictureMenuItems = PictureMenuItems()
             /// The entry's text as an undo or redo on the window's undo manager started.
             private var textBeforeUndo: String?
@@ -246,6 +248,11 @@ enum EntryTextInset {
                 parent.actions.isEditing = { [weak self, weak view] in
                     view?.window?.firstResponder === view || self?.tables?.active != nil
                 }
+                view.linkItems = { [weak self] event in self?.linkMenuItems(for: event) ?? [] }
+                view.focusChanged = { [weak self, weak view] focused in
+                    guard let self, let view else { return }
+                    self.parent.actions.setEditing(focused, by: view)
+                }
                 parent.actions.handler = { [weak self] command in
                     if case .focus = command {
                         self?.perform(command)
@@ -267,8 +274,17 @@ enum EntryTextInset {
                     guard let view else { return "" }
                     return (view.string as NSString).substring(with: view.selectedRange())
                 }
+                parent.actions.linkAtSelection = { [weak self, weak view] in
+                    guard let self, let view, !self.editingSource, self.tables?.active == nil,
+                        let storage = view.textStorage
+                    else { return nil }
+                    return LinkEditing.link(in: storage, selection: view.selectedRange())
+                }
                 parent.actions.selectionStyle = { [weak self, weak view] in
-                    if let selected = self?.tables?.selectedCellStyle { return selected }
+                    if var selected = self?.tables?.selectedCellStyle {
+                        selected.link = LinkAvailability()
+                        return selected
+                    }
                     guard let view else { return FormattingState() }
                     return FormattingState(
                         text: view.attributedString(), range: view.selectedRange(), typing: view.typingAttributes,
@@ -393,6 +409,11 @@ enum EntryTextInset {
             private func focusEditor() { view?.window?.makeFirstResponder(view) }
             func perform(_ command: EditorCommand) {
                 if tables?.active?.formatCell(command) == true { return }
+                // Links are changed in the text of the entry; a table cell's are not.
+                switch command {
+                case .editLink, .removeLink: if tables?.active != nil { return }
+                default: break
+                }
                 guard let view, let storage = view.textStorage, parent.editable else { return }
                 commitComposition(before: command)
                 let selection = view.selectedRange()
@@ -415,6 +436,17 @@ enum EntryTextInset {
                 switch command {
                 case .source, .strikethrough, .code, .insert, .linkDialog, .imagePicker, .toggleTask, .indent, .outdent:
                     return
+                case .editLink(let link, let address, let text):
+                    guard let url = LinkAddress.url(address), NSMaxRange(link.range) <= storage.length else { return }
+                    replace(
+                        LinkEditing.editing(storage, link: link, url: url, newText: text), range: link.range,
+                        actionName: "Edit Link")
+                case .removeLink(let range):
+                    guard let removal = LinkEditing.removing(storage, touching: range ?? selection) else { return }
+                    replace(removal.text, range: removal.range, actionName: "Remove Link")
+                    view.setSelectedRange(selection)
+                    view.typingAttributes = LinkEditing.withoutLink(view.typingAttributes)
+                    JournalAccessibility.announce("Link removed.")
                 case .focus: view.window?.makeFirstResponder(view)
                 case .bold, .italic, .underline:
                     if selection.length == 0 {
@@ -646,8 +678,15 @@ enum EntryTextInset {
                     guard let view else { return "" }
                     return (view.textStorage.string as NSString).substring(with: view.selectedRange)
                 }
+                parent.actions.linkAtSelection = { [weak self, weak view] in
+                    guard let self, let view, !self.editingSource, self.tables?.active == nil else { return nil }
+                    return LinkEditing.link(in: view.textStorage, selection: view.selectedRange)
+                }
                 parent.actions.selectionStyle = { [weak self, weak view] in
-                    if let selected = self?.tables?.selectedCellStyle { return selected }
+                    if var selected = self?.tables?.selectedCellStyle {
+                        selected.link = LinkAvailability()
+                        return selected
+                    }
                     guard let view else { return FormattingState() }
                     return FormattingState(
                         text: view.textStorage, range: view.selectedRange, typing: view.typingAttributes,
@@ -849,6 +888,11 @@ enum EntryTextInset {
             private func focusEditor() { view?.becomeFirstResponder() }
             func perform(_ command: EditorCommand) {
                 if tables?.active?.formatCell(command) == true { return }
+                // Links are changed in the text of the entry; a table cell's are not.
+                switch command {
+                case .editLink, .removeLink: if tables?.active != nil { return }
+                default: break
+                }
                 guard let view, parent.editable else { return }
                 commitComposition(before: command)
                 let selection = view.selectedRange
@@ -875,6 +919,19 @@ enum EntryTextInset {
                 switch command {
                 case .source, .strikethrough, .code, .insert, .linkDialog, .imagePicker, .toggleTask, .indent, .outdent:
                     return
+                case .editLink(let link, let address, let text):
+                    guard let url = LinkAddress.url(address), NSMaxRange(link.range) <= view.textStorage.length
+                    else { return }
+                    replace(
+                        LinkEditing.editing(view.textStorage, link: link, url: url, newText: text),
+                        range: link.range, actionName: "Edit Link")
+                case .removeLink(let range):
+                    guard let removal = LinkEditing.removing(view.textStorage, touching: range ?? selection)
+                    else { return }
+                    replace(removal.text, range: removal.range, actionName: "Remove Link")
+                    view.selectedRange = selection
+                    view.typingAttributes = LinkEditing.withoutLink(view.typingAttributes)
+                    JournalAccessibility.announce("Link removed.")
                 case .focus: view.becomeFirstResponder()
                 case .bold:
                     view.toggleBoldface(nil)

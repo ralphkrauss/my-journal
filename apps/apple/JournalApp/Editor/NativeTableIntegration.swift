@@ -116,6 +116,10 @@ extension NativeEditor.Coordinator {
         #endif
         var checked: Bool?
         var indentation = ListIndentation.Availability()
+        var link = LinkAvailability()
+        if text.length > 0, !editingSource, tables?.active == nil {
+            link = LinkEditing.availability(text, selection: selection)
+        }
         if text.length > 0, !editingSource {
             switch FormattingState.caretKind(text, at: selection.location, typing: view.typingAttributes) {
             case "task": checked = false
@@ -127,6 +131,7 @@ extension NativeEditor.Coordinator {
         }
         if parent.actions.caretTaskChecked != checked { parent.actions.caretTaskChecked = checked }
         if parent.actions.caretIndentation != indentation { parent.actions.caretIndentation = indentation }
+        if parent.actions.caretLink != link { parent.actions.caretLink = link }
     }
     private static func isCode(_ text: NSAttributedString, at location: Int, typing: [NSAttributedString.Key: Any])
         -> Bool

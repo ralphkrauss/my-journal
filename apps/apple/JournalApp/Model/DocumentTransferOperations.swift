@@ -5,7 +5,10 @@ import JournalCore
 extension AppModel {
     func validateVaultSession(_ session: UUID) throws {
         try Task.checkCancellation()
-        guard session == vaultSessionID, !locked, !replacingVault else { throw CancellationError() }
+        // The lock screen of a missing device key offers Import Archive….
+        guard session == vaultSessionID, !locked || libraryProblem == .needsKey, !replacingVault else {
+            throw CancellationError()
+        }
     }
 }
 
@@ -71,6 +74,8 @@ extension AppModel {
 @MainActor final class ArchiveExport: ObservableObject {
     static let progressDelay = Duration.milliseconds(300)
     static let saveFailure = "Couldn’t save the archive. Try again, or choose another location."
+    /// Said when the device's authentication, asked for before an export, failed rather than was cancelled.
+    static let verificationFailure = "Couldn’t verify it’s you. Try again."
 
     @Published private(set) var document: JournalFile?
     /// Shown only when preparing takes a noticeable time, so a small library doesn't flash a progress state.
@@ -138,7 +143,23 @@ extension AppModel {
         return "Couldn’t export the archive. Try again."
     }
 
+    /// An archive of a library that isn't encrypted holds readable entries, images and earlier versions, and
+    /// restoring needs no password, so with App Lock on the device's authentication comes first, as for Markdown
+    /// (docs/design/build-18-fixes-2026-10-06.md §3.1). An encrypted archive needs the recovery credential instead.
+    private func confirmOwner(_ model: AppModel) async -> Bool {
+        guard model.appLockOn, model.configuration?.encrypted == false else { return true }
+        switch await model.checkDeviceOwner(reason: "Export an archive of your journals") {
+        case .approved: return true
+        case .cancelled: return false
+        case .failed:
+            error = Self.verificationFailure
+            return false
+        }
+    }
+
     private func prepare(_ model: AppModel, session: UUID) async {
+        defer { operation = nil }
+        guard await confirmOwner(model) else { return }
         let progress = Task { [weak self] in
             try? await Task.sleep(for: Self.progressDelay)
             if !Task.isCancelled { self?.showsProgress = true }
@@ -146,7 +167,6 @@ extension AppModel {
         defer {
             progress.cancel()
             showsProgress = false
-            operation = nil
         }
         let filename = JournalFile.archiveFilename()
         do {

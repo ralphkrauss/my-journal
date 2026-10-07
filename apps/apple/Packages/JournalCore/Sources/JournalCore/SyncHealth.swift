@@ -26,15 +26,18 @@ public enum SyncHealth: Equatable, Sendable {
     case certificateInvalid
     /// The address answers, but not as a journal server.
     case notJournalServer
-    /// This device's own store couldn't be read or written.
+    /// This device's own database is damaged, so it can't be read or written.
     case localDataUnreadable
+    /// This device's own database couldn't be used right now: it is busy or locked, the device is locked, or the
+    /// disk is failing or full. The data is fine, and trying again can work.
+    case localDataUnavailable
     case unexpected
 
     public enum Kind: Equatable, Sendable { case temporary, needsYou, serverChanged, noAccess, updateOrFix, unexpected }
 
     public var kind: Kind {
         switch self {
-        case .offline, .unreachable, .unavailable: return .temporary
+        case .offline, .unreachable, .unavailable, .localDataUnavailable: return .temporary
         case .signInNeeded: return .needsYou
         case .serverNotSetUp, .serverReplaced: return .serverChanged
         case .accessRemoved: return .noAccess
@@ -79,7 +82,8 @@ public enum SyncHealth: Equatable, Sendable {
         case .notJournalServer: return "The server address doesn’t lead to a My Journal server. \(saved)"
         case .localDataUnreadable:
             return
-                "My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup."
+                "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup."
+        case .localDataUnavailable: return "Couldn’t sync right now. My Journal will try again."
         case .unexpected: return "Couldn’t sync because of an unexpected problem. \(saved)"
         }
     }
@@ -101,7 +105,8 @@ public enum SyncHealth: Equatable, Sendable {
         case let failure as SyncFailure: self = failure.health
         case let error as URLError: self = Self.health(of: error)
         case is ServerRateLimited, is ServerUnavailable, is CancellationError: self = .unavailable
-        case is DatabaseError: self = .localDataUnreadable
+        case let error as DatabaseError:
+            self = LocalDataFailure(classifying: error) == .damaged ? .localDataUnreadable : .localDataUnavailable
         case JournalError.unauthorized: self = .accessRemoved
         case JournalError.unsupportedFormat, JournalError.newerVersion: self = .appUpdateNeeded
         default: self = .unexpected

@@ -10,7 +10,7 @@ extension AppModel {
         do {
             return try await importImage(data)
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
             return nil
         }
     }

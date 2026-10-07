@@ -5,6 +5,7 @@ import JournalCore
 /// docs/design/join-with-local-journals.md).
 extension AppModel {
     func initializeServer(address: String, code: String, phrase: String, uploadLocal: Bool) async throws {
+        try requireJournalsOpen()
         guard !locked, !replacingVault else { throw JournalError.locked }
         try await checkReconnection(address: address)
         guard await finishPendingSave() else { throw JournalError.server("Save your changes before connecting.") }
@@ -68,6 +69,7 @@ extension AppModel {
         address: String, phrase: String, uploadLocal: Bool, shown: RecoveryParameters? = nil,
         replacingEmptyLibrary: Bool = false
     ) async throws {
+        try requireJournalsOpen()
         guard !locked else { throw JournalError.locked }
         guard await flush() else { throw JournalError.server("Save your changes before connecting.") }
         if store != nil && !uploadLocal && !(replacingEmptyLibrary && nothingWritten) {
@@ -123,7 +125,9 @@ extension AppModel {
             retryGrant = nil
         } catch {
             // Cancelling or locking gave the access up already.
-            retryGrant = Task.isCancelled || locked ? nil : (address, key, grant)
+            // A refusal can't succeed on a retry, and nothing was sent.
+            let refused = (error as? JournalError)?.refusesMerge == true
+            retryGrant = Task.isCancelled || locked || refused ? nil : (address, key, grant)
             throw error
         }
     }
@@ -143,6 +147,7 @@ extension AppModel {
         address: String, key: Data, token: String, deviceID: UUID, uploadLocal: Bool, recoveryVersion: Int = 1,
         shown: RecoveryParameters? = nil, replacingEmptyLibrary: Bool = false
     ) async throws {
+        try requireJournalsOpen()
         if replacingEmptyLibrary && !nothingWritten { throw JournalError.server("This device already has journals.") }
         // Read with the new device credential: servers with `private-envelope` don't publish the wrapped key.
         let envelope = try await ServerClient(address: address, token: token).recoveryEnvelope()
@@ -170,6 +175,7 @@ extension AppModel {
         keepsStageForRetry: Bool = false, replacingEmptyLibrary: Bool = false
     ) async throws {
         do {
+            try requireJournalsOpen()
             guard !locked else { throw JournalError.locked }
             try await checkReconnection(address: address)
             guard await flush() else { throw JournalError.server("Save your changes before connecting.") }
@@ -204,13 +210,14 @@ extension AppModel {
             vaultReplacement = false
             // Only Try Again with the same grant reuses the staged copy. Until then nothing can change this
             // library (see `replacingVault`), so the copy never misses newer writing.
-            if !keepsStageForRetry || Task.isCancelled || locked {
+            let refused = (error as? JournalError)?.refusesMerge == true
+            if !keepsStageForRetry || Task.isCancelled || locked || refused {
                 await removeStagedVault()
                 await revokeUnused(grant, address: address)
             }
             // Merging may have sent some journals already; Try Again finishes without duplicates.
             if joinPhase != nil, !(error is CancellationError), !(error is ServerConnectionError),
-                !(error is MergeConsentNeeded)
+                !(error is MergeConsentNeeded), !refused
             {
                 throw MergeInterrupted(underlying: error, sent: mergeSending)
             }
@@ -262,7 +269,7 @@ extension AppModel {
                 recovery: envelope, recoveryConfirmed: true, storageFolder: folder, keyID: account,
                 connectionKeyID: connectionAccount, appLock: oldConfiguration?.appLock,
                 inactivityLockMinutes: oldConfiguration?.inactivityLockMinutes,
-                supersededLibraries: librariesSuperseded(by: store == nil ? nil : oldConfiguration)),
+                supersededLibraries: librariesSuperseded(by: oldConfiguration)),
             writtenAccounts: [account, connectionAccount])
         stagedVault = nil
         masterKey = key
@@ -443,5 +450,13 @@ struct MergeConsentNeeded: Error {}
 struct MergeInterrupted: Error, LocalizedError {
     let underlying: Error
     let sent: Bool
-    var errorDescription: String? { underlying.localizedDescription }
+    var errorDescription: String? { underlying.shown(.saving) }
+}
+
+extension JournalError {
+    /// Joining was refused before anything was sent, because of what this device holds. Trying again can't help.
+    var refusesMerge: Bool {
+        if case .mergeNeedsUpdate = self { return true }
+        return false
+    }
 }

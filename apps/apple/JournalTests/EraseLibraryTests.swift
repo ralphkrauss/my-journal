@@ -68,6 +68,8 @@ import os
     private func library(connectedTo server: Server? = nil) async throws -> AppModel {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Erase-" + UUID().uuidString)
         let model = AppModel(directory: directory)
+        // Erasing removes preference keys; never from the app's own preferences.
+        model.preferences = UserDefaults(suiteName: "Erase-" + UUID().uuidString) ?? .standard
         addTeardownBlock { @MainActor in
             try? await model.store?.close()
             for account in [model.configuration?.keyID, model.configuration?.connectionKeyID].compactMap({ $0 }) {

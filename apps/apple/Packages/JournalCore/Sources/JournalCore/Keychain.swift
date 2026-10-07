@@ -24,15 +24,22 @@ public enum Keychain {
     public static func read(_ account: String) throws -> Data? { try store.read(account) }
     public static func write(_ data: Data, account: String) throws { try store.write(data, account: account) }
     public static func remove(_ account: String) throws { try store.remove(account) }
+    /// The names of the items the app keeps, found by listing the service, never reading a secret. Erase uses it to
+    /// remove what no configuration names (docs/design/build-18-fixes-2026-10-06.md §2.1). Only the data protection
+    /// keychain is listed: the login keychain can raise an unlock prompt and, on the Mac, shows other builds' items.
+    /// A build without the entitlement, or a keychain with nothing in it, gives an empty list.
+    public static func accounts() throws -> [String] { try store.accounts() }
 }
 
 protocol SecretStore: Sendable {
     func read(_ account: String) throws -> Data?
     func write(_ data: Data, account: String) throws
     func remove(_ account: String) throws
+    /// Every account of the app's service, by name only.
+    func accounts() throws -> [String]
 }
 
-enum SecretStoreError: Error, Equatable {
+public enum SecretStoreError: Error, Equatable {
     /// The app isn't entitled to this keychain, for example an unprovisioned Mac build.
     case unavailable
 }
@@ -97,6 +104,15 @@ struct MigratingSecretStore: SecretStore {
             removed = true
         }
         if !removed { throw SecretStoreError.unavailable }
+    }
+
+    /// The current store's accounts only: items left in the login keychain are removed by name, never listed.
+    func accounts() throws -> [String] {
+        guard currentAvailable || legacy == nil else { return [] }
+        do { return try current.accounts() } catch SecretStoreError.unavailable {
+            markCurrentUnavailable()
+            return []
+        }
     }
 
     private var currentAvailable: Bool { !currentRefused.withLock { $0 } }
@@ -178,6 +194,20 @@ struct SystemSecretStore: SecretStore {
         if status == errSecItemNotFound { return }
         try Self.check(status)
     }
+    /// Attributes only, so no secret is read and nothing prompts. A keychain the app isn't entitled to reports that
+    /// nothing was found or `errSecMissingEntitlement`; both are an empty list.
+    func accounts() throws -> [String] {
+        var request = query("")
+        request[kSecAttrAccount as String] = nil
+        request[kSecReturnAttributes as String] = true
+        request[kSecMatchLimit as String] = kSecMatchLimitAll
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(request as CFDictionary, &result)
+        if status == errSecItemNotFound || status == errSecMissingEntitlement { return [] }
+        try Self.check(status)
+        let items = result as? [[String: Any]] ?? []
+        return items.compactMap { $0[kSecAttrAccount as String] as? String }
+    }
 }
 
 /// Keeps secrets for the life of the process.
@@ -186,4 +216,5 @@ struct MemorySecretStore: SecretStore {
     func read(_ account: String) throws -> Data? { secrets.withLock { $0[account] } }
     func write(_ data: Data, account: String) throws { secrets.withLock { $0[account] = data } }
     func remove(_ account: String) throws { _ = secrets.withLock { $0.removeValue(forKey: account) } }
+    func accounts() throws -> [String] { secrets.withLock { Array($0.keys) } }
 }

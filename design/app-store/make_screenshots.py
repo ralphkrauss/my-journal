@@ -6,9 +6,9 @@ and is not run by the checks. From the repository root:
 
     JOURNAL_SCREENSHOT_FONT=/path/to/InterVariable.ttf python3 design/app-store/make_screenshots.py
 
-Inputs are the captures in design/screenshots/raw/ (see capture-ios.sh,
+Inputs are the captures in design/screenshots/raw/ or --raw (see capture-ios.sh,
 capture-sync.sh and capture-mac.sh next to this file), the copy in copy.json
-and the app icon. Output is docs/app-store/screenshots/{iphone,ipad,mac}/,
+and the app icon. Output is docs/app-store/screenshots/{iphone,ipad,mac}/ (or --out),
 sRGB JPEGs (quality 94, no chroma subsampling) at the exact App Store sizes in
 docs/app-store/screenshots-plan.md, plus a contact sheet when a path is given
 with --sheet.
@@ -30,6 +30,7 @@ import numpy as np
 from PIL import Image, ImageCms, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
+# Replaced by --raw and --out.
 RAW = ROOT / "design" / "screenshots" / "raw"
 OUT = ROOT / "docs" / "app-store" / "screenshots"
 COPY = json.loads((ROOT / "design" / "app-store" / "copy.json").read_text())
@@ -537,8 +538,9 @@ def build() -> dict[str, list[Path]]:
         ("02", "02-privacy-light", "02-privacy", False),
         ("03", "03-devices-light", "03-sync", False),
         ("04", "04-pinned-light", "04-find", False),
-        ("05", "05-journals-edit-light", "05-journals", False),
+        ("05", "05-journals-list", "05-journals", False),
         ("06", "06-dark", "06-dark", True),
+        ("07", "07-backup-light", "07-markdown", False),
     ]
     for number, capture, name, dark in phone:
         outputs["iphone"].append(save(phone_frame(number, capture, dark), "iphone", name))
@@ -549,6 +551,7 @@ def build() -> dict[str, list[Path]]:
         ("04", "04-history-light", "04-find", False),
         ("05", "05-journals-light", "05-journals", False),
         ("06", "06-dark", "06-dark", True),
+        ("07", "07-backup-light", "07-markdown", False),
     ]
     for number, capture, name, dark in tablet:
         outputs["ipad"].append(save(pad_frame(number, capture, dark), "ipad", name))
@@ -604,6 +607,8 @@ def build() -> dict[str, list[Path]]:
     phone_body = iphone(raw("iphone", "06-dark"), theme, 0.40)
     place(canvas, phone_body, (330, 900), STRONG_SHADOW)
     outputs["mac"].append(save(canvas, "mac", "06-dark"))
+    backup = mac_window("07-settings-backup-light", traffic="close")
+    outputs["mac"].append(save(mac_with_settings("07", inactive, backup), "mac", "07-markdown"))
     return outputs
 
 
@@ -644,16 +649,21 @@ def contact_sheet(outputs: dict[str, list[Path]], path: Path) -> None:
 
 
 def main() -> None:
+    global RAW, OUT
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--sheet", type=Path, help="also write a contact sheet of every frame here")
+    parser.add_argument("--raw", type=Path, help=f"the captures (default {RAW.relative_to(ROOT)})")
+    parser.add_argument("--out", type=Path, help=f"the output folder (default {OUT.relative_to(ROOT)})")
     arguments = parser.parse_args()
+    RAW = (arguments.raw or RAW).resolve()
+    OUT = (arguments.out or OUT).resolve()
     outputs = build()
     check(outputs)
     if arguments.sheet:
         contact_sheet(outputs, arguments.sheet)
     for paths in outputs.values():
         for path in paths:
-            print("wrote", path.relative_to(ROOT))
+            print("wrote", path)
 
 
 if __name__ == "__main__":

@@ -540,6 +540,94 @@ final class ListItemEditingTests: XCTestCase {
         }
     }
 
+    /// Return in an empty quote line leaves the quote one level, as Backspace at the start of the line does and as
+    /// Return leaves a list (docs/design/build-18-fixes-2026-10-06.md §2.3).
+    func testReturnOnAnEmptyQuoteLineLeavesTheQuote() throws {
+        let before = DocumentBlock(runs: [TextRun("Before")])
+        let quoted = DocumentBlock(kind: "quote", runs: [TextRun("Quoted")])
+
+        // The last line: the quote's own line break goes with it, so the line is the text's empty last line again.
+        let last = EditorHarness(JournalDocument(blocks: [before, quoted, DocumentBlock(kind: "quote")]))
+        defer { last.close() }
+        last.caret(at: last.text.length)
+        last.pressReturn()
+        XCTAssertEqual(last.document.blocks.map(\.kind), ["paragraph", "quote", "paragraph"])
+        XCTAssertEqual(last.selection, NSRange(location: last.text.length, length: 0))
+        last.type("After")
+        XCTAssertEqual(last.document.blocks.map(\.kind), ["paragraph", "quote", "paragraph"])
+        XCTAssertEqual(last.document.blocks.last?.runs.map(\.text).joined(), "After")
+
+        // In the middle, the quote splits in two around a plain line, and no line is added.
+        let middle = EditorHarness(
+            JournalDocument(blocks: [
+                DocumentBlock(kind: "quote", runs: [TextRun("One")]), DocumentBlock(kind: "quote"),
+                DocumentBlock(kind: "quote", runs: [TextRun("Two")]),
+            ]))
+        defer { middle.close() }
+        let length = middle.text.length
+        middle.caret(at: ("One\n" as NSString).length)
+        middle.pressReturn()
+        XCTAssertEqual(middle.document.blocks.map(\.kind), ["quote", "paragraph", "quote"])
+        XCTAssertEqual(middle.text.length, length)
+        XCTAssertEqual(middle.selection, NSRange(location: ("One\n" as NSString).length, length: 0))
+
+        // A line with text still continues the quote.
+        let writing = EditorHarness(JournalDocument(blocks: [quoted]))
+        defer { writing.close() }
+        writing.caret(at: ("Quoted" as NSString).length)
+        writing.pressReturn()
+        XCTAssertEqual(writing.document.blocks.map(\.kind), ["quote", "quote"])
+    }
+
+    /// A quote inside a quote moves out a level first, and one inside a list item becomes that item's text.
+    func testReturnOnAnEmptyNestedQuoteLineMovesOutOneLevelAtATime() throws {
+        var inner = DocumentBlock(kind: "quote")
+        inner.markdownPrefix = "> "
+        inner.markdownContinuation = "> > "
+        let nested = EditorHarness(
+            JournalDocument(blocks: [
+                DocumentBlock(kind: "quote", runs: [TextRun("Outer")]), inner,
+                DocumentBlock(kind: "quote", runs: [TextRun("Outer again")]),
+            ]))
+        defer { nested.close() }
+        nested.caret(at: ("Outer\n" as NSString).length)
+        nested.pressReturn()
+        XCTAssertEqual(nested.document.blocks.map(\.kind), ["quote", "quote", "quote"])
+        XCTAssertNil(nested.document.blocks[1].markdownPrefix, "The line is one of the outer quote now.")
+
+        var listed = try XCTUnwrap(JournalDocument(markdown: "- > Quote").blocks.first)
+        listed.runs = []
+        let item = EditorHarness(JournalDocument(blocks: [listed]))
+        defer { item.close() }
+        let prefix = try XCTUnwrap(listed.markdownPrefix, "A quote inside a list item has the item's prefix.")
+        item.caret(at: 0)
+        item.pressReturn()
+        XCTAssertEqual(item.document.blocks.map(\.kind), ["paragraph"])
+        // The text is empty now, so the block lives in what typing continues with.
+        let metadata = try XCTUnwrap(item.view.typingAttributes[.journalBlockMetadata] as? Data)
+        let left = try JournalCoding.decoder().decode(DocumentBlock.self, from: metadata)
+        XCTAssertEqual(left.kind, "paragraph")
+        XCTAssertEqual(left.markdownPrefix, prefix, "It stays in the item as its text.")
+    }
+
+    func testLeavingAQuoteWithReturnIsOneUndoStep() throws {
+        let quoted = DocumentBlock(kind: "quote", runs: [TextRun("Quoted")])
+        let atTheEnd = JournalDocument(blocks: [
+            DocumentBlock(runs: [TextRun("Before")]), quoted, DocumentBlock(kind: "quote"),
+        ])
+        try checkUndoAndRedo("Return on an empty last quote line", atTheEnd) { harness in
+            harness.caret(at: harness.text.length)
+            harness.pressReturn()
+        }
+        let inTheMiddle = JournalDocument(blocks: [
+            quoted, DocumentBlock(kind: "quote"), DocumentBlock(kind: "quote", runs: [TextRun("Two")]),
+        ])
+        try checkUndoAndRedo("Return on an empty quote line between two", inTheMiddle) { harness in
+            harness.caret(at: ("Quoted\n" as NSString).length)
+            harness.pressReturn()
+        }
+    }
+
     // MARK: - Helpers
 
     /// Each block but empty paragraphs, whose identity isn't kept: its identity, kind, number and text.

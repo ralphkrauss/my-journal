@@ -332,6 +332,9 @@ struct ConnectionStepView: View {
     }
     @ViewBuilder private var recoveryCode: some View {
         Section {
+            if let notice = flow.codeUsedNotice {
+                Text(notice).font(.callout).fixedSize(horizontal: false, vertical: true)
+            }
             phraseField("Recovery Code").onSubmit { if !flow.phrase.isEmpty && !flow.busy { flow.signIn() } }
             fieldError(.phrase)
             Toggle("Show Recovery Code", isOn: $showPassword)

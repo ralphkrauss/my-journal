@@ -54,10 +54,10 @@ final class IPadWritingUITests: XCTestCase {
         let insert = app.buttons["Insert"].firstMatch
         XCTAssertTrue(insert.waitToAppear(timeout: 5))
         insert.tap()
-        app.buttons["Link…"].firstMatch.tap()
+        app.buttons["Add Link…"].firstMatch.tap()
         let link = app.textFields["Link"]
         XCTAssertTrue(link.waitToAppear(timeout: 5))
-        XCTAssertTrue(hasKeyboardFocus(link), "Insert ▸ Link… focuses the Link field.")
+        XCTAssertTrue(hasKeyboardFocus(link), "Insert ▸ Add Link… focuses the Link field.")
         capture(app, "Add Link from Formatting")
         app.buttons["Cancel"].firstMatch.tap()
         XCTAssertTrue(link.waitToDisappear(timeout: 5))
@@ -84,7 +84,7 @@ final class IPadWritingUITests: XCTestCase {
         app.buttons["Formatting"].firstMatch.tap()
         XCTAssertTrue(insert.waitToAppear(timeout: 5))
         insert.tap()
-        app.buttons["Link…"].firstMatch.tap()
+        app.buttons["Add Link…"].firstMatch.tap()
         XCTAssertTrue(link.waitToAppear(timeout: 5))
         link.typeText("not a link\n")
         XCTAssertTrue(app.staticTexts["Enter a valid web or email address."].waitToAppear(timeout: 5))

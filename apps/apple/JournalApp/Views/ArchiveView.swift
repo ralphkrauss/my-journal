@@ -106,7 +106,7 @@ struct ArchiveImportButton: View {
             .fileImporter(isPresented: $choosing, allowedContentTypes: [.journalArchive]) { result in
                 do {
                     archive = try result.get()
-                } catch { self.error = error.localizedDescription }
+                } catch { self.error = ArchiveImportView.couldntOpen }
             }
             .sheet(isPresented: Binding(get: { archive != nil }, set: { if !$0 { archive = nil } })) {
                 if let archive { ArchiveImportView(source: archive) }
@@ -179,7 +179,7 @@ struct ArchiveImportView: View {
     }
     private var content: some View {
         VStack(alignment: .leading, spacing: 18) {
-            if model.locked {
+            if model.lockBlocksImport {
                 Text("Import Archive").font(.title2.bold())
                 Text("Unlock My Journal to import an archive.").foregroundStyle(.secondary)
                 HStack {
@@ -202,6 +202,12 @@ struct ArchiveImportView: View {
                     Text("Use the password or recovery key for this archive.").foregroundStyle(.secondary)
                 } else {
                     if let preview { ArchivePreviewSummary(summary: preview) }
+                    if model.store == nil && model.libraryProblem?.offersImport == true {
+                        // Replacing journals that can't be opened removes them, so the sheet says so.
+                        Text(
+                            "The journals on this device can’t be opened, but they may still be fine. Restoring removes them from this device and ends any syncing with a server."
+                        ).foregroundStyle(.secondary)
+                    }
                     if model.store != nil {
                         Text(
                             namesUsed
@@ -270,10 +276,11 @@ struct ArchiveImportView: View {
         case JournalError.invalidData:
             error = "This archive is incomplete or damaged. Try another copy."
         default:
-            error =
-                "Couldn’t open this archive. Check that the file is available and your device has enough space, then try again."
+            error = Self.couldntOpen
         }
     }
+    static let couldntOpen =
+        "Couldn’t open this archive. Check that the file is available and your device has enough space, then try again."
 
     private func install() {
         guard let prepared else { return }
@@ -291,7 +298,9 @@ struct ArchiveImportView: View {
                 guard !model.locked else { return }
                 completed = true
                 preview = nil
-            } catch { self.error = error.localizedDescription }
+            } catch is CancellationError {
+                // The device's authentication was cancelled: nothing was replaced, and Restore Journals asks again.
+            } catch { self.error = error.shown(.saving) }
         }
     }
 }

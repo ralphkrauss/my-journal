@@ -3,8 +3,9 @@
 # sample library inside the app's sandbox container and starts a disposable local server, then runs the opt-in
 # JournalMacScreenshots test hosted in a team-signed build, which opens the library in the app's own windows and
 # renders them. For frame 4 the test sets up the server as "MacBook Pro" and connects "Writing Assistant" to it; the
-# server names itself with the public address https://journal.example.net, which Agent Access shows. Writes the PNG
-# captures to <output>. The owner's own library is never opened.
+# server names itself with the public address https://journal.example.net, which Agent Access shows, and frame 3
+# shows Settings > Sync connected to it under that address. Writes the PNG captures to <output>. The owner's own
+# library is never opened.
 # Usage: capture-mac.sh <new-output-directory>
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -19,12 +20,23 @@ mkdir -p "$work"
 server_pid=""
 cleanup() {
   [[ -z "$server_pid" ]] || kill "$server_pid" 2>/dev/null || true
+  # Also after a failure, so the frames captured until then and failed-* show what happened.
+  # Files the app wrote in its container can take a moment to show to this process.
+  for _ in {1..20}; do
+    if compgen -G "$work/captures/*.png" >/dev/null; then
+      cp "$work/captures/"* "$output/"
+      break
+    fi
+    sleep 0.5
+  done
   rm -rf "$work"
 }
 trap cleanup EXIT
 # The library is uploaded to a new server, so it leaves out versions made on another device.
 JOURNAL_SCREENSHOT_HISTORY=0 design/app-store/seed-library.sh "$work/library" >/dev/null
 dotnet build server/src/Journal.Api -v quiet -p:RestoreLockedMode=true >/dev/null
+# Created first, so the wait below can read it before the server opens it.
+: >"$work/server.log"
 # The agent's requests name the public host on the loopback address, so the server accepts that host too.
 Journal__DataDirectory="$work/server" Journal__PublicUrl="$public_url" ASPNETCORE_URLS="http://127.0.0.1:0" \
   AllowedHosts="localhost;127.0.0.1;[::1];${public_url#https://}" \
@@ -51,5 +63,4 @@ TEST_RUNNER_JOURNAL_DATA_DIR="$work/library" \
   -destination 'platform=macOS' -derivedDataPath "${JOURNAL_SCREENSHOT_DERIVED_DATA:-artifacts/DD-shots}" \
   -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_STYLE=Manual \
   "CODE_SIGN_IDENTITY=${JOURNAL_SIGNING_IDENTITY:?Set JOURNAL_SIGNING_IDENTITY to your Apple Development identity}" test
-cp "$work/captures/"* "$output/"
 printf 'Captures: %s\n' "$output"

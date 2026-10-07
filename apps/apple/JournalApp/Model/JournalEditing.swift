@@ -61,7 +61,7 @@ extension AppModel {
             // A later edit builds on this save even before the list is read again.
             if self.store === store, let index = items.firstIndex(where: { $0.id == saved.id }) { items[index] = saved }
             try await refresh()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.shown(.saving) }
     }
 
     /// The name of the journal that already has `name`, other than `excluding`: New Journal and Rename refuse it

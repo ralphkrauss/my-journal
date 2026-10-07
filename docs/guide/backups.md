@@ -12,6 +12,8 @@ Your server is not a backup: it can fail or lose data too. Export an archive reg
 2. The first time, if your journals are only on this device, My Journal asks you to enter your master password, to make sure it’s the one you saved. Choose **Check**, or **Not Now** to skip it this time.
 3. Choose where to save the archive.
 
+If App Lock is on and your journals aren’t encrypted, My Journal first asks you to confirm with your device’s authentication, because the archive holds readable entries.
+
 Keep your master password separate from your archives. An archive opens only with the password you had when you exported it, even if you change your password later.
 
 ## Restore journals on a new device

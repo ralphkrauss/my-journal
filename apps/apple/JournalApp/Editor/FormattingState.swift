@@ -14,6 +14,8 @@ struct FormattingState: Equatable {
     var taskCompletion: FormattingToggle?
     /// Whether Increase and Decrease Indent apply (docs/design/list-indentation-2026-10-04.md).
     var indent = ListIndentation.Availability()
+    /// Whether Edit Link… and Remove Link apply (docs/design/build-18-fixes-2026-10-06.md §2.4).
+    var link = LinkAvailability()
     var paragraph: String?
 
     init() {}
@@ -35,6 +37,7 @@ struct FormattingState: Equatable {
             readSource(text.string, range: range)
             return
         }
+        link = LinkEditing.availability(text, selection: range)
         guard !samples.isEmpty else { return }
         var kinds = Set(samples.map { $0[.journalKind] as? String ?? "paragraph" })
         if range.length == 0, text.length > 0 {

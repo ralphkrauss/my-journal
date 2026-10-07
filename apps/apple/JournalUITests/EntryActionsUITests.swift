@@ -140,7 +140,7 @@ final class EntryActionsUITests: XCTestCase {
             cancel.tap()
             XCTAssertTrue(body.waitToAppear(timeout: 5))
             assertEventually((body.value as? String ?? "").contains("A useful reflection"))
-            XCTAssertFalse(app.alerts["Journal"].exists)
+            XCTAssertFalse(app.alerts["My Journal"].exists)
         }
     }
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {

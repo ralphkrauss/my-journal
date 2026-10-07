@@ -148,8 +148,8 @@ struct ChangePasswordView: View {
         } else if known == nil, !(error is JournalError) {
             message = PasswordChangeError.failed.localizedDescription
         } else {
-            message = error.localizedDescription
+            message = error.shown(.saving)
         }
-        announceForAccessibility(message ?? error.localizedDescription)
+        announceForAccessibility(message ?? error.shown(.saving))
     }
 }

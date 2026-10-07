@@ -13,7 +13,8 @@ struct ServerAgentsSections: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        if model.connection != nil, controller.phase == .ready, !controller.requests.isEmpty {
+        // A loaded list stays while the server can't be reached, as the agents do.
+        if model.connection != nil, controller.loaded || controller.phase == .ready, !controller.requests.isEmpty {
             Section("Requests") { requestRows }
         }
         if model.connection != nil, controller.loaded, !controller.agents.isEmpty {
@@ -286,8 +287,19 @@ struct AgentJournalsSection: View {
         } footer: {
             if scope == nil { footer }
         }
+        .onValueChange(of: emptyChoiceNotice) { notice in
+            if let notice { announceForAccessibility(notice) }
+        }
         if let scope {
             Section {
+                if let notice = emptyChoiceNotice {
+                    // Not footer text, which people skip: it is about what the agent can read.
+                    Label {
+                        Text(verbatim: notice).fixedSize(horizontal: false, vertical: true)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle").accessibilityHidden(true)
+                    }
+                }
                 ForEach(model.journals) { journal in
                     if scope == .all {
                         // What All Journals includes now, as a reminder; nothing to change here.
@@ -312,6 +324,16 @@ struct AgentJournalsSection: View {
         }
     }
 
+    /// Said while Selected Journals is chosen with no journal switched on (docs/design/build-18-fixes-2026-10-06.md
+    /// §2.2). In the detail nothing is saved yet, so the agent still reads what it did; in the approval sheet this
+    /// explains the dimmed Allow button. The detail's condition is the one `commit` saves by.
+    private var emptyChoiceNotice: String? {
+        guard scope == .selected else { return nil }
+        if keepsOne {
+            return selection.isEmpty ? "Choose a journal. Until you do, \(name) can still read all journals." : nil
+        }
+        return selection.intersection(model.journals.map(\.id)).isEmpty ? "Choose a journal to allow \(name)." : nil
+    }
     private var footer: some View {
         Text(
             verbatim: (scope == .all ? "Includes journals you create later. " : "")

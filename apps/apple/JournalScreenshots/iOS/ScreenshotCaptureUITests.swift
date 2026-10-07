@@ -81,7 +81,10 @@ final class ScreenshotCaptureUITests: XCTestCase {
         let enterCode = app.buttons["Enter Code Instead…"]
         try require(enterCode, timeout: 10)
         enterCode.tap()
-        let field = app.textFields["Pairing Code"]
+        // The field shows its prompt, "123 456 789", in place of its label.
+        let field = app.textFields.matching(
+            NSPredicate(format: "label == %@ OR placeholderValue == %@", "Pairing Code", "123 456 789")
+        ).firstMatch
         try require(field, timeout: 10)
         try "ready".write(to: meeting.appendingPathComponent("ipad-ready"), atomically: true, encoding: .utf8)
         let file = meeting.appendingPathComponent("iphone-code")
@@ -96,9 +99,14 @@ final class ScreenshotCaptureUITests: XCTestCase {
         try XCTUnwrap(proceed, "No Continue button").tap()
         try require(app.staticTexts["check-code"], timeout: 60)
         try capture(app, "03-pairing-light")
+        // capture-sync.sh answers the Face ID request that Approve makes with a match.
+        try "approving".write(to: meeting.appendingPathComponent("ipad-approving"), atomically: true, encoding: .utf8)
         app.buttons["Approve"].tap()
         // The iPhone's run finishes once it is connected; the iPad only has to wait for the approval to be sent.
-        XCTAssertTrue(app.staticTexts["check-code"].waitForNonExistence(timeout: 60))
+        if !app.staticTexts["check-code"].waitForNonExistence(timeout: 60) {
+            try capture(app, "failed-approval", settle: false)
+            throw CaptureError("The iPad didn't approve the iPhone.")
+        }
     }
 
     /// The folder both simulators' runs share for the pairing code.
@@ -211,6 +219,16 @@ final class ScreenshotCaptureUITests: XCTestCase {
         NavigationTestSupport.openEntry("Porto, day two", journal: "Travel", app: app)
         if isPad { showSidebar(app) }
         try capture(app, "06-dark")
+    }
+
+    /// Frame 7: Settings > Backup, with Export as Markdown… below the archive.
+    @MainActor func test7Backup() throws {
+        let app = try launch()
+        if isPad { NavigationTestSupport.openEntry("Slow Sunday", journal: "Personal", app: app) }
+        NavigationTestSupport.openSettings(app)
+        app.buttons["Backup"].tap()
+        try require(app.buttons["Export as Markdown…"], timeout: 5)
+        try capture(app, "07-backup-light")
     }
 
     /// Frame 2: Privacy with App Lock on. It turns App Lock on, so it runs last.

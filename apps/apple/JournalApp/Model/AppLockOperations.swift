@@ -57,6 +57,15 @@ extension DeviceOwnerAvailability {
     }
 }
 
+/// How a request for the device owner's authentication ended.
+enum DeviceOwnerCheck: Equatable {
+    case approved
+    /// The person, the system or a lock cancelled the request. Nothing is said.
+    case cancelled
+    /// Face ID is locked out or authentication is unavailable.
+    case failed
+}
+
 extension AppModel {
     var appLockOn: Bool { configuration?.appLock == true }
 
@@ -72,15 +81,23 @@ extension AppModel {
     /// The device's own authentication before something App Lock protects leaves the app or is erased, as turning
     /// App Lock off asks for it. False when cancelled, failed, or the app locked meanwhile.
     func authenticateDeviceOwner(reason: String) async -> Bool {
+        await checkDeviceOwner(reason: reason) == .approved
+    }
+
+    /// As `authenticateDeviceOwner`, for callers that tell a cancel (silent) from a failure (said). Locking while
+    /// the request shows ends it as a cancel.
+    func checkDeviceOwner(reason: String) async -> DeviceOwnerCheck {
         refreshDeviceOwnerAvailability()
         let lockCount = unlockState.lockCount
         unlockState.authenticating = true
         let outcome = await deviceOwner.authenticate(reason: Self.authenticationReason(reason))
         unlockState.authenticating = false
-        guard !locked, lockCount == unlockState.lockCount else { return false }
+        // The lock screen of a missing device key offers Import and Erase, which ask for it too.
+        guard !locked || libraryProblem == .needsKey, lockCount == unlockState.lockCount else { return .cancelled }
         switch outcome {
-        case .success, .noPasscode: return true
-        case .cancelled, .failed: return false
+        case .success, .noPasscode: return .approved
+        case .cancelled: return .cancelled
+        case .failed: return .failed
         }
     }
 
@@ -308,7 +325,7 @@ extension AppModel {
             if draft == nil { selectInitialEntry(reveal: true) }
         } catch {
             guard locked || authenticated, canFinishUnlock(store, sessionID: sessionID) else { return }
-            self.error = error.localizedDescription
+            report(error, .reading)
         }
     }
 

@@ -129,4 +129,65 @@ final class SupersededLibraryTests: XCTestCase {
             LocalConfiguration.self, from: Data(contentsOf: directory.appendingPathComponent("configuration.json")))
         XCTAssertNil(saved.supersededLibraries)
     }
+
+    /// Importing over journals that can't be opened leaves them to remove like any library a switch leaves, with the
+    /// ones earlier switches left, keeps App Lock on, and gives the restored library its own connection item. The
+    /// device owner is asked once, and a cancelled prompt replaces nothing.
+    func testImportingOverJournalsThatCantBeOpenedSupersedesThemAndKeepsAppLock() async throws {
+        let root = temporaryDirectory()
+        let source = AppModel(directory: root.appendingPathComponent("source"))
+        closing(source)
+        await source.start(password: "the archive's master password")
+        await source.newEntry()
+        let entry = try XCTUnwrap(source.draft)
+        let archive = try await source.prepareArchive()
+
+        var fixture = try await LibraryFixture.make(self, appLock: true, folder: "vault-old")
+        let earlierKey = "superseded-earlier-" + UUID().uuidString
+        try Keychain.write(Data("earlier".utf8), account: earlierKey)
+        let earlierFolder = fixture.directory.appendingPathComponent("vault-earlier")
+        try FileManager.default.createDirectory(at: earlierFolder, withIntermediateDirectories: true)
+        fixture.configuration.inactivityLockMinutes = 10
+        fixture.configuration.supersededLibraries = [
+            SupersededLibrary(storageFolder: "vault-earlier", keyID: earlierKey)
+        ]
+        try fixture.saveConfiguration()
+        try fixture.damageRecords()
+        let model = fixture.model(self)
+        closing(model)
+        let owner = TestDeviceOwner()
+        model.deviceOwner = owner
+        model.applicationActive = true
+        await model.load()
+        await model.unlockWithDevice()
+        XCTAssertEqual(model.libraryProblem, .cantOpen)
+        let restored = try await model.inspectArchive(archive, phrase: "the archive's master password")
+
+        owner.outcome = .cancelled
+        let before = try fixture.digest()
+        do {
+            try await model.installArchive(restored)
+            XCTFail("A cancelled prompt replaced the journals")
+        } catch is CancellationError {}
+        XCTAssertEqual(try fixture.digest(), before, "Nothing was replaced.")
+        XCTAssertEqual(model.libraryProblem, .cantOpen)
+
+        owner.outcome = .success
+        try await model.installArchive(restored)
+        await model.discardImportedCopy(restored)
+        let installed = try XCTUnwrap(model.configuration)
+        XCTAssertNil(model.libraryProblem)
+        XCTAssertEqual(installed.appLock, true)
+        XCTAssertEqual(installed.inactivityLockMinutes, 10)
+        XCTAssertEqual(installed.connectionKeyID, installed.keyID.map { $0 + "-connection" })
+        XCTAssertNotEqual(installed.connectionKeyID, fixture.account + "-connection")
+        await model.supersededRemoval?.value
+        XCTAssertFalse(
+            exists(fixture.libraryURL), "The library that couldn't be opened is removed once the new one opens.")
+        XCTAssertFalse(exists(earlierFolder), "So is the one an earlier switch left.")
+        XCTAssertNil(try Keychain.read(fixture.account))
+        XCTAssertNil(try Keychain.read(earlierKey))
+        XCTAssertNil(model.configuration?.supersededLibraries)
+        XCTAssertNotNil(model.items.first { $0.id == entry.id })
+    }
 }

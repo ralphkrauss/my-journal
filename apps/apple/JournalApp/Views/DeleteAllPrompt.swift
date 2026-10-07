@@ -103,7 +103,7 @@ private struct DeleteAllPrompt: ViewModifier {
     }
     private func report(_ failure: Error) {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
-        model.error = failure.localizedDescription
+        model.error = failure.shown(.saving)
     }
 }
 

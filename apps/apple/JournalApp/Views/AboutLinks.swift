@@ -39,6 +39,10 @@ enum AboutLink: Identifiable {
     /// The steps for a Mac and its devices that synced through the server Mac builds once ran (FormerMacServer.swift).
     static let formerMacServerGuide = URL(string: repository + "/blob/main/docs/guide/sync.md#if-you-used-use-this-mac")
 
+    /// “My Journal can’t open your journals”, the troubleshooting guide's section for the screen of that name.
+    static let cantOpenGuide = URL(
+        string: repository + "/blob/main/docs/guide/troubleshooting.md#my-journal-cant-open-your-journals")
+
     /// Text for a footer link.
     static func link(_ title: String, to url: URL?) -> Text {
         var text = AttributedString(title)

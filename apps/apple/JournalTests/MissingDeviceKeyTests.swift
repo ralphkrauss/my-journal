@@ -30,6 +30,8 @@ final class MissingDeviceKeyTests: XCTestCase {
         }
         await model.load()
         XCTAssertTrue(model.locked)
+        XCTAssertEqual(model.libraryProblem, .needsKey)
+        XCTAssertFalse(model.showsLibraryProblem, "The missing key keeps the lock screen, with its credential field.")
         XCTAssertNil(model.store)
         await model.unlockForTesting()
         XCTAssertTrue(model.locked, "Face ID or a passcode cannot replace a missing encryption key.")
@@ -37,12 +39,15 @@ final class MissingDeviceKeyTests: XCTestCase {
         XCTAssertNil(model.draft)
         await model.unlockWithRecovery(phrase)
         XCTAssertFalse(model.locked)
+        XCTAssertNil(model.libraryProblem, "Unlocking with the credential still works, and saves the configuration.")
         XCTAssertNil(model.error)
         XCTAssertEqual(model.configuration?.appLock, true, "Recovering the key keeps App Lock on.")
         let restored = try await model.store?.item(entry.id)
         XCTAssertEqual(restored, expected)
     }
-    func testStoreOpenFailureCannotBeDismissedByUnlocking() async throws {
+    /// A library that can't be opened is no longer a lock screen with a button that leads nowhere: it is a problem the
+    /// person can act on, and nothing is locked.
+    func testStoreOpenFailureIsAProblemNotALockScreen() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
             "UnavailableStore-" + UUID().uuidString)
         let account = "unavailable-store-" + UUID().uuidString
@@ -61,13 +66,63 @@ final class MissingDeviceKeyTests: XCTestCase {
         }
         let model = AppModel(directory: directory)
         await model.load()
-        let loadError = try XCTUnwrap(model.error)
-        XCTAssertTrue(model.locked, "An existing vault that cannot open must not look like an empty journal.")
+        XCTAssertEqual(model.libraryProblem, .cantOpen)
+        XCTAssertFalse(model.locked, "A library that can't be opened has nothing to unlock.")
         XCTAssertNil(model.store)
+        XCTAssertNil(model.error, "The raw error never reaches the screen.")
         await model.unlockForTesting()
-        XCTAssertTrue(model.locked)
-        XCTAssertEqual(model.error, loadError)
+        XCTAssertEqual(model.libraryProblem, .cantOpen)
         XCTAssertNil(model.draft)
+    }
+    /// With the key gone and the credential forgotten, the lock screen offers the two ways on: an archive, or erasing
+    /// and connecting to a server again.
+    func testTheMissingKeyScreenOffersImportAndEraseAndBothWork() async throws {
+        let fixture = try await LibraryFixture.make(self, appLock: true)
+        try Keychain.remove(fixture.account)
+        let source = AppModel(
+            directory: fixture.directory.deletingLastPathComponent().appendingPathComponent(
+                "Source-" + UUID().uuidString))
+        addTeardownBlock { @MainActor in
+            try? await source.store?.close()
+            try? FileManager.default.removeItem(at: source.directory)
+            if let account = source.configuration?.keyID { try? Keychain.remove(account) }
+        }
+        await source.start(encrypted: false)
+        await source.newEntry()
+        let entry = try XCTUnwrap(source.draft)
+        let archive = try await source.prepareArchive()
+        let model = fixture.model(self)
+        let owner = TestDeviceOwner()
+        model.deviceOwner = owner
+        model.applicationActive = true
+        await model.load()
+        XCTAssertEqual(model.libraryProblem, .needsKey)
+        XCTAssertTrue(model.locked)
+        XCTAssertTrue(model.canImportArchive, "The lock screen of a missing key offers Import Archive….")
+
+        let restored = try await model.inspectArchive(archive, phrase: "")
+        try await model.installArchive(restored)
+        await model.discardImportedCopy(restored)
+        await model.supersededRemoval?.value
+        XCTAssertEqual(owner.requests, 1, "With App Lock on, replacing the journals asks for the device owner.")
+        XCTAssertNil(model.libraryProblem)
+        XCTAssertFalse(model.locked)
+        XCTAssertEqual(model.configuration?.appLock, true, "Restoring never turns App Lock off.")
+        XCTAssertNotNil(model.items.first { $0.id == entry.id })
+
+        // And erasing, from the same lock screen, on a library that lost its key.
+        let second = try await LibraryFixture.make(self)
+        try Keychain.remove(second.account)
+        let other = second.model(self)
+        await other.load()
+        XCTAssertEqual(other.libraryProblem, .needsKey)
+        let found = await other.unopenedEraseWarning()
+        XCTAssertNotNil(found)
+        let outcome = await other.eraseUnopenedLibrary()
+        XCTAssertEqual(outcome, .erased)
+        XCTAssertFalse(other.locked)
+        XCTAssertNil(other.libraryProblem)
+        XCTAssertNil(other.configuration)
     }
     /// Recovering a missing device key opens the library ready to sync with its saved server, as a normal launch does.
     func testRecoveryResumesTheSavedServerConnection() async throws {

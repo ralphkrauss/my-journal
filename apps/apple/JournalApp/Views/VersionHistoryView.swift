@@ -214,7 +214,7 @@ struct VersionHistoryView: View {
             }
             await loadImages()
         } catch is CancellationError {} catch {
-            if !model.locked { self.error = error.localizedDescription }
+            if !model.locked { self.error = error.shown(.reading) }
         }
     }
     private func loadImages() async {
@@ -240,7 +240,7 @@ struct VersionHistoryView: View {
             needsDestinationRefresh = false
             error = "Choose an available journal."
         } catch is CancellationError {} catch {
-            if !model.locked { self.error = error.localizedDescription }
+            if !model.locked { self.error = error.shown(.reading) }
         }
     }
     private func restore() {
@@ -265,7 +265,7 @@ struct VersionHistoryView: View {
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
                 if case HistoryRecoveryError.unavailableVersion = error { needsReload = true }
-                self.error = error.localizedDescription
+                self.error = error.shown(.saving)
             }
         }
     }

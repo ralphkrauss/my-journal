@@ -38,7 +38,7 @@ extension AppModel {
             try await refresh()
             return item
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
             return nil
         }
     }
@@ -83,7 +83,7 @@ extension AppModel {
             if let replacement, selectedID == replacement.id { rememberSelection() }
             return item
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
             return nil
         }
     }
@@ -153,7 +153,7 @@ extension AppModel {
                 error = "The template was restored, but couldn’t be displayed. Reopen My Journal to try again."
             }
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.shown(.saving)
         }
     }
 }

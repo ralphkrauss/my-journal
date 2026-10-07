@@ -143,16 +143,27 @@ struct AddDeviceView: View {
             EmptyView()
         }
     }
+    /// The Mac shows the code except in the background, so another window in front doesn't hide it from a phone
+    /// held up to the screen. iPhone and iPad hide it whenever the app isn't active, since the app switcher's
+    /// snapshot shows the inactive state (docs/design/build-18-fixes-2026-10-06.md §3.3).
+    private var showsCodeImage: Bool {
+        #if os(macOS)
+            scenePhase != .background
+        #else
+            scenePhase == .active
+        #endif
+    }
     private var codeSection: some View {
         Section {
             VStack(spacing: 16) {
                 if let notice { Text(notice).font(.callout).multilineTextAlignment(.center) }
                 if expired {
                     if error == nil { Text("This code has expired.").font(.headline).padding(.vertical, 40) }
-                } else if scenePhase == .active, let current {
+                } else if showsCodeImage, let current {
                     PairingCodeImage(text: current.invite.text)
                 } else {
-                    // Hidden in the app switcher and while another window is in front.
+                    // Hidden in the app switcher (iPhone and iPad, where the snapshot shows the inactive state) and
+                    // while the app is in the background.
                     RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.quaternary)
                         .frame(width: 252, height: 252).accessibilityHidden(true)
                 }
@@ -461,10 +472,14 @@ struct AddDeviceView: View {
     private func stoppedConnecting(_ candidate: PairingCandidate, failure: Error) {
         restart()
         notice = "“\(Self.displayName(candidate.deviceName))” stopped connecting."
-        if failure is URLError { error = "Couldn’t reach the server. Check your connection." }
+        if let network = failure as? URLError { error = NetworkFailureMessage.text(for: network) }
     }
     private func show(_ failure: Error, scanned: Bool) {
-        error = failure.localizedDescription
+        if let network = failure as? URLError {
+            error = NetworkFailureMessage.text(for: network)
+        } else {
+            error = failure.shown(.saving)
+        }
         switch failure {
         case PairingError.deviceOutdated: step = .finished
         case PairingError.insecureCandidate, PairingError.expired, PairingError.noResponse:

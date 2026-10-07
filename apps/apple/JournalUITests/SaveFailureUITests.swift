@@ -22,7 +22,7 @@ final class SaveFailureUITests: XCTestCase {
         let body = app.textViews["Entry text"]
         body.tap()
         body.typeText("X")
-        let alert = app.alerts["Journal"]
+        let alert = app.alerts["My Journal"]
         guard alert.waitToAppear(timeout: 10) else { throw InteractionError.unreachable }
         capture(app, "Local save failure retains writing")
         let dismiss = alert.buttons["OK"]

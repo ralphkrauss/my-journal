@@ -125,7 +125,7 @@ struct JournalHistoryView: View {
         } catch is CancellationError {} catch {
             if !model.locked {
                 needsReload = true
-                self.error = error.localizedDescription
+                self.error = error.shown(.reading)
             }
         }
     }
@@ -156,7 +156,7 @@ struct JournalHistoryView: View {
                     error = "This journal can’t be changed here. You can export your journals."
                 }
             } catch is CancellationError {} catch {
-                if !model.locked { self.error = error.localizedDescription }
+                if !model.locked { self.error = error.shown(.reading) }
             }
         }
     }
@@ -190,7 +190,7 @@ struct JournalHistoryView: View {
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
                 if case HistoryRecoveryError.unavailableVersion = error { needsReload = true }
-                self.error = error.localizedDescription
+                self.error = error.shown(.saving)
             }
         }
     }
@@ -202,7 +202,7 @@ struct JournalHistoryView: View {
             conflict = latest
             error = "These changes need review before you can continue."
         } catch is CancellationError {} catch {
-            if !model.locked { self.error = error.localizedDescription }
+            if !model.locked { self.error = error.shown(.reading) }
         }
     }
 

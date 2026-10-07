@@ -97,7 +97,13 @@ extension AppModel {
     private func run(_ model: AppModel, session: UUID) async {
         defer { operation = nil }
         if model.appLockOn {
-            guard await model.authenticateDeviceOwner(reason: model.markdownExportReason) else { return }
+            switch await model.checkDeviceOwner(reason: model.markdownExportReason) {
+            case .approved: break
+            case .cancelled: return
+            case .failed:
+                error = ArchiveExport.verificationFailure
+                return
+            }
         }
         let progress = Task { [weak self] in
             try? await Task.sleep(for: ArchiveExport.progressDelay)

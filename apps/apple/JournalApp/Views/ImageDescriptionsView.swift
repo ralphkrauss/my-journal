@@ -207,7 +207,7 @@ struct ImageDescriptionsView: View {
             } catch is CancellationError {} catch {
                 if !model.locked {
                     if case ImageDescriptionError.entrySaveRequired = error { needsEntrySave = true }
-                    self.error = error.localizedDescription
+                    self.error = error.shown(.reading)
                 }
             }
         }
@@ -262,7 +262,7 @@ struct ImageDescriptionsView: View {
                 guard !model.locked else { return }
                 if error is ImageDescriptionError || error is JournalLifecycleError { invalidated = true }
                 if case ImageDescriptionError.entrySaveRequired = error { needsEntrySave = true }
-                self.error = error.localizedDescription
+                self.error = error.shown(.saving)
             }
         }
     }

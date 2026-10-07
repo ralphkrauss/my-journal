@@ -65,6 +65,8 @@ final class KeychainMigrationTests: XCTestCase {
             }
             try SystemSecretStore.check(status)
         }
+
+        func accounts() throws -> [String] { state.withLock { $0.items.keys.sorted() } }
     }
 
     private let key = Data("vault key".utf8)
@@ -88,6 +90,16 @@ final class KeychainMigrationTests: XCTestCase {
         try launch.remove("connection")
         XCTAssertNil(try launch.read("connection"))
         XCTAssertEqual(try launch.read("vault"), key)
+    }
+
+    /// Erase lists the app's items to remove what no configuration names. Listing the login keychain could raise an
+    /// unlock prompt and, on the Mac, shows other builds' items, so only the data protection keychain is listed.
+    func testListingNamesTheDataProtectionKeychainOnly() throws {
+        let current = FakeKeychain()
+        let legacy = MemorySecretStore()
+        try current.write(key, account: "current")
+        try legacy.write(key, account: "left in the login keychain")
+        XCTAssertEqual(try MigratingSecretStore(current: current, legacy: legacy).accounts(), ["current"])
     }
 
     func testReadingMovesALegacySecretOnceAndPrefersTheCurrentKeychain() throws {

@@ -211,6 +211,72 @@ final class ArchiveLifecycleTests: XCTestCase {
         XCTAssertEqual(try packages(), [])
     }
 
+    private func libraryWithAppLock(
+        encrypted: Bool, appLock: Bool
+    ) async throws -> (model: AppModel, owner: TestDeviceOwner, export: ArchiveExport) {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let model = AppModel(directory: root.appendingPathComponent("library"))
+        addTeardownBlock { @MainActor in
+            for account in [model.configuration?.keyID, model.configuration?.connectionKeyID].compactMap({ $0 }) {
+                try? Keychain.remove(account)
+            }
+            try await model.store?.close()
+            try? FileManager.default.removeItem(at: root)
+        }
+        await model.start(password: encrypted ? "this device's own password" : nil, encrypted: encrypted)
+        model.confirmRecovery()
+        let owner = TestDeviceOwner()
+        model.deviceOwner = owner
+        model.applicationActive = true
+        if appLock {
+            let result = await model.setAppLock(true)
+            XCTAssertEqual(result, .saved)
+        }
+        return (model, owner, ArchiveExport(dialogFolder: root.appendingPathComponent("dialog")))
+    }
+
+    /// An archive of a library without encryption holds everything readable and restores without a password, so
+    /// with App Lock on the device's authentication comes first. A cancel is silent; a failure is said.
+    func testExportingAReadableArchiveAsksForTheDevicesAuthenticationWhenAppLockIsOn() async throws {
+        let (model, owner, export) = try await libraryWithAppLock(encrypted: false, appLock: true)
+        let before = owner.requests
+
+        owner.outcome = .cancelled
+        export.start(with: model)
+        await export.finishPreparing()
+        XCTAssertEqual(owner.requests, before + 1)
+        XCTAssertNil(export.document, "Nothing is prepared before the person is verified.")
+        XCTAssertNil(export.error)
+        XCTAssertFalse(export.busy, "Export Archive is available again.")
+
+        owner.outcome = .failed
+        export.start(with: model)
+        await export.finishPreparing()
+        XCTAssertNil(export.document)
+        XCTAssertEqual(export.error, "Couldn’t verify it’s you. Try again.")
+
+        owner.outcome = .success
+        export.start(with: model)
+        await export.finishPreparing()
+        XCTAssertNil(export.error)
+        XCTAssertTrue(export.presenting)
+        XCTAssertNotNil(export.document)
+    }
+
+    /// An encrypted archive needs the recovery credential, and without App Lock there is nothing to ask.
+    func testExportingNeedsNoAuthenticationForAnEncryptedLibraryOrWithoutAppLock() async throws {
+        for (encrypted, appLock) in [(true, true), (false, false)] {
+            let (model, owner, export) = try await libraryWithAppLock(encrypted: encrypted, appLock: appLock)
+            let before = owner.requests
+            owner.outcome = .failed
+            export.start(with: model)
+            await export.finishPreparing()
+            XCTAssertEqual(owner.requests, before, "encrypted: \(encrypted), App Lock: \(appLock)")
+            XCTAssertTrue(export.presenting, "encrypted: \(encrypted), App Lock: \(appLock)")
+            XCTAssertNil(export.error)
+        }
+    }
+
     /// Launch removes the archive copies earlier builds left behind, and nothing else in the same folders.
     func testLaunchCleanupRemovesOnlyLeftoverExportCopies() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

@@ -130,7 +130,10 @@ final class MergeJoinTests: XCTestCase {
     }
 
     /// A password server that hands out access but can't synchronize, so merging stops while downloading.
-    private func failingServer(grant: DeviceGrant) async throws -> (FakeJournalServer, RecoveryEnvelope) {
+    /// With `downloads`, it answers the first synchronization with nothing, so joining reaches merging.
+    private func failingServer(grant: DeviceGrant, downloads: Bool = false) async throws -> (
+        FakeJournalServer, RecoveryEnvelope
+    ) {
         let envelope = try VaultCrypto.makeRecovery(masterKey: VaultCrypto.generateKey(), phrase: serverPassword).0
         let parameters = try JournalCoding.encoder().encode(RecoveryParameters(envelope))
         struct Recovered: Encodable {
@@ -140,13 +143,15 @@ final class MergeJoinTests: XCTestCase {
         }
         let recovered = try JournalCoding.encoder().encode(
             Recovered(deviceId: grant.deviceId, token: grant.token, envelope: envelope))
-        let status = Data(#"{"protocolVersion":1,"initialized":true}"#.utf8)
+        let status = Data(#"{"protocolVersion":1,"initialized":true,"serverId":"fake-server"}"#.utf8)
+        let page = Data(#"{"changes":[],"cursor":0,"hasMore":false,"serverId":"fake-server","serverIdCursor":0}"#.utf8)
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
             case ("GET", "/v1/recovery"): return (200, parameters)
             case ("POST", "/v1/recovery"): return (200, recovered)
             case ("DELETE", _): return (204, Data())
+            case ("GET", let path) where downloads && path.hasPrefix("/v1/sync/"): return (200, page)
             default: return (503, Data("{}".utf8))
             }
         }
@@ -180,6 +185,55 @@ final class MergeJoinTests: XCTestCase {
         XCTAssertTrue(model.canEdit)
         let kept = try await model.store?.item(entry.id)
         XCTAssertEqual(kept, entry)
+    }
+
+    /// Journals saved by a newer version can't be merged until the app is updated, so trying again can't help: the
+    /// flow says to update, doesn't offer Try Again, and gives up the access it received (§2.7).
+    func testJournalsFromANewerVersionAreRefusedWithoutOfferingTryAgain() async throws {
+        let model = try await model(writing: true)
+        let journalID = try XCTUnwrap(model.items.first { $0.kind == "journal" }?.id)
+        // An entry another device saved with rules this version doesn't know arrives as it is, and can't be merged.
+        let future = JournalItem(kind: "entry", journalID: journalID, title: "From a newer version")
+        var object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: JournalCoding.encoder().encode(future)) as? [String: Any])
+        object["futureEntryRules"] = ["kept": true]
+        let sealed = try VaultCrypto.seal(
+            JSONSerialization.data(withJSONObject: object), key: try XCTUnwrap(model.masterKey),
+            context: VaultCrypto.recordContext(id: future.id, kind: "entry"))
+        try await model.store?.apply(
+            [
+                RemoteChange(
+                    cursor: 1, recordId: future.id, revision: 1, kind: "entry",
+                    payload: sealed.base64EncodedString(), deviceId: UUID(), modifiedAt: Date())
+            ], cursor: 1)
+        try await model.refresh()
+        let arrived = try XCTUnwrap(model.items.first { $0.id == future.id })
+        XCTAssertNotNil(arrived.preservedJSON, "Rules this version doesn't know are kept, so it can't be merged.")
+        let grant = DeviceGrant(deviceId: UUID(), token: String(repeating: "t", count: 64))
+        let (server, _) = try await failingServer(grant: grant, downloads: true)
+        let flow = ConnectionFlow(model: model)
+        flow.address = server.address
+        flow.check()
+        try await settle(flow) { flow.path == [.merge] }
+        XCTAssertEqual(flow.path, [.merge])
+        flow.confirmMerge()
+        try await settle(flow)
+        XCTAssertEqual(flow.path.last, .signIn)
+        flow.phrase = serverPassword
+        flow.signIn()
+        try await settle(flow)
+
+        XCTAssertEqual(
+            flow.errorMessage(on: .signIn),
+            "Update My Journal to merge the journals on this device. Some of them were saved by a newer version.")
+        XCTAssertFalse(flow.mergeInterrupted, "Try Again can't succeed until My Journal is updated.")
+        XCTAssertNil(model.retryGrant)
+        XCTAssertNil(model.connection)
+        XCTAssertTrue(
+            server.requests.contains {
+                $0.method == "DELETE" && $0.path == "/v1/devices/\(grant.deviceId.uuidString.lowercased())"
+            }, "Nothing was sent, so the access received is given up.")
+        flow.close()
     }
 
     /// A server opened by a recovery key asks for one, so a wrong key or too many tries must not say "password".

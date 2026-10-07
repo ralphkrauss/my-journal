@@ -108,7 +108,7 @@ struct EntryDateView: View {
                 dismiss()
             } catch is CancellationError {} catch {
                 guard !Task.isCancelled, !model.locked, model.selectedID == entry.id else { return }
-                self.error = error.localizedDescription
+                self.error = error.shown(.saving)
             }
         }
     }

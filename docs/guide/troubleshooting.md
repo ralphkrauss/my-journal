@@ -14,6 +14,34 @@ Save your password in a password manager so this doesn’t happen again.
 
 App Lock uses your device’s Face ID, Touch ID or passcode, or your Mac login password; there’s no separate PIN. If your device can’t authenticate you, choose **Use Master Password** (or your recovery key) on the lock screen. If you removed your device’s passcode, My Journal turns App Lock off the next time it opens.
 
+## My Journal can’t open your journals
+
+When My Journal can’t open the journals on your device, it shows **Your Journals Can’t Be Opened** instead of your journals. It says “Nothing has been removed.” and means it: opening only reads, and a damaged library is left exactly as it is. Your journals may still be fine. A busy device, a restart that hasn’t finished, a Keychain that can’t be read and a locked iPhone cause the same screen as a damaged file.
+
+1. **Try Again.** Choose **Try Again**, or quit and reopen My Journal. On an iPhone or iPad that has just restarted, the screen goes away by itself once the device is unlocked and My Journal can reach its files. If you use App Lock, you unlock as usual afterwards.
+2. **Restart your iPhone, iPad or Mac.** If it keeps happening, restart the device and open My Journal again.
+3. **Keep a copy first.** Before you try anything that removes something, keep a copy. On a Mac, quit My Journal and copy the app’s folder (`~/Library/Containers/io.github.ralphkrauss.myjournal`, in Finder choose Go > Go to Folder…). On an iPhone or iPad you can’t reach the app’s files, so make a device backup.
+4. **Restore from an archive.** If you have an archive you exported earlier, choose **Import Archive…**. My Journal checks the archive first, and only then replaces the journals it can’t open: they are removed from this device, and syncing with a server ends. App Lock stays on. The device stays in your server’s list of devices until you remove it in Settings > Devices on another device.
+5. **Restore from your server.** If your journals are on a server, choose **Erase Journals and Settings…**, which appears after Try Again has failed once, then **Connect to a Server…** on the first screen. Your journals come back from the server. Changes that hadn’t synced are lost. If this device couldn’t be signed out of the server, remove it in Settings > Devices on another device.
+
+### Update My Journal
+
+**Update My Journal** means these journals were saved by a newer version. Update My Journal in the App Store or TestFlight to open them. The same screen appears when the settings saved on the device were written by a newer version: **Your Journals Can’t Be Opened** with “My Journal can’t read the settings saved on this device.” Update, then choose Try Again. There is no button for an update yet, so open the App Store or TestFlight yourself. If no newer build is available to you, there is no button on the screen that keeps the journals: deleting the app removes its files, and the device key stays in the Keychain until the next install and Erase.
+
+### Settings that can’t be read
+
+With unreadable settings, **Import Archive…** isn’t offered, because it would replace a file My Journal couldn’t read. If you have an archive, choose **Erase Journals and Settings…** first, then **Import Archive…** on the first screen.
+
+### What Erase removes
+
+**Erase Journals and Settings…** removes everything My Journal stores on the device, whether or not it can read it: the journals, the settings, copies left by earlier imports and exports, and the device’s keys. It keeps the files of the server earlier Mac builds ran, which may hold the only copy of other devices’ changes (see [If you used Use This Mac](#if-you-used-use-this-mac)). If the Keychain can’t be listed, Erase still removes the files and says nothing about it; a connection token may then remain, and you remove it by revoking this device in Settings > Devices on another device. If Erase can’t move the settings file (for example because of permissions), it says “Couldn’t Erase.” and removes nothing; deleting the app removes the files on iPhone and iPad.
+
+With App Lock on, or when the settings can’t be read, Import and Erase ask you to confirm with Face ID, Touch ID or your passcode or Mac login password first.
+
+### The lock screen asks for your password and you don’t have it
+
+If your library needs a password and its device key is gone (it isn’t kept in a device backup), the lock screen asks for the master password or recovery key. Below it, **Don’t have your Master Password?** offers **Import Archive…** and **Erase Journals and Settings…**, which work as described above.
+
 ## An entry has changes from another device
 
 When the same entry changes on two devices before they sync, My Journal keeps both versions instead of choosing one. The entry shows “This entry has changes from another device.” and is marked in the list. Settings > Sync lists every item under **Changes to Review**.
@@ -35,7 +63,8 @@ Your changes are always saved on the device first; sync never deletes them. **Sy
 - **“The server now uses encryption or was replaced. Sign in to keep syncing.”** Choose **Sign In…** and enter the master password your other devices use. Changes that hadn’t synced are kept.
 - **“Update My Journal to sync with this server.”**, **“The server needs an update…”**, a certificate that isn’t valid, or an address that doesn’t lead to a My Journal server: fix the app or the server, then choose **Check Again**. My Journal also checks every few minutes.
 - **“My Journal no longer runs a server on this Mac, so this Mac stopped syncing.”** See [If you used Use This Mac](#if-you-used-use-this-mac).
-- **“My Journal couldn’t read its data on this device.”** Your journals haven’t been changed. Export an archive in Settings > Backup to keep a copy, then quit and reopen My Journal.
+- **“My Journal can’t read your journals on this device.”** Nothing has been removed. Choose Export Archive in Settings ▸ Backup to keep a copy, then quit and reopen My Journal. If it keeps happening, see [My Journal can’t open your journals](#my-journal-cant-open-your-journals).
+- **“Couldn’t sync right now. My Journal will try again.”** The journals on the device were busy or briefly unavailable. Nothing needs doing.
 
 **Your server moved to a new address.** Choose Settings > Sync > **Stop Syncing…**, then **Connect to a Server…** with the new address. Your journals stay on the device, and nothing is copied twice.
 

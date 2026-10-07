@@ -42,7 +42,7 @@ struct JournalCommands: Commands {
         }
         CommandGroup(replacing: .importExport) {
             Button("Import Archive…") { inJournalWindow { model.archiveImportRequested = true } }
-                .disabled(model.locked)
+                .disabled(!model.canImportArchive)
             Button("Export Archive…") { inJournalWindow { model.archiveExportPresented = true } }
                 .disabled(!model.isReady || model.locked)
             Button("Export Journals as Markdown…") { inJournalWindow { model.markdownExportPresented = true } }
@@ -184,7 +184,10 @@ struct JournalCommands: Commands {
                 Button("Table") { editor.perform(.insert("|  |  |\n| --- | --- |\n|  |  |\n")) }
                 Button("Horizontal Rule") { editor.perform(.insert("---\n")) }
                 Divider()
-                Button("Link…") { editor.openLinkFromKeyboard() }.keyboardShortcut("k")
+                // ⌘K adds or edits, as in Notes and Pages: it reads Edit Link… with the caret in a link.
+                Button(editor.caretLink.edit ? "Edit Link…" : "Add Link…") { editor.openLinkFromKeyboard() }
+                    .keyboardShortcut("k")
+                Button("Remove Link") { editor.perform(.removeLink(nil)) }.disabled(!editor.caretLink.remove)
                 Button("Image…") {
                     #if os(macOS)
                         editor.insertImage(from: .files)
@@ -193,7 +196,7 @@ struct JournalCommands: Commands {
                     #endif
                 }
             }
-        }.disabled(!model.canEdit)
+        }.disabled(!model.canEdit || !(editor.editing || editor.editingTable))
         #if os(macOS)
             Menu("Table") {
                 Button("Add Row Below") { editor.tableAction?(.addRow) }

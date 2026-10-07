@@ -285,7 +285,7 @@ struct DeletionConflictView: View {
         case PermanentDeletionError.unsupported:
             unsupported = true
             error = "Update My Journal to review these changes. You can export an archive to keep a copy."
-        default: error = failure.localizedDescription
+        default: error = failure.shown(.saving)
         }
     }
 }

@@ -34,6 +34,7 @@ private struct PermanentDeletionPrompt: ViewModifier {
     @State private var operation: Task<Void, Never>?
     /// The row a swipe took out of the list for the item being asked about.
     @State private var removedRow: UUID?
+    @State private var conflict: DeletionConflict?
 
     func body(content: Content) -> some View {
         content
@@ -63,6 +64,7 @@ private struct PermanentDeletionPrompt: ViewModifier {
             } message: { reviewed in
                 Text(PermanentDeletionCopy.message(reviewed.plan))
             }
+            .deletionConflictAlert($conflict)
             .onValueChange(of: model.locked) { locked in
                 if locked {
                     operation?.cancel()
@@ -86,7 +88,8 @@ private struct PermanentDeletionPrompt: ViewModifier {
         } catch {
             guard !Task.isCancelled else { return }
             returnRow(id)
-            report(error)
+            let listed = model.items.first { $0.id == id }
+            report(error, kind: listed?.kind ?? "entry", title: listed?.title ?? "")
         }
     }
     private func commit(_ reviewed: PermanentDeletionConfirmation) async {
@@ -97,9 +100,9 @@ private struct PermanentDeletionPrompt: ViewModifier {
                 model.error =
                     "The item was deleted, but My Journal couldn’t update the view. Reopen My Journal to continue."
             }
-        } catch { report(error) }
+        } catch { report(error, kind: reviewed.plan.kind, title: reviewed.plan.title) }
     }
-    private func report(_ failure: Error) {
+    private func report(_ failure: Error, kind: String, title: String) {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
         switch failure {
         case PermanentDeletionError.missing, PermanentDeletionError.permanentlyDeleted:
@@ -108,10 +111,12 @@ private struct PermanentDeletionPrompt: ViewModifier {
             model.error = "This has changed since you chose to delete it. Check it and try again."
         case PermanentDeletionError.unsupported:
             model.error = "Update My Journal to delete this."
-        case PermanentDeletionError.conflict:
-            model.error = "This has changes that need review before it can be deleted."
+        case PermanentDeletionError.conflict(let recordID):
+            conflict = DeletionConflict(
+                id: recordID, title: DeletionConflict.alertTitle(kind: kind, title: title),
+                message: "This has changes that need review before it can be deleted.")
         default:
-            model.error = failure.localizedDescription
+            model.error = failure.shown(.saving)
         }
     }
 }

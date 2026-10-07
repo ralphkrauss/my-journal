@@ -29,7 +29,7 @@
         func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
             guard let model else { return .terminateNow }
             Task {
-                if await model.flush() {
+                if await model.flush(announcing: .never) {
                     // Writing reaches the server now rather than at the next launch, unless that takes long.
                     await model.sendWritingBeforeQuitting(within: 3)
                     sender.reply(toApplicationShouldTerminate: true)
@@ -127,7 +127,7 @@
         func windowShouldClose(_ sender: NSWindow) -> Bool {
             if allowingClose { return original?.windowShouldClose?(sender) ?? true }
             Task {
-                if await model.flush() {
+                if await model.flush(announcing: .never) {
                     allowingClose = true
                     sender.performClose(nil)
                     allowingClose = false
