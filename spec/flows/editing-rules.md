@@ -1,0 +1,276 @@
+---
+id: editing-rules
+title: Editing rules
+features: [entry-title, entry-body, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, spelling-and-substitutions, autosave]
+sources:
+  - apps/apple/JournalApp/Editor/ (all files)
+  - apps/apple/Packages/JournalCore/Sources/JournalCore/MarkdownDocument.swift
+  - apps/apple/Packages/JournalCore/Sources/JournalCore/MarkdownReader.swift
+  - apps/apple/Packages/JournalCore/Sources/JournalCore/MarkdownWriter.swift
+  - apps/apple/Packages/JournalCore/Sources/JournalCore/DocumentTable.swift
+  - apps/apple/JournalTests/ (editor tests, cited per rule)
+  - apps/apple/Packages/JournalCore/Tests/JournalCoreTests/MarkdownFidelityTests.swift
+  - apps/apple/Packages/JournalCore/Tests/JournalCoreTests/MarkdownTests.swift
+  - protocol/records.md (Markdown)
+  - docs/design/list-markers-2026-10-03.md
+  - docs/design/list-indentation-2026-10-04.md
+  - docs/design/checklists-2026-10-03.md
+  - docs/design/pre-release-ui-2026-09-27.md (§4)
+  - docs/design/owner-decisions-2026-09-25.md (§4, §7)
+  - docs/design/pasted-text.md
+  - docs/design/menus-and-popovers.md (D2)
+---
+
+# Editing rules
+
+## Purpose
+
+Precise, testable statements of what every edit does. Each rule becomes a conformance test on every platform. A rule names the code that implements it and, where one exists, the test that protects it (`JournalTests/` for the app, `JournalCoreTests/` for the shared package). Rules without a test are marked *untested*.
+
+## How to read the rules
+
+- **Line**: one paragraph of the body (one block). **Item**: a bulleted, numbered or checklist line. **Quote line**: a block-quote paragraph. “Item or quote” means any of these.
+- **Top-level item**: an item not nested in another item (it may be inside a quote).
+- **The caret at an item's start**: before its first character (markers are drawn, not characters).
+- Examples show Markdown as stored. “Reads back” means: the stored Markdown, read again by the shared reader, gives the same blocks (kind, nesting, number, text, formatting).
+- Commands named here are listed in `commands.md#editor`.
+
+## M. Markdown storage and preservation
+
+- **M-1** Markdown the person didn't touch keeps its exact bytes. Editing one block rewrites only that block's Markdown; every other block's text, spacing, line endings and reference definitions stay byte for byte. — `MarkdownDocument.applyingRichEdit`; `MarkdownFidelityTests.testEditingOneBlockRewritesOnlyThatBlock`, `testCanonicalMarkdownIsWrittenBackByteForByte`; `MarkdownEditorTests.testNestedListAndLineBreakRichRoundTripPreservesOriginalMarkdown`.
+- **M-2** Opening an entry and closing it without a change writes nothing. Showing an entry and reading it back gives the same Markdown and the same block identities, whatever list or quote it ends with. — `ListItemEditingTests.testEntriesEndingInListsReadBackExactly`; `EditorTests.testNativeTextRoundTripPreservesInlineStylesLinksAndParagraphs`.
+- **M-3** A rewritten list item keeps its own marker spelling and indentation (`* `, `-   `, `1) `, `9.`/`10.`, `1. [ ] `). — `MarkdownFidelityTests.testRewrittenListItemsKeepTheirMarkerAndIndentation`.
+- **M-4** Line endings are kept: LF, CR and CRLF each stay as written; a new block takes the line ending used near it. — `MarkdownFidelityTests.testLoneCarriageReturnsAndCRLFKeepBlockBoundaries`.
+- **M-5** A reference definition (`[r]: https://…`) keeps working when the paragraph it sits above is edited or removed. — `MarkdownFidelityTests.testReferenceDefinitionAboveAParagraphSurvivesItsRewriteAndRemoval`; `MarkdownTests.testEditingBeforeReferenceDefinitionDoesNotBreakUntouchedLink`.
+- **M-6** A new or changed block is written so that the Markdown reads back as the blocks the editor shows; blank lines are added only where needed to keep blocks apart. — `SourceLayout.separate`; `MarkdownFidelityTests.testStyleChangeBesideSingleNewlineMarkdownKeepsBlocksApartWhileTyping`, `testStructuralEditsKeepEveryOtherBlockIntact`.
+- **M-7** Spaces beside bold or italic text are written outside the marks (`Some **very** happy`); a space at the very start or end of a line is written as `&#32;` so it survives. Every non-space character keeps its marks after reopening. — `MarkdownFidelityTests.testSpacesBesideFormattedTextStayReadableInTheSource`, `testMarksWithEdgeSpacesOrPunctuationBesideWordsSurviveReopening`.
+- **M-8** Punctuation is escaped only where Markdown would read it as syntax; Markdown characters inside emoji, inline code and table cells stay literal. — `MarkdownTests.testPunctuationIsEscapedOnlyWhereMarkdownWouldReadItAsSyntax`, `MarkdownFidelityTests.testSyntaxInsideEmojiAndTableCellsStaysLiteral`.
+- **M-9** Underline is stored as `<u>…</u>`; strikethrough `~~`; inline code backticks; links `[text](<address>)`; checklist items `- [ ] ` / `- [x] `; headings `#`…`######`. — `MarkdownWriter`; `MarkdownFidelityTests.testSpacesBesideFormattedTextStayReadableInTheSource`.
+- **M-10** An empty item directly above an item nested under it stays an empty item, written as its marker alone; typing elsewhere leaves its Markdown unchanged, and typing into it fills it, not the nested item. — `ListItemEditingTests.testAnEmptyItemAboveANestedItemReadsBackUnchanged`; `MarkdownFidelityTests.testAnEmptyItemBeforeANestedItemKeepsItsPlace`.
+- **M-11** A document this version can't fully read (newer version, unknown fields, malformed metadata) is shown read-only and its record is kept byte for byte; nothing in the editor can change it. — `PortableRecord.decode`, `JournalDocument.isEditable`; `MarkdownFidelityTests.testUnfamiliarDocumentShapesArePreservedReadOnly`.
+- **M-12** Markdown the editor can't show as blocks (any element other than text, emphasis, strong, strikethrough, inline code, links, images, inline HTML, line breaks, paragraphs, headings, lists, task items, quotes, code blocks, HTML blocks, thematic breaks and tables, or blocks whose position can't be placed) opens in source view only, and View Preview is unavailable for it. — `MarkdownReader.read` (`requiresSource`); `RichText.render`.
+- **M-13** Raw HTML is shown as its source text (inline in the line; HTML blocks styled like code) and never run; it is kept byte for byte. — `RichText.attributes` (`journalRawHTML`), `MarkdownReader.readRuns`.
+- **M-14** A paragraph interrupted by a table (`Intro\n| A | B |…`) opens with both blocks and stays editable. — `MarkdownFidelityTests.testParagraphInterruptedByTableOpensAndKeepsBoth`.
+- **M-15** Typing in any kind of paragraph, deleting from it, or splitting and joining paragraphs always saves what reading the whole text would. — `EditorReadingTests` (all four tests).
+- **M-16** Block identities: a block keeps its identity across edits; a block split off by Return gets a new identity; no two blocks share one. — `EditorTests.testPrefixReplacementRecoversOnlyItsOwnParagraphIdentity`, `testNewParagraphsGetDistinctIDsAndEmptyParagraphSurvives`; `ListItemEditingTests.testReturnContinuesItemsWithTheirOwnIdentityNumberAndState`.
+
+## T. Title
+
+- **T-1** Return in the title moves the caret to the body; on the phone and tablet so does Tab from a hardware keyboard. The title never holds a tab. While an input method composes, Return confirms the composition instead. — `EntryTitleEditor` (iOS `shouldChangeTextIn`, Mac `submit`); *untested*.
+- **T-2** Pasting into the title keeps the pasted text's line breaks and doesn't move to the body; one Undo removes the paste. — `TitleTextView.textPasteConfigurationSupporting`; `TitleEditingTests.testPastePreservesLineBreaksWithoutSubmitting` (phone, tablet).
+- **T-3** A long or multi-line title wraps and shows in full at the column's width; an empty title keeps one line's height for its placeholder. — `TitleEditingTests.testTitleGrowsToShowEveryLineAtTheAvailableWidth`.
+- **T-4** The title's first letter starts exactly where the body's first letter does. — `EntryTextInset`; `TitleAlignmentTests.testTitleAndBodyStartAtTheSameEdge`.
+- **T-5** A new entry opens with its title focused and its whole text selected. — `InitialTitleFocus`, `TitleTextView.applyInitialFocus`; *untested*.
+
+## N. Return
+
+- **N-1** Return at the end of a non-empty item starts a new empty item of the same kind below it, with a new identity; a numbered item's number is the next number; an item below a checked item is unchecked. The keyboard sees a line start before the new item (so it capitalizes). — `RichText.newlineAction`, `itemLines`; `ListItemEditingTests.testANewItemStartsALineForTheKeyboard`, `testReturnContinuesItemsWithTheirOwnIdentityNumberAndState`; `EditorTests.testListReturnContinuesAndEmptyListReturnsToBody`.
+- **N-2** Return in the middle of an item splits it: the text after the caret becomes the next item of the list (new identity, next number, unchecked). — `RichText.itemLines`; `ListItemEditingTests.testUndoAndRedoRestoreSplitAndJoinedItemsExactly` (“Return in a checked item”, “Return in a numbered item”).
+- **N-3** Return at the very start of a non-empty item inserts a new empty item above it; the item keeps its identity and its checked state, and the caret stays at its start. A numbered item below moves to the next number. — `RichText.itemAbove`; `ListItemEditingTests.testReturnContinuesItemsWithTheirOwnIdentityNumberAndState`.
+- **N-4** The new item continues the inline formatting at the caret, not the formatting of the item's first word. — `ListItemEditingTests.testReturnContinuesTheFormattingAtTheCaret`.
+- **N-5** Return on an empty top-level item ends the list: the line becomes an empty plain paragraph in the same place, with the caret on it. At the end of the entry no extra line is added. — `RichText.leavingItem`; `EditorTests.testListReturnContinuesAndEmptyListReturnsToBody`, `testReturnAfterLeavingAListStartsNewLinesAgain`.
+- **N-6** Return on an empty nested item moves it out one level (its Markdown indentation shrinks by its parent's marker width); the caret stays on it. — `RichText.leavingItem`; *untested*.
+- **N-7** Return on an empty quote line adds another quote line below; it doesn't leave the quote (see [open-questions.md](../open-questions.md), D4). Return in a non-empty quote line splits or continues it as N-1 to N-4. — `RichText.newlineAction` (`kind != "quote"`); *untested*.
+- **N-8** Return at the end of a heading starts a plain paragraph below it. — `RichText.newlineAction` (headings); `TypingRoomTests.testTheEditorsOwnEditsKeepRoom` (Mac). Return in the middle of a heading is not specified (see [open-questions.md](../open-questions.md), D6).
+- **N-9** After N-5, Return on the (now plain) line is an ordinary new line. Typing on the empty last line after a list writes a plain paragraph, even after moving away and back. — `ListItemEditingTests.testTypingOnTheEmptyLineAfterAListWritesAPlainLine` (Mac); `ListIndentationTests.testTheLineAfterAListIsAPlainLine`; `EditorTests.testReturnAfterLeavingAListStartsNewLinesAgain`.
+- **N-10** Return over a selection that ends with a line break (a whole line, as a triple-click selects it) replaces the selection and leaves the next line as it was. — `RichText.itemLines` (`endsLine`); `ListItemEditingTests.testReturnOverAWholeSelectedLineLeavesTheNextLineAlone`.
+- **N-11** Lines inserted into an item in one piece (dictation's “new line”, a drop, Writing Tools) become further items of that list, as Return would make them, keeping their links and formatting. — `RichText.continueInsertedLines`; `ListItemEditingTests.testLinesInsertedIntoAnItemBecomeItemsOfTheList`, `testFormattedLinesInsertedIntoAnItemKeepTheirFormatting`.
+- **N-12** A typed key burst (“- Milk⏎Eggs” at any speed) keeps every letter, in order, in its own item. — `MarkdownShortcutEditing.convertShortcut`; `MarkdownShortcutTests.testABurstOfKeystrokesKeepsEachLetterInItsItem`.
+- **N-13** A new item stays where it is when its first character is typed (nothing moves). — `ListTypingStabilityTests.testANewItemStaysPutWhenItsFirstCharacterIsTyped`.
+- **N-14** Return in a code block inserts a line break inside the code. — native; `EditorContentSafetyTests.testTypingInsideACodeBlockKeepsOneCodeBlock`.
+- **N-15** Return in a table cell moves to the cell below (the same column of the next row); from the last row it leaves the table, with the caret on the line after it. — `InlineTableGrid` (`move(direction: columnCount)`); *untested*.
+
+## E. The end of the entry
+
+- **E-1** When the entry ends with an item or quote line, that line's line break belongs to it: no empty line follows it and the caret can't go past it. A tap below the text puts the caret at the end of the last item. — `ListMarkers.hasOwnEnd`, `HiddenMarkers.caret`, `ListLayoutManager.setExtraLineFragmentRect`; `ListItemEditingTests.testTheLastItemKeepsItsOwnLineBreak`.
+- **E-2** Deleting all of the last item's text leaves an empty item, not a plain line; Forward Delete at the end of the last item does nothing. — `ListItemEditingTests.testTheLastItemKeepsItsOwnLineBreak`.
+- **E-3** Changing the item above an empty last item (checking it, indenting it) keeps the empty item. — `ListItemEditingTests.testChangingTheItemAboveAnEmptyLastItemKeepsIt`.
+- **E-4** Select All then Delete in an entry whose only line is an empty item removes everything. — `ListItemEditingTests.testDeletingIntoTheLastItemKeepsTheCaretInTheText`.
+- **E-5** On the phone and tablet, a tap in the empty space below the text continues the entry at its end (it never selects the last word). — `JournalTextView.continueAtEnd`; *untested*.
+
+## B. Backspace and deletion
+
+- **B-1** Backspace with the caret at the start of a top-level item's text and no selection removes one level of formatting and keeps the text, its inline styles and the caret: a bullet, numbered or checklist item becomes a paragraph; a list item inside a quote becomes quote text; a quote line becomes a paragraph; a nested quote (`> >`) becomes a quote one level out. Innermost first. — `ItemFormattingRemoval.removingOneLevel`; `ItemFormattingRemovalTests.testBackspaceRemovesOneLevelAndKeepsTheText`.
+- **B-2** Backspace at the start of a nested item moves it out one level together with the items nested under it (as Decrease Indent). Repeated Backspaces move it out level by level, then make it a paragraph, then join it to the line above. — `ItemFormattingRemoval.edit`; `ItemFormattingRemovalTests.testNestedItemMovesOutOneLevelAtATimeThenJoinsTheLineAbove`; `ListIndentationTests.testBackspaceAtANestedItemsStartMovesItsNestedItemsToo`.
+- **B-3** B-1 and B-2 also apply at the very start of the entry, to empty items, and to Option-Backspace and Command-Backspace at an item's start. — `removeItemFormattingAtStart`, `removeItemFormatting(deleting:)`; *untested* for Option/Command.
+- **B-4** B-1 and B-2 are one undo step named `editor.undo.paragraph`, `editor.undo.blockQuote` or `editor.undo.decreaseIndent`; Undo brings the item back exactly (kind, checked state, number). VoiceOver announces `editor.announce.paragraph`, `editor.announce.blockQuote` or `editor.announce.decreaseIndent`. — `ItemFormattingRemovalTests.testUndoBringsTheItemBackExactly`.
+- **B-5** Backspace anywhere else in an item deletes a character as usual. — `ItemFormattingRemovalTests.testBackspaceElsewhereInAnItemStillDeletesText`.
+- **B-6** Joining lines when an item or quote is one of them (Backspace at a line's start, Forward Delete at a line's end, deleting or typing over a selection across lines): the joined text takes the paragraph of the line where the selection starts. A plain line typed into from above stays plain; an item typed over into a paragraph stays an item. The last item's own line break never stays on a joined plain line. — `RichText.joining`; `ListItemEditingTests.testTypingOverLinesTakesTheLineWhereTheSelectionStarts`, `testDeletingIntoTheLastItemKeepsTheCaretInTheText`; `EditorContentSafetyTests.testJoiningLinesAcrossAHiddenMarkerSavesOnlyTheText`.
+- **B-7** Joins never pull an image, table, rule or code block into a line; a deletion that removes a whole first line keeps the remaining line's own style. — `RichText.joining` (`isText`); *untested*.
+- **B-8** An input method composing over a selection across lines composes there; the result replaces the selection. — `ListItemEditingTests.testComposingOverLinesStillComposes`.
+- **B-9** Deleting across items, including Select All and Delete, and then Undo brings back every item exactly as it was (identity, kind, checked state); the lines after them stay what they were. — `ListItemEditingTests.testUndoingADeletionAcrossItemsBringsThemBackAsTheyWere`.
+- **B-10** Deleting a rule's line removes the rule whole; no part of it is ever saved inside a joined line. — `HiddenMarkers.joiningDeletion`; `EditorContentSafetyTests.testJoiningLinesAcrossAHiddenMarkerSavesOnlyTheText`.
+
+## I. Increase and Decrease Indent (lists)
+
+- **I-1** Increase Indent makes the selected items children of the item above them. It is possible only when the first selected item has an item at its own level above it in the same list (any kind: a numbered item can nest under a bullet). — `ListIndentation.movedLines`; `ListIndentationTests.testItemsIndentOnlyWhereMarkdownKeepsIt`, `testNumberedListsAreNumberedAsTheyReadBack`.
+- **I-2** A list's first item can't be indented, and an item can go at most one level below the item above it. — `ListIndentationTests.testItemsIndentOnlyWhereMarkdownKeepsIt`.
+- **I-3** Maximum depth: an item can't go deeper than the editor draws nesting at the current text size: ⌊160 ÷ round(1.5 × size)⌋ levels, at least 1 (6 at 16–17 pt). Increase Indent is unavailable when any line it would move is already there. — `RichText.visibleNestingLevels`; `ListIndentationTests.testItemsIndentOnlyWhereMarkdownKeepsIt`.
+- **I-4** Decrease Indent moves selected nested items out one level; it does nothing to top-level items and never takes an item out of its quote. — `ListIndentation.plan`; `ListIndentationTests.testItemsIndentOnlyWhereMarkdownKeepsIt`, `testAListInAQuoteStaysInTheQuote`.
+- **I-5** Items nested under a moved item move with it, in both directions. Items after a moved item keep their level and may get a new parent. — `ListIndentationTests.testNestedItemsMoveWithTheirParent`.
+- **I-6** Several selected items move together, with what is nested under the last of them; when the selection covers items of more than one list, both commands are unavailable. — `ListIndentationTests.testNestedItemsMoveWithTheirParent`, `testListsThatCantChangeSafelyAreLeftAlone`; `StructuredSelectionTests.testIndentAndOutdentMultipleItemsPreserveContent`.
+- **I-7** Numbered lists are renumbered as Markdown reads them, only in the lists where something moved: an item that starts a nested list is 1; an item joining a list continues its numbering; the items after it follow; a list's own first number is otherwise kept (`5. five` stays 5). — `ListIndentation.renumber`; `ListIndentationTests.testNumberedListsAreNumberedAsTheyReadBack`.
+- **I-8** The Markdown indentation of a moved item is its parent's marker width (2 for `- `, 3 for `1. `, 4 for `10. `); in a quote, after the `> `. Every result reads back as the structure shown. — `ListIndentation.restructure`; `ListIndentationTests.testEachKindOfItemIndentsAndOutdents`, `testANewItemAfterReturnIndentsUnderTheItemAbove`.
+- **I-9** A new empty item made by Return can be indented at once, under the item above; it isn't mistaken for the plain line after a list. — `ListIndentationTests.testANewItemAfterReturnIndentsUnderTheItemAbove`.
+- **I-10** Lists that hold other content inside an item (a second paragraph, quote, code, table or picture nested in an item, only from Markdown written elsewhere) can't be indented: both commands are unavailable there. — `ListIndentation.scope` (`.unsupported`); `ListIndentationTests.testListsThatCantChangeSafelyAreLeftAlone`.
+- **I-11** Plain paragraphs, headings, quotes, tables, images and the empty line after a list: both commands unavailable. — `FormattingState.indentation`; `ListIndentationTests.testTheLineAfterAListIsAPlainLine`.
+- **I-12** Tab and Shift-Tab in an item do what Increase and Decrease Indent do. Where the command isn't available in a list item, the key changes nothing and types no tab (the computer beeps). In a paragraph Tab types a tab character. — `NativeEditor` (`doCommandBy`), `JournalTextView.keyCommands`, `performStructuralKey`; `ListIndentationTests.testItemsIndentOnlyWhereMarkdownKeepsIt`.
+- **I-13** Each indent change is one undo step named `editor.undo.increaseIndent` / `editor.undo.decreaseIndent`; Undo restores the list and the selection exactly; Redo repeats it. — `ListIndentationTests.testUndoAndRedoRestoreTheListAndTheSelection`.
+- **I-14** After an indent change VoiceOver announces the item's new level, `editor.announce.level` (1 at the top). — `performStructuralKey`; *untested*.
+- **I-15** In a code block, Increase Indent (Tab) inserts a tab at the caret, or a tab at the start of every selected line; Decrease Indent (Shift-Tab) removes one leading tab, or up to 4 leading spaces, from each selected line, and is unavailable when there is nothing to remove. A selection reaching outside the code block is left alone. — `StructuredKeyboard.code`, `codeLines`; `StructuredSelectionTests.testMultilineCodeIndentPreservesTextAndRejectsCrossBlockSelection`; `MarkdownEditorTests.testStructuralKeysPreserveNestedContentAndCodeBoundary`.
+
+## C. Checklists
+
+- **C-1** Mark as Checked / Mark as Unchecked acts on every checklist item the selection touches: if any of them is unchecked, all become checked; if all are checked, all become unchecked. Other lines in the selection are unchanged. — `StructuredKeyboard.edit(.toggleTask)`; `StructuredSelectionTests.testMixedSelectionRetainsEveryBlockAndCompletesAllTasks`.
+- **C-2** The command's name follows the caret's item: `library.menu.format.markUnchecked` on a checked item, otherwise `library.menu.format.markChecked`; it is unavailable when the caret isn't in a checklist item (including the empty line after a list). — `NativeEditor.Coordinator.updateCaretState`, `AppCommands.formatMenu`.
+- **C-3** A click or tap on a checkbox toggles only its item, as one undo step, and leaves the caret and focus in the text. Taps between two boxes toggle the nearer one. — `InlineTasks`; `ChecklistGeometryTests.testCheckboxTapsToggleTheirItems`; `ChecklistScrollingTests.testCheckboxesAreLabelledAndAClickLeavesTheCaretInTheText`.
+- **C-4** Checking an item changes nothing else: its text isn't dimmed or struck through, and no line below moves. — `ChecklistGeometryTests.testListsShareOneColumnAtTheDefaultAndLargestTextSize`.
+- **C-5** A checklist item that holds only an image keeps the image when checked or edited. — `MarkdownFidelityTests.testImageOnlyListItemsKeepTheirImageWhenTickedOrEdited`.
+- **C-6** Every checkbox in view is in place at every scroll position. — `ChecklistScrollingTests.testEveryCheckboxInViewIsInPlaceAtEachScrollPosition`.
+
+## G. List layout
+
+- **G-1** Bulleted, numbered and checklist text starts at the same x; wrapped lines start where the item's text starts; the column is 1.5 × the text size, rounded, at every size. — `ChecklistGeometryTests.testListsShareOneColumnAtTheDefaultAndLargestTextSize`.
+- **G-2** First-level markers sit 18 pt in from the body text; a nested marker sits under its parent's text; an item's second paragraph lines up with the item's text; a list in a quote starts after the quote's indent. Only presentation moves: the Markdown is unchanged. — `ChecklistGeometryTests.testListsStartAtTheListInsetAndTheirContentMovesWithThem`.
+- **G-3** Nesting stops moving in after 160 pt; the deepest item's text keeps room on its line. — `ChecklistGeometryTests.testNestedItemsStartAtTheirParentsTextAndDeepNestingKeepsRoom`.
+- **G-4** In a numbered list whose widest number plus a space is wider than the column, every item of that list (the numbered items at one level) uses the wider column; a Return that makes item 10 widens them all at once. — `RichText.alignNumberedLists`; `ChecklistGeometryTests.testNumbersKeepASpaceBeforeTheirTextAndTheListLinesUp`.
+- **G-5** Drawn bullets and numbers look exactly like the characters “•” and “n.” in the paragraph's regular font, never the first word's bold or code font. — `ListMarkers.font`; `ChecklistGeometryTests.testDrawnBulletsAndNumbersMatchTheCharactersTheyReplace`.
+- **G-6** Markers are never characters of the text: the keyboard, find, copy within the journal and VoiceOver read only what was written; VoiceOver learns the kind from accessibility attributes (computer: prefix and level; phone, tablet: “Bullet”, “n.”, “Checkbox, unchecked/checked”, “Quote”), and every numbered item announces the number it shows. — `ListAccessibility`; `ListItemEditingTests.testListLinesCarryTheirAccessibilityAttributes`, `testNumberedItemsAnnounceTheNumberTheyShow`.
+- **G-7** An input method composing at the start of an empty item keeps the item, its indent and its own line break. — `ListItemEditingTests.testComposingInAnEmptyItemKeepsTheItem`.
+- **G-8** Typing at the start of a line after a list continues that line with its own indent (not the list's). Typing at an item's start is the item's visible text. — `ListItemEditingTests.testTypingAtTheStartOfALineAfterAListKeepsItsIndent`; `EditorContentSafetyTests.testTypingAtTheStartOfAnItemIsVisibleAndSavedWithoutMarkers`.
+- **G-9** On the computer the arrow keys move across an item's start like any line's. — `EditorChangeTests.testArrowKeysMoveAcrossAnItemsStartLikeAnyLine` (Mac).
+
+## F. Inline formatting
+
+- **F-1** Bold, Italic and Underline with a selection: the style turns on for the whole selection unless every character that can carry it already has it, in which case it turns off. Each run keeps its other styles and size. — `RichText.toggling` (computer), system toggles (phone, tablet); `FormattingRuntimeTests.testEveryInlineStyleAndLinkPreserveSurroundingRunsInBothModes`.
+- **F-2** A heading's bold weight is its style, not the Bold format: Bold shows Off in a heading, isn't saved as `**`, and toggling Bold across a heading and a paragraph changes only the paragraph. — `RichText.boldBlockKinds`; `FormattingRuntimeTests.testBoldIsNotShownOnForHeadings`, `testPreviewSelectionsAcrossBlocksIndentAndCodeExitChangeOnlyTheirTargets`.
+- **F-3** Strikethrough and Inline Code with a selection: if the first selected character doesn't have the style, the whole selection gets it; otherwise the whole selection loses it. — `MarkdownEditing.toggle`; `FormattingRuntimeTests.testEveryInlineStyleAndLinkPreserveSurroundingRunsInBothModes`.
+- **F-4** Any of the five with no selection changes only what the next typed text gets. — `MarkdownEditing.typingCommand`, `RichText.toggling(in typing:)`; *untested*.
+- **F-5** Inline formatting doesn't apply inside a code block (the commands are disabled there). — `FormattingPopover.inline` (`disabled(inCodeBlock)`); *untested*.
+- **F-6** The Formatting state shows each inline style as On, Off or Mixed for the selection (or the typing style at a caret). — `FormattingState`; `FormattingSessionTests.testTheShownStateFollowsTheSelection`; `LinkInsertionTests.testAddingLinkPreservesMixedSelectionFormattingAndSupportsNewDisplayText`.
+- **F-7** Inline code is monospaced with a fill behind it; typing right after inline code continues the code. — `InsertedText.adopt`; *untested*.
+
+## P. Paragraph styles
+
+- **P-1** A paragraph style (Paragraph, Heading 1–6, Bulleted List, Numbered List, Checklist, Block Quote) restyles every whole paragraph the selection touches and nothing else; neighbouring blocks keep their kind and formatting. — `RichText.restyling`, `paragraphReplacement`; `FormattingRuntimeTests.testEveryParagraphStylePreservesAdjacentContentInBothModes`, `testPreviewSelectionsAcrossBlocksIndentAndCodeExitChangeOnlyTheirTargets`.
+- **P-2** Images, tables, code blocks and raw HTML blocks in the selection keep their kind. — `RichText.restyling`; *untested*.
+- **P-3** Changing an item to a non-list style removes its list structure (nesting, number); its text and inline formatting stay. — `RichText.restyling`; *untested*.
+- **P-4** A list style chosen for an empty line keeps one identity for the item while it's typed. — `ListItemEditingTests.testAListStyleChosenForAnEmptyLineKeepsItsIdentityWhileTyping`.
+- **P-5** A paragraph style places the caret at the end of the restyled text, and typing continues in that style. — `NativeEditor.perform(.paragraph)`, `RichText.styledTyping`; *untested*.
+- **P-6** Paragraph styles are unavailable in table cells and code blocks. — `FormattingPopover.style`; *untested*.
+
+## K. Markdown as you type
+
+Only when Settings ▸ Format Markdown as You Type is on (default on), only in preview, only in a plain paragraph (not a heading, item, quote, code block or table cell), never while an input method composes, never on paste.
+
+- **K-1** Typing a space after one of these at the start of a line converts the line: `- `, `* `, `+ ` → bulleted list; `n. ` or `n) ` (1 to 9 digits) → numbered list starting at n; `[ ] ` or `[] ` → checklist; `[x] ` or `[X] ` → checked checklist item; `> ` → block quote; `# ` … `###### ` → Heading 1–6. `####### `, `1.5 `, `Note: ` do nothing. The rest of the line, if any, becomes the item's text. — `MarkdownShortcuts.style`; `MarkdownShortcutTests.testLineStartMarkersMapToTheirStyles`, `testTypedMarkerBecomesAListAndBackspaceGivesBackTheTypedText`.
+- **K-2** Return at the end of a line that is exactly `---`, `***` or `___` makes a horizontal rule (caret on the line after it); exactly ` ``` ` optionally followed by a language name (letters, digits, `+ - _ # .`) makes a code block with the caret inside it. ` ``` not code` does nothing. — `MarkdownShortcuts.block`; `MarkdownShortcutTests.testReturnAfterACodeFenceOrRuleCreatesThatBlock`.
+- **K-3** The typed space and the conversion are two undo steps: the first Undo gives back the typed marker and space as plain text, the second removes the space. — `MarkdownShortcutTests.testUndoAfterAShortcutGivesBackWhatWasTyped`.
+- **K-4** Backspace straight after a conversion (before anything else is typed or changed) gives back exactly what was typed (“- ”), as a plain paragraph, with the caret after it; the line stays as typed while typing continues. — `MarkdownShortcutTests.testTypedMarkerBecomesAListAndBackspaceGivesBackTheTypedText`.
+- **K-5** VoiceOver announces the new style: `editor.announce.bulletedList`, `editor.announce.numberedList`, `editor.announce.checklist`, `editor.announce.blockQuote`, `editor.announce.heading`, `editor.announce.horizontalRule`, `editor.announce.codeBlock`. The undo step has the same name (see [open-questions.md](../open-questions.md), B16). — `MarkdownShortcuts.announcement`; *untested*.
+- **K-6** With the setting off, the characters stay as typed. — `MarkdownShortcuts.enabled`; *untested*.
+
+## BI. Inserted blocks (Insert menu)
+
+- **BI-1** Insert ▸ Code Block, Horizontal Rule or Table adds the block after the caret's block, never splitting or replacing text; the existing paragraphs stay. — `MarkdownEditing.insertFormatted`; `FormattingRuntimeTests.testBlockInsertionsStaySeparateFromExistingParagraphsInBothModes`; `MarkdownTests.testInsertingBlockSyntaxPreservesSurroundingParagraphs`.
+- **BI-2** After Code Block the caret is inside the new empty code block; after Horizontal Rule it is at the start of the block after the rule (a new empty paragraph if the rule is last); an empty paragraph is added only at the end of the entry, never for a code block. — `MarkdownEditing.insertFormatted`; `FormattingRuntimeTests.testInsertedBlocksLeaveTheCaretWhereTypingContinuesCleanly`.
+- **BI-3** Insert ▸ Table adds a table of 2 columns, a header row and one body row, all empty, and puts the caret in the first header cell. — `TableEditorTests.testInsertTableStaysFormattedAndFocusesFirstHeader`.
+- **BI-4** Exit Code Block (and Down Arrow at the end of a code block's last line) moves the caret to the start of the block after the code block, adding an empty paragraph only when the code block is last. — `MarkdownEditing.exitCodeBlock`, `StructuredKeyboard.code(.down)`; `FormattingRuntimeTests.testPreviewSelectionsAcrossBlocksIndentAndCodeExitChangeOnlyTheirTargets`; `MarkdownEditorTests.testStructuralKeysPreserveNestedContentAndCodeBoundary`.
+- **BI-5** Typing inside a code block keeps one code block, with the typed characters exactly where they were typed. — `EditorContentSafetyTests.testTypingInsideACodeBlockKeepsOneCodeBlock`; `MarkdownEditorTests.testCodeBlockRemainsFormattedAndKeepsMultilineContentsOnRichEdit`.
+- **BI-6** Typing on the empty line after an image, table or rule writes a paragraph there and keeps exactly one copy of that block. — `EditorContentSafetyTests.testTypingOnTheEmptyLineAfterAnImageTableOrRuleKeepsTheText`.
+- **BI-7** Code blocks keep their language, multi-line content and exact boundaries through edits elsewhere. — `EditorTests.testCodeBlocksRoundTripWithoutAnExtraBlankLine`; `MarkdownEditorTests.testCodeBlockRemainsFormattedAndKeepsMultilineContentsOnRichEdit`.
+
+## TB. Tables
+
+- **TB-1** Each cell is edited in place. Typing in one cell is one undo step until anything else changes; Undo and Redo with the body's history. — `CellTypingUndo`; `EditorChangeTests.testTypingInATableCellIsOneUndoStep`; `TableEditorTests.testNativeTableCellsShareBodyUndoAndSurviveSourceSwitch`.
+- **TB-2** A cell holds one line: typed or pasted line breaks become spaces. — `DocumentTable.replaceCell`, `InlineTableGrid.textView(shouldChangeTextIn:)`; *untested*.
+- **TB-3** Tab moves to the next cell, Shift-Tab to the previous (row by row); Return moves to the cell below. Moving past the last cell leaves the table, with the caret on the line after it; moving before the first cell leaves it with the caret just before the table. — `InlineTableGrid.move`; *untested*.
+- **TB-4** Add Row Below inserts an empty row under the cell's row; Add Column After inserts an empty column after the cell's column (with no alignment); Delete Row / Delete Column remove the cell's row or column; Delete Table removes the table. Deleting the last row or column removes the table and the caret leaves to the line after it. Align Left / Center / Right set the column's alignment. Each is one undo step. — `DocumentTable.apply`; `MarkdownTests.testRaggedTableStructuralEditsDoNotDropCellsOrCrash`.
+- **TB-5** Bold, Italic, Underline, Strikethrough and Inline Code apply inside a cell; paragraph styles don't. The header row is drawn semibold, which isn't the Bold format. — `TableCellFormatting`, `InlineTables.selectedCellStyle`; *untested*.
+- **TB-6** Editing a cell keeps the other cells' text, alignment marks, escaped pipes and the surrounding source. — `MarkdownTests.testTableCellEditsKeepAlignmentMarksPipesAndSurroundingSource`.
+- **TB-7** Typing next to a table stays undoable. — `FormattingRuntimeTests.testTypingNextToATableStaysUndoable`.
+
+## L. Links
+
+- **L-1** Add Link with a selection links the selected text, keeping each run's formatting; with a different Text, the selection is replaced by that text, linked; with nothing selected and no Text, the address itself is inserted as the link's text. — `LinkInsertion.text`; `LinkInsertionTests.testAddingLinkPreservesMixedSelectionFormattingAndSupportsNewDisplayText`.
+- **L-2** Accepted addresses and completions are as in `screens/link-editor.md`; the scheme is stored lower case. — `LinkAddress.url`; `LinkInsertionTests.testAddLinkInsertsAddressesWhoseSchemeIsNotLowercase`, `testAddLinkCompletesEmailAndWebAddressesWithoutAScheme`.
+- **L-3** Links with `http`, `https` or `mailto` are shown as links; any other link destination read from Markdown (relative paths, `javascript:`, anchors, other schemes) is shown as plain text and kept unchanged in the Markdown (an inert link). — `RichText.attributes` (`journalInertLink`), `RichText.readRuns`; *untested*.
+- **L-4** Link titles (`[t](url "Title")`) are kept. — `MarkdownEditorTests.testNestedListAndLineBreakRichRoundTripPreservesOriginalMarkdown`.
+- **L-5** ⌘K opens Add Link with the selected text as its Text. — `LinkInsertionTests.testCommandKOpensAddLinkWithTheSelectedText` (phone, tablet).
+- **L-6** Typed addresses stay plain text; nothing is linked automatically. — no data detection in `NativeEditor`; *untested*.
+
+## S. Source view
+
+- **S-1** View Source shows the entry's stored Markdown, in a monospaced font, exactly; View Preview shows the blocks it reads as. Switching back and forth without typing never changes the Markdown. — `MarkdownEditing.edit(.source)`; `FormattingRuntimeTests.testEveryParagraphStylePreservesAdjacentContentInBothModes`.
+- **S-2** Switching keeps the caret on the same character in every kind of block, and a selection on the same text, including emoji. The caret's line stays at the same height in the window. — `MarkdownSelection`, `ModeSwitchViewport`; `MarkdownEditorTests.testSwitchingViewsKeepsTheCaretOnTheSameCharacterInEveryKindOfBlock`; `FormattingRuntimeTests.testSelectionTracksContentAcrossRepeatedModeChanges`.
+- **S-3** In source view every formatting command edits Markdown syntax (`flows/source-view.md`): inline styles wrap or unwrap delimiters, paragraph styles replace the line's marker, block insertions never split text. — `SourceFormatting`; `SourceFormattingTests` (all).
+- **S-4** Switching views is an undo step named `editor.undo.viewSource` / `editor.undo.viewPreview`; Undo returns to the previous view and text. — `MarkdownEditorTests.testSwitchingMarkdownViewsRetainsNativeUndoAcrossEdits`.
+- **S-5** Markdown typed in source that the preview can't show keeps source view: View Preview does nothing for it. — `MarkdownEditing.edit` (returns nil); *untested*.
+- **S-6** Pasting formatted text in source view inserts it as Markdown; emptying the source and typing stays in source view. — `EditorContentSafetyTests.testPastingRichTextInSourceViewKeepsTheMarkdown`.
+- **S-7** Images keep following the editor's width after switching views. — `EditorChangeTests.testImagesFollowTheEditorWidthAfterSwitchingViews`.
+
+## SP. Spelling and substitutions
+
+- **SP-1** In source view, in code blocks, in raw HTML blocks and in inline code (including the typing style right after it), smart quotes, smart dashes, autocorrection, text replacement, autocapitalization and spelling marks are off. — `NativeEditor.Coordinator.applySubstitutions`; `EditorChangeTests.testSubstitutionChoicesSurviveTheCaretMovingThroughCode` (Mac).
+- **SP-2** In prose they follow the person's own settings: on the computer the choices in Edit ▸ Spelling and Grammar and Edit ▸ Substitutions are restored when the caret leaves code; on the phone and tablet the system defaults with sentence capitalization. — same.
+
+## PA. Paste, drop and copy
+
+- **PA-1** Copy, Cut and drag within the journal carry the entry's own Markdown for the selection, so pasting into an entry keeps images (with their descriptions), lists, checklists, tables, quotes and formatting. — `JournalTextView.writeSelection`/`pasteboardItem`, `NativeEditor.Coordinator.markdown(for:)`; `EditorClipboardTests.testCopyAndPasteWithinTheJournalKeepImagesListsAndTables`.
+- **PA-2** Text copied from within one paragraph is pasted as text that joins the paragraph it lands in; a multi-line selection that starts inside an item copies that first line as plain text. — `markdown(for:)`; `EditorClipboardTests.testTextCopiedWithinAParagraphJoinsTheParagraphItIsPastedInto`.
+- **PA-3** Other apps receive lists with their markers and a tab (“☐\t”, “☑\t”, “•\t”, “n.\t”) inside real text lists, plain text without object-replacement characters, and a table's Markdown as its plain text. — `RichText.otherAppsText`, `tableSelectionMarkdown`; `ListItemEditingTests.testOtherAppsGetListsWithTheirMarkers`; `TableEditorTests.testNativeTableCellsShareBodyUndoAndSurviveSourceSwitch`.
+- **PA-4** Formatted text from another app becomes the entry's own blocks: headings (paragraphs of up to 100 characters whose smallest font is at least 1.12× the size most of the text uses: ≥1.75 → Heading 1, ≥1.35 → Heading 2, else Heading 3), bulleted, numbered and nested lists, checklists, code (text entirely in a monospaced font), tables (computer), bold, italic, underline (not a link's), strikethrough, inline code and web or email links. Fonts, sizes, colours, highlights and spacing lines are left out; links to anything but web or email addresses keep only their text. — `PastedRichText`; `EditorClipboardTests.testFormattedTextFromAnotherAppKeepsItsBlocksAndLinksWithoutUnderline`; `PasteCorpusTests.testTextFromCommonAppsBecomesCleanEntryBlocks`, `testLinksAndInlineCodeFromAWebPage`.
+- **PA-5** Pasting a web page loads nothing it refers to; if anything loadable would remain, its plain text is pasted instead. — `PastedRichText.pageWithoutResources`; `PasteCorpusTests.testPastingAWebPageLoadsNothingItRefersTo`.
+- **PA-6** The first pasted paragraph joins the paragraph at the caret; the rest of that paragraph follows the pasted text on its own line when the copied text ended with a line break, otherwise it continues the last pasted line. Pasting never leaves an empty line behind; a single line pasted on an empty line (a template's answer line) fills it. The caret ends after the pasted text, scrolled into view; one Undo restores the entry and caret. — `NativeEditor.Coordinator.insert(_ fragment:)`; `PasteCorpusTests.testPastingIntoAnEntryKeepsWhatWasAroundItAndUndoRestoresIt`; `EditorClipboardTests.testALinePastedOnAnEmptyAnswerLineFillsIt`.
+- **PA-7** Plain text pasted into an item or quote: the first line joins it, each further line becomes the next item, and the rest of the item follows the last; an empty item stays an item and gains no empty line. — `pasteLines`; `ListItemEditingTests.testPastingIntoItemsKeepsThemItems`.
+- **PA-8** Anything pasted into a code block becomes code text in that block. — `insert(_ fragment:)`; *untested*.
+- **PA-9** Text joining a heading takes the heading's size and kind; pasted text always takes the editor's fonts and colours and keeps bold, italic, underline, strikethrough and links. — `InsertedText.adopt`; `PasteCorpusTests.testTextPastedIntoAHeadingTakesItsSize`; `EditorContentSafetyTests.testPastedTextTakesTheEditorsFontsAndColoursAndKeepsItsEmphasis`.
+- **PA-10** Plain text (including Markdown) is pasted as written, one paragraph per line, including empty lines; Markdown characters stay characters. Paste and Match Style pastes the plain text, whose lines continue the list they land in. — `PastedRichText.fragment(plain:)`; `PasteCorpusTests.testPasteAndMatchStylePastesThePlainText`.
+- **PA-11** Pasteboard choice: when the pasteboard has text (formatted or plain) as well as a picture, the text is pasted (word processors offer a picture of their text). A picture whose only text is its web address is pasted as the picture. Image files are pasted or dropped as the files they are, in order. — `PastedImages.images`; `EditorClipboardTests.testPasteboardChoiceKeepsDocumentTextAndOriginalPictures`.
+- **PA-12** Pictures copied together with text are imported first and arrive where they were, as the entry's own images, with no empty line beside them; one that can't be read is left out with its line. — `NativeEditor.Coordinator.paste`; `PasteCorpusTests.testPicturesCopiedWithTextArriveWhereTheyWere`; `EditorClipboardTests.testImagesPastedOrDroppedAsFormattedContentAreStoredAsJournalImages`.
+- **PA-13** Dropped journal content and picture files go where they are dropped (computer), in order; a drop never lands after the last item's own line break. — `JournalTextView.performDragOperation`, `characterIndexForInsertion`; `EditorClipboardTests.testDroppedJournalContentAndPictureFilesGoWhereTheyAreDropped` (Mac).
+- **PA-14** Another app gets a copy of what is dragged to it; only a drop within the journal moves it. — `JournalTextView.draggingSession(sourceOperationMaskFor:)`; *untested*.
+- **PA-15** A paste made while pictures import goes where it was made even if writing continued. — `TextRanges.insertionPoint`; `PasteCorpusTests.testPictureImportedAfterEditingEndsStillArrives`.
+
+## IM. Images in the text
+
+- **IM-1** An inserted image goes on a line of its own at the caret captured when Insert Image was chosen (a line break is added before it unless the caret is at a line's start), followed by a new line for the caret. An image placed on an empty line adds no blank paragraph; inserted in the middle of a paragraph, it splits it. — `NativeEditor.perform(.image)`; `EditorChangeTests.testAnImageOnAnEmptyLineAddsNoBlankParagraph`, `testAnImageLeavesAsMuchRoomBelowItAsAbove`.
+- **IM-2** Typing beside, after or around an image keeps exactly one reference to it, also when images arrive later. — `EditorContentSafetyTests.testTypingAfterAnInsertedImageKeepsTheTextAndASingleImage`, `testTypingBesideAnImageOnItsOwnLineKeepsTheTextAndASingleImage`.
+- **IM-3** An image that isn't available keeps its reference and description through edits around it. — `EditorTests.testUnavailableImageRetainsReferenceAndDescriptionWhenEditingSurroundingText`.
+- **IM-4** Text beside an attachment survives reading as its own paragraphs around the image. — `EditorTests.testTextBesideAnAttachmentSurvivesConversion`.
+- **IM-5** Removing a picture (Delete in its menu, or Cut): a picture on its own line goes with its line; at the end of the text the line break before it goes instead, so no empty line is left; a picture inside a line goes alone. One undo step named `editor.undo.deleteImage` (Cut: `editor.undo.cut`). — `ImageItem.deletionRange`; `ImageActionsTests.testWhatAPictureIsAndWhatDeletingItRemoves`, `testCutAndDeleteAreOneUndoStepAndAFailedReadChangesNothing`, `testDeleteIsOneUndoStepWhileReading`.
+- **IM-6** A picture's arrival (loading finished) keeps the visible text, the selection, the typing style and undo. — `ImageArrivalTests` (all); `ImageViewportTests.testImageArrivalAboveViewportKeepsVisibleTextAndSelection`.
+- **IM-7** Pictures are decoded at the size they're shown; an unchanged picture isn't decoded again when others arrive. — `EditorChangeTests.testPicturesAreDecodedAtTheirShownSizeAndKeptWhenOthersArrive`.
+- **IM-8** An image has as much room below it as above it. — `EditorChangeTests.testAnImageLeavesAsMuchRoomBelowItAsAbove`.
+- **IM-9** Images pasted, dropped or inserted after the person moved on still go where they were placed, and leave the person's caret, focus and scrolling where they are. — `formattingSession` (image exception); `EditorChangeTests.testImageThatFinishesImportingAfterMoreWritingIsStillInserted`; `SeveralImagesTests.testTypingElsewhereMeanwhileKeepsThePersonsCaret`.
+
+## U. Undo and redo
+
+- **U-1** Every change the editor makes itself (splitting and joining items, continuing a list, a final item's own line break, indenting, shortcuts, styles, insertions, pasting, deleting a picture, switching views) is one undo step that restores the text, the selection and the view exactly; Redo repeats it exactly. — `registerSnapshot`/`restore`; `ListItemEditingTests.testUndoAndRedoRestoreSplitAndJoinedItemsExactly`.
+- **U-2** Typing is grouped by the system as usual; the editor's own change within one key press is a separate step from the typing around it. — `beginOwnUndoStep`, `breakTypingUndo`; `MarkdownShortcutTests.testUndoAfterAShortcutGivesBackWhatWasTyped`.
+- **U-3** Undo keeps the last 100 steps. — `NativeEditor.Coordinator.limitUndo`; *untested*.
+- **U-4** Opening another entry clears undo; a formatting choice made for the previous entry can't act on the new one. — `EditorIsolationTests.testSwitchingEntriesClearsUndoAndRejectsPreviousFormattingSession`; `EntryActionTests.testFormattingSessionPreservesRangeAndCannotRetargetAnotherEntry`.
+- **U-5** A change from elsewhere replacing the text clears undo; zooming doesn't. — `EditorChangeTests.testChangeFromElsewhereReplacesTheTextAndItsUndo`, `testZoomKeepsTheSelectionAndUndo`.
+- **U-6** Undoing an entry-level step that shares the window's undo history (Pin Entry, Delete Entry, journal moves) leaves the entry scrolled where it is. — `TypingRoomTests.testUndoingSomethingElseLeavesTheEntryWhereItIs` (Mac).
+- **U-7** On the computer, after Undo or Redo the visible text and the saved entry are the same. — `NativeEditor.Coordinator.undoCompleted`; `MarkdownEditorTests.testSwitchingMarkdownViewsRetainsNativeUndoAcrossEdits`.
+- **U-8** Inserting several images from one choice is one undo step. — `SeveralImagesTests.testImagesArriveInTheChosenOrderAsOneUndoStepAndFailuresAreSaidOnce`.
+
+## X. Changes from elsewhere
+
+- **X-1** A change to the open entry from sync replaces the shown text; the selection stays where it still fits. — `NativeEditor.Coordinator.render`; `EditorChangeTests.testChangeFromElsewhereReplacesTheTextAndItsUndo`.
+- **X-2** While an input method composes, a change from elsewhere waits; when the composition ends both are kept, block by block. — `ExternalEdits.rebase`; `EditorChangeTests.testChangeFromElsewhereWaitsForTheCompositionAndKeepsBothEdits`.
+- **X-3** Rebasing keeps edits to different blocks from both sides; when both changed the same block this editor's version is kept and the other remains in history. — `ExternalEdits.rebase`; `EditorChangeTests.testRebaseKeepsEditsToDifferentBlocksAndThisEditorsVersionOfTheSameBlock`.
+- **X-4** An open entry follows another device's changes; typing over a change that arrived but wasn't shown keeps both versions as a conflict for review. — `StaleDraftTests.testAnOpenEntryFollowsOtherDevicesAndTypingOverAnUnseenChangeKeepsBoth`.
+- **X-5** Leaving an entry that another device wrote while it was open here, without typing, never overwrites or deletes the other device's version. — `StaleDraftTests.testAnEmptyNewEntryWrittenOnAnotherDeviceIsNotOverwrittenWhenLeft`.
+
+## V. Viewing and scrolling while writing
+
+- **V-1** Phone and tablet: the line being typed stays above the writing controls; typing at the bottom scrolls forward without jumps. — `SelectionReveal`; `TypingScrollTests.testTypingAtTheBottomScrollsForwardWithoutJumps`.
+- **V-2** Computer: two lines of room below the line being typed (at most a quarter of the editor's height), also after the editor's own edits; no empty space below the end when there is less room. — `EntryScrollView.typingRoom`; `TypingRoomTests` (all).
+- **V-3** The computer's find bar shows above the entry, never over its first line. — `TypingRoomTests.testTheFindBarDoesntCoverTheFirstLine`.
+- **V-4** After inserting an image the caret line ends up clear of the writing controls. — `ImageViewportTests.testCaretLineStaysClearOfTheWritingBarAfterInsertingAnImage`.
+- **V-5** Loading and unavailable image placeholders stay readable at the normal and largest text sizes; appearance changes keep the selection and undo; header growth or removal keeps the reading position. — `ImageViewportTests` (other tests).
+
+## Open questions
+
+Open questions about this file are collected in [open-questions.md](../open-questions.md).

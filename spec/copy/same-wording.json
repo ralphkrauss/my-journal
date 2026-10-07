@@ -1,0 +1,195 @@
+[
+  {
+    "keys": [
+      "common.alertTitle",
+      "editor.history.journalLabel",
+      "library.entryList.journalValue"
+    ],
+    "reason": "Title of the generic alert, caption of a menu, and an accessibility value are separate roles."
+  },
+  {
+    "keys": [
+      "editor.announce.checklist",
+      "library.menu.format.checklist"
+    ],
+    "reason": "Announcement and undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.announce.copied",
+      "settings.agents.copied"
+    ],
+    "reason": "VoiceOver announcement versus the Copy button's temporary title."
+  },
+  {
+    "keys": [
+      "editor.announce.heading",
+      "library.menu.format.heading"
+    ],
+    "reason": "Announcement and undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.announce.paragraph",
+      "editor.undo.paragraph",
+      "library.menu.format.paragraph"
+    ],
+    "reason": "Announcement, undo step name and menu item are separate roles."
+  },
+  {
+    "keys": [
+      "editor.image.accessibilityLabel",
+      "editor.image.fileName",
+      "editor.imageDescriptions.image"
+    ],
+    "reason": "Accessibility label, exported file name and sheet heading are separate roles."
+  },
+  {
+    "keys": [
+      "editor.image.cut",
+      "editor.undo.cut"
+    ],
+    "reason": "Menu item versus undo step name."
+  },
+  {
+    "keys": [
+      "editor.image.describeSpoken",
+      "editor.imageDescriptions.title"
+    ],
+    "reason": "VoiceOver action name versus sheet title."
+  },
+  {
+    "keys": [
+      "editor.image.unavailableAccessibility",
+      "messages.server.imageUnavailable"
+    ],
+    "reason": "Accessibility label versus a server error text that is never shown."
+  },
+  {
+    "keys": [
+      "editor.link.add",
+      "editor.link.title"
+    ],
+    "reason": "Button versus sheet title."
+  },
+  {
+    "keys": [
+      "editor.table.accessibilityLabel",
+      "library.menu.format.insert.table",
+      "library.menu.format.table"
+    ],
+    "reason": "Accessibility label; Insert item; Table submenu. Different commands."
+  },
+  {
+    "keys": [
+      "editor.title.accessibilityLabel",
+      "editor.title.placeholder"
+    ],
+    "reason": "Accessibility label versus placeholder."
+  },
+  {
+    "keys": [
+      "editor.undo.blockQuote",
+      "library.menu.format.blockQuote"
+    ],
+    "reason": "Undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.undo.codeBlock",
+      "library.menu.format.insert.codeBlock"
+    ],
+    "reason": "Undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.undo.decreaseIndent",
+      "library.menu.format.decreaseIndent"
+    ],
+    "reason": "Undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.undo.horizontalRule",
+      "library.menu.format.insert.horizontalRule"
+    ],
+    "reason": "Undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.undo.increaseIndent",
+      "library.menu.format.increaseIndent"
+    ],
+    "reason": "Undo step name versus menu item."
+  },
+  {
+    "keys": [
+      "editor.undo.viewPreview",
+      "library.menu.view.viewPreview"
+    ],
+    "reason": "Undo step name versus menu item and toolbar button."
+  },
+  {
+    "keys": [
+      "editor.undo.viewSource",
+      "library.menu.view.viewSource"
+    ],
+    "reason": "Undo step name versus menu item and toolbar button."
+  },
+  {
+    "keys": [
+      "library.app.name",
+      "library.welcome.title"
+    ],
+    "reason": "Window title versus first-launch screen title."
+  },
+  {
+    "keys": [
+      "library.entryActions.pin",
+      "library.entryActions.pinUndo"
+    ],
+    "reason": "Menu item versus undo action name."
+  },
+  {
+    "keys": [
+      "library.entryList.pinned",
+      "messages.announce.pinned"
+    ],
+    "reason": "Section header and accessibility value versus announcement."
+  },
+  {
+    "keys": [
+      "library.entryList.untitledEntry",
+      "library.menu.file.newEntry"
+    ],
+    "reason": "Placeholder title of an entry versus a command."
+  },
+  {
+    "keys": [
+      "library.newJournal.title",
+      "library.toolbar.newJournal"
+    ],
+    "reason": "Alert title versus toolbar button label."
+  },
+  {
+    "keys": [
+      "library.toolbar.settings",
+      "settings.title"
+    ],
+    "reason": "Toolbar label versus sheet title."
+  },
+  {
+    "keys": [
+      "settings.addDevice.add",
+      "settings.addDevice.title"
+    ],
+    "reason": "Button versus sheet title."
+  },
+  {
+    "keys": [
+      "settings.connect.protect.choice",
+      "settings.privacy.encryption.header"
+    ],
+    "reason": "Accessibility label versus section header."
+  }
+]

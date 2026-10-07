@@ -1,0 +1,1031 @@
+# Feature parity across platforms. One entry per feature id; every id used in the front matter of screens/ and flows/ is defined here.
+#
+# Fields of an entry:
+#   title                    one line saying what the feature is (double-quoted)
+#   specs                    spec files that define it (screens, flows, commands.md, messages.md)
+#   apple | windows | android   shipped, partial, planned, different-by-design, not-applicable
+#   <platform>-reason        required for different-by-design and not-applicable
+#   <platform>-notes         optional: where iPhone, iPad and Mac differ, or what a port must watch
+# "apple" covers iPhone, iPad and Mac; the notes say where they differ.
+# Removed features (export-entry, archive-entry) are kept as not-applicable on every platform so nobody rebuilds them.
+
+# ======================================================================
+# Library and navigation
+# ======================================================================
+
+launch-states:
+  title: "What the window shows at launch (opening, locked, welcome, recovery key, journals)"
+  specs: [screens/welcome.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+create-library:
+  title: "Start a Journal creates this device's library with one journal named Default and no templates"
+  specs: [flows/create-library.md, screens/welcome.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+encrypt-library:
+  title: "Protect a new library with a master password (Use Encryption)"
+  specs: [flows/create-library.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+continue-without-encryption:
+  title: "Create a library without encryption, with no master password"
+  specs: [flows/create-library.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+connect-from-welcome:
+  title: "Connect to a Server… on the welcome screen joins an existing library"
+  specs: [screens/welcome.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+import-archive-from-welcome:
+  title: "Import Archive… on the welcome screen starts from a backup"
+  specs: [screens/welcome.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Same file route as import-archive (D29, the review's draft default): the Open picker, a double-click through a `.journalarchive` association, and a dropped file; the Import archive task page."
+  android: planned
+
+three-column-layout:
+  title: "Journals sidebar, entry list and editor side by side on Mac and iPad"
+  specs: [screens/library-window.md]
+  apple: shipped
+  apple-notes: "Mac and iPad."
+  windows: planned
+  android: planned
+  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+
+stacked-navigation:
+  title: "Journals, list and entry as stacked pages on iPhone and in compact or accessibility-size layouts"
+  specs: [screens/library-window.md]
+  apple: shipped
+  apple-notes: "iPhone, and iPad in compact or accessibility-size layouts."
+  windows: planned
+  android: planned
+
+state-restoration:
+  title: "Reopen the last journal and entry at launch and after unlocking; per-window columns on the Mac"
+  specs: [screens/library-window.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+editor-only:
+  title: "Show Editor Only hides the sidebar and list together on the Mac (⇧⌘D)"
+  specs: [screens/entry-editor.md, screens/library-window.md]
+  apple: shipped
+  apple-notes: "Mac only."
+  windows: planned
+  android: planned
+  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+
+previous-next-entry:
+  title: "Open the item above or below in the list without showing it (⌥⌘↑, ⌥⌘↓, Mac)"
+  specs: [screens/entry-editor.md, screens/library-window.md]
+  apple: shipped
+  apple-notes: "Mac only."
+  windows: planned
+  android: planned
+  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+
+text-size:
+  title: "Zoom In, Zoom Out and Actual Size change the editor's text size"
+  specs: [screens/entry-editor.md, screens/library-window.md]
+  apple: shipped
+  apple-notes: "Mac and iPad with a keyboard (View menu); iPhone has no zoom commands."
+  windows: planned
+  android: planned
+  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+
+help-menu:
+  title: "Help menu links to the user guide, support, privacy policy, source code and the App Store review page"
+  specs: [screens/settings-about.md]
+  apple: shipped
+  apple-notes: "Mac and iPad with a hardware keyboard; iPhone and iPad also have the links in Settings ▸ About."
+  windows: planned
+  windows-notes: "Help menu with F1; About My Journal opens Settings ▸ About; Rate My Journal only in Store builds."
+  android: planned
+
+journals-sidebar:
+  title: "The list of All Entries, journals, Templates, Recently Deleted and Unavailable Journals, with counts"
+  specs: [screens/journals.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "NavigationView shell with the journals as a list in the pane and plain secondary-text counts (D38); a stacked list at small width."
+  android: planned
+
+all-entries:
+  title: "A collection showing every journal's entries together, with journal labels"
+  specs: [screens/entry-list.md, screens/journals.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+unavailable-journals:
+  title: "Unavailable Journals collection for entries whose journal is missing, newer, or has changes to review"
+  specs: [screens/unavailable-content.md, screens/entry-list.md, screens/journals.md, screens/recently-deleted.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+new-journal:
+  title: "Create a journal with a unique name"
+  specs: [screens/journals.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+rename-journal:
+  title: "Rename a journal, refusing a name another journal has"
+  specs: [screens/journals.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+journal-default-template:
+  title: "Choose the template New Entry uses in a journal"
+  specs: [flows/new-entry.md, screens/journals.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+merge-journal:
+  title: "Move every entry of a journal into another and move the emptied journal to Recently Deleted"
+  specs: [screens/journals.md, screens/merge-journal.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+delete-journal:
+  title: "Move a journal and its entries to Recently Deleted after a confirmation"
+  specs: [flows/delete-and-restore.md, screens/journals.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+reorder-journals:
+  title: "Arrange journals by dragging, edit mode or VoiceOver actions; the order syncs"
+  specs: [screens/journals.md]
+  apple: partial
+  apple-notes: "Dragging on every platform; the VoiceOver Move Up and Move Down actions exist on iPhone and iPad only."
+  windows: planned
+  windows-notes: "Drag in the navigation pane plus Move up and Move down items in the journal menu and Alt+Shift+Up and Down; no edit mode."
+  android: planned
+
+journal-version-history:
+  title: "Earlier versions of a journal's name and default template, put back only after a side-by-side comparison"
+  specs: [screens/journal-history.md, screens/journals.md, screens/recently-deleted.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+unique-journal-names:
+  title: "Journals in use never share a name; restores and syncs add a number"
+  specs: [screens/journals.md, screens/merge-journal.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+entry-list:
+  title: "A collection's entries, newest first, by month, with date, title and preview rows"
+  specs: [screens/entry-list.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+entry-actions:
+  title: "The entry's actions in its context menu and the Entry Actions menu"
+  specs: [screens/entry-editor.md, screens/entry-list.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+pin-entry:
+  title: "Pin entries to the top of their journal and All Entries"
+  specs: [screens/entry-editor.md, screens/entry-list.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+delete-entry:
+  title: "Move an entry or template to Recently Deleted at once, without confirmation"
+  specs: [flows/delete-and-restore.md, screens/entry-editor.md, screens/entry-list.md, screens/templates.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+undo-delete:
+  title: "Undo Delete Entry or Undo Delete Template brings the item back"
+  specs: [flows/delete-and-restore.md, screens/entry-list.md, screens/templates.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+change-entry-date:
+  title: "Change an entry's date, which sets where it's listed"
+  specs: [screens/change-date.md, screens/entry-editor.md, screens/entry-list.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+move-entry:
+  title: "File an entry in another journal"
+  specs: [screens/destination-journal.md, screens/entry-editor.md, screens/entry-list.md, screens/move-entry.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+save-as-template:
+  title: "Save an entry's text and formatting as a new template"
+  specs: [screens/entry-editor.md, screens/entry-list.md, screens/templates.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+templates-collection:
+  title: "A list of the library's templates, with New Entry In ▸ a journal"
+  specs: [screens/templates.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+new-entry:
+  title: "New Entry in the shown journal or the Default Journal, with the journal's default template"
+  specs: [flows/new-entry.md, screens/library-window.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+new-blank-entry:
+  title: "New Blank Entry ignores the default template (⇧⌘N)"
+  specs: [flows/new-entry.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+new-entry-from-template:
+  title: "Start an entry from a chosen template, in a chosen journal"
+  specs: [flows/new-entry.md, screens/template-chooser.md, screens/templates.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+template-chooser:
+  title: "A searchable, keyboard-friendly list of templates, with a Journal picker outside a journal"
+  specs: [screens/template-chooser.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+template-suggestion:
+  title: "“use a template” in an empty entry fills it from a template"
+  specs: [flows/new-entry.md, screens/entry-editor.md, screens/template-chooser.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+default-journal:
+  title: "The journal New Entry uses outside a journal (chosen in Settings, else the oldest)"
+  specs: [flows/new-entry.md, screens/settings-general.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+search-entries:
+  title: "Search the list on screen by title and text (⌥⌘F)"
+  specs: [screens/library-window.md, screens/search.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+search-all-entries:
+  title: "On iPhone, search every journal from the Journals screen"
+  specs: [screens/search.md]
+  apple: shipped
+  apple-notes: "iPhone only (the Journals screen)."
+  windows: planned
+  android: planned
+
+recently-deleted:
+  title: "Deleted journals, templates and entries stay until deleted permanently"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+restore-entry:
+  title: "Restore an entry or template from Recently Deleted"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md, screens/restore-journal.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+restore-and-move:
+  title: "Restore an entry from Recently Deleted into a chosen journal"
+  specs: [flows/delete-and-restore.md, screens/move-entry.md, screens/recently-deleted.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+restore-journal:
+  title: "Restore a deleted journal with the entries deleted with it"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md, screens/restore-journal.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+delete-permanently:
+  title: "Delete one item from Recently Deleted for good, after a confirmation"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+delete-all-deleted:
+  title: "Delete everything in Recently Deleted that can be deleted, after one confirmation"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+# ======================================================================
+# Entry editor
+# ======================================================================
+
+entry-title:
+  title: "A large title above the body that wraps, keeps pasted line breaks, and moves to the body on Return"
+  specs: [screens/entry-editor.md, flows/editing-rules.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+entry-body:
+  title: "Rich text body stored as Markdown, keeping untouched Markdown byte for byte"
+  specs: [screens/entry-editor.md, flows/editing-rules.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "The control and the Markdown round trip depend on the editor spike (D30, D31, D32)."
+  android: planned
+
+autosave:
+  title: "Every change is saved on this device as it happens, quietly; leaving, locking and quitting finish the save first"
+  specs: [flows/save-entry.md, flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  apple-notes: "Mac also waits up to 3 seconds for sync when quitting."
+  windows: planned
+  android: planned
+
+writing-controls:
+  title: "Formatting, Insert Image and View Source in a floating bar while reading and above the keyboard while writing, with a Done checkmark"
+  specs: [screens/entry-editor.md]
+  apple: different-by-design
+  apple-reason: "iPhone and iPad only; the Mac has the same controls in the window toolbar and menus."
+  windows: planned
+  windows-notes: "Desktop pattern (a toggleable formatting bar under the editor header, a selection mini-toolbar and menus) as in Notepad and Word; no floating bar and no Done (D20)."
+  android: planned
+
+format-panel:
+  title: "One Formatting surface with inline styles, paragraph styles, lists, indentation and Insert, opening and closing without animation"
+  specs: [screens/format-sheet.md]
+  apple: shipped
+  apple-notes: "Mac and iPad (regular width) show a popover; iPhone (and iPad compact or at accessibility sizes) a panel in place of the keyboard."
+  windows: planned
+  android: planned
+
+inline-formatting:
+  title: "Bold, Italic, Underline, Strikethrough and Inline Code, with On, Off and Mixed states"
+  specs: [screens/format-sheet.md, flows/editing-rules.md, commands.md#editor, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+paragraph-styles:
+  title: "Paragraph and Heading 1–6 for the paragraphs a selection touches"
+  specs: [screens/format-sheet.md, flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+lists:
+  title: "Bulleted and numbered lists with drawn markers, an 18-point inset, Return to continue and to leave, and Backspace to remove a level"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+checklists:
+  title: "Checklist items with native checkboxes, Mark as Checked / Unchecked, stored as GitHub task lists"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  apple-notes: "Mac uses the system checkbox control; iPhone and iPad a square symbol with a 44-point touch area."
+  windows: planned
+  android: planned
+
+list-indentation:
+  title: "Increase and Decrease Indent (and Tab, Shift-Tab) that nest list items as Markdown reads them back"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+block-quotes:
+  title: "Block quotes with a quote bar, including nested quotes and lists in quotes"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+code-blocks:
+  title: "Code blocks and inline code that stay literal, with Exit Code Block and tab indentation"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+horizontal-rules:
+  title: "Horizontal rules from Insert or by typing --- and Return"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+tables:
+  title: "Markdown tables edited cell by cell, with rows, columns, alignment and one undo step per cell's typing"
+  specs: [flows/edit-table.md, flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  apple-notes: "Only the Mac has Format ▸ Table; all platforms have the cell's menu."
+  windows: planned
+  windows-notes: "Depends on the editor control spike (D30); tables may need a read-only grid edited through source view, or be held on Windows (D33)."
+  android: planned
+
+links:
+  title: "Add Link for web and email addresses, completing addresses typed without a scheme"
+  specs: [screens/link-editor.md, flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+inert-links:
+  title: "Links to anything but web or email addresses are shown as text and kept unchanged"
+  specs: [flows/editing-rules.md, screens/entry-editor.md, screens/link-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+source-view:
+  title: "View Source and View Preview switch the whole entry between its Markdown and the formatted view, keeping the caret"
+  specs: [flows/source-view.md, flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+source-only-entry:
+  title: "Markdown the preview can't show opens in source view only, with a note"
+  specs: [flows/source-view.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+insert-image:
+  title: "Insert one or several images in the order chosen, with progress, Stop, one undo step and location removed"
+  specs: [flows/insert-image.md, flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
+  apple: shipped
+  apple-notes: "Mac uses the open panel; iPhone and iPad a menu with Photo Library, Take Photo and Choose File…."
+  windows: planned
+  android: planned
+
+insert-image-camera:
+  title: "Take Photo inserts a photo from the camera"
+  specs: [flows/insert-image.md]
+  apple: different-by-design
+  apple-reason: "iPhone and iPad only, and only with a usable camera; Macs pick files."
+  windows: planned
+  windows-notes: "Mapping proposes different-by-design (D24): no Take Photo and no Photo Library in version 1; images arrive by file picker, paste, drag and drop and the Snipping Tool. Only where a camera capture UI is conventional (tablets) would a later version add one."
+  android: planned
+
+paste-and-drop:
+  title: "Pasting and dropping keep the journal's own content exactly and turn other apps' text and pictures into clean entry blocks"
+  specs: [flows/editing-rules.md, flows/insert-image.md, screens/entry-editor.md]
+  apple: shipped
+  apple-notes: "Dropping into the text is specified for the Mac; iPhone and iPad use the system's text drop."
+  windows: planned
+  android: planned
+
+copy-to-other-apps:
+  title: "Copy gives other apps lists with their markers, plain text without picture characters and tables as Markdown"
+  specs: [flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+image-actions:
+  title: "A picture's menu to copy, share, save, describe or delete it, handing over the original file"
+  specs: [flows/image-actions.md, flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  apple-notes: "Mac adds Cut and Paste and offers Save Image As…; iPhone and iPad offer Save to Photos."
+  windows: planned
+  android: planned
+
+image-descriptions:
+  title: "Write one-line descriptions for an entry's images for VoiceOver, kept as Markdown alt text"
+  specs: [screens/image-description.md, flows/image-actions.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+image-placeholders:
+  title: "Loading, unavailable and remote images show a readable placeholder and keep their reference"
+  specs: [flows/insert-image.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+undo-redo:
+  title: "Undo and Redo restore every editor change exactly, with named steps, up to 100 steps per entry visit"
+  specs: [flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "App-owned undo stack if the spike confirms it; the Edit menu says plain Undo and Redo and the step names are used only for announcements (D31)."
+  android: planned
+
+find-in-entry:
+  title: "Find (and replace) within the open entry"
+  specs: [commands.md#editor, screens/entry-editor.md]
+  apple: shipped
+  apple-notes: "Mac Edit ▸ Find with the find bar; iPhone and iPad Find in Entry and the system find navigator."
+  windows: planned
+  windows-notes: "The app draws its own find bar (Ctrl+F, Ctrl+H, F3); Windows has no system one (D37)."
+  android: planned
+
+spelling-and-substitutions:
+  title: "Prose follows the person's spelling and substitution settings; code and source stay literal"
+  specs: [flows/editing-rules.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "The Windows checker is control-wide; spelling marks cannot be switched off per range in code (D35). No substitutions or Writing Tools."
+  android: planned
+
+version-history:
+  title: "Earlier versions of an entry or template, newest first, with a read-only preview"
+  specs: [screens/version-history.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+restore-version:
+  title: "Restore a version as a new entry in a chosen journal, or as a new template, never changing the original"
+  specs: [screens/version-history.md, screens/destination-journal.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+export-entry:
+  title: "Export Entry (“Readable Document” or “Journal Entry”) for one entry"
+  specs: []
+  apple: not-applicable
+  apple-reason: "Removed by owner decision (owner-decisions-2026-09-25.md §2). Journals are exported whole with Export as Markdown or Export Archive."
+  windows: not-applicable
+  windows-reason: "Removed feature."
+  android: not-applicable
+  android-reason: "Removed feature."
+
+archive-entry:
+  title: "Archive and Unarchive an entry, and the Archived collection"
+  specs: []
+  apple: not-applicable
+  apple-reason: "Removed by owner decision (owner-decisions-2026-09-25.md §1); Delete moves entries to Recently Deleted. The stored field is kept for compatibility (protocol/entry-archiving.md)."
+  windows: not-applicable
+  windows-reason: "Removed feature."
+  android: not-applicable
+  android-reason: "Removed feature."
+
+# ======================================================================
+# Messages and cross-cutting states
+# ======================================================================
+
+sync-health:
+  title: "Every sync failure classified into one state with one message and at most one action; automatic retries stop where they can't help"
+  specs: [flows/sync-recovery.md, messages.md, screens/sync-status.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+sync-recovery:
+  title: "Guided recovery actions (Set Up Server Again…, Connect Again…, Sign In…, Check Again) with lineage deciding join or merge"
+  specs: [flows/sync-recovery.md, flows/reconnect-to-server.md, screens/connect-to-server.md, screens/settings-privacy.md, screens/settings-sync.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+sync-network-return:
+  title: "Retry at once when the network returns; offline and unreachable stay quiet"
+  specs: [flows/sync-recovery.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+sync-item-refusal:
+  title: "A record or image the server refuses is kept on the device with its own message while the rest syncs"
+  specs: [flows/sync-recovery.md, screens/sync-status.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+sync-status:
+  title: "Sync Status control, shown only when the person must act or after a long wait, without moving other controls"
+  specs: [screens/sync-status.md, flows/sync-recovery.md]
+  apple: shipped
+  apple-notes: "Mac toolbar button in a reserved place; iPhone and iPad submenu at the end of the entry's More menu."
+  windows: planned
+  windows-notes: "Mapping puts the button in the title bar's trailing area at every width, so it is reachable from every page (D47)."
+  android: planned
+
+save-failure-recovery:
+  title: "A failed local save keeps the writing, explains once, and offers Try Again next to the entry"
+  specs: [flows/save-failure.md, flows/save-entry.md, screens/entry-editor.md]
+  apple: shipped
+  apple-notes: "Mac also blocks closing the window and quitting until the writing is saved."
+  windows: planned
+  windows-notes: "While typing, only the persistent bar and one Narrator notification; the alert dialog is kept for failures that follow a deliberate action (D48)."
+  android: planned
+
+writing-paused-notice:
+  title: "Explains in the journal window why writing is paused while the library is replaced from Settings"
+  specs: [flows/save-failure.md, screens/entry-editor.md]
+  apple: different-by-design
+  apple-reason: "Mac only. On iPhone and iPad the connection and encryption sheets cover the app, so nothing behind them needs explaining."
+  windows: planned
+  windows-notes: "Needed wherever the connection or encryption flow runs in a separate window from the journals. Mapping: an Informational bar without the Show Connection and Show Progress actions, because the flow is a modal task page over the only window (strings kept in the catalog; see B30)."
+  android: not-applicable
+  android-reason: "The flows cover the app as on iPhone."
+
+generic-error-alert:
+  title: "One alert per window for model errors that have no place of their own; the lock screen shows them while locked"
+  specs: [messages.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "One dialog at a time through a queue; no dialog title; a dialog never opens another dialog."
+  android: planned
+
+conflict-notice:
+  title: "Entries and templates with changes to review are marked in the list and show a notice with Review Changes"
+  specs: [screens/conflict-review.md, flows/resolve-conflict.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+changes-to-review-list:
+  title: "Settings ▸ Sync lists every record with changes to review, including journals and deleted records"
+  specs: [screens/conflict-review.md, flows/resolve-conflict.md, screens/settings-sync.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+conflict-review-entry:
+  title: "Compare This Device and Other Device for an entry or template; Keep Both or keep one version"
+  specs: [screens/entry-conflict.md, flows/resolve-conflict.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "A page, not a sheet, with one version at a time at every width as in the spec; side by side is deferred (D50)."
+  android: planned
+
+conflict-review-journal:
+  title: "Compare and keep one version of a journal's name, default template and location"
+  specs: [screens/conflict-review.md, flows/resolve-conflict.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "A page; the entry point is an attention dot on the journal's navigation row and Review changes in the journal menus, because Windows has no journal settings surface (D52)."
+  android: planned
+
+conflict-review-deletion:
+  title: "Resolve an edit against a permanent deletion (keep, keep as copy, or keep the deletion)"
+  specs: [screens/conflict-review.md, flows/resolve-conflict.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+conflict-review-unsupported:
+  title: "Changes with content from a newer version can't be resolved; update or export an archive"
+  specs: [screens/conflict-review.md, flows/resolve-conflict.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+library-open-failure:
+  title: "Missing device key, newer library or unreadable library at launch, explained on the lock screen without writing anything"
+  specs: [screens/unavailable-content.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+read-only-newer-content:
+  title: "Content from a newer version is kept as is and shown read-only with an update note"
+  specs: [screens/unavailable-content.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+privacy-cover:
+  title: "While App Lock is on, a cover hides content whenever the app isn't active, labelled only while locked"
+  specs: [screens/unavailable-content.md, screens/lock-screen.md]
+  apple: shipped
+  apple-notes: "iPhone and iPad cover every window including sheets and alerts; the Mac covers the journal window's content."
+  windows: planned
+  windows-notes: "Mapping proposes no cover on Windows (D28): windows lose focus all day and sit side by side, and Windows has no app-switcher snapshot. App lock and capture exclusion (a Settings switch, on by default pending an accessibility spike) protect instead."
+  android: planned
+
+accessibility-announcements:
+  title: "VoiceOver announcements for the results of actions the person started (sync, pin, journal order, encryption)"
+  specs: [messages.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+# ======================================================================
+# Settings, connections, security and data
+# ======================================================================
+
+settings:
+  title: "Settings with six panes (Writing/General, Sync, Devices, Privacy, Backup, Agent Access); a sheet on phones and tablets, a tabbed window on computers"
+  specs: [screens/settings.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Mapping proposes different-by-design (D26): Settings is a page in the main window with a breadcrumb and a back button, About on its home page, General instead of Writing, no Done button."
+  android: planned
+
+markdown-as-you-type:
+  title: "Format Markdown as You Type switch (per device, on by default)"
+  specs: [screens/settings-general.md, flows/editing-rules.md, flows/markdown-as-you-type.md, screens/entry-editor.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Text that arrives without key presses (voice typing, handwriting, emoji panel) converts only a single space after a marker (D40)."
+  android: planned
+
+sync-connect:
+  title: "Connect to a Server sheet — choose a server, then set it up or add this device step by step"
+  specs: [screens/connect-to-server.md, flows/connect-to-server.md, screens/settings-sync.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+server-discovery:
+  title: "Servers on This Network — HTTPS servers announced on the local network (_myjournal._tcp) listed as suggestions"
+  specs: [screens/connect-to-server.md, flows/connect-to-server.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "DNS-SD discovery without any permission prompt; the Local Network strings are not shown."
+  android: planned
+
+server-setup:
+  title: "Set up a new server with its 6-character setup code, from a new device (Protect Your Journals) or one with journals"
+  specs: [flows/connect-to-server.md, screens/connect-to-server.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+join-with-local-journals:
+  title: "Merge Journals — a device with journals agrees before anything is sent; same-name journals combine; retries never duplicate"
+  specs: [flows/connect-to-server.md, screens/connect-to-server.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+pair-device-scan:
+  title: "A new device scans the QR code a connected device shows (no check code to compare)"
+  specs: [flows/pair-device.md, screens/add-device.md, screens/scan-code.md, flows/connect-to-server.md, screens/connect-to-server.md]
+  apple: shipped
+  apple-notes: "iPhone and iPad scan; the Mac only shows codes (it has no camera scanning)."
+  windows: planned
+  windows-notes: "Mapping proposes different-by-design (D24): a PC never scans; it always shows the QR code and offers Enter code instead. The scanning screen is not offered in version 1; a later camera dialog only where a camera is present."
+  android: planned
+
+pair-device-code:
+  title: "A connected device types the new device's 9-digit code; both compare a 6-digit check code before connecting"
+  specs: [flows/pair-device.md, screens/add-device.md, screens/connect-to-server.md, flows/connect-to-server.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+recovery-code-join:
+  title: "Join a server without encryption with a one-time recovery code from its administrator"
+  specs: [flows/connect-to-server.md, screens/connect-to-server.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+sync-now:
+  title: "Settings ▸ Sync shows Last Synced and Not on Server Yet, and one action for the current state (Sync Now, Try Again, Check Again, or a reconnect)"
+  specs: [screens/settings-sync.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+sync-status-footer:
+  title: "Settings ▸ Sync footer explains the state, where journals are, and how to set up a server"
+  specs: [screens/settings-sync.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Mapping proposes a non-closable bar at the severity of messages, with the state's action inside it; the not-connected text and the library notes are the card's description (D49)."
+  android: planned
+
+stop-syncing:
+  title: "Stop Syncing… keeps everything on the device and gives up its access on the server"
+  specs: [flows/stop-syncing.md, screens/settings-sync.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+former-mac-server-notice:
+  title: "A Mac that synced through the server earlier Mac builds ran stops syncing once and explains it in Settings ▸ Sync"
+  specs: [flows/stop-syncing.md, screens/settings-sync.md]
+  apple: shipped
+  apple-notes: "Mac only."
+  windows: not-applicable
+  windows-reason: "Windows never had a bundled server."
+  android: not-applicable
+  android-reason: "Android never had a bundled server."
+
+devices-list:
+  title: "Settings ▸ Devices lists the devices with access and how and when each was added"
+  specs: [screens/settings-devices.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+revoke-device:
+  title: "Revoke another device's access after a confirmation"
+  specs: [screens/settings-devices.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+add-device:
+  title: "Add Device — show a QR code or enter a new device's code, then approve with the device owner's authentication"
+  specs: [screens/add-device.md, flows/pair-device.md, screens/settings-devices.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+encryption-status:
+  title: "Settings ▸ Privacy says whether the journals are encrypted and offers the next step"
+  specs: [screens/settings-privacy.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+turn-on-encryption:
+  title: "Turn On Encryption for journals without it, on this device and its server, keeping every identity"
+  specs: [screens/turn-on-encryption.md, flows/turn-on-encryption.md, screens/settings-privacy.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+change-password:
+  title: "Change the master password on the server and this device without re-encrypting"
+  specs: [screens/change-password.md, flows/change-password.md, screens/settings-privacy.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+password-check:
+  title: "One-time check, before the first archive export, that the master password is the saved one (Not Now continues)"
+  specs: [screens/password-check.md, flows/export-archive.md, screens/settings-backup.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+forgot-password:
+  title: "Set a new master password without the old one, for journals only on this device, after the device owner authenticates"
+  specs: [screens/password-check.md, flows/forgot-password.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+legacy-recovery-key:
+  title: "Keep Your Recovery Key — early libraries confirm their generated recovery key before the journals show"
+  specs: [screens/recovery-key.md]
+  apple: shipped
+  windows: not-applicable
+  windows-reason: "New libraries never have a generated recovery key; early libraries exist only on Apple devices."
+  android: not-applicable
+  android-reason: "New libraries never have a generated recovery key; early libraries exist only on Apple devices."
+
+app-lock:
+  title: "App Lock with the device's own authentication only; lock screen; turns itself off if the passcode is removed"
+  specs: [flows/app-lock.md, screens/lock-screen.md, screens/settings-privacy.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Mapping proposes a Windows difference (D25, D42): Windows Hello only (face, fingerprint or PIN) through the system prompt; Windows 11 (build 22000) is required; an account without Hello cannot turn App lock on, and an App lock that is on pauses with a visible bar when Hello cannot be used; there is no app PIN history to retire."
+  android: planned
+
+mac-inactivity-lock:
+  title: "Lock when inactive (5, 15, 30 minutes, 1 hour, Never) and on sleep, screen lock and user switching"
+  specs: [flows/app-lock.md, screens/settings-privacy.md]
+  apple: shipped
+  apple-notes: "Mac only; iPhone and iPad lock whenever the app leaves the screen."
+  windows: planned
+  windows-notes: "Applies on Windows (inactivity time, sleep and session lock); the feature id says Mac for historical reasons. Windows also locks on display off, the lid, sleep and a user switch (display and lid notifications, with a heartbeat only as a backstop)."
+  android: different-by-design
+  android-reason: "Locks whenever the app leaves the screen, as iPhone does."
+
+lock-now:
+  title: "Lock My Journal in Settings ▸ Privacy (and the Mac's application menu)"
+  specs: [screens/settings-privacy.md, flows/app-lock.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+missing-device-key-unlock:
+  title: "When the device key is unavailable, the journals open with their password or recovery key"
+  specs: [screens/lock-screen.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "A first-class path on Windows (restore, new PC, reinstall, password reset): the lock page opens straight in the password form (D25, D43)."
+  android: planned
+
+export-archive:
+  title: "Export Archive — one encrypted file with entries, images and history that can be imported later"
+  specs: [screens/settings-backup.md, flows/export-archive.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Mapping follows the one-file route (D29, the review's draft default, needing a protocol change): FileSavePicker with the suggested name. The folder route is the fallback."
+  android: planned
+
+import-archive:
+  title: "Import Archive — preview, then restore (no journals) or add as new journals (with journals)"
+  specs: [screens/archive-import.md, flows/import-archive.md, screens/settings-backup.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Mapping follows the one-file route (D29, the review's draft default): FileOpenPicker, a `.journalarchive` file association and a dropped file start the import. The folder route is the fallback, with a completeness check."
+  android: planned
+
+export-markdown:
+  title: "Export as Markdown — the journals and images as Markdown files in a folder (protocol/markdown-export.md)"
+  specs: [screens/settings-backup.md, flows/export-markdown.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Folder picker with Windows-safe file names; a short dialog before writing when the chosen folder is inside OneDrive (D46)."
+  android: planned
+
+erase-device:
+  title: "Erase Journals and Settings — removes this device's library, keys and settings after a warning matched to what would be lost"
+  specs: [screens/settings-erase.md, flows/erase.md, screens/settings-general.md, screens/settings.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "The warning dialog puts Export archive… first and as the default when journals would be lost (D44); Windows Hello when App lock is on."
+  android: planned
+
+agent-access:
+  title: "Agent Access — agents read chosen journals through the sync server's MCP address, read-only"
+  specs: [screens/settings-agent-access.md, flows/allow-agent.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+agent-requests:
+  title: "Agent requests appear in the app and are allowed with the two-digit number the agent's page shows"
+  specs: [screens/allow-agent.md, flows/allow-agent.md, screens/settings-agent-access.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+agent-detail:
+  title: "An agent's name, journals, access end, last use, recent activity and Revoke Access"
+  specs: [screens/agent-detail.md, screens/settings-agent-access.md]
+  apple: shipped
+  windows: planned
+  android: planned
+
+about-links:
+  title: "Settings ▸ About with Privacy Policy, Support, Source Code, Rate My Journal and the version"
+  specs: [screens/settings-about.md, screens/settings.md]
+  apple: shipped
+  apple-notes: "iPhone and iPad; the Mac has the same links in the Help menu."
+  windows: planned
+  android: planned
+
+rate-app:
+  title: "Rate My Journal opens the store's review page"
+  specs: [screens/settings-about.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Store builds only; the Help menu and Settings ▸ About carry the item."
+  android: planned
+
+rating-request:
+  title: "The platform's rating prompt, at a pause after editing, for store installs after a week and four writing days, at most once per version and every 120 days"
+  specs: [flows/rating-request.md]
+  apple: shipped
+  windows: planned
+  windows-notes: "Store-signed installs only; only a Succeeded or Canceled result counts as asked and a failed call is retried at a later pause (D53)."
+  android: planned
