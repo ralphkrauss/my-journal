@@ -25,9 +25,11 @@ trap 'rm -rf "$work/server"; rmdir "$work" 2>/dev/null || true' EXIT
 scripts/package-server.sh "$runtime" "$work/server"
 export JOURNAL_SERVER_EXECUTABLE="$work/server/Journal.Api"
 scripts/generate-apple.sh
+# The test host starts the server as a child process inside its sandbox, so only test builds may listen.
 xcodebuild -project apps/apple/Journal.xcodeproj -scheme JournalServerRecovery \
   -destination 'platform=macOS' -derivedDataPath artifacts/DerivedData \
   -resultBundlePath "$results/ServerRecovery.xcresult" \
-  -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- "$@" test
+  -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- \
+  JOURNAL_MAC_ENTITLEMENTS=Signing/JournalMac-Tests.entitlements "$@" test
 python3 scripts/verify-test-results.py "$results/ServerRecovery.xcresult"
 printf 'Server recovery results: %s\n' "$results/ServerRecovery.xcresult"

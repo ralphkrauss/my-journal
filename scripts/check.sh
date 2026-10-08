@@ -51,10 +51,12 @@ case "${1:-all}" in
     ;;
   mac)
     # Debug, explicitly: tests use loopback HTTP test servers, which only Debug builds accept. JOURNAL_DERIVED_DATA
-    # lets it build beside a lane that uses artifacts/DerivedData.
+    # lets it build beside a lane that uses artifacts/DerivedData. The test servers listen inside the app's sandbox,
+    # so the test host gets the test entitlements.
     xcodebuild -jobs 2 -project apps/apple/Journal.xcodeproj -scheme 'My Journal (Mac)' -configuration Debug \
       -destination 'platform=macOS' -derivedDataPath "${JOURNAL_DERIVED_DATA:-artifacts/DerivedData}" \
-      -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- test
+      -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- \
+      JOURNAL_MAC_ENTITLEMENTS=Signing/JournalMac-Tests.entitlements test
     ;;
   ios-build)
     # Only this Mac's simulator architecture, which the simulator test lanes build too. Building every architecture
