@@ -11,6 +11,7 @@ targets:
     deploymentTarget: "16.4"
     sources:
       - JournalScreenshots/iOS
+      - JournalScreenshots/Shared
       - JournalUITests/NavigationTestSupport.swift
       - JournalUITests/Waiting.swift
     dependencies:
@@ -22,7 +23,7 @@ targets:
     type: bundle.unit-test
     platform: macOS
     deploymentTarget: "14.0"
-    sources: [JournalScreenshots/Mac]
+    sources: [JournalScreenshots/Mac, JournalScreenshots/Shared]
     settings:
       base:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/My Journal.app/Contents/MacOS/My Journal"

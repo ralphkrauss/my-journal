@@ -1,0 +1,404 @@
+{
+  "corpusVersion" : 1,
+  "dates" : [
+    {
+      "day" : "2026-10-05",
+      "folderName" : "Journal Markdown 2026-10-05",
+      "instant" : "2026-10-05T05:12:00Z",
+      "offsetMinutes" : 120,
+      "timestamp" : "2026-10-05T07:12:00+02:00"
+    },
+    {
+      "day" : "2026-10-05",
+      "folderName" : "Journal Markdown 2026-10-05",
+      "instant" : "2026-10-04T22:30:00Z",
+      "offsetMinutes" : 120,
+      "timestamp" : "2026-10-05T00:30:00+02:00"
+    },
+    {
+      "day" : "2026-10-04",
+      "folderName" : "Journal Markdown 2026-10-04",
+      "instant" : "2026-10-04T22:30:00Z",
+      "offsetMinutes" : 0,
+      "timestamp" : "2026-10-04T22:30:00Z"
+    },
+    {
+      "day" : "2026-10-04",
+      "folderName" : "Journal Markdown 2026-10-04",
+      "instant" : "2026-10-05T01:00:00Z",
+      "offsetMinutes" : -300,
+      "timestamp" : "2026-10-04T20:00:00-05:00"
+    },
+    {
+      "day" : "2026-10-06",
+      "folderName" : "Journal Markdown 2026-10-06",
+      "instant" : "2026-10-05T20:00:00Z",
+      "offsetMinutes" : 330,
+      "timestamp" : "2026-10-06T01:30:00+05:30"
+    },
+    {
+      "day" : "2025-12-31",
+      "folderName" : "Journal Markdown 2025-12-31",
+      "instant" : "2026-01-01T00:00:00Z",
+      "offsetMinutes" : -570,
+      "timestamp" : "2025-12-31T14:30:00-09:30"
+    },
+    {
+      "day" : "2027-01-01",
+      "folderName" : "Journal Markdown 2027-01-01",
+      "instant" : "2026-12-31T23:59:59Z",
+      "offsetMinutes" : 840,
+      "timestamp" : "2027-01-01T13:59:59+14:00"
+    }
+  ],
+  "headingText" : [
+    {
+      "expected" : "Morning pages",
+      "input" : "Morning pages",
+      "note" : "Plain text is unchanged."
+    },
+    {
+      "expected" : "\\*Draft\\* \\#1 \\[x\\] \\<b\\> & co \\&amp; \\!\\[i\\]",
+      "input" : "*Draft* #1 [x] <b> & co &amp; ![i]",
+      "note" : "Formatting characters are escaped; & only before a letter or #; ! only before [."
+    },
+    {
+      "expected" : "1. Not a list",
+      "input" : "1. Not a list",
+      "note" : "A number and a dot are not escaped inside the line."
+    },
+    {
+      "expected" : "- Not a bullet",
+      "input" : "- Not a bullet",
+      "note" : "A hyphen is not escaped inside the line."
+    },
+    {
+      "expected" : "a\\_b \\~c\\~ \\`d\\` e\\|f \\\\g",
+      "input" : "a_b ~c~ `d` e|f \\g",
+      "note" : "Underscore, tilde, backtick, pipe and backslash."
+    },
+    {
+      "expected" : "Two lines",
+      "input" : "Two\nlines",
+      "note" : "Always one line."
+    },
+    {
+      "expected" : "Ends with \\#",
+      "input" : "Ends with #",
+      "note" : "A trailing hash."
+    }
+  ],
+  "purpose" : "Export as Markdown names and text escapes (protocol/markdown-export.md): safe names, numbering of names that compare equal, YAML strings, heading text, dates in the exporting device's offset. See README.md in this folder.",
+  "safeNames" : [
+    {
+      "expected" : "Morning pages",
+      "fallback" : "Untitled",
+      "input" : "Morning pages",
+      "note" : "Ordinary text is unchanged."
+    },
+    {
+      "expected" : "Work- Q4-Plans-",
+      "fallback" : "Untitled",
+      "input" : "Work: Q4/Plans?",
+      "note" : "Characters unsafe on Windows, macOS or Linux become hyphens."
+    },
+    {
+      "expected" : "-tag -draft- -1 - a-b",
+      "fallback" : "Untitled",
+      "input" : "#tag [draft] ^1 | a\\b",
+      "note" : "Characters Obsidian rejects, and a backslash."
+    },
+    {
+      "expected" : "-quoted- -b- -star-",
+      "fallback" : "Untitled",
+      "input" : "\"quoted\" <b> *star*",
+      "note" : "Quotes, angle brackets and an asterisk."
+    },
+    {
+      "expected" : "hidden",
+      "fallback" : "Untitled",
+      "input" : "..hidden.",
+      "note" : "Leading dots and trailing dots are trimmed."
+    },
+    {
+      "expected" : "spaced",
+      "fallback" : "Untitled",
+      "input" : "  spaced  ",
+      "note" : "Surrounding spaces are trimmed."
+    },
+    {
+      "expected" : "name",
+      "fallback" : "Untitled",
+      "input" : "name. . ",
+      "note" : "Trailing dots and spaces are trimmed, in any mix."
+    },
+    {
+      "expected" : "Untitled",
+      "fallback" : "Untitled",
+      "input" : "  \n ",
+      "note" : "Nothing left: the fallback."
+    },
+    {
+      "expected" : "Untitled Journal",
+      "fallback" : "Untitled Journal",
+      "input" : "",
+      "note" : "An empty name uses the fallback it is given."
+    },
+    {
+      "expected" : "Line one line two Tabbed",
+      "fallback" : "Untitled",
+      "input" : "Line one\nline two\tTabbed",
+      "note" : "Line breaks and tabs become spaces."
+    },
+    {
+      "expected" : "a-b-c",
+      "fallback" : "Untitled",
+      "input" : "a\u0007bc",
+      "note" : "Control characters become hyphens."
+    },
+    {
+      "expected" : "odd----",
+      "fallback" : "Untitled",
+      "input" : "odd￿￾🿿͸",
+      "note" : "Noncharacters and unassigned code points become hyphens."
+    },
+    {
+      "expected" : "gpj-.exe",
+      "fallback" : "Untitled",
+      "input" : "gpj‮.exe",
+      "note" : "A direction override could disguise the name."
+    },
+    {
+      "expected" : "a-b-",
+      "fallback" : "Untitled",
+      "input" : "a⁦b⁩",
+      "note" : "Direction isolates too."
+    },
+    {
+      "expected" : "CON-",
+      "fallback" : "Untitled",
+      "input" : "CON",
+      "note" : "A Windows device name gets a hyphen."
+    },
+    {
+      "expected" : "nul-",
+      "fallback" : "Untitled",
+      "input" : "nul",
+      "note" : "In any letter case."
+    },
+    {
+      "expected" : "Lpt9-",
+      "fallback" : "Untitled",
+      "input" : "Lpt9",
+      "note" : "LPT1 to LPT9."
+    },
+    {
+      "expected" : "COM¹-",
+      "fallback" : "Untitled",
+      "input" : "COM¹",
+      "note" : "And the superscript forms."
+    },
+    {
+      "expected" : "com1-.notes",
+      "fallback" : "Untitled",
+      "input" : "com1.notes",
+      "note" : "The part before the first dot is what Windows reads."
+    },
+    {
+      "expected" : "CON-.txt",
+      "fallback" : "Untitled",
+      "input" : "CON.txt",
+      "note" : "So CON.txt is a device too."
+    },
+    {
+      "expected" : "console",
+      "fallback" : "Untitled",
+      "input" : "console",
+      "note" : "A longer name that only starts with a device name is fine."
+    },
+    {
+      "expected" : "COM0",
+      "fallback" : "Untitled",
+      "input" : "COM0",
+      "note" : "COM0 is not reserved."
+    },
+    {
+      "expected" : "Café",
+      "fallback" : "Untitled",
+      "input" : "Café",
+      "note" : "Names are normalized to NFC."
+    },
+    {
+      "expected" : "Straße",
+      "fallback" : "Untitled",
+      "input" : "Straße",
+      "note" : "Case is kept; only comparison folds it."
+    },
+    {
+      "expected" : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "fallback" : "Untitled",
+      "input" : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note" : "At most 60 characters."
+    },
+    {
+      "expected" : "日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記",
+      "fallback" : "Untitled",
+      "input" : "日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記日記",
+      "note" : "Sixty characters would be 180 bytes; 120 bytes is the limit."
+    },
+    {
+      "expected" : "👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦",
+      "fallback" : "Untitled",
+      "input" : "👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦",
+      "note" : "Cut between whole characters, never inside one."
+    },
+    {
+      "expected" : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "fallback" : "Untitled",
+      "input" : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb . ",
+      "note" : "Trimmed again after the cut."
+    }
+  ],
+  "uniqueNames" : [
+    {
+      "claimed" : [
+        "Paris",
+        "Paris",
+        "Paris"
+      ],
+      "expected" : [
+        "Paris",
+        "Paris 2",
+        "Paris 3"
+      ],
+      "note" : "The same name three times."
+    },
+    {
+      "claimed" : [
+        "Trips",
+        "trips",
+        "TRIPS"
+      ],
+      "expected" : [
+        "Trips",
+        "trips 2",
+        "TRIPS 3"
+      ],
+      "note" : "Letter case is ignored."
+    },
+    {
+      "claimed" : [
+        "Straße",
+        "STRASSE",
+        "strasse"
+      ],
+      "expected" : [
+        "Straße",
+        "STRASSE 2",
+        "strasse 3"
+      ],
+      "note" : "Full case folding, as APFS does."
+    },
+    {
+      "claimed" : [
+        "ﬀ",
+        "FF"
+      ],
+      "expected" : [
+        "ﬀ",
+        "FF 2"
+      ],
+      "note" : "Ligatures fold too."
+    },
+    {
+      "claimed" : [
+        "ς",
+        "Σ"
+      ],
+      "expected" : [
+        "ς",
+        "Σ 2"
+      ],
+      "note" : "Final sigma."
+    },
+    {
+      "claimed" : [
+        "Café",
+        "Café"
+      ],
+      "expected" : [
+        "Café",
+        "Café 2"
+      ],
+      "note" : "Unicode form is ignored."
+    },
+    {
+      "claimed" : [
+        "Name",
+        "Name 2",
+        "Name"
+      ],
+      "expected" : [
+        "Name",
+        "Name 2",
+        "Name 3"
+      ],
+      "note" : "A number already taken is numbered again."
+    },
+    {
+      "claimed" : [
+        "Name 2",
+        "Name",
+        "Name"
+      ],
+      "expected" : [
+        "Name 2",
+        "Name",
+        "Name 3"
+      ],
+      "note" : "A numbered name that exists first."
+    }
+  ],
+  "yamlStrings" : [
+    {
+      "expected" : "\"Morning pages\"",
+      "input" : "Morning pages",
+      "note" : "Double-quoted."
+    },
+    {
+      "expected" : "\"A \\\"quote\\\" \\\\ and\\nnew\\tline\"",
+      "input" : "A \"quote\" \\ and\nnew\tline",
+      "note" : "Quote, backslash, line feed, tab."
+    },
+    {
+      "expected" : "\"cr\\rhere\"",
+      "input" : "cr\rhere",
+      "note" : "Carriage return."
+    },
+    {
+      "expected" : "\"bell\\u0007 and \\u0000\"",
+      "input" : "bell\u0007 and \u0000",
+      "note" : "Control characters as \\uXXXX."
+    },
+    {
+      "expected" : "\"x\\uFFFF\\U0010FFFF\"",
+      "input" : "x￿􏿿",
+      "note" : "Noncharacters: \\u above U+FFFF becomes \\U."
+    },
+    {
+      "expected" : "\"line\\u2028sep\\u2029para\\u0085next\"",
+      "input" : "line sep paranext",
+      "note" : "U+2028, U+2029 and U+0085."
+    },
+    {
+      "expected" : "\"Café 🌿 日記\"",
+      "input" : "Café 🌿 日記",
+      "note" : "Everything else is written as it is."
+    },
+    {
+      "expected" : "\"\"",
+      "input" : "",
+      "note" : "An empty string."
+    }
+  ]
+}

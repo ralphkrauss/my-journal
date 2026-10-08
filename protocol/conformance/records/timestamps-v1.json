@@ -1,0 +1,65 @@
+{
+  "corpusVersion" : 1,
+  "invalid" : [
+    "",
+    "not a timestamp",
+    "2026-05-20",
+    "2026-05-20T08:00:00",
+    "2026-05-20 08:00:00Z",
+    "2026-13-20T08:00:00Z",
+    "1779264000"
+  ],
+  "purpose" : "Timestamps (protocol/README.md, wire conventions): the instants a reader must accept, as whole epoch seconds rounded down, and texts it must refuse.",
+  "valid" : [
+    {
+      "epochSeconds" : 1789905600,
+      "note" : "UTC, whole seconds: what the Apple app writes",
+      "text" : "2026-09-20T12:00:00Z"
+    },
+    {
+      "epochSeconds" : 1789905600,
+      "note" : "A zero offset",
+      "text" : "2026-09-20T12:00:00+00:00"
+    },
+    {
+      "epochSeconds" : 1779264000,
+      "note" : "A positive offset",
+      "text" : "2026-05-20T09:00:00+01:00"
+    },
+    {
+      "epochSeconds" : 1779264000,
+      "note" : "A negative offset with minutes",
+      "text" : "2026-05-20T02:30:00-05:30"
+    },
+    {
+      "epochSeconds" : 1779264000,
+      "note" : "One fraction digit",
+      "text" : "2026-05-20T08:00:00.1Z"
+    },
+    {
+      "epochSeconds" : 1779264000,
+      "note" : "Milliseconds",
+      "text" : "2026-05-20T08:00:00.123Z"
+    },
+    {
+      "epochSeconds" : 1779264000,
+      "note" : "Seven fraction digits, the most readers accept",
+      "text" : "2026-05-20T08:00:00.1234567Z"
+    },
+    {
+      "epochSeconds" : 1779264000,
+      "note" : "A fraction and an offset: the instant keeps its whole second",
+      "text" : "2026-05-20T09:00:00.9234567+01:00"
+    },
+    {
+      "epochSeconds" : 1798761599,
+      "note" : "The last second of a year",
+      "text" : "2026-12-31T23:59:59Z"
+    },
+    {
+      "epochSeconds" : 1835395200,
+      "note" : "A leap day",
+      "text" : "2028-02-29T00:00:00Z"
+    }
+  ]
+}

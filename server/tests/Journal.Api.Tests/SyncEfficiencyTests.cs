@@ -65,11 +65,11 @@ public sealed class SyncEfficiencyTests
     private static async Task<string> ServerId(HttpClient client) =>
         (await client.GetFromJsonAsync<JsonElement>("/v1/status")).GetProperty("serverId").GetString()!;
 
-    // protocol/fixtures/sync-receipts-v1.json: the server writes a short receipt exactly as the public vector shows.
+    // protocol/conformance/sync/sync-receipts-v1.json: the server writes a short receipt exactly as the public vector shows.
     [Fact]
     public void ShortReceiptMatchesTheProtocolVector()
     {
-        using var corpus = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "sync-receipts-v1.json")));
+        using var corpus = ConformanceFiles.Json("sync/sync-receipts-v1.json");
         var full = corpus.RootElement.GetProperty("fullReceipt");
         var expected = corpus.RootElement.GetProperty("shortReceipt");
         var receipt = new ShortReceipt(

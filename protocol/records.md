@@ -1,6 +1,6 @@
 # Portable records
 
-A record is one journal, entry or template, or the library record, stored and synced as a UTF-8 JSON object. The same JSON is the plaintext of a sync payload, of a local database payload and of an archive. How it is encrypted, or base64-encoded in libraries without encryption, is in [README.md](README.md); [fixtures/encryption-v2.json](fixtures/README.md) has a complete current example.
+A record is one journal, entry or template, or the library record, stored and synced as a UTF-8 JSON object. The same JSON is the plaintext of a sync payload, of a local database payload and of an archive. How it is encrypted, or base64-encoded in libraries without encryption, is in [README.md](README.md); [conformance/crypto/encryption-v2.json](conformance/crypto/README.md) has a complete current example, and [conformance/records/](conformance/records/README.md) has records of every kind and the cases a reader must handle.
 
 ## Record fields
 
@@ -54,7 +54,7 @@ A newer app reads kept records again from their stored bytes. A client must not 
 
 ## The library record
 
-One record per library holds small arrangement values shared across the library: pinned entries and journal order (docs/design/pinned-entries.md, docs/design/journal-order.md). Records that hold content are unchanged. [fixtures/library-record-v1.json](fixtures/README.md) has an example sealed with the corpus key, and [fixtures/journal-ranks-v1.json](fixtures/README.md) the rank vectors.
+One record per library holds small arrangement values shared across the library: pinned entries and journal order (docs/design/pinned-entries.md, docs/design/journal-order.md). Records that hold content are unchanged. [conformance/records/library-record-v1.json](conformance/records/README.md) has an example sealed with the corpus key, and [conformance/records/journal-ranks-v1.json](conformance/records/README.md) the rank vectors.
 
 ```json
 {"id":"9F297F28-7D13-41B7-A7EA-83D06CAC6924","kind":"library","modifiedAt":"2026-10-03T12:00:00Z","title":"Pinned Entries and Journal Order","values":{"journal-rank/1b6f0e2a-4c8d-4e3f-a1b2-c3d4e5f60718":"Kf","pinned/2f1c7a54-8e0b-4d6a-9c3e-5b7d1f2a4c60":true},"version":1}

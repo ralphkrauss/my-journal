@@ -1,0 +1,184 @@
+{
+  "checkCodes" : [
+    {
+      "approverPublicKey" : "CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk=",
+      "checkCode" : "479111",
+      "commitment" : "2kHrWMfI9jssNr6LMzi1CnMfO8j59ftEu0NEGULOHFY=",
+      "devicePublicKey" : "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+      "pairingID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "shown" : "479 111"
+    },
+    {
+      "approverPublicKey" : "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "checkCode" : "491460",
+      "commitment" : "sHQasvMbaBkV8He1utTlymMzvfuH+TcjlYZd2i2B0SQ=",
+      "devicePublicKey" : "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "pairingID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "shown" : "491 460"
+    },
+    {
+      "approverPublicKey" : "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
+      "checkCode" : "931694",
+      "commitment" : "wvdivuWYxUdW4aZryr4TWtM5w6hUg+0jvEyQLBa1TmU=",
+      "devicePublicKey" : "//////////////////////////////////////////8=",
+      "pairingID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "shown" : "931 694"
+    },
+    {
+      "approverPublicKey" : "CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk=",
+      "checkCode" : "479111",
+      "commitment" : "2kHrWMfI9jssNr6LMzi1CnMfO8j59ftEu0NEGULOHFY=",
+      "devicePublicKey" : "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+      "pairingID" : "3F2504E0-4F89-41D3-9A0C-0305E82C3301",
+      "shown" : "479 111"
+    },
+    {
+      "approverPublicKey" : "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "checkCode" : "491460",
+      "commitment" : "sHQasvMbaBkV8He1utTlymMzvfuH+TcjlYZd2i2B0SQ=",
+      "devicePublicKey" : "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "pairingID" : "3F2504E0-4F89-41D3-9A0C-0305E82C3301",
+      "shown" : "491 460"
+    },
+    {
+      "approverPublicKey" : "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
+      "checkCode" : "931694",
+      "commitment" : "wvdivuWYxUdW4aZryr4TWtM5w6hUg+0jvEyQLBa1TmU=",
+      "devicePublicKey" : "//////////////////////////////////////////8=",
+      "pairingID" : "3F2504E0-4F89-41D3-9A0C-0305E82C3301",
+      "shown" : "931 694"
+    },
+    {
+      "approverPublicKey" : "CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk=",
+      "checkCode" : "065174",
+      "commitment" : "u9oVa+DDcTQHNSL7Ug3A1qgODr3IFBomaJ15R04mkHs=",
+      "devicePublicKey" : "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
+      "note" : "A code that starts with zeros keeps them.",
+      "pairingID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "shown" : "065 174"
+    }
+  ],
+  "corpusVersion" : 1,
+  "inviteProofs" : [
+    {
+      "approverKey" : "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=",
+      "commitment" : "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM=",
+      "deviceName" : "iPad",
+      "handle" : "AQEBAQEBAQEBAQEBAQEBAQ==",
+      "handleHex" : "01010101010101010101010101010101",
+      "message" : "am91cm5hbDp2MjpwYWlyaW5nLWludml0ZQABAQEBAQEBAQEBAQEBAQEBAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwAeaHR0cHM6Ly9qb3VybmFsLmV4YW1wbGUudHMubmV0AARpUGFk",
+      "name" : "protocol-readme",
+      "origin" : "https://journal.example.ts.net",
+      "proof" : "xVcRQajP8P9JRb9Q527FO/+5SpxXKy3XXhgAxdoRgvY=",
+      "secret" : "BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=",
+      "server" : "https://journal.example.ts.net",
+      "text" : "MYJOURNAL1.AQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBARodHRwczovL2pvdXJuYWwuZXhhbXBsZS50cy5uZXQ"
+    },
+    {
+      "approverKey" : "srKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrI=",
+      "commitment" : "w8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8M=",
+      "deviceName" : "Ralph’s Café 📱",
+      "handle" : "oaGhoaGhoaGhoaGhoaGhoQ==",
+      "handleHex" : "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+      "message" : "am91cm5hbDp2MjpwYWlyaW5nLWludml0ZQChoaGhoaGhoaGhoaGhoaGhsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDwwAjaHR0cHM6Ly9qb3VybmFsLmV4YW1wbGUudHMubmV0Ojg0NDMAFFJhbHBo4oCZcyBDYWbDqSDwn5Ox",
+      "name" : "non-ascii-name-and-port",
+      "origin" : "https://journal.example.ts.net:8443",
+      "proof" : "9P0dUDI/vHKaO6ZrSNpGsds81UAmFoJ2cO9oDl3SQdM=",
+      "secret" : "1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NQ=",
+      "server" : "https://Journal.Example.ts.net:8443/ignored/path",
+      "text" : "MYJOURNAL1.oaGhoaGhoaGhoaGhoaGhobKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NRodHRwczovL0pvdXJuYWwuRXhhbXBsZS50cy5uZXQ6ODQ0My9pZ25vcmVkL3BhdGg"
+    },
+    {
+      "approverKey" : "//////////////////////////////////////////8=",
+      "commitment" : "gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=",
+      "deviceName" : "X",
+      "handle" : "AAAAAAAAAAAAAAAAAAAAAA==",
+      "handleHex" : "00000000000000000000000000000000",
+      "message" : "am91cm5hbDp2MjpwYWlyaW5nLWludml0ZQAAAAAAAAAAAAAAAAAAAAAA//////////////////////////////////////////+AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgAAeaHR0cHM6Ly9qb3VybmFsLmV4YW1wbGUudHMubmV0AAFY",
+      "name" : "upper-case-scheme-and-default-port",
+      "origin" : "https://journal.example.ts.net",
+      "proof" : "lrfv4xCyrhxgQUcSBRsVOW7Os62kUrRAkHBcwPblifo=",
+      "secret" : "f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f38=",
+      "server" : "HTTPS://journal.example.ts.net:443",
+      "text" : "MYJOURNAL1.AAAAAAAAAAAAAAAAAAAAAP__________________________________________f39_f39_f39_f39_f39_f39_f39_f39_f39_f39_f39IVFRQUzovL2pvdXJuYWwuZXhhbXBsZS50cy5uZXQ6NDQz"
+    }
+  ],
+  "origins" : [
+    {
+      "address" : "https://journal.example.ts.net",
+      "origin" : "https://journal.example.ts.net"
+    },
+    {
+      "address" : "HTTPS://Journal.Example.ts.net:443/",
+      "origin" : "https://journal.example.ts.net"
+    },
+    {
+      "address" : "https://journal.example.ts.net:8443",
+      "origin" : "https://journal.example.ts.net:8443"
+    },
+    {
+      "address" : "https://journal.example.ts.net/path?query=1#fragment",
+      "origin" : "https://journal.example.ts.net"
+    },
+    {
+      "address" : "http://journal.example.ts.net",
+      "origin" : null
+    },
+    {
+      "address" : "https://user:password@journal.example.ts.net",
+      "origin" : null
+    },
+    {
+      "address" : "ftp://journal.example.ts.net",
+      "origin" : null
+    },
+    {
+      "address" : "journal.example.ts.net",
+      "origin" : null
+    },
+    {
+      "address" : "https://",
+      "origin" : null
+    },
+    {
+      "address" : "",
+      "origin" : null
+    }
+  ],
+  "purpose" : "Pairing (protocol/README.md): the invite proof and the text of an invite code, server origins as the proof binds them, and the six-digit check code. Keys of 0x07 and 0x09 are the protocol README's vector. All values are synthetic and public.",
+  "scannedTexts" : [
+    {
+      "result" : "notInvite",
+      "text" : "https://example.com"
+    },
+    {
+      "result" : "newerVersion",
+      "text" : "MYJOURNAL2.AAAA"
+    },
+    {
+      "result" : "notInvite",
+      "text" : "MYJOURNAL1."
+    },
+    {
+      "result" : "notInvite",
+      "text" : "MYJOURNAL1.!!!!"
+    },
+    {
+      "result" : "notInvite",
+      "text" : "MYJOURNAL.AAAA"
+    },
+    {
+      "result" : "notInvite",
+      "text" : "MYJOURNAL1.AQEBAQEBAQEBAQEBAQEBAQ"
+    },
+    {
+      "result" : "unreachableServer",
+      "text" : "MYJOURNAL1.AQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBARodHRwOi8vam91cm5hbC5leGFtcGxlLnRzLm5ldA"
+    },
+    {
+      "result" : "invite",
+      "server" : "https://journal.example.ts.net",
+      "text" : "MYJOURNAL1.AQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBARodHRwczovL2pvdXJuYWwuZXhhbXBsZS50cy5uZXQ"
+    }
+  ]
+}

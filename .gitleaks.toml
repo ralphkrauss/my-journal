@@ -8,9 +8,9 @@ paths = ['''(^|/)(\.git|\.build|artifacts|bin|obj|DerivedData|__pycache__)/''']
 
 [[allowlists]]
 targetRules = ["generic-api-key"]
-description = "Exact public synthetic keys in the version 1 compatibility corpus; see protocol/fixtures/README.md."
+description = "Exact public synthetic keys in the version 1 compatibility corpus; see protocol/conformance/README.md."
 condition = "AND"
-paths = ['''(^|/)protocol/fixtures/encryption-v1\.json$''']
+paths = ['''(^|/)protocol/conformance/crypto/encryption-v1\.json$''']
 regexTarget = "secret"
 regexes = [
   '''^9f15a4703fff17624dbc7dce7b4cdcd4d4abb8cd6299f305d79e171fb0f2137f$''',
@@ -20,9 +20,9 @@ regexes = [
 
 [[allowlists]]
 targetRules = ["generic-api-key"]
-description = "Exact public synthetic values in the recovery v2-v4, pairing and record compatibility corpus; see protocol/fixtures/README.md."
+description = "Exact public synthetic values in the recovery v2-v4, pairing and record compatibility corpus; see protocol/conformance/README.md."
 condition = "AND"
-paths = ['''(^|/)protocol/fixtures/encryption-v2\.json$''']
+paths = ['''(^|/)protocol/conformance/crypto/encryption-v2\.json$''']
 regexTarget = "secret"
 regexes = [
   '''^ICBjb3JyZWN0IGhvcnNlLCBjYWbDqSDwn4y/ICA=$''',
@@ -48,13 +48,24 @@ regexes = [
 
 [[allowlists]]
 targetRules = ["generic-api-key"]
-description = "Exact public synthetic keys in the agent access copy corpus; see protocol/fixtures/README.md."
+description = "Exact public synthetic keys in the agent access copy corpus; see protocol/conformance/README.md."
 condition = "AND"
-paths = ['''(^|/)protocol/fixtures/agent-copy-v1\.json$''']
+paths = ['''(^|/)protocol/conformance/agent-copy/agent-copy-v1\.json$''']
 regexTarget = "secret"
 regexes = [
   '''^3G\+jpA8Fl1tu\+CWhoF/BICs7OlYLfVlCm44Aw6los9o=$''',
   '''^G8HTpMzBm\+WkQB5zqOC2Sdh6bMD94mHiaM9LH9gaaFI=$''',
   '''^MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=$''',
   '''^REREREREREREREREO8fMCt88fikBTj\+kpkDDKlOBMkpBUwXBmVm31/QEo7uXb2kAIxn5CTi4SPsahMaQ$''',
+]
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Exact public synthetic key of the version 1 compatibility corpus, reused to seal the values that must be refused; see protocol/conformance/README.md."
+condition = "AND"
+paths = ['''(^|/)protocol/conformance/crypto/negative-v1\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=$''',
+  '''^//79/Pv6\+fj39vX08/Lx8O/u7ezr6uno5\+bl5OPi4eA=$''',
 ]

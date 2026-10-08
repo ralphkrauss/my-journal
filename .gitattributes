@@ -27,3 +27,6 @@ mise.lock linguist-generated=true
 
 # Design records are documentation, not source
 docs/design/** linguist-documentation=true
+
+# Conformance fixtures are exact bytes; never normalize their line endings.
+protocol/conformance/archive/** -text

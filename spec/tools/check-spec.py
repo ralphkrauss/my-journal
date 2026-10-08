@@ -9,22 +9,27 @@ Standard library only. Exit status 1 when there are errors; warnings never fail 
 Errors
   - copy/en.json (and copy/same-wording.json) don't parse, have duplicate or unsorted keys, or a bad entry shape (a text object is
     a plural one/other, or a variant: default plus at least one of mac, sentence, windows or android)
-  - parity.yaml doesn't parse or breaks the structure described in its header
+  - parity.yaml doesn't parse or breaks the structure described in its header (every entry needs `reference:` apple, windows or
+    android, and the reference platform must not be marked not-applicable or different-by-design unless the feature is removed)
   - a copy key referenced in a spec file doesn't exist in copy/en.json
   - a command id is defined twice in commands.md, or a Command column names an unknown id
   - a feature id in a screen or flow's front matter isn't in parity.yaml
   - a relative link, a screens/ or flows/ path, or a link anchor doesn't resolve
   - a screen, flow or messages.md front matter is missing, or its id doesn't match the file name
   - a spec file contains a home path, an e-mail address or a personal name
-  - a platform mapping (mappings/<platform>/) has a bad front matter (id, title, spec link, features, status), is missing a
-    required section, isn't in the platform's index.md, or the platform's commands.md doesn't cover every command id once;
-    shortcuts in that commands.md that the scope column says are app-wide or editor-wide must be unique
+  - a platform page (platforms/<platform>/screens, flows or messages.md) has a bad front matter (id, title, spec link, features,
+    status; for Apple also devices), is missing a required section, isn't in the platform's index.md, or the platform's
+    commands.md (every platform has one) doesn't cover every command id once;
+    where a platform's commands.md has Shortcut and Scope columns, app-wide or editor-wide shortcuts must be unique
+  - a screenshot a platform page lists under `screenshots:` doesn't exist, isn't named
+    screenshots/<device>/<page id>-<state>.png, uses a device the platform doesn't define, or is listed by two pages
 
 Warnings
   - copy keys that no spec file references
   - the same English text under different keys that copy/same-wording.json doesn't explain
   - features in parity.yaml that no screen, flow or messages.md lists (removed features excepted)
   - files named under `sources:` in a front matter that don't exist in the repository
+  - screenshot files in a platform's screenshots/ folder that no page of that platform lists
 """
 import json
 import re
@@ -42,17 +47,53 @@ AREAS = ("common", "library", "messages", "settings", "editor")
 PLURAL_SHAPE = {"one", "other"}
 VARIANT_NAMES = {"mac", "sentence", "windows", "android"}
 MAPPING_STATUSES = ("draft", "reviewed", "done")
-INDEX_STATUSES = ("todo",) + MAPPING_STATUSES
-# Sections every platform mapping of a screen, flow or messages.md has, in this order (matched by the start of the heading).
+# Sections every platform page of a screen, flow or messages.md has, in this order (matched by the start of the heading).
+# A platform may add others (Implementation, Screenshots); it may not leave these out.
 MAPPING_SECTIONS = (
     "Controls",
-    "Layout at each window width",
+    "Layout",
     "Commands and shortcuts",
     "Copy differences",
     "Accessibility",
     "Different by design",
     "Open questions",
 )
+# Apple's pages record how the shipped apps implement a page, so they say where iPhone, iPad and Mac differ, and list the
+# screenshots and the source files.
+APPLE_SECTIONS = (
+    "Controls",
+    "Layout",
+    "Commands and shortcuts",
+    "Copy differences",
+    "Accessibility",
+    "Differences between iPhone, iPad and Mac",
+    "Screenshots",
+    "Source files",
+    "Open questions",
+)
+APPLE_STATUSES = ("draft", "verified")
+APPLE_DEVICES = ("iphone", "ipad", "mac")
+
+
+class PlatformKind:
+    """What a platform folder under platforms/ must hold. Apple differs; every other platform follows the Windows folder."""
+
+    def __init__(self, sections, statuses, devices, required_files, needs_devices):
+        self.sections = sections
+        self.statuses = statuses
+        self.index_statuses = ("todo",) + statuses
+        self.devices = devices  # allowed screenshot device folders, or None for any kebab-case name
+        self.required_files = required_files
+        self.needs_devices = needs_devices
+
+
+APPLE_KIND = PlatformKind(
+    APPLE_SECTIONS, APPLE_STATUSES, APPLE_DEVICES, ("README.md", "platform.md", "commands.md", "index.md"), True
+)
+DEFAULT_KIND = PlatformKind(
+    MAPPING_SECTIONS, MAPPING_STATUSES, None, ("README.md", "platform.md", "commands.md", "index.md"), False
+)
+SCREENSHOT_NAME = re.compile(r"screenshots/([a-z0-9]+(?:-[a-z0-9]+)*)/([a-z0-9]+(?:-[a-z0-9]+)*)\.png")
 STATUSES = {"shipped", "partial", "planned", "different-by-design", "not-applicable"}
 PLATFORMS = ("apple", "windows", "android")
 # Kebab-case words in backticks that are neither commands, features nor pages (server capability names).
@@ -205,7 +246,7 @@ def load_parity():
     return data
 
 
-ALLOWED_FIELDS = {"title", "specs"} | {p for p in PLATFORMS} | {f"{p}-{s}" for p in PLATFORMS for s in ("reason", "notes")}
+ALLOWED_FIELDS = {"title", "specs", "reference"} | {p for p in PLATFORMS} | {f"{p}-{s}" for p in PLATFORMS for s in ("reason", "notes")}
 
 
 def check_parity_structure(parity):
@@ -227,14 +268,18 @@ def check_parity_structure(parity):
                 err(where, f"spec file {spec} doesn't exist")
             elif anchor and anchor not in anchors_of(path):
                 err(where, f"spec anchor {spec} doesn't exist")
+        reference = entry.get("reference")
+        if reference not in PLATFORMS:
+            err(where, f"reference must be one of {list(PLATFORMS)}, not {reference!r}")
+        removed = all(entry.get(p) == "not-applicable" for p in PLATFORMS)
+        if reference in PLATFORMS and not removed and entry.get(reference) == "not-applicable":
+            err(where, f"the reference platform {reference} can't be not-applicable; it is where the feature originates")
         for platform in PLATFORMS:
             status = entry.get(platform)
             if status not in STATUSES:
                 err(where, f"{platform}: status must be one of {sorted(STATUSES)}, not {status!r}")
             elif status in ("different-by-design", "not-applicable") and not entry.get(f"{platform}-reason"):
                 err(where, f"{platform}: {status} needs {platform}-reason")
-        if entry.get("windows") == "shipped" or entry.get("android") == "shipped":
-            pass  # allowed once a port ships
 
 
 # ---------------------------------------------------------------- Markdown helpers
@@ -279,9 +324,21 @@ def front_matter(text):
             fm[key] = k.group(1)
     f = re.search(r"^features:\s*\[(.*?)\]", block, re.M)
     fm["features"] = [s.strip() for s in f.group(1).split(",") if s.strip()] if f else None
-    s = re.search(r"^sources:\s*\n((?:[ \t]+- .*\n?)+)", block + "\n", re.M)
-    fm["sources"] = [re.sub(r"^\s+- ", "", line).strip() for line in s.group(1).splitlines()] if s else []
+    fm["sources"] = front_matter_list(block, "sources") or []
+    fm["screenshots"] = front_matter_list(block, "screenshots") or []
+    fm["devices"] = front_matter_list(block, "devices")
     return fm
+
+
+def front_matter_list(block, key):
+    """A list under `key:`, written inline (`key: [a, b]`) or as `- item` lines; None when the key is absent."""
+    inline = re.search(rf"^{key}:\s*\[(.*?)\]", block, re.M)
+    if inline:
+        return [s.strip() for s in inline.group(1).split(",") if s.strip()]
+    found = re.search(rf"^{key}:[ \t]*(?:#.*)?\n((?:[ \t]+- .*\n?)+)", block + "\n", re.M)
+    if found:
+        return [re.sub(r"\s+#.*$", "", re.sub(r"^\s+- ", "", line)).strip() for line in found.group(1).splitlines()]
+    return None
 
 
 # ---------------------------------------------------------------- Commands
@@ -372,8 +429,8 @@ def mapping_pages(platform_dir):
     return found
 
 
-def check_mapping_page(kind, page_id, path, pages, parity):
-    """Checks one mapping file's front matter and sections; returns its status (or None)."""
+def check_mapping_page(kind, page_id, path, pages, parity, platform, platform_kind, screenshot_owners):
+    """Checks one platform page's front matter and sections; returns its status (or None)."""
     where = rel(path)
     text = path.read_text(encoding="utf-8")
     fm = front_matter(text)
@@ -403,22 +460,69 @@ def check_mapping_page(kind, page_id, path, pages, parity):
             elif fid not in listed:
                 err(where, f"feature {fid} isn't listed by {expected}")
     status = fm.get("status")
-    if status not in MAPPING_STATUSES:
-        err(where, f"front matter status must be one of {list(MAPPING_STATUSES)}, not {status!r}")
+    if status not in platform_kind.statuses:
+        err(where, f"front matter status must be one of {list(platform_kind.statuses)}, not {status!r}")
+    if platform_kind.needs_devices:
+        devices = fm["devices"]
+        if not devices:
+            err(where, f"front matter has no devices list (any of {list(platform_kind.devices)})")
+        else:
+            for device in devices:
+                if device not in platform_kind.devices:
+                    err(where, f"device {device!r} must be one of {list(platform_kind.devices)}")
     for source in fm["sources"]:
         name = re.sub(r"\s*\(.*\)\s*$", "", source)
         if not source.startswith("https://") and not (REPO / name).exists():
             warn(where, f"source {source} doesn't exist in the repository")
+    for shot in fm["screenshots"]:
+        check_screenshot(where, page_id, shot, SPEC / "platforms" / platform, platform_kind, screenshot_owners)
     headings = level2_headings(text)
     position = 0
-    for section in MAPPING_SECTIONS:
+    for section in platform_kind.sections:
         for index in range(position, len(headings)):
             if headings[index].lower().startswith(section.lower()):
                 position = index + 1
                 break
         else:
             err(where, f"missing section ## {section}, or it is out of order")
+    if platform_kind is APPLE_KIND and status == "verified" and not fm["screenshots"]:
+        shots = section_text(text, "Screenshots")
+        if not shots.lower().startswith("none"):
+            err(where, "a verified page lists its screenshots in the front matter, or its Screenshots section starts with None and why")
     return status
+
+
+def section_text(text, heading):
+    """The text under the `## ` heading that starts with `heading`, up to the next `## ` heading."""
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("## ") and line[3:].strip().lower().startswith(heading.lower()):
+            body = []
+            for following in lines[index + 1 :]:
+                if following.startswith("## "):
+                    break
+                body.append(following)
+            return "\n".join(body).strip()
+    return ""
+
+
+def check_screenshot(where, page_id, shot, platform_dir, platform_kind, owners):
+    """A listed screenshot is screenshots/<device>/<page id>-<state>.png, exists, and belongs to one page."""
+    match = SCREENSHOT_NAME.fullmatch(shot)
+    if not match:
+        err(where, f"screenshot {shot!r} must be named screenshots/<device>/<page id>-<state>.png in lower-case kebab-case")
+        return
+    device, name = match.groups()
+    if platform_kind.devices is not None and device not in platform_kind.devices:
+        err(where, f"screenshot {shot}: device must be one of {list(platform_kind.devices)}")
+    if not name.startswith(page_id + "-"):
+        err(where, f"screenshot {shot}: the file name must start with the page id {page_id}- and end with the state")
+    if not (platform_dir / shot).is_file():
+        err(where, f"screenshot {shot} doesn't exist")
+    key = str(platform_dir / shot)
+    if key in owners and owners[key] != where:
+        err(where, f"screenshot {shot} is also listed by {owners[key]}")
+    owners[key] = where
 
 
 def check_mapping_commands(platform_dir, commands):
@@ -468,8 +572,8 @@ def check_mapping_commands(platform_dir, commands):
             )
 
 
-def check_mapping_index(platform_dir, pages, found):
-    """index.md lists every spec page once, with its mapping file and status."""
+def check_mapping_index(platform_dir, pages, found, platform_kind):
+    """index.md lists every spec page once, with its platform page and status (columns Spec, Kind, Mapping file or Page file, Status)."""
     path = platform_dir / "index.md"
     if not path.is_file():
         return
@@ -482,7 +586,7 @@ def check_mapping_index(platform_dir, pages, found):
         row = dict(zip(header, cells, strict=False))
         ids = re.findall(r"`([^`]+)`", row.get("Spec", ""))
         kind = row.get("Kind", "").strip()
-        names = re.findall(r"`([^`]+)`", row.get("Mapping file", ""))
+        names = re.findall(r"`([^`]+)`", row.get("Mapping file", row.get("Page file", "")))
         status = row.get("Status", "").strip()
         if len(ids) != 1 or kind not in files:
             err(where, "a row needs one spec id in backticks and a kind: screen, flow or messages")
@@ -496,8 +600,8 @@ def check_mapping_index(platform_dir, pages, found):
         listed[key] = number
         if names != [files[kind].format(ids[0])]:
             err(where, f"the mapping file must be {files[kind].format(ids[0])}")
-        if status not in INDEX_STATUSES:
-            err(where, f"status must be one of {list(INDEX_STATUSES)}, not {status!r}")
+        if status not in platform_kind.index_statuses:
+            err(where, f"status must be one of {list(platform_kind.index_statuses)}, not {status!r}")
         elif status == "todo" and key in found:
             err(where, "the mapping file exists, so the status can't be todo")
         elif status != "todo" and key not in found:
@@ -509,20 +613,41 @@ def check_mapping_index(platform_dir, pages, found):
             err(rel(path), f"{key[0]} {key[1]} is not in the index")
 
 
-def check_mappings(parity, commands):
-    root = SPEC / "mappings"
+def platform_kind_of(name):
+    return APPLE_KIND if name == "apple" else DEFAULT_KIND
+
+
+def check_platforms(parity, commands):
+    root = SPEC / "platforms"
     if not root.is_dir():
+        err("platforms", "folder is missing")
         return
+    if not (root / "README.md").is_file():
+        err("platforms", "missing README.md")
     pages = spec_pages()
     for platform_dir in sorted(p for p in root.iterdir() if p.is_dir()):
-        for required in ("README.md", "platform.md", "commands.md", "index.md"):
+        name = platform_dir.name
+        if name not in PLATFORMS:
+            err(rel(platform_dir), f"platform folder must be named for one of {list(PLATFORMS)}")
+            continue
+        kind = platform_kind_of(name)
+        for required in kind.required_files:
             if not (platform_dir / required).is_file():
                 err(rel(platform_dir), f"missing {required}")
         statuses = {}
-        for (kind, page_id), path in mapping_pages(platform_dir).items():
-            statuses[(kind, page_id)] = check_mapping_page(kind, page_id, path, pages, parity)
-        check_mapping_commands(platform_dir, commands)
-        check_mapping_index(platform_dir, pages, statuses)
+        owners = {}
+        for (page_kind, page_id), path in mapping_pages(platform_dir).items():
+            statuses[(page_kind, page_id)] = check_mapping_page(
+                page_kind, page_id, path, pages, parity, name, kind, owners
+            )
+        if "commands.md" in kind.required_files:
+            check_mapping_commands(platform_dir, commands)
+        check_mapping_index(platform_dir, pages, statuses, kind)
+        referenced = {Path(key).resolve() for key in owners}
+        shots_dir = platform_dir / "screenshots"
+        for shot in sorted(shots_dir.rglob("*.png")) if shots_dir.is_dir() else []:
+            if shot.resolve() not in referenced:
+                warn(rel(shot), "no page of this platform lists this screenshot")
 
 
 # ---------------------------------------------------------------- Main checks
@@ -715,8 +840,8 @@ def main():
             if pattern.search(line):
                 err(f"copy/en.json:{number}", f"contains a {label}")
 
-    # platform mappings
-    check_mappings(parity, commands)
+    # platform folders
+    check_platforms(parity, commands)
 
     # report
     print(f"copy keys: {len(keys)}, referenced: {len(keys & used)}, group references: {group_refs}")

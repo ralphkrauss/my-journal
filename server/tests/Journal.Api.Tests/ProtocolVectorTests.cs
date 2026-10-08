@@ -8,12 +8,12 @@ using Journal.Api.Security;
 
 namespace Journal.Api.Tests;
 
-// The public corpora in protocol/fixtures are what other clients are written against. .NET reproduces every
+// The public corpora in protocol/conformance are what other clients are written against. .NET reproduces every
 // value independently, and the server's own derivations (verifier hashes, the pairing commitment, input bounds)
 // must accept exactly what the corpus describes.
 public sealed class ProtocolVectorTests
 {
-    private static JsonDocument Corpus(string name) => JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, name)));
+    private static JsonDocument Corpus(string name) => ConformanceFiles.Json(name);
 
     private static string Text(JsonElement element, string name) =>
         element.GetProperty(name).GetString() ?? throw new InvalidDataException("Missing fixture string.");
@@ -45,8 +45,8 @@ public sealed class ProtocolVectorTests
     [Fact]
     public void TheLibraryRecordFixtureOpensOnlyAsALibraryRecord()
     {
-        using var library = Corpus("library-record-v1.json");
-        using var corpus = Corpus("encryption-v2.json");
+        using var library = Corpus("records/library-record-v1.json");
+        using var corpus = Corpus("crypto/encryption-v2.json");
         var key = Bytes(corpus.RootElement.GetProperty("recovery"), "vaultKey");
         var record = library.RootElement.GetProperty("record");
         var combined = Bytes(record, "combined");
@@ -62,7 +62,7 @@ public sealed class ProtocolVectorTests
     [Fact]
     public void PublicFixturesMatchIndependentDotNetEncryptionAndRecovery()
     {
-        using var corpus = Corpus("encryption-v1.json");
+        using var corpus = Corpus("crypto/encryption-v1.json");
         Assert.Equal(1, corpus.RootElement.GetProperty("formatVersion").GetInt32());
         foreach (var vector in corpus.RootElement.GetProperty("envelopes").EnumerateArray())
         {
@@ -78,7 +78,7 @@ public sealed class ProtocolVectorTests
     [Fact]
     public void PasswordEnvelopesUseTheExactPasswordAndTheServerStoresOnlyTheVerifierHash()
     {
-        using var corpus = Corpus("encryption-v2.json");
+        using var corpus = Corpus("crypto/encryption-v2.json");
         Assert.Equal(2, corpus.RootElement.GetProperty("corpusVersion").GetInt32());
         var recovery = corpus.RootElement.GetProperty("recovery");
         var password = Text(recovery, "password");
@@ -124,7 +124,7 @@ public sealed class ProtocolVectorTests
     [Fact]
     public void PasswordsDeriveFromTheirNormalizedFormAndExactEnvelopesRemainReadable()
     {
-        using var corpus = Corpus("encryption-v2.json");
+        using var corpus = Corpus("crypto/encryption-v2.json");
         var vector = corpus.RootElement.GetProperty("normalization");
         var vaultKey = Bytes(corpus.RootElement.GetProperty("recovery"), "vaultKey");
         var password = Text(vector, "password");
@@ -149,7 +149,7 @@ public sealed class ProtocolVectorTests
     [Fact]
     public void PairingGrantMatchesIndependentDotNetDerivationAndTheServerChecks()
     {
-        using var corpus = Corpus("encryption-v2.json");
+        using var corpus = Corpus("crypto/encryption-v2.json");
         var pairing = corpus.RootElement.GetProperty("pairing");
         var id = Guid.Parse(Text(pairing, "id")).ToString();
         var device = Bytes(pairing, "devicePublicKey");
@@ -184,7 +184,7 @@ public sealed class ProtocolVectorTests
     [Fact]
     public void RecordAndImageMatchIndependentDotNetEncryption()
     {
-        using var corpus = Corpus("encryption-v2.json");
+        using var corpus = Corpus("crypto/encryption-v2.json");
         var content = corpus.RootElement.GetProperty("content");
         var key = Bytes(content, "key");
         Assert.Equal(Bytes(corpus.RootElement.GetProperty("recovery"), "vaultKey"), key);

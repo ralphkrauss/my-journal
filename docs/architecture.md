@@ -9,6 +9,8 @@ My Journal is local-first. Each device keeps a complete copy of the user's journ
 | Mac and iOS apps | `apps/apple/JournalApp` | One SwiftUI source tree with AppKit and UIKit text editing. The Xcode project is generated from `apps/apple/project.yml`. |
 | JournalCore | `apps/apple/Packages/JournalCore` | Swift package without UI code: document model, Markdown, encryption, local storage, sync, archives and agent access. |
 | Server | `server/src/Journal.Api` | ASP.NET Core Minimal API with EF Core and SQLite. It stores revisions and attachments and never needs the vault key. |
+| Spec | `spec/` | Platform-neutral specification of every screen, flow, message, command and string, with per-platform implementation notes and screenshots in `spec/platforms/`. Features are specified here in the same change as their code. |
+| Windows app | `apps/windows` | Planned: a native WinUI 3 client in C#; not built yet. See its `AGENTS.md`. |
 | Protocol | `protocol/` | Language-independent contracts and interoperability fixtures for record encryption, sync, pairing, recovery, archives, lifecycle and agent access. |
 | Deployment | `deploy/`, `packaging/`, `server/Dockerfile` | Compose files for local, Tailscale and public HTTPS hosting; the non-root container image; standalone server packages. |
 
@@ -47,7 +49,7 @@ Devices join by pairing: the new device shows a code, a connected device approve
 
 With encryption on (the default), records and attachments are encrypted on the device with AES-256-GCM under a random 256-bit vault key. The vault key is wrapped with a key derived from the master password (PBKDF2-HMAC-SHA256) and the wrapped key is stored on the server so another device can recover it. The server sees record IDs and kinds, sizes, revisions, timing and device names, but no journal names, titles, text or images; [SECURITY.md](../SECURITY.md#what-the-server-can-see) lists exactly what it sees. Libraries created without encryption store readable JSON; device authentication still applies.
 
-The formats, key derivation and pairing construction are specified in [protocol/README.md](../protocol/README.md), with test vectors in `protocol/fixtures/`. [SECURITY.md](../SECURITY.md) describes the threat model and its limits.
+The formats, key derivation and pairing construction are specified in [protocol/README.md](../protocol/README.md), with test vectors in [protocol/conformance/](../protocol/conformance/README.md). [SECURITY.md](../SECURITY.md) describes the threat model and its limits.
 
 ## Server
 

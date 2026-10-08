@@ -15,9 +15,9 @@ To build and test, follow [docs/development.md](docs/development.md). [docs/arch
 
 Every interface change, by anyone, starts with a concrete design: layout, behavior, exact interface copy, accessibility, and the relevant empty, loading, offline, error and recovery states. Before implementation, someone other than the author reviews it independently: the maintainer, another human reviewer, or a separate design-review agent. Share the requirements and the proposal without coaching the reviewer toward approval. Resolve material findings and keep the design and review in `docs/design/`, and add them to the [index](docs/design/README.md).
 
-Use familiar Apple interface conventions for the Apple client. Favor native controls, readable adaptive colors, standard editing behavior and concise action labels. The writing surface should stay quiet; complexity should appear only when it is needed. After implementation, inspect the real interface against the reviewed design.
+Each client follows its own platform's interface conventions: familiar Apple conventions on the Apple clients, Windows conventions on Windows, and so on. Favor native controls, readable adaptive colors, standard editing behavior and concise action labels. The writing surface should stay quiet; complexity should appear only when it is needed. After implementation, inspect the real interface against the reviewed design.
 
-Future clients should follow their own platform conventions while keeping document fidelity and protocol compatibility.
+Every client keeps document fidelity and protocol compatibility. A feature or change is specified in [spec/](spec/README.md) in the same change as its code, on whichever platform it starts, so that every other platform can port it; changes to anything in [protocol/](protocol/README.md) also bump its version and update the conformance fixtures.
 
 ## Tests must earn their cost
 

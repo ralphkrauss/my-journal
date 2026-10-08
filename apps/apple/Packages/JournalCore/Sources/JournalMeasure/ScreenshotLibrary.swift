@@ -30,6 +30,11 @@ struct ScreenshotLibrary {
     /// Earlier versions of "Bread, attempt four" come from edits made on another device. Libraries that will be
     /// uploaded to a new server leave them out, because those versions carry that device's revisions.
     let includesHistory: Bool
+    /// Gives the templates a fixed date instead of the day of seeding, for the spec screenshots, which must not change
+    /// from one day to the next (`JOURNAL_SCREENSHOT_FIXED_DATES=1`).
+    var fixedTemplateDate = false
+
+    private static let templateDate = Date(timeIntervalSince1970: 1_788_000_000)
 
     static let imageDescriptions = [
         "coffee.jpg": "A cup of coffee on a wooden table by a sunny window",
@@ -51,13 +56,16 @@ struct ScreenshotLibrary {
         var templates: [String: UUID] = [:]
         // The person's own templates: four with the questions earlier builds started with, and Book Notes.
         for template in BuiltInTemplates.asEarlierBuildsCreated() {
+            var template = template
+            if fixedTemplateDate { template.setDates(Self.templateDate) }
             try await store.save(template)
             templates[template.title] = template.id
         }
-        let bookNotes = JournalItem(
+        var bookNotes = JournalItem(
             kind: "template", title: "Book Notes",
             document: JournalDocument(markdown: "## Title and author\n\n## What stayed with me\n\n## One idea to try\n")
         )
+        if fixedTemplateDate { bookNotes.setDates(Self.templateDate) }
         try await store.save(bookNotes)
         let names = ["Personal", "Work", "Travel"]
         let defaults = ["Daily Reflection", "Workday Log", nil]
@@ -411,4 +419,11 @@ struct ScreenshotLibrary {
 
                 """),
     ]
+}
+
+extension JournalItem {
+    fileprivate mutating func setDates(_ date: Date) {
+        self.date = date
+        modifiedAt = date
+    }
 }

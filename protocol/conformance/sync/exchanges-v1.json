@@ -1,0 +1,821 @@
+{
+  "corpusVersion": 1,
+  "purpose": "A conversation with the server's sync endpoints (protocol/README.md, Sync and conflicts): requests and the exact responses. The server's tests replay it against a new server; clients' tests read each response with their own decoders. See README.md in this folder.",
+  "preconditions": "A server whose vault is set up in recovery format 1 or 2 (encrypted), with one device that sends its bearer credential on every request unless a step says otherwise. Steps run in order on the same server.",
+  "matching": {
+    "exact": "Every member of the response body equals the fixture's, and the response has no other members.",
+    "subset": "Every member and value in the fixture is in the response; arrays must contain each listed element; the response may have more.",
+    "volatile": "JSON pointers to values the server chooses (a UUID or an ISO 8601 timestamp). They are compared by format, not by value.",
+    "identicalTo": "The response body equals the actual body of the named earlier step, volatile values included."
+  },
+  "steps": [
+    {
+      "name": "empty-log",
+      "note": "A new vault has an empty log; serverId is the identity assigned at setup.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=0"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [],
+          "cursor": 0,
+          "hasMore": false,
+          "serverId": "5b7e0f2a-6c1d-4e3f-8a9b-0c1d2e3f4a5b",
+          "serverIdCursor": 0
+        },
+        "volatile": {
+          "/serverId": "uuid"
+        }
+      },
+      "client": "page"
+    },
+    {
+      "name": "create-record",
+      "note": "Creation uses baseRevision 0. The receipt is the change the server wrote.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a01",
+          "baseRevision": 0,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "cursor": 1,
+          "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "revision": 1,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8",
+          "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+          "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+        },
+        "volatile": {
+          "/deviceId": "uuid",
+          "/modifiedAt": "timestamp"
+        }
+      },
+      "client": "receipt"
+    },
+    {
+      "name": "retry-same-operation",
+      "note": "Retrying an operation returns its original receipt.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a01",
+          "baseRevision": 0,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "cursor": 1,
+          "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "revision": 1,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8",
+          "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+          "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+        },
+        "identicalTo": "create-record"
+      },
+      "client": "receipt"
+    },
+    {
+      "name": "operation-reused",
+      "note": "The same operation ID with other content: not applied.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a01",
+          "baseRevision": 0,
+          "kind": "entry",
+          "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM"
+        }
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "operation_reused",
+          "error": "operation_reused"
+        }
+      },
+      "client": "rejected"
+    },
+    {
+      "name": "update-short-receipt",
+      "note": "With shortReceipt the receipt leaves out the payload and gives its digest (capability sync-short-receipt).",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a02",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM",
+          "shortReceipt": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "cursor": 2,
+          "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "revision": 2,
+          "kind": "entry",
+          "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+          "modifiedAt": "2026-10-02T09:14:03.1234567+00:00",
+          "payloadDigest": "92cfa1646f68ac1e9a409745ed2fd7b6268e1c6bf6f33e0359ed46a1ac82b971"
+        },
+        "volatile": {
+          "/deviceId": "uuid",
+          "/modifiedAt": "timestamp"
+        }
+      },
+      "client": "receipt"
+    },
+    {
+      "name": "retry-asking-for-the-full-receipt",
+      "note": "The same operation again, asking for the full receipt: the same change, the other form, not operation_reused.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a02",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "cursor": 2,
+          "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "revision": 2,
+          "kind": "entry",
+          "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM",
+          "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+          "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+        },
+        "volatile": {
+          "/deviceId": "uuid",
+          "/modifiedAt": "timestamp"
+        }
+      },
+      "client": "receipt"
+    },
+    {
+      "name": "stale-base-revision",
+      "note": "A base revision below the server's: revision_conflict with the server's record.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a03",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpuc"
+        }
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "revision_conflict",
+          "error": "revision_conflict",
+          "current": {
+            "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+            "kind": "entry",
+            "revision": 2,
+            "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM",
+            "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+            "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+          }
+        },
+        "volatile": {
+          "/current/deviceId": "uuid",
+          "/current/modifiedAt": "timestamp"
+        }
+      },
+      "client": "conflict"
+    },
+    {
+      "name": "base-revision-ahead",
+      "note": "A base revision above the server's: the server lost revisions (revision_ahead, with its record).",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a04",
+          "baseRevision": 5,
+          "kind": "entry",
+          "payload": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpuc"
+        }
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "revision_ahead",
+          "error": "revision_ahead",
+          "current": {
+            "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+            "kind": "entry",
+            "revision": 2,
+            "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM",
+            "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+            "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+          }
+        },
+        "volatile": {
+          "/current/deviceId": "uuid",
+          "/current/modifiedAt": "timestamp"
+        }
+      },
+      "client": "serverBehind"
+    },
+    {
+      "name": "base-revision-ahead-of-unknown-record",
+      "note": "The server has no such record: current is null.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/9c5b94b1-35ad-49bb-b118-8e8fc24abf80",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a05",
+          "baseRevision": 3,
+          "kind": "entry",
+          "payload": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpuc"
+        }
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "revision_ahead",
+          "error": "revision_ahead",
+          "current": null
+        }
+      },
+      "client": "serverBehind"
+    },
+    {
+      "name": "kind-is-immutable",
+      "note": "A record keeps its kind.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a06",
+          "baseRevision": 2,
+          "kind": "journal",
+          "payload": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpuc"
+        }
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "kind_is_immutable",
+          "error": "kind_is_immutable"
+        }
+      },
+      "client": "rejected"
+    },
+    {
+      "name": "create-record-of-another-kind",
+      "note": "Any well-formed kind is stored as it is (capability record-kinds).",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/9c5b94b1-35ad-49bb-b118-8e8fc24abf80",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a07",
+          "baseRevision": 0,
+          "kind": "library",
+          "payload": "cXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqus"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "cursor": 3,
+          "recordId": "9c5b94b1-35ad-49bb-b118-8e8fc24abf80",
+          "revision": 1,
+          "kind": "library",
+          "payload": "cXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqus",
+          "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+          "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+        },
+        "volatile": {
+          "/deviceId": "uuid",
+          "/modifiedAt": "timestamp"
+        }
+      },
+      "client": "receipt"
+    },
+    {
+      "name": "smallest-payload",
+      "note": "29 bytes (nonce, tag and one byte) is the smallest payload.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a08",
+          "baseRevision": 0,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF0="
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "cursor": 4,
+          "recordId": "7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+          "revision": 1,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF0=",
+          "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+          "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+        },
+        "volatile": {
+          "/deviceId": "uuid",
+          "/modifiedAt": "timestamp"
+        }
+      },
+      "client": "receipt"
+    },
+    {
+      "name": "payload-too-small",
+      "note": "28 bytes: refused, not applied.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a09",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXA=="
+        }
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "invalid_record",
+          "error": "invalid_record"
+        }
+      },
+      "client": "rejected"
+    },
+    {
+      "name": "payload-not-canonical-base64",
+      "note": "Base64 with a line break: refused.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a0a",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5P\nUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8"
+        }
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "invalid_record",
+          "error": "invalid_record"
+        }
+      },
+      "client": "rejected"
+    },
+    {
+      "name": "kind-not-well-formed",
+      "note": "Kinds are 1 to 32 characters from a-z, 0-9 and hyphen.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a0b",
+          "baseRevision": 1,
+          "kind": "Entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8"
+        }
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "invalid_record",
+          "error": "invalid_record"
+        }
+      },
+      "client": "rejected"
+    },
+    {
+      "name": "readable-payload-in-an-encrypted-vault",
+      "note": "A payload that is a JSON document is refused by a version 1 or 2 vault.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a0c",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "eyJraW5kIjoiZW50cnkiLCJ0aXRsZSI6IlRoaXMgcmVjb3JkIGlzIHJlYWRhYmxlIn0="
+        }
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "unencrypted_record",
+          "error": "unencrypted_record"
+        }
+      },
+      "client": "rejected"
+    },
+    {
+      "name": "other-server-identity",
+      "note": "A write naming another server identity is not applied.",
+      "request": {
+        "method": "PUT",
+        "path": "/v1/sync/7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+        "body": {
+          "operationId": "6a1f3c2e-8d4b-4f0a-9c7e-2b5d8e1f4a0d",
+          "baseRevision": 1,
+          "kind": "entry",
+          "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8",
+          "serverId": "00000000-0000-4000-8000-000000000000"
+        }
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "server_changed",
+          "error": "server_changed"
+        }
+      },
+      "client": "serverChanged"
+    },
+    {
+      "name": "first-page",
+      "note": "limit=2: hasMore is true and cursor is the last change returned. Every revision is a change.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=0&limit=2"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [
+            {
+              "cursor": 1,
+              "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+              "revision": 1,
+              "kind": "entry",
+              "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8",
+              "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+              "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+            },
+            {
+              "cursor": 2,
+              "recordId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+              "revision": 2,
+              "kind": "entry",
+              "payload": "UVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM",
+              "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+              "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+            }
+          ],
+          "cursor": 2,
+          "hasMore": true,
+          "serverId": "5b7e0f2a-6c1d-4e3f-8a9b-0c1d2e3f4a5b",
+          "serverIdCursor": 0
+        },
+        "volatile": {
+          "/changes/0/deviceId": "uuid",
+          "/changes/1/deviceId": "uuid",
+          "/changes/0/modifiedAt": "timestamp",
+          "/changes/1/modifiedAt": "timestamp",
+          "/serverId": "uuid"
+        }
+      },
+      "client": "page"
+    },
+    {
+      "name": "last-page",
+      "note": "Continuing from the cursor.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=2&limit=2"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [
+            {
+              "cursor": 3,
+              "recordId": "9c5b94b1-35ad-49bb-b118-8e8fc24abf80",
+              "revision": 1,
+              "kind": "library",
+              "payload": "cXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqus",
+              "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+              "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+            },
+            {
+              "cursor": 4,
+              "recordId": "7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+              "revision": 1,
+              "kind": "entry",
+              "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF0=",
+              "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+              "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+            }
+          ],
+          "cursor": 4,
+          "hasMore": false,
+          "serverId": "5b7e0f2a-6c1d-4e3f-8a9b-0c1d2e3f4a5b",
+          "serverIdCursor": 0
+        },
+        "volatile": {
+          "/changes/0/deviceId": "uuid",
+          "/changes/1/deviceId": "uuid",
+          "/changes/0/modifiedAt": "timestamp",
+          "/changes/1/modifiedAt": "timestamp",
+          "/serverId": "uuid"
+        }
+      },
+      "client": "page"
+    },
+    {
+      "name": "continuity-check-passes",
+      "note": "afterRecord, afterRevision and afterDigest name the change the client applied at `after` (capability sync-continuity-digest).",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=2&afterRecord=3f2504e0-4f89-41d3-9a0c-0305e82c3301&afterRevision=2&afterDigest=92cfa1646f68ac1e9a409745ed2fd7b6268e1c6bf6f33e0359ed46a1ac82b971"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [
+            {
+              "cursor": 3,
+              "recordId": "9c5b94b1-35ad-49bb-b118-8e8fc24abf80",
+              "revision": 1,
+              "kind": "library",
+              "payload": "cXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqus",
+              "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+              "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+            },
+            {
+              "cursor": 4,
+              "recordId": "7d1e5c3a-2b4f-4a60-8d9e-0f1a2b3c4d5e",
+              "revision": 1,
+              "kind": "entry",
+              "payload": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF0=",
+              "deviceId": "8c5e2f0a-1b6d-4c84-9f3e-2a7d1e0b9c41",
+              "modifiedAt": "2026-10-02T09:14:03.1234567+00:00"
+            }
+          ],
+          "cursor": 4,
+          "hasMore": false,
+          "serverId": "5b7e0f2a-6c1d-4e3f-8a9b-0c1d2e3f4a5b",
+          "serverIdCursor": 0
+        },
+        "volatile": {
+          "/changes/0/deviceId": "uuid",
+          "/changes/1/deviceId": "uuid",
+          "/changes/0/modifiedAt": "timestamp",
+          "/changes/1/modifiedAt": "timestamp",
+          "/serverId": "uuid"
+        }
+      },
+      "client": "page"
+    },
+    {
+      "name": "continuity-wrong-digest",
+      "note": "Another payload at that position: the server's log is not the one the client read.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=2&afterRecord=3f2504e0-4f89-41d3-9a0c-0305e82c3301&afterRevision=2&afterDigest=d9298a10d1b0735837dc4bd85dac641b0f3cef27a47e5d53a54f2f3f5b2fcffa"
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "server_changed",
+          "error": "server_changed"
+        }
+      },
+      "client": "serverChanged"
+    },
+    {
+      "name": "continuity-wrong-revision",
+      "note": "Another revision at that position.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=2&afterRecord=3f2504e0-4f89-41d3-9a0c-0305e82c3301&afterRevision=1"
+      },
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 409,
+          "code": "server_changed",
+          "error": "server_changed"
+        }
+      },
+      "client": "serverChanged"
+    },
+    {
+      "name": "negative-cursor",
+      "note": "A negative cursor.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=-1"
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "invalid_cursor",
+          "error": "invalid_cursor"
+        }
+      },
+      "client": "problem"
+    },
+    {
+      "name": "position-without-revision",
+      "note": "afterRecord and afterRevision come together.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=2&afterRecord=3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+      },
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 400,
+          "code": "invalid_cursor",
+          "error": "invalid_cursor"
+        }
+      },
+      "client": "problem"
+    },
+    {
+      "name": "wait-finds-news",
+      "note": "A wait from a position the log has passed answers at once, with no content.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/wait?after=0&timeout=1"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changed": true
+        }
+      },
+      "client": "wait"
+    },
+    {
+      "name": "wait-other-identity",
+      "note": "Another server identity counts as news.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/wait?after=4&timeout=1&serverId=00000000-0000-4000-8000-000000000000"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changed": true
+        }
+      },
+      "client": "wait"
+    },
+    {
+      "name": "no-credential",
+      "note": "A missing credential is refused before the body is read.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/sync/?after=0",
+        "authenticated": false
+      },
+      "response": {
+        "status": 401,
+        "contentType": "application/problem+json",
+        "match": "subset",
+        "body": {
+          "status": 401,
+          "code": "unauthorized",
+          "error": "unauthorized"
+        },
+        "headers": {
+          "www-authenticate": "Bearer"
+        }
+      },
+      "client": "problem"
+    },
+    {
+      "name": "server-capabilities",
+      "note": "GET /v1/server needs no credential. Capabilities only ever grow, so the response must contain these.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/server",
+        "authenticated": false
+      },
+      "response": {
+        "status": 200,
+        "match": "subset",
+        "body": {
+          "protocolVersions": [
+            1
+          ],
+          "recoveryVersions": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        }
+      },
+      "client": "capabilities"
+    },
+    {
+      "name": "status",
+      "note": "GET /v1/status.",
+      "request": {
+        "method": "GET",
+        "path": "/v1/status",
+        "authenticated": false
+      },
+      "response": {
+        "status": 200,
+        "match": "subset",
+        "body": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "serverId": "5b7e0f2a-6c1d-4e3f-8a9b-0c1d2e3f4a5b",
+          "features": [
+            "sync-short-receipt",
+            "record-kinds"
+          ]
+        },
+        "volatile": {
+          "/serverId": "uuid"
+        }
+      },
+      "client": "status"
+    }
+  ]
+}

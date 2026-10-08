@@ -1,0 +1,194 @@
+{
+  "cases" : [
+    {
+      "expected" : {
+        "imageIDs" : [
+          "01234567-89ab-4cde-8fab-0123456789ab"
+        ],
+        "rewrittenToPng" : "![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab.png)\n"
+      },
+      "markdown" : "![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "block-image",
+      "note" : "An image on its own line."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+          "fedcba98-7654-4321-8fed-cba987654321"
+        ],
+        "rewrittenToPng" : "Text ![a cup](attachments/fedcba98-7654-4321-8fed-cba987654321.png \"Title\") text\n"
+      },
+      "markdown" : "Text ![a cup](attachments/fedcba98-7654-4321-8fed-cba987654321 \"Title\") text\n",
+      "name" : "inline-image-with-title",
+      "note" : "An image inside text, with a title."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+          "01234567-89ab-4cde-8fab-0123456789ab",
+          "fedcba98-7654-4321-8fed-cba987654321"
+        ],
+        "rewrittenToPng" : "![a](attachments/01234567-89ab-4cde-8fab-0123456789ab.png) ![b](attachments/fedcba98-7654-4321-8fed-cba987654321) ![c](attachments/01234567-89ab-4cde-8fab-0123456789ab.png)\n"
+      },
+      "markdown" : "![a](attachments/01234567-89ab-4cde-8fab-0123456789ab) ![b](attachments/fedcba98-7654-4321-8fed-cba987654321) ![c](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "two-references-to-one-image",
+      "note" : "Listed once, in order of first appearance."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+          "01234567-89ab-4cde-8fab-0123456789ab"
+        ],
+        "rewrittenToPng" : "[![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab.png)](https://example.com)\n"
+      },
+      "markdown" : "[![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab)](https://example.com)\n",
+      "name" : "image-in-link",
+      "note" : "An image inside a link."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+          "01234567-89ab-4cde-8fab-0123456789ab"
+        ],
+        "rewrittenToPng" : "| Picture |\n| --- |\n| ![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab.png) |\n"
+      },
+      "markdown" : "| Picture |\n| --- |\n| ![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab) |\n",
+      "name" : "image-in-table-cell",
+      "note" : "An image in a table cell."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+          "01234567-89ab-4cde-8fab-0123456789ab"
+        ],
+        "rewrittenToPng" : "![Map][map]\n\n[map]: attachments/01234567-89ab-4cde-8fab-0123456789ab.png\n"
+      },
+      "markdown" : "![Map][map]\n\n[map]: attachments/01234567-89ab-4cde-8fab-0123456789ab\n",
+      "name" : "reference-definition",
+      "note" : "An image reached through a reference definition."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+          "01234567-89ab-4cde-8fab-0123456789ab"
+        ],
+        "rewrittenToPng" : null
+      },
+      "markdown" : "![Map][map] and [open it][map]\n\n[map]: attachments/01234567-89ab-4cde-8fab-0123456789ab\n",
+      "name" : "reference-definition-shared-with-a-link",
+      "note" : "The definition is also used by a text link, so it can't be rewritten alone."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "`attachments/01234567-89ab-4cde-8fab-0123456789ab`\n",
+      "name" : "code-span",
+      "note" : "A path quoted in code is text."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "```\n![x](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n```\n",
+      "name" : "code-block",
+      "note" : "A path in a fenced block is text."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "[file](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "link-not-image",
+      "note" : "A link to an attachment path is not an image."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](./attachments/01234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "relative-prefix",
+      "note" : "Only the exact path counts: no ./ prefix."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](attachments/01234567-89ab-4cde-8fab-0123456789ab?size=large)\n",
+      "name" : "query",
+      "note" : "No query."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](attachments/01234567-89ab-4cde-8fab-0123456789ab#top)\n",
+      "name" : "fragment",
+      "note" : "No fragment."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](attachments/01234567-89ab-4cde-8fab-0123456789ab.png)\n",
+      "name" : "file-extension",
+      "note" : "No suffix."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](attachments/%301234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "percent-encoding",
+      "note" : "No percent-encoding."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](ATTACHMENTS/01234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "upper-case-path",
+      "note" : "The directory name is lower case."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](attachments/photo.png)\n",
+      "name" : "not-a-uuid",
+      "note" : "A name that isn't a UUID."
+    },
+    {
+      "expected" : {
+        "imageIDs" : [
+
+        ]
+      },
+      "markdown" : "![x](https://example.com/attachments/01234567-89ab-4cde-8fab-0123456789ab)\n",
+      "name" : "remote-image",
+      "note" : "A remote image is not an attachment."
+    }
+  ],
+  "corpusVersion" : 1,
+  "purpose" : "Image references (protocol/records.md, Images): which attachments a body refers to, and the body with the first one pointed at attachments/<id>.png as Export as Markdown does (protocol/markdown-export.md). Null: the reference can't be rewritten alone."
+}

@@ -1,0 +1,269 @@
+{
+  "base64" : {
+    "canonical" : [
+      {
+        "hex" : "",
+        "text" : ""
+      },
+      {
+        "hex" : "00",
+        "text" : "AA=="
+      },
+      {
+        "hex" : "0001",
+        "text" : "AAE="
+      },
+      {
+        "hex" : "000102",
+        "text" : "AAEC"
+      },
+      {
+        "hex" : "fffefd",
+        "text" : "//79"
+      },
+      {
+        "hex" : "fb",
+        "text" : "+w=="
+      },
+      {
+        "hex" : "e29c93",
+        "text" : "4pyT"
+      }
+    ],
+    "rejected" : [
+      {
+        "note" : "Padding missing.",
+        "text" : "QQ"
+      },
+      {
+        "note" : "Padding missing.",
+        "text" : "QQ="
+      },
+      {
+        "note" : "Padding bits aren't zero.",
+        "text" : "QR=="
+      },
+      {
+        "note" : "Padding bits aren't zero.",
+        "text" : "QUJ="
+      },
+      {
+        "note" : "A line break.",
+        "text" : "QUJD\n"
+      },
+      {
+        "note" : "Whitespace.",
+        "text" : "QU JD"
+      },
+      {
+        "note" : "Trailing whitespace.",
+        "text" : "QUJD "
+      },
+      {
+        "note" : "Too much padding.",
+        "text" : "QUJD===="
+      },
+      {
+        "note" : "URL-safe alphabet.",
+        "text" : "QUJ_"
+      },
+      {
+        "note" : "URL-safe alphabet.",
+        "text" : "QUJ-"
+      },
+      {
+        "note" : "Padding first.",
+        "text" : "=QUJ"
+      }
+    ]
+  },
+  "corpusVersion" : 1,
+  "open" : [
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "untouched",
+      "note" : "The vector itself opens.",
+      "plaintext" : "eyJpZCI6ImFhYWFhYWFhLWJiYmItNGNjYy04ZGRkLWVlZWVlZWVlZWVlZSIsImtpbmQiOiJlbnRyeSIsImpvdXJuYWxJRCI6IjExMTExMTExLTIyMjItNDMzMy04NDQ0LTU1NTU1NTU1NTU1NSIsInRpdGxlIjoiQ2Fmw6kg4oCUIOaXpeiomCIsImRvY3VtZW50Ijp7InZlcnNpb24iOjEsImJsb2NrcyI6W3siaWQiOiI5OTk5OTk5OS04ODg4LTQ3NzctODY2Ni01NTU1NTU1NTU1NTUiLCJraW5kIjoicGFyYWdyYXBoIiwicnVucyI6W3sidGV4dCI6IkEgcXVpZXQgZGF5LiDwn4y/IiwiYm9sZCI6dHJ1ZSwiaXRhbGljIjpmYWxzZSwidW5kZXJsaW5lIjpmYWxzZX1dfV19LCJkYXRlIjoiMjAyNi0wOS0yMFQxMjowMDowMFoiLCJtb2RpZmllZEF0IjoiMjAyNi0wOS0yMFQxMjowMDowMFoiLCJkZWxldGVkV2l0aEpvdXJuYWwiOmZhbHNlfQ==",
+      "result" : "opens"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "//79/Pv6+fj39vX08/Lx8O/u7ezr6uno5+bl5OPi4eA=",
+      "name" : "wrong-key",
+      "note" : "Another key.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHs=",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "flipped-tag",
+      "note" : "The last tag byte changed.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yRdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "flipped-ciphertext",
+      "note" : "The first ciphertext byte changed.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MTEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "flipped-nonce",
+      "note" : "The first nonce byte changed.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:journal:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "another-kind",
+      "note" : "The context names another record kind.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeef",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "another-record",
+      "note" : "The context names another record.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:record:entry:AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "upper-case-id",
+      "note" : "Contexts use lower-case UUIDs, so an upper-case one is another context.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "journal:v1:attachment:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "attachment-context",
+      "note" : "The same bytes under an attachment context.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsHo=",
+      "context" : "",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "empty-context",
+      "note" : "No context.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hfRf5FLTXuCidmRJNpKIzXU1smBWkBSaX+wstBd2tW5LhEwCh/cwnUq1PfOUN4YiI+gSII3+Pd7RUF0iqoZ1deTfEN9AIxsfc/6zbVCJ9bZCvc5oJjLGVNMjhrnC5lMdXFM0sNOjU1ZFnKcTHadfZzlWxncjuCBquOl5aSaR2Yv6BWP3aZeE0l76aK6jVvmYeVIS3jaj3bIMdO1motaYukbbPj0Nrm7kYZqmoX3DohJ4bQrB2AEyok9RMaDU/I+GPOJjotFKFLZfU/JeEKzCKL8Jl6FFrvN/Fj1c5vZRbCfMjZulM+za6Geh384a0PclqRV/vpzQgVsZxedtkp/2YN3pQIaVo+KoXruO7jg+NG6fFkWLkUsBQEGQyo8jqPQFeSOa71YALxAAzDwtn4cGLmhokm4XGyPGeWB8Has57quq0vjG21lw3xyTbBBXkbIaC281ix52ATFTz7V+Rf2Fc/gBXrBrYWxtsEiEuI4GwO4K1J7H/UEOC3IFGoVA1OGZNJVHVos2uzNFflE/uSiigHdXHhX3kfX6VThjcPLyrQsA==",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "truncated-tag",
+      "note" : "One byte short of the tag.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7yBdYpMtVaGJLUu+Nc/hf",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "shorter-than-nonce-and-tag",
+      "note" : "Fewer than 28 bytes.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "MDEyMzQ1Njc4OTo7",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "nonce-only",
+      "note" : "Only a nonce.",
+      "result" : "authenticationFails"
+    },
+    {
+      "combined" : "",
+      "context" : "journal:v1:record:entry:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "key" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "name" : "empty",
+      "note" : "No bytes.",
+      "result" : "authenticationFails"
+    }
+  ],
+  "purpose" : "What every client must refuse: sealed values that must not open, recovery parameters outside the accepted range and base64 that isn't canonical. The sealed values are the record vector of encryption-v1.json, changed. See README.md in this folder.",
+  "recoveryParameters" : [
+    {
+      "clientAccepts" : true,
+      "iterations" : 600000,
+      "name" : "current",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : true
+    },
+    {
+      "clientAccepts" : true,
+      "iterations" : 100000,
+      "name" : "lowest-client-accepts",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : true,
+      "iterations" : 2000000,
+      "name" : "highest-client-accepts",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : 99999,
+      "name" : "below-range",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : 2000001,
+      "name" : "above-range",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : 0,
+      "name" : "zero",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : -1,
+      "name" : "negative",
+      "saltBytes" : 16,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : 600000,
+      "name" : "short-salt",
+      "saltBytes" : 15,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : 600000,
+      "name" : "long-salt",
+      "saltBytes" : 17,
+      "serverAcceptsOnSetup" : false
+    },
+    {
+      "clientAccepts" : false,
+      "iterations" : 600000,
+      "name" : "empty-salt",
+      "saltBytes" : 0,
+      "serverAcceptsOnSetup" : false
+    }
+  ]
+}

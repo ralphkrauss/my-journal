@@ -15,6 +15,7 @@
 - [Code hygiene](engineering/code-hygiene.md): the rules and tools the checks enforce.
 - [Performance measurements](performance.md): opt-in resource probes and their latest results.
 - [Protocol](../protocol/README.md): the versioned contracts shared by clients and the server.
+- [Product spec](../spec/README.md): every screen, flow, message, command and string, independent of platform, with each platform's implementation notes and screenshots in [spec/platforms/](../spec/platforms/README.md). The spec is the starting point for porting a feature to another platform.
 - [Design records](design/README.md): interface designs and their independent reviews, with the status of each.
 
 ## Maintaining the repository

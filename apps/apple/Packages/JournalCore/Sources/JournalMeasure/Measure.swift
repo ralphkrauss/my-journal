@@ -71,7 +71,8 @@ struct Measure {
     }
 
     /// Seeds the App Store screenshot library. The master password comes from the environment so it never
-    /// appears in a command line; `JOURNAL_SCREENSHOT_HISTORY=0` leaves out the earlier versions.
+    /// appears in a command line; `JOURNAL_SCREENSHOT_HISTORY=0` leaves out the earlier versions;
+    /// `JOURNAL_SCREENSHOT_FIXED_DATES=1` dates the templates 2026-08-29, not the day of seeding.
     static func seedScreenshots(_ directory: URL) async throws {
         let environment = ProcessInfo.processInfo.environment
         guard let password = environment["JOURNAL_SCREENSHOT_PASSWORD"],
@@ -79,7 +80,8 @@ struct Measure {
         else { throw MeasurementError.invalidArguments }
         let library = ScreenshotLibrary(
             directory: directory, photos: URL(fileURLWithPath: photos, isDirectory: true), password: password,
-            includesHistory: environment["JOURNAL_SCREENSHOT_HISTORY"] != "0")
+            includesHistory: environment["JOURNAL_SCREENSHOT_HISTORY"] != "0",
+            fixedTemplateDate: environment["JOURNAL_SCREENSHOT_FIXED_DATES"] == "1")
         try await library.seed()
     }
 

@@ -1,0 +1,968 @@
+{
+  "corpusVersion" : 1,
+  "documents" : [
+    {
+      "expected" : {
+        "blocks" : [
+
+        ],
+        "canonical" : "",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "",
+      "name" : "empty",
+      "note" : "No text at all."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Just text"
+              }
+            ]
+          }
+        ],
+        "canonical" : "Just text\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "Just text",
+      "name" : "text-without-final-newline",
+      "note" : "The final line ending is part of the text, so it is neither added nor removed."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "heading",
+            "level" : 1,
+            "runs" : [
+              {
+                "text" : "Title"
+              }
+            ]
+          },
+          {
+            "kind" : "heading",
+            "level" : 2,
+            "runs" : [
+              {
+                "text" : "Section"
+              }
+            ]
+          },
+          {
+            "kind" : "heading",
+            "level" : 3,
+            "runs" : [
+              {
+                "text" : "Three"
+              }
+            ]
+          },
+          {
+            "kind" : "heading",
+            "level" : 6,
+            "runs" : [
+              {
+                "text" : "Six"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Body."
+              }
+            ]
+          }
+        ],
+        "canonical" : "# Title\n\n## Section\n\n### Three\n\n###### Six\n\nBody.\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "# Title\n\n## Section\n\n### Three\n\n###### Six ##\n\nBody.\n",
+      "name" : "headings",
+      "note" : "ATX headings of every level; a closing sequence of hashes is syntax."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "heading",
+            "level" : 1,
+            "runs" : [
+              {
+                "text" : "Heading"
+              }
+            ]
+          },
+          {
+            "kind" : "heading",
+            "level" : 2,
+            "runs" : [
+              {
+                "text" : "Sub"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Body"
+              }
+            ]
+          }
+        ],
+        "canonical" : "# Heading\n\n## Sub\n\nBody\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "Heading\n=======\n\nSub\n---\n\nBody\n",
+      "name" : "setext-headings",
+      "note" : "Underlined headings keep their spelling until edited."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Plain "
+              },
+              {
+                "bold" : true,
+                "text" : "bold"
+              },
+              {
+                "text" : ", "
+              },
+              {
+                "italic" : true,
+                "text" : "italic"
+              },
+              {
+                "text" : ", "
+              },
+              {
+                "bold" : true,
+                "italic" : true,
+                "text" : "both"
+              },
+              {
+                "text" : ", "
+              },
+              {
+                "strikethrough" : true,
+                "text" : "struck"
+              },
+              {
+                "text" : ", "
+              },
+              {
+                "text" : "underlined",
+                "underline" : true
+              },
+              {
+                "text" : " and "
+              },
+              {
+                "code" : true,
+                "text" : "code"
+              },
+              {
+                "text" : "."
+              }
+            ]
+          }
+        ],
+        "canonical" : "Plain **bold**, *italic*, ***both***, ~~struck~~, <u>underlined</u> and `code`.\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "Plain **bold**, *italic*, ***both***, ~~struck~~, <u>underlined</u> and `code`.\n",
+      "name" : "inline-marks",
+      "note" : "Bold, italic, both, strikethrough, underline (inert HTML) and code."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "bold" : true,
+                "text" : "bold"
+              },
+              {
+                "italic" : true,
+                "text" : "italic"
+              }
+            ]
+          }
+        ],
+        "canonical" : "**bold**<!-- -->*italic*\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "**bold**<!-- -->*italic*\n",
+      "name" : "emphasis-separator",
+      "note" : "An inert comment keeps adjacent emphasis apart without adding visible text."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "One"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "Two"
+              }
+            ]
+          },
+          {
+            "depth" : 1,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "Nested"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "Three"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "Star"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "List"
+              }
+            ]
+          }
+        ],
+        "canonical" : "- One\n\n- Two\n\n  - Nested\n\n- Three\n\n* Star\n\n* List\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "- One\n- Two\n  - Nested\n- Three\n\n* Star\n* List\n",
+      "name" : "bullet-lists",
+      "note" : "Bullet lists, nesting and the markers other editors use."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "numbered",
+            "number" : 7,
+            "runs" : [
+              {
+                "text" : "Seven"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "numbered",
+            "number" : 8,
+            "runs" : [
+              {
+                "text" : "Eight"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "numbered",
+            "number" : 1,
+            "runs" : [
+              {
+                "text" : "one"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "numbered",
+            "number" : 2,
+            "runs" : [
+              {
+                "text" : "two"
+              }
+            ]
+          }
+        ],
+        "canonical" : "7. Seven\n\n8. Eight\n\n1) one\n\n2) two\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "7. Seven\n8. Eight\n\n1) one\n2) two\n",
+      "name" : "ordered-lists",
+      "note" : "Ordered lists keep their first number and their delimiter."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "checked" : false,
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "task",
+            "runs" : [
+              {
+                "text" : "Open task"
+              }
+            ]
+          },
+          {
+            "checked" : true,
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "task",
+            "runs" : [
+              {
+                "text" : "Done task"
+              }
+            ]
+          }
+        ],
+        "canonical" : "- [ ] Open task\n\n- [x] Done task\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "- [ ] Open task\n- [x] Done task\n",
+      "name" : "task-lists",
+      "note" : "GFM task items, open and done."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "quote",
+            "runs" : [
+              {
+                "text" : "Quoted "
+              },
+              {
+                "italic" : true,
+                "text" : "text"
+              }
+            ]
+          }
+        ],
+        "canonical" : "> Quoted *text*\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "> Quoted *text*\n",
+      "name" : "quote",
+      "note" : "A single-paragraph quote."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "codeBlock",
+            "language" : "swift",
+            "runs" : [
+              {
+                "text" : "let x = 1\n"
+              }
+            ]
+          },
+          {
+            "kind" : "codeBlock",
+            "runs" : [
+              {
+                "text" : "```\n"
+              }
+            ]
+          }
+        ],
+        "canonical" : "```swift\nlet x = 1\n```\n\n````\n```\n````\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "```swift\nlet x = 1\n```\n\n````\n```\n````\n",
+      "name" : "code-fence",
+      "note" : "A fenced block with a language and a longer fence."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Above"
+              }
+            ]
+          },
+          {
+            "kind" : "rule",
+            "runs" : [
+
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Below"
+              }
+            ]
+          }
+        ],
+        "canonical" : "Above\n\n---\n\nBelow\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "Above\n\n---\n\nBelow\n",
+      "name" : "thematic-break",
+      "note" : "A rule between paragraphs."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "alignments" : [
+              "left",
+              "right"
+            ],
+            "kind" : "table",
+            "rows" : [
+              [
+                "Name",
+                "Value"
+              ],
+              [
+                "a|b",
+                "link"
+              ]
+            ]
+          }
+        ],
+        "canonical" : "| Name | Value |\n| :--- | ---: |\n| a\\|b | [link](<https://example.com/a_(b)>) |\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "| Name | Value |\n| :--- | ---: |\n| a\\|b | [link](<https://example.com/a_(b)>) |\n",
+      "name" : "table",
+      "note" : "A GFM table with alignments, a pipe in a cell and a link in a cell."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "See "
+              },
+              {
+                "link" : "https://example.com/a_(b)",
+                "linkTitle" : "Title",
+                "text" : "the docs"
+              },
+              {
+                "text" : ", "
+              },
+              {
+                "link" : "https://example.com/path?q=1&r=2",
+                "text" : "y"
+              },
+              {
+                "text" : " and "
+              },
+              {
+                "link" : "https://example.com",
+                "text" : "https://example.com"
+              },
+              {
+                "text" : "."
+              }
+            ]
+          }
+        ],
+        "canonical" : "See [the docs](<https://example.com/a_(b)> \"Title\"), [y](<https://example.com/path?q=1&r=2>) and [https://example.com](<https://example.com>).\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "See [the docs](https://example.com/a_(b) \"Title\"), [y](https://example.com/path?q=1&r=2) and <https://example.com>.\n",
+      "name" : "links",
+      "note" : "Inline link with a title, angle-bracket destination and an autolink."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Use "
+              },
+              {
+                "link" : "https://example.com",
+                "linkTitle" : "A title",
+                "text" : "the link"
+              },
+              {
+                "text" : " and "
+              },
+              {
+                "link" : "https://example.com",
+                "linkTitle" : "A title",
+                "text" : "again"
+              },
+              {
+                "text" : "."
+              }
+            ]
+          }
+        ],
+        "canonical" : "Use [the link](<https://example.com> \"A title\") and [again](<https://example.com> \"A title\").\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "[site]: https://example.com \"A title\"\n\nUse [the link][site] and [again][site].\n",
+      "name" : "reference-links",
+      "note" : "A reference definition keeps its place and its title."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "attachment" : "01234567-89ab-4cde-8fab-0123456789ab",
+            "description" : "Photo",
+            "kind" : "image"
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Inline "
+              },
+              {
+                "image" : "attachments/fedcba98-7654-4321-8fed-cba987654321",
+                "imageTitle" : "Title",
+                "text" : "a cup"
+              },
+              {
+                "text" : " here."
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "image" : "https://example.com/a.png",
+                "text" : "Remote"
+              }
+            ]
+          }
+        ],
+        "canonical" : "![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n\nInline ![a cup](<attachments/fedcba98-7654-4321-8fed-cba987654321> \"Title\") here.\n\n![Remote](<https://example.com/a.png>)\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "![Photo](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n\nInline ![a cup](attachments/fedcba98-7654-4321-8fed-cba987654321 \"Title\") here.\n\n![Remote](https://example.com/a.png)\n",
+      "name" : "images",
+      "note" : "A block image, an inline image with a title and a remote image (never loaded)."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "One"
+              },
+              {
+                "break" : "hard",
+                "text" : "\n"
+              },
+              {
+                "text" : "Two"
+              },
+              {
+                "break" : "hard",
+                "text" : "\n"
+              },
+              {
+                "text" : "Three"
+              },
+              {
+                "break" : "soft",
+                "text" : "\n"
+              },
+              {
+                "text" : "soft"
+              }
+            ]
+          }
+        ],
+        "canonical" : "One  \nTwo  \nThree\nsoft\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "One  \nTwo\\\nThree\nsoft\n",
+      "name" : "line-breaks",
+      "note" : "A hard break (two spaces or a backslash) and a soft break."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "html",
+            "runs" : [
+              {
+                "text" : "<details>\n<summary>More</summary>\n</details>\n"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Inline "
+              },
+              {
+                "html" : true,
+                "text" : "<b>"
+              },
+              {
+                "text" : "html"
+              },
+              {
+                "html" : true,
+                "text" : "</b>"
+              },
+              {
+                "text" : " stays text."
+              }
+            ]
+          }
+        ],
+        "canonical" : "<details>\n<summary>More</summary>\n</details>\n\nInline <b>html</b> stays text.\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "<details>\n<summary>More</summary>\n</details>\n\nInline <b>html</b> stays text.\n",
+      "name" : "html",
+      "note" : "Raw HTML is shown as source text and never run."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "*not bold* and 1. not a list and # not a heading"
+              }
+            ]
+          }
+        ],
+        "canonical" : "\\*not bold\\* and 1. not a list and # not a heading\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "\\*not bold\\* and 1\\. not a list and \\# not a heading\n",
+      "name" : "escapes",
+      "note" : "Backslash escapes are literal text."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Café, café, 👩‍👩‍👧 and 日記"
+              }
+            ]
+          },
+          {
+            "kind" : "quote",
+            "runs" : [
+              {
+                "text" : "שלום "
+              },
+              {
+                "bold" : true,
+                "text" : "עולם"
+              },
+              {
+                "text" : " مرحبا"
+              }
+            ]
+          }
+        ],
+        "canonical" : "Café, café, 👩‍👩‍👧 and 日記\n\n> שלום **עולם** مرحبا\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "Café, café, 👩‍👩‍👧 and 日記\n\n> שלום **עולם** مرحبا\n",
+      "name" : "unicode",
+      "note" : "Composed and decomposed characters, an emoji sequence and right-to-left text are kept as written."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "a"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "b"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "c"
+              }
+            ]
+          },
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "d"
+              }
+            ]
+          }
+        ],
+        "canonical" : "a\n\nb\n\n- c\n\n- d\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "a\r\n\r\nb\r\n\r\n- c\r\n- d\r\n",
+      "name" : "crlf",
+      "note" : "Windows line endings are kept."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "a"
+              },
+              {
+                "break" : "soft",
+                "text" : "\n"
+              },
+              {
+                "text" : "b"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "c"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "d"
+              }
+            ]
+          }
+        ],
+        "canonical" : "a\nb\n\nc\n\nd\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "a\rb\n\nc\n\nd",
+      "name" : "cr-only",
+      "note" : "Old Mac line endings are kept."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Indented start"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Text"
+              },
+              {
+                "break" : "hard",
+                "text" : "\n"
+              },
+              {
+                "text" : "more"
+              }
+            ]
+          }
+        ],
+        "canonical" : "Indented start\n\nText  \nmore\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "\n\n  Indented start\n\nText   \nmore\n\n\n",
+      "name" : "leading-and-trailing-space",
+      "note" : "Blank lines and trailing spaces are kept."
+    },
+    {
+      "expected" : {
+        "blocks" : [
+          {
+            "depth" : 0,
+            "kind" : "listItem",
+            "list" : "numbered",
+            "number" : 7,
+            "runs" : [
+              {
+                "text" : "First"
+              }
+            ]
+          },
+          {
+            "depth" : 1,
+            "kind" : "listItem",
+            "list" : "bullet",
+            "runs" : [
+              {
+                "text" : "Nested "
+              },
+              {
+                "bold" : true,
+                "text" : "item"
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Continued paragraph."
+              }
+            ]
+          },
+          {
+            "kind" : "paragraph",
+            "runs" : [
+              {
+                "text" : "Last "
+              },
+              {
+                "link" : "https://example.com",
+                "linkTitle" : "A title",
+                "text" : "link"
+              },
+              {
+                "text" : "."
+              }
+            ]
+          }
+        ],
+        "canonical" : "7. First\n\n   - Nested **item**\n\n   Continued paragraph.\n\nLast [link](<https://example.com> \"A title\").\n\n",
+        "canonicalReadsBackAsTheSameBlocks" : true,
+        "keepsText" : true,
+        "requiresSource" : false
+      },
+      "markdown" : "[site]: https://example.com \"A title\"\n\n7. First\n   - Nested **item**\n\n   Continued paragraph.\n\nLast [link][site].\n",
+      "name" : "nested-list-with-paragraph",
+      "note" : "A list item that holds a nested list and a second paragraph."
+    }
+  ],
+  "purpose" : "Stored Markdown (protocol/records.md, Markdown) and how the reference reader and writer treat each construct. See README.md in this folder."
+}

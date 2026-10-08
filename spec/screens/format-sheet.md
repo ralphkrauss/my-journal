@@ -28,7 +28,7 @@ One compact surface with every formatting choice, showing the styles at the sele
 - Computer: the Formatting toolbar button (symbol: text format, tooltip and label `library.toolbar.formatting`), or its entry in the toolbar's overflow menu.
 - Phone and tablet: the Formatting (Aa) button in the writing controls (the keyboard accessory while writing, the bottom bar while reading).
 
-Every command in it is also in the Format menu (computer, tablet) and most have shortcuts (`commands.md#editor`).
+Every command in it is also in the Format menu (computer, tablet) and most have shortcuts (`commands.md#editor`; the shortcuts are in each platform's `commands.md`).
 
 ## Content
 

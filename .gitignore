@@ -10,6 +10,8 @@ TestResults/
 .env
 .env.*
 *.sqlite*
+# The synthetic archives of the conformance fixtures hold a database each (protocol/conformance/README.md).
+!protocol/conformance/archive/**/journal.sqlite
 *.db*
 *.xcuserstate
 xcuserdata/

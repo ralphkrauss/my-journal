@@ -277,12 +277,10 @@ final class AgentCopyTests: XCTestCase {
         XCTAssertFalse(readable.contains(payload))
     }
 
-    /// protocol/fixtures/agent-copy-v1.json: the app's item IDs, digests, sealed items and key wraps match the public
+    /// protocol/conformance/agent-copy/agent-copy-v1.json: the app's item IDs, digests, sealed items and key wraps match the public
     /// corpus the server and other clients are checked against.
     func testPublicAgentCopyFixture() throws {
-        var root = URL(fileURLWithPath: #filePath)
-        for _ in 0..<7 { root.deleteLastPathComponent() }
-        let data = try Data(contentsOf: root.appendingPathComponent("protocol/fixtures/agent-copy-v1.json"))
+        let data = try Conformance.data("agent-copy/agent-copy-v1.json")
         let fixture = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let item = try XCTUnwrap(fixture["item"] as? [String: Any])
         let wrap = try XCTUnwrap(fixture["wrap"] as? [String: Any])

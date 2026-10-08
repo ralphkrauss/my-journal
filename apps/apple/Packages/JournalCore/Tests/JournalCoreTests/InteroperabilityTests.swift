@@ -24,10 +24,7 @@ final class InteroperabilityTests: XCTestCase {
         let envelopes: [Envelope]
     }
     private func corpus() throws -> Corpus {
-        var root = URL(fileURLWithPath: #filePath)
-        for _ in 0..<7 { root.deleteLastPathComponent() }
-        return try JSONDecoder().decode(
-            Corpus.self, from: Data(contentsOf: root.appendingPathComponent("protocol/fixtures/encryption-v1.json")))
+        try Conformance.decode(Corpus.self, "crypto/encryption-v1.json")
     }
     func testIndependentEnvelopesAuthenticateAndPreservePortableContent() throws {
         let corpus = try corpus()

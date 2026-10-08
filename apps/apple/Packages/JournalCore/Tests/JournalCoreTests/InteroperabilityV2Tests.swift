@@ -3,7 +3,7 @@ import XCTest
 
 @testable import JournalCore
 
-/// Checks the public corpus other clients are written against (protocol/fixtures/encryption-v2.json): password
+/// Checks the public corpus other clients are written against (protocol/conformance/crypto/encryption-v2.json): password
 /// envelopes, the passwordless envelope, the pairing grant and a current record with its image. The expected bytes
 /// are fixed in the shared file, so neither this app nor the .NET check can change the protocol and still pass.
 final class InteroperabilityV2Tests: XCTestCase {
@@ -106,10 +106,7 @@ final class InteroperabilityV2Tests: XCTestCase {
     }
 
     private func corpus() throws -> Corpus {
-        var root = URL(fileURLWithPath: #filePath)
-        for _ in 0..<7 { root.deleteLastPathComponent() }
-        let corpus = try JSONDecoder().decode(
-            Corpus.self, from: Data(contentsOf: root.appendingPathComponent("protocol/fixtures/encryption-v2.json")))
+        let corpus = try Conformance.decode(Corpus.self, "crypto/encryption-v2.json")
         XCTAssertEqual(corpus.corpusVersion, 2)
         return corpus
     }

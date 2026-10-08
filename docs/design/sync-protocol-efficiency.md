@@ -985,7 +985,7 @@ request storm or a stuck client, or resource exhaustion. Suggested attacks:
     - keep a periodic full sync;
     - honor the proxy-timeout guidance.
   No new error codes.
-- protocol/fixtures: a short receipt and its digest for another client to check against.
+- protocol/conformance/sync: a short receipt and its digest for another client to check against.
 - docs/self-hosting: the proxy-timeout sentence (§4.7).
 - SECURITY.md: no change to what the server can see. The wait reveals foreground presence, as polling already does.
 - docs/performance.md: the measurements in §7.4.

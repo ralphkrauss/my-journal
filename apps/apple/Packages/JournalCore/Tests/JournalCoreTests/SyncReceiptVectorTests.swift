@@ -2,14 +2,11 @@ import XCTest
 
 @testable import JournalCore
 
-/// protocol/fixtures/sync-receipts-v1.json: the client completes the public short receipt into exactly the full
+/// protocol/conformance/sync/sync-receipts-v1.json: the client completes the public short receipt into exactly the full
 /// receipt, and reads the three wait answers.
 final class SyncReceiptVectorTests: XCTestCase {
     func testTheShortReceiptVectorCompletesToTheFullReceipt() throws {
-        var root = URL(fileURLWithPath: #filePath)
-        for _ in 0..<7 { root.deleteLastPathComponent() }
-        let file = root.appendingPathComponent("protocol/fixtures/sync-receipts-v1.json")
-        let corpus = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
+        let corpus = try Conformance.object("sync/sync-receipts-v1.json")
         let pending = try JournalCoding.decoder().decode(
             PendingChange.self,
             from: JSONSerialization.data(

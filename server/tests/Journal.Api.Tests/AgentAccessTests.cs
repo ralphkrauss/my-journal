@@ -333,12 +333,12 @@ public sealed class AgentAccessTests
         return bytes;
     }
 
-    // protocol/fixtures/agent-copy-v1.json: .NET reproduces the key derivation, item ID, digest, sealed item and key
+    // protocol/conformance/agent-copy/agent-copy-v1.json: .NET reproduces the key derivation, item ID, digest, sealed item and key
     // wrap independently; opening at another position fails.
     [Fact]
     public void AgentCopyFixtureMatchesIndependentDotNetCryptography()
     {
-        using var corpus = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "agent-copy-v1.json")));
+        using var corpus = ConformanceFiles.Json("agent-copy/agent-copy-v1.json");
         var fixture = corpus.RootElement;
         var copyKey = fixture.GetProperty("copyKey").GetBytesFromBase64();
         var grantId = Guid.Parse(fixture.GetProperty("grantId").GetString()!);

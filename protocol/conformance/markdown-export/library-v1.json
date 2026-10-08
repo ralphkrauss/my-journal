@@ -1,0 +1,307 @@
+{
+  "attachments" : [
+    {
+      "base64" : "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "id" : "40000000-0000-4000-8000-000000000001",
+      "note" : "A PNG: written as it is."
+    },
+    {
+      "base64" : "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      "id" : "40000000-0000-4000-8000-000000000002",
+      "note" : "A GIF: written as it is."
+    },
+    {
+      "base64" : "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "id" : "40000000-0000-4000-8000-000000000003",
+      "note" : "A PNG behind a reference definition a link shares."
+    },
+    {
+      "base64" : "bm90IGFuIGltYWdl",
+      "id" : "40000000-0000-4000-8000-000000000004",
+      "note" : "Bytes that are not an image: counted, link kept."
+    }
+  ],
+  "corpusVersion" : 1,
+  "expected" : {
+    "binaryFiles" : [
+      {
+        "bytes" : 70,
+        "path" : "Personal/attachments/40000000-0000-4000-8000-000000000001.png",
+        "sha256" : "497790947d4666760ce38f3c00e852c71fdb66cae849bae8e9ede352719e1581"
+      },
+      {
+        "bytes" : 42,
+        "path" : "Personal/attachments/40000000-0000-4000-8000-000000000002.gif",
+        "sha256" : "ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629"
+      },
+      {
+        "bytes" : 70,
+        "path" : "Personal/attachments/40000000-0000-4000-8000-000000000003",
+        "sha256" : "497790947d4666760ce38f3c00e852c71fdb66cae849bae8e9ede352719e1581"
+      },
+      {
+        "bytes" : 70,
+        "path" : "Personal/attachments/40000000-0000-4000-8000-000000000003.png",
+        "sha256" : "497790947d4666760ce38f3c00e852c71fdb66cae849bae8e9ede352719e1581"
+      },
+      {
+        "bytes" : 70,
+        "path" : "Templates 2/attachments/40000000-0000-4000-8000-000000000001.png",
+        "sha256" : "497790947d4666760ce38f3c00e852c71fdb66cae849bae8e9ede352719e1581"
+      }
+    ],
+    "directories" : [
+      "CON-",
+      "Other Entries",
+      "Personal",
+      "Personal/attachments",
+      "Templates",
+      "Templates 2",
+      "Templates 2/attachments",
+      "Work- Q4-Plans",
+      "personal 2"
+    ],
+    "files" : [
+      {
+        "path" : "CON-/2026-09-03 In CON.md",
+        "text" : "---\ntitle: \"In CON\"\ndate: 2026-09-03T12:00:00+02:00\nmodified: 2026-09-03T12:30:00+02:00\njournal: \"CON\"\njournal_id: 10000000-0000-4000-8000-000000000004\nid: 20000000-0000-4000-8000-000000000014\n---\n\n# In CON\n\nCrème brûlée, 日記 and 🌿.\n"
+      },
+      {
+        "path" : "Other Entries/2026-09-01 Journal never synced.md",
+        "text" : "---\ntitle: \"Journal never synced\"\ndate: 2026-09-01T12:00:00+02:00\nmodified: 2026-09-01T12:30:00+02:00\nid: 20000000-0000-4000-8000-000000000012\n---\n\n# Journal never synced\n\nOrphan.\n"
+      },
+      {
+        "path" : "Personal/2026-10-01 Newer client.md",
+        "text" : "---\ntitle: \"Newer client\"\ndate: 2026-10-01T10:00:00+02:00\nmodified: 2026-10-01T10:05:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000020\n---\n\n# Newer client\n\nKept as written by a newer client.\n"
+      },
+      {
+        "path" : "Personal/2026-10-02 CON-.md",
+        "text" : "---\ntitle: \"CON\"\ndate: 2026-10-02T12:00:00+02:00\nmodified: 2026-10-02T12:30:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000006\n---\n\n# CON\n\nA device name.\n"
+      },
+      {
+        "path" : "Personal/2026-10-03 Paris 3.md",
+        "text" : "---\ntitle: \"Paris\"\ndate: 2026-10-03T12:00:00+02:00\nmodified: 2026-10-03T12:30:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000005\n---\n\n# Paris\n\nThird.\n"
+      },
+      {
+        "path" : "Personal/2026-10-03 Paris.md",
+        "text" : "---\ntitle: \"Paris\"\ndate: 2026-10-03T12:00:00+02:00\nmodified: 2026-10-03T12:30:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000003\npinned: true\n---\n\n# Paris\n\nFirst.\n"
+      },
+      {
+        "path" : "Personal/2026-10-03 paris 2.md",
+        "text" : "---\ntitle: \"paris\"\ndate: 2026-10-03T12:00:00+02:00\nmodified: 2026-10-03T12:30:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000004\n---\n\n# paris\n\nSecond.\n"
+      },
+      {
+        "path" : "Personal/2026-10-05 Morning pages.md",
+        "text" : "---\ntitle: \"Morning pages\"\ndate: 2026-10-05T07:12:00+02:00\nmodified: 2026-10-05T07:42:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000001\npinned: true\n---\n\n# Morning pages\n\nMorning *walk*.\n\n![The bay](attachments/40000000-0000-4000-8000-000000000001.png)\n\nText with ![a cup](attachments/40000000-0000-4000-8000-000000000002.gif \"Cup\") inside, and `attachments/40000000-0000-4000-8000-000000000002` in code.\n\n![A map][map] and [open the map][map]\n\n![Broken](attachments/40000000-0000-4000-8000-000000000004)\n\n![Still downloading](attachments/40000000-0000-4000-8000-000000000005)\n\n- [ ] Call the bank\n- [x] Water plants\n\n[map]: attachments/40000000-0000-4000-8000-000000000003\n"
+      },
+      {
+        "path" : "Personal/2026-10-05 Quiet day.md",
+        "text" : "---\ndate: 2026-10-05T00:30:00+02:00\nmodified: 2026-10-05T01:00:00+02:00\njournal: \"Personal\"\njournal_id: 10000000-0000-4000-8000-000000000001\nid: 20000000-0000-4000-8000-000000000002\narchived: true\n---\n\nQuiet day\nNothing else\n"
+      },
+      {
+        "path" : "Templates 2/Untitled Template.md",
+        "text" : "---\nmodified: 2026-02-01T02:00:00+02:00\nid: 30000000-0000-4000-8000-000000000002\nkind: template\n---\n\nUntitled template body\n"
+      },
+      {
+        "path" : "Templates 2/Weekly review.md",
+        "text" : "---\ntitle: \"Weekly review\"\nmodified: 2026-02-01T02:00:00+02:00\nid: 30000000-0000-4000-8000-000000000001\nkind: template\n---\n\n# Weekly review\n\n## Wins\n\n![Chart](attachments/40000000-0000-4000-8000-000000000001.png)\n"
+      },
+      {
+        "path" : "Templates 2/nul-.md",
+        "text" : "---\ntitle: \"nul\"\nmodified: 2026-02-01T02:00:00+02:00\nid: 30000000-0000-4000-8000-000000000003\nkind: template\n---\n\n# nul\n\nReserved name\n"
+      },
+      {
+        "path" : "Templates 2/weekly REVIEW 2.md",
+        "text" : "---\ntitle: \"weekly REVIEW\"\nmodified: 2026-02-01T02:00:00+02:00\nid: 30000000-0000-4000-8000-000000000004\nkind: template\n---\n\n# weekly REVIEW\n\nSame name apart from case\n"
+      },
+      {
+        "path" : "Templates/2026-09-05 Named like a folder.md",
+        "text" : "---\ntitle: \"Named like a folder\"\ndate: 2026-09-05T12:00:00+02:00\nmodified: 2026-09-05T12:30:00+02:00\njournal: \"Templates\"\njournal_id: 10000000-0000-4000-8000-000000000006\nid: 20000000-0000-4000-8000-000000000016\n---\n\n# Named like a folder\n\nTemplates folder numbering.\n"
+      },
+      {
+        "path" : "Work- Q4-Plans/2026-10-03 Long title Long title Long title Long title Long title Long.md",
+        "text" : "---\ntitle: \"Long title Long title Long title Long title Long title Long title Long title Long title Long title Long title\"\ndate: 2026-10-03T11:45:00+02:00\nmodified: 2026-10-03T12:15:00+02:00\njournal: \"Work: Q4/Plans\"\njournal_id: 10000000-0000-4000-8000-000000000002\nid: 20000000-0000-4000-8000-000000000011\n---\n\n# Long title Long title Long title Long title Long title Long title Long title Long title Long title Long title\n\nCut at 60 characters.\n"
+      },
+      {
+        "path" : "Work- Q4-Plans/2026-10-03 Plan.md",
+        "text" : "---\ntitle: \"Plan\"\ndate: 2026-10-03T10:00:00+02:00\nmodified: 2026-10-03T10:30:00+02:00\njournal: \"Work: Q4/Plans\"\njournal_id: 10000000-0000-4000-8000-000000000002\nid: 20000000-0000-4000-8000-000000000008\n---\n\n# Plan\n\nShip it\n\n![](attachments/40000000-0000-4000-8000-000000000005)\n"
+      },
+      {
+        "path" : "Work- Q4-Plans/2026-10-03 Q4- -plan- -1 -draft- -x-.md",
+        "text" : "---\ntitle: \"Q4: \\\"plan\\\" #1 *draft* [x]\"\ndate: 2026-10-03T11:00:00+02:00\nmodified: 2026-10-03T11:30:00+02:00\njournal: \"Work: Q4/Plans\"\njournal_id: 10000000-0000-4000-8000-000000000002\nid: 20000000-0000-4000-8000-000000000009\n---\n\n# Q4: \"plan\" \\#1 \\*draft\\* \\[x\\]\n\nEscapes in front matter and heading.\n"
+      },
+      {
+        "path" : "Work- Q4-Plans/2026-10-03 Two lines and a tab.md",
+        "text" : "---\ntitle: \"Two\\nlines\\tand a tab\"\ndate: 2026-10-03T11:30:00+02:00\nmodified: 2026-10-03T12:00:00+02:00\njournal: \"Work: Q4/Plans\"\njournal_id: 10000000-0000-4000-8000-000000000002\nid: 20000000-0000-4000-8000-000000000010\n---\n\n# Two lines\tand a tab\n\nx\n"
+      },
+      {
+        "path" : "personal 2/2026-09-04 Same journal name.md",
+        "text" : "---\ntitle: \"Same journal name\"\ndate: 2026-09-04T12:00:00+02:00\nmodified: 2026-09-04T12:30:00+02:00\njournal: \"personal\"\njournal_id: 10000000-0000-4000-8000-000000000003\nid: 20000000-0000-4000-8000-000000000015\n---\n\n# Same journal name\n\nFolder numbering.\n"
+      }
+    ],
+    "manifest" : {
+      "format" : "my-journal-markdown",
+      "version" : 1
+    },
+    "summary" : {
+      "imagesNotDownloaded" : 1,
+      "imagesUnreadable" : 1,
+      "itemsUnreadable" : 1,
+      "itemsWithOtherVersions" : 0
+    }
+  },
+  "pinned" : [
+    "20000000-0000-4000-8000-000000000001",
+    "20000000-0000-4000-8000-000000000003"
+  ],
+  "purpose" : "A whole library and the folder Export as Markdown writes for it (protocol/markdown-export.md). The library is given as record plaintexts, images and the library record's pins and journal order; the offset is the exporting device's. The manifest's date is left out. See README.md in this folder.",
+  "ranks" : {
+    "10000000-0000-4000-8000-000000000001" : "V",
+    "10000000-0000-4000-8000-000000000002" : "k",
+    "10000000-0000-4000-8000-000000000003" : "x",
+    "10000000-0000-4000-8000-000000000004" : "y"
+  },
+  "records" : [
+    {
+      "id" : "10000000-0000-4000-8000-000000000001",
+      "kind" : "journal",
+      "plaintext" : "{\"date\":\"2026-01-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-01T00:00:00Z\",\"title\":\"Personal\"}"
+    },
+    {
+      "id" : "10000000-0000-4000-8000-000000000002",
+      "kind" : "journal",
+      "plaintext" : "{\"date\":\"2026-01-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"10000000-0000-4000-8000-000000000002\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-01T00:00:00Z\",\"title\":\"Work: Q4\\/Plans\"}"
+    },
+    {
+      "id" : "10000000-0000-4000-8000-000000000003",
+      "kind" : "journal",
+      "plaintext" : "{\"date\":\"2026-01-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"10000000-0000-4000-8000-000000000003\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-01T00:00:00Z\",\"title\":\"personal\"}"
+    },
+    {
+      "id" : "10000000-0000-4000-8000-000000000004",
+      "kind" : "journal",
+      "plaintext" : "{\"date\":\"2026-01-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"10000000-0000-4000-8000-000000000004\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-01T00:00:00Z\",\"title\":\"CON\"}"
+    },
+    {
+      "id" : "10000000-0000-4000-8000-000000000005",
+      "kind" : "journal",
+      "plaintext" : "{\"date\":\"2026-01-01T00:00:00Z\",\"deletedAt\":\"2026-09-30T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"10000000-0000-4000-8000-000000000005\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-01T00:00:00Z\",\"title\":\"Gone\"}"
+    },
+    {
+      "id" : "10000000-0000-4000-8000-000000000006",
+      "kind" : "journal",
+      "plaintext" : "{\"date\":\"2026-01-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"10000000-0000-4000-8000-000000000006\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-01T00:00:00Z\",\"title\":\"Templates\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000001",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-05T05:12:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning *walk*.\\n\\n![The bay](attachments\\/40000000-0000-4000-8000-000000000001)\\n\\nText with ![a cup](attachments\\/40000000-0000-4000-8000-000000000002 \\\"Cup\\\") inside, and `attachments\\/40000000-0000-4000-8000-000000000002` in code.\\n\\n![A map][map] and [open the map][map]\\n\\n![Broken](attachments\\/40000000-0000-4000-8000-000000000004)\\n\\n![Still downloading](attachments\\/40000000-0000-4000-8000-000000000005)\\n\\n- [ ] Call the bank\\n- [x] Water plants\\n\\n[map]: attachments\\/40000000-0000-4000-8000-000000000003\",\"metadata\":{\"blockIDs\":[\"F0EA04E2-D87E-76A6-5985-369E297EF704\",\"01CA27BE-467C-7440-702B-4CEB5DB29566\",\"EF2890A9-B014-9DDD-7939-2B1430684225\",\"B81F5B45-4F70-2F81-9579-7E3AEBF4FFB1\",\"2E54DF28-B47F-D234-C585-6E1168054CA8\",\"F6357FE6-5582-7FB0-59B5-9BEDBF2C8F36\",\"1C607665-0A8C-02CF-5103-C70B95E928E2\",\"FE52A743-5BF6-3B63-51DC-986ED2E41943\"],\"imageTypes\":{},\"segmentLengths\":[17,62,148,39,61,72,20,75]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000001\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-05T05:42:00Z\",\"title\":\"Morning pages\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000002",
+      "kind" : "entry",
+      "plaintext" : "{\"archivedAt\":\"2026-10-04T23:30:00Z\",\"date\":\"2026-10-04T22:30:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Quiet day\\nNothing else\",\"metadata\":{\"blockIDs\":[\"12EFD039-A0CD-7429-E0D0-CAE13B22372B\"],\"imageTypes\":{},\"segmentLengths\":[22]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000002\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-04T23:00:00Z\",\"title\":\"\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000003",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"First.\",\"metadata\":{\"blockIDs\":[\"3697ABC8-6A4F-50EA-F0D3-85078B522D72\"],\"imageTypes\":{},\"segmentLengths\":[6]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000003\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T10:30:00Z\",\"title\":\"Paris\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000004",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Second.\",\"metadata\":{\"blockIDs\":[\"EF8D2B73-4F8F-5DAB-3F54-E44D75B0545C\"],\"imageTypes\":{},\"segmentLengths\":[7]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000004\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T10:30:00Z\",\"title\":\"paris\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000005",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Third.\",\"metadata\":{\"blockIDs\":[\"17871B17-2917-4C4E-AA3D-3464C85DF0B2\"],\"imageTypes\":{},\"segmentLengths\":[6]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000005\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T10:30:00Z\",\"title\":\"Paris\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000006",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-02T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"A device name.\",\"metadata\":{\"blockIDs\":[\"0CB1F256-F70E-2106-DC06-9B86E917054E\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000006\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-02T10:30:00Z\",\"title\":\"CON\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000007",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-01T10:00:00Z\",\"deletedAt\":\"2026-10-01T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Gone.\",\"metadata\":{\"blockIDs\":[\"BE33D700-3BA5-EE4F-93C3-4466C94F573F\"],\"imageTypes\":{},\"segmentLengths\":[5]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000007\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-01T10:30:00Z\",\"title\":\"Deleted entry\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000008",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Ship it\\n\\n![](attachments\\/40000000-0000-4000-8000-000000000005)\\n\",\"metadata\":{\"blockIDs\":[\"87053DD9-D73D-4A3F-C061-64E89B16C8AB\",\"2627B0D7-EE11-0DA8-34E7-9E0508FC1FA0\"],\"imageTypes\":{},\"segmentLengths\":[9,54]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000008\",\"journalID\":\"10000000-0000-4000-8000-000000000002\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T08:30:00Z\",\"title\":\"Plan\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000009",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T09:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Escapes in front matter and heading.\\n\",\"metadata\":{\"blockIDs\":[\"CD2B7D3B-8391-B0E3-71D1-3CF240026A64\"],\"imageTypes\":{},\"segmentLengths\":[37]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000009\",\"journalID\":\"10000000-0000-4000-8000-000000000002\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T09:30:00Z\",\"title\":\"Q4: \\\"plan\\\" #1 *draft* [x]\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000010",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T09:30:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"x\\n\",\"metadata\":{\"blockIDs\":[\"66F5655B-4B3E-BC05-E06C-2EC56CD544E8\"],\"imageTypes\":{},\"segmentLengths\":[2]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000010\",\"journalID\":\"10000000-0000-4000-8000-000000000002\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T10:00:00Z\",\"title\":\"Two\\nlines\\tand a tab\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000011",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-10-03T09:45:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Cut at 60 characters.\\n\",\"metadata\":{\"blockIDs\":[\"71FAEAD2-C49E-7C1E-2C0B-AD369ED006A8\"],\"imageTypes\":{},\"segmentLengths\":[22]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000011\",\"journalID\":\"10000000-0000-4000-8000-000000000002\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-03T10:15:00Z\",\"title\":\"Long title Long title Long title Long title Long title Long title Long title Long title Long title Long title \"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000015",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-09-04T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Folder numbering.\\n\",\"metadata\":{\"blockIDs\":[\"2DE64594-77EE-2971-56A6-5E77EB4B8962\"],\"imageTypes\":{},\"segmentLengths\":[18]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000015\",\"journalID\":\"10000000-0000-4000-8000-000000000003\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-04T10:30:00Z\",\"title\":\"Same journal name\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000016",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-09-05T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Templates folder numbering.\\n\",\"metadata\":{\"blockIDs\":[\"02FD1C49-8375-9F1F-8E6A-9209825647BE\"],\"imageTypes\":{},\"segmentLengths\":[28]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000016\",\"journalID\":\"10000000-0000-4000-8000-000000000006\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-05T10:30:00Z\",\"title\":\"Named like a folder\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000012",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-09-01T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Orphan.\\n\",\"metadata\":{\"blockIDs\":[\"09D40F88-02E3-D606-FA88-C6E3A942AEB2\"],\"imageTypes\":{},\"segmentLengths\":[8]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000012\",\"journalID\":\"10000000-0000-4000-8000-000000000255\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-01T10:30:00Z\",\"title\":\"Journal never synced\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000013",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-09-02T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Hidden.\\n\",\"metadata\":{\"blockIDs\":[\"FE734502-65A6-3524-92CB-069B951CBD66\"],\"imageTypes\":{},\"segmentLengths\":[8]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000013\",\"journalID\":\"10000000-0000-4000-8000-000000000005\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-02T10:30:00Z\",\"title\":\"In a deleted journal\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000014",
+      "kind" : "entry",
+      "plaintext" : "{\"date\":\"2026-09-03T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Crème brûlée, 日記 and 🌿.\\n\",\"metadata\":{\"blockIDs\":[\"5ACADF8C-84C1-96E5-DBC5-D9E5F937C57F\"],\"imageTypes\":{},\"segmentLengths\":[34]},\"version\":2},\"id\":\"20000000-0000-4000-8000-000000000014\",\"journalID\":\"10000000-0000-4000-8000-000000000004\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-03T10:30:00Z\",\"title\":\"In CON\"}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000020",
+      "kind" : "entry",
+      "plaintext" : "{\"id\":\"20000000-0000-4000-8000-000000000020\",\"kind\":\"entry\",\"journalID\":\"10000000-0000-4000-8000-000000000001\",\"title\":\"Newer client\",\"date\":\"2026-10-01T08:00:00Z\",\"modifiedAt\":\"2026-10-01T08:05:00Z\",\"deletedWithJournal\":false,\"mood\":4,\"document\":{\"version\":2,\"markdown\":\"Kept as written by a newer client.\\n\"}}"
+    },
+    {
+      "id" : "20000000-0000-4000-8000-000000000021",
+      "kind" : "entry",
+      "plaintext" : "{\"id\":\"20000000-0000-4000-8000-000000000021\",\"kind\":\"entry\",\"title\":\"No date\",\"modifiedAt\":\"2026-10-01T08:05:00Z\",\"deletedWithJournal\":false}"
+    },
+    {
+      "id" : "30000000-0000-4000-8000-000000000001",
+      "kind" : "template",
+      "plaintext" : "{\"date\":\"2026-02-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## Wins\\n\\n![Chart](attachments\\/40000000-0000-4000-8000-000000000001)\\n\",\"metadata\":{\"blockIDs\":[\"2E6701B3-D3C3-A83D-E1F2-9D72B452D6FA\",\"A7E76E0A-478D-BAE6-143E-9853D5B43535\"],\"imageTypes\":{},\"segmentLengths\":[9,59]},\"version\":2},\"id\":\"30000000-0000-4000-8000-000000000001\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-01T00:00:00Z\",\"title\":\"Weekly review\"}"
+    },
+    {
+      "id" : "30000000-0000-4000-8000-000000000002",
+      "kind" : "template",
+      "plaintext" : "{\"date\":\"2026-02-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Untitled template body\\n\",\"metadata\":{\"blockIDs\":[\"078E699B-DC6E-21B6-7DCC-97A5A5137774\"],\"imageTypes\":{},\"segmentLengths\":[23]},\"version\":2},\"id\":\"30000000-0000-4000-8000-000000000002\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-01T00:00:00Z\",\"title\":\"\"}"
+    },
+    {
+      "id" : "30000000-0000-4000-8000-000000000003",
+      "kind" : "template",
+      "plaintext" : "{\"date\":\"2026-02-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Reserved name\\n\",\"metadata\":{\"blockIDs\":[\"45040F8A-03A1-DD96-18F9-26CEAA901258\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"30000000-0000-4000-8000-000000000003\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-01T00:00:00Z\",\"title\":\"nul\"}"
+    },
+    {
+      "id" : "30000000-0000-4000-8000-000000000004",
+      "kind" : "template",
+      "plaintext" : "{\"date\":\"2026-02-01T00:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Same name apart from case\\n\",\"metadata\":{\"blockIDs\":[\"3D4025FC-8659-6DE4-F00F-99B8E6C810A3\"],\"imageTypes\":{},\"segmentLengths\":[26]},\"version\":2},\"id\":\"30000000-0000-4000-8000-000000000004\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-01T00:00:00Z\",\"title\":\"weekly REVIEW\"}"
+    }
+  ],
+  "timeZoneOffsetMinutes" : 120
+}

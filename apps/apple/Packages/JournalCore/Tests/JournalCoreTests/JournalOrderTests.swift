@@ -186,7 +186,7 @@ final class JournalOrderTests: XCTestCase {
     }
 
     func testRanksMatchTheProtocolVectors() throws {
-        let url = LibraryFixture.directory().appendingPathComponent("journal-ranks-v1.json")
+        let url = Conformance.url("records/journal-ranks-v1.json")
         let vectors = try JSONDecoder().decode(RankVectors.self, from: Data(contentsOf: url))
         for rank in vectors.valid { XCTAssertTrue(JournalRanks.isValid(rank), rank) }
         for rank in vectors.invalid { XCTAssertFalse(JournalRanks.isValid(rank), rank) }

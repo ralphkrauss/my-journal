@@ -922,7 +922,7 @@ final class LibrarySyncTests: XCTestCase {
     }
 }
 
-/// protocol/fixtures/library-record-v1.json, with the vault key of encryption-v2.json.
+/// protocol/conformance/records/library-record-v1.json, with the vault key of encryption-v2.json.
 struct LibraryFixture: Decodable {
     struct Record: Decodable {
         let context: String
@@ -939,20 +939,11 @@ struct LibraryFixture: Decodable {
     var vaultKey = Data()
     private enum CodingKeys: String, CodingKey { case record, expected }
 
-    static func directory() -> URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent(
-            "../../../../../../protocol/fixtures"
-        ).standardizedFileURL
-    }
     static func load() throws -> LibraryFixture {
         struct Recovery: Decodable { let vaultKey: Data }
         struct Corpus: Decodable { let recovery: Recovery }
-        let folder = directory()
-        var fixture = try JSONDecoder().decode(
-            LibraryFixture.self, from: Data(contentsOf: folder.appendingPathComponent("library-record-v1.json")))
-        fixture.vaultKey = try JSONDecoder().decode(
-            Corpus.self, from: Data(contentsOf: folder.appendingPathComponent("encryption-v2.json"))
-        ).recovery.vaultKey
+        var fixture = try Conformance.decode(LibraryFixture.self, "records/library-record-v1.json")
+        fixture.vaultKey = try Conformance.decode(Corpus.self, "crypto/encryption-v2.json").recovery.vaultKey
         return fixture
     }
 }
