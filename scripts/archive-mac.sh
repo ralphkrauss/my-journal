@@ -61,7 +61,8 @@ claimed = {key: value for key, value in plistlib.loads(sys.stdin.buffer.read()).
 group = claimed.get("com.apple.security.application-groups", [f"{team}.io.github.ralphkrauss.myjournal"])
 keychain = claimed.get("keychain-access-groups", [f"{team}.org.privatejournal.vault"])
 expected = ([f"{team}.io.github.ralphkrauss.myjournal"], [f"{team}.org.privatejournal.vault"])
-if not set(required) <= set(claimed) or (group, keychain) != expected:
+# App Review rejects network.server without a listener, and the app is a client only.
+if not set(required) <= set(claimed) or (group, keychain) != expected or "com.apple.security.network.server" in claimed:
     raise SystemExit(code + " has unexpected entitlements: " + " ".join(sorted(claimed)))
 ' "$1" "$team" "${@:2}"
 }

@@ -17,7 +17,7 @@ Nothing private belongs here: no tailnet names, host names, personal paths or re
 
 ## Notes for iPhone and iPad
 
-Paste into the Notes field of the iOS version. Edit or delete the bracketed demo server block first. (3190 bytes with the placeholders.)
+Paste into the Notes field of the iOS version. Edit or delete the bracketed demo server block first. (about 3510 bytes with the placeholders.)
 
 ```text
 My Journal is a private journal for iPhone, iPad and Mac (one universal app). There is no account, sign-in or login, and everything except sync works offline without a server.
@@ -46,6 +46,9 @@ Settings > Agent Access shows the server's MCP address. A person adds it to an A
 PERMISSIONS
 Camera: Take Photo and scanning a code from another device. Face ID: App Lock and confirming a new device. Photos: only saving an image the person chooses; picking uses the system picker. Local network: finding the person's own server on their network.
 
+NO VPN
+The app has no VPN functionality: no NetworkExtension, VPN configuration or tunnel, and it doesn't route or inspect traffic. Some people reach their own server through Tailscale, a separate app they manage themselves; My Journal only mentions it in connection hints and connects to the server's address over HTTPS.
+
 ENCRYPTION
 Only the operating system's encryption (CryptoKit, CommonCrypto, Security framework, HTTPS through URLSession), so ITSAppUsesNonExemptEncryption is NO.
 
@@ -55,7 +58,7 @@ No analytics, advertising or tracking. The app sends nothing to us.
 
 ## Notes for the Mac
 
-Paste into the Notes field of the macOS version. (2949 bytes with the placeholders.)
+Paste into the Notes field of the macOS version. (about 3270 bytes with the placeholders.)
 
 ```text
 My Journal is a private journal for Mac, iPhone and iPad (one universal app). There is no account, sign-in or login, and everything except sync works offline without a server.
@@ -79,6 +82,9 @@ Settings > Agent Access shows the server's MCP address. A person adds it to an A
 
 APP SANDBOX
 The app is sandboxed. It has no helper, login item or updater, and downloads no code.
+
+NO VPN
+The app has no VPN functionality: no NetworkExtension, VPN configuration or tunnel, and it doesn't route or inspect traffic. Some people reach their own server through Tailscale, a separate app they manage themselves; My Journal only mentions it in connection hints and connects to the server's address over HTTPS.
 
 ENCRYPTION
 Only the operating system's encryption (CryptoKit, CommonCrypto, Security framework, HTTPS through URLSession), so ITSAppUsesNonExemptEncryption is NO.
@@ -119,6 +125,13 @@ The Mac app is a plain sandboxed client, like the iPhone and iPad app: no helper
 ### Third-party AI
 
 Guideline [5.1.2(i)](https://developer.apple.com/app-store/review/guidelines/#data-use-and-sharing) requires disclosure and explicit permission before sharing personal data with third-party AI. The Allow Access sheet does both, per journal, and PRIVACY.md describes it. Naming Claude Code in the notes, which aren't public, only helps the reviewer find a client.
+
+### Build 18 rejection (2026-10-08)
+
+Two automated findings, no human review yet:
+
+- **VPN functionality (iOS and macOS, guideline 2.1).** The scan most likely matched the Tailscale hints in the connection screens. The app has no VPN code. Answered in a reply to App Review and the NO VPN section in both Notes fields; keep that section in future submissions.
+- **`com.apple.security.network.server` without matching functionality (macOS, 2.4.5).** Left from when the Mac app ran a server. Removed in build 19; the Mac app only makes outgoing connections. Don't add entitlements the app doesn't use.
 
 ### Export compliance
 
