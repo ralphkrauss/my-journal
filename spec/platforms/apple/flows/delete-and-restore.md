@@ -54,7 +54,7 @@ Maps [flows/delete-and-restore.md](../../../flows/delete-and-restore.md). The fl
 
 **Delete permanently.** One item: `library.entryActions.deletePermanently` (context menu, Entry Actions, trailing swipe `common.delete`, Delete or ⌘⌫ on the Mac, deleted journal's detail) goes through `.permanentDeletionPrompt` (`PermanentDeletionView.swift`): the item is checked and the open entry saved before the alert, which is a standard `.alert` with `common.delete` (destructive) and `common.cancel`. Everything: Delete All (`DeleteAllPrompt.swift`), described in [recently-deleted](../screens/recently-deleted.md). The deletion syncs like any record; the alert text `library.deletePermanently.retention` says copies may remain elsewhere.
 
-**Refusals and failures.** A changed or already-restored item shows `messages.generic.deleteChanged`, a newer-version item `messages.generic.deleteNeedsUpdate`, in the generic alert. An item or journal with changes to review gets `DeletionConflictAlert`: a second standard alert, title “name” Can’t Be Deleted (no copy key), a one-sentence message, Review Changes and Cancel; Review Changes opens `ConflictReview` as a sheet. A missing or already deleted item is ignored without a message. A stored change that cannot be shown is `messages.refresh.itemDeleted`, `messages.refresh.itemsDeleted` or `messages.refresh.journalDeletedView`.
+**Refusals and failures.** A changed or already-restored item shows `messages.generic.deleteChanged`, a newer-version item `messages.generic.deleteNeedsUpdate`, in the generic alert. An item or journal with changes to review gets `DeletionConflictAlert`: a second standard alert, title `messages.deleteConflict.title` (“name” Can’t Be Deleted), message `messages.deleteConflict.journal` or `messages.deleteConflict.record`, `common.reviewChanges` and `common.cancel`; Review Changes opens `ConflictReview` as a sheet. A missing or already deleted item is ignored without a message. A stored change that cannot be shown is `messages.refresh.itemDeleted`, `messages.refresh.itemsDeleted` or `messages.refresh.journalDeletedView`.
 
 **States.** Locked: every prompt modifier cancels its task, closes its alerts and returns swiped rows (`onValueChange(of: model.locked)`); nothing already stored is undone. Removed by a sync while open: `reconcileDraftLocation` (`JournalNavigation.swift`) closes the open entry when it no longer belongs in the list being shown, unless it has unsaved edits, which keep it open.
 
@@ -123,4 +123,4 @@ Design records: `docs/design/recently-deleted-2026-09-30.md`, `docs/design/ios-d
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), D15. The conflict alert for deletions has no copy key and is not in the spec (reported to the owner).
+None for the conflict alert: it is now in the spec (`messages.deleteConflict.*`), so the earlier question about it is resolved. See [open-questions.md](../../../open-questions.md) for the rest.

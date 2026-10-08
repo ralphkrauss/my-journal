@@ -1,7 +1,7 @@
 ---
 id: messages
 title: Messages
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, erase-unopened-library, failure-messages, deletion-conflict-alert, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 sources:
   - apps/apple/Packages/JournalCore/Sources/JournalCore/SyncHealth.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/Models.swift
@@ -14,6 +14,13 @@ sources:
   - apps/apple/JournalApp/Views/EntryConflictReview.swift
   - apps/apple/JournalApp/Views/JournalConflictView.swift
   - apps/apple/JournalApp/Views/DeletionConflictView.swift
+  - apps/apple/JournalApp/Views/DeletionConflictAlert.swift
+  - apps/apple/JournalApp/Views/LibraryProblemView.swift
+  - apps/apple/JournalApp/Model/FailureMessage.swift
+  - apps/apple/JournalApp/Model/NetworkFailureMessage.swift
+  - apps/apple/JournalApp/Model/LibraryProblem.swift
+  - apps/apple/Packages/JournalCore/Sources/JournalCore/LocalDataFailure.swift
+  - docs/design/build-18-fixes-2026-10-06.md
 ---
 
 # Messages
@@ -29,7 +36,9 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | **Settings ▸ Sync footer** | The current sync message, item refusal, save-paused note, or library note | One message at a time. Priority: `messages.sync.pausedForSaveFailure` (connected and a save failed), then the sync message, then the not-connected text, then `messages.library.needsUpdate` / `messages.library.waitingForServer`. |
 | **Sync Status** | The same sync message, its action, and Sync Settings… | Only when the person must act, or after a long wait. See [screens/sync-status.md](screens/sync-status.md). |
 | **Generic alert** | Title `common.alertTitle`, the message, `common.ok`, plus `common.tryAgain` while a save has failed | One per window. Never while locked or while the first journal is being created. Most "Couldn’t …", "Save your … before …", "… couldn’t be displayed" messages and any operation error without its own place go here. |
-| **Lock screen note** | The same model error, in red, under "My Journal Is Locked" | Used instead of the generic alert while locked, and for launch failures. |
+| **Lock screen note** | The same model error, in red, under "My Journal Is Locked" | Used instead of the generic alert while locked. Launch failures no longer use it: they show the library problem screen. |
+| **Library problem screen** | Heading, paragraphs and buttons for a library that can't be opened | Replaces the window; needs no authentication. See [screens/unavailable-content](screens/unavailable-content.md) and Library can’t be opened below. |
+| **Deletion conflict alert** | A standard alert with Review Changes and Cancel | Delete Journal and Delete Permanently on an item with changes to review. See Deletion refused below. |
 | **Sheet errors** | An operation's error inside its own sheet (Connect to a Server, Turn On Encryption, Change Password, Add Device, Move Entry, Change Date, Image Descriptions, the conflict reviews, exports) | Errors stay on the sheet that caused them, never in an alert behind it. |
 | **Notices** | Save failure, writing paused (Mac), conflict, recovery and unavailable notices in the entry | Persistent while the state lasts, with their single action. |
 | **Announcements** | VoiceOver announcements | Only for results of actions the person started, and for errors appearing in an open sheet. |
@@ -58,7 +67,8 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | `messages.sync.serverUpdateNeeded` | The server needs an update before this device can sync. Your changes are saved on this device. | Sync state Update or fix needed (server): the server lacks an endpoint this app needs (404 or 405 on a sync request). Checked again every 5 minutes. | Settings ▸ Sync footer; Sync Status menu | messages.sync.action.checkAgain |  |
 | `messages.sync.certificateInvalid` | Can’t connect securely to the server because its certificate isn’t valid. Your changes are saved on this device. | Sync state Update or fix needed (certificate): no secure connection could be made or the certificate isn’t trusted, expired or not yet valid. Checked again every 5 minutes. | Settings ▸ Sync footer; Sync Status menu | messages.sync.action.checkAgain |  |
 | `messages.sync.notJournalServer` | The server address doesn’t lead to a My Journal server. Your changes are saved on this device. | Sync state Update or fix needed (not a journal server): the address answers, but its status isn’t a My Journal status (for example a web page or a captive portal). Checked again every 5 minutes. | Settings ▸ Sync footer; Sync Status menu | messages.sync.action.checkAgain |  |
-| `messages.sync.localDataUnreadable` | My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup. | Sync state Unexpected (this device’s data): this device’s own store couldn’t be read or written during a sync. Retries continue with the usual backoff. | Settings ▸ Sync footer; Sync Status menu | common.tryAgain |  |
+| `messages.sync.localDataUnreadable` | My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup. | Sync state Unexpected (this device’s data is damaged): this device’s own database is malformed or isn’t a database, or the store’s own validation found it inconsistent. Retries continue with the usual backoff. Same wording as `messages.failure.damagedReading`. | Settings ▸ Sync footer; Sync Status menu | common.tryAgain |  |
+| `messages.sync.localDataUnavailable` | Couldn’t sync right now. My Journal will try again. | Sync state Temporary (this device’s data): the local database was busy or locked, the device was locked, or the disk is failing or full. The data is fine, and the text makes no claim about saving. Retries continue with the usual backoff. | Settings ▸ Sync footer; Sync Status menu only after a long wait | common.tryAgain |  |
 | `messages.sync.unexpected` | Couldn’t sync because of an unexpected problem. Your changes are saved on this device. | Sync state Unexpected: any other sync failure. Retries continue with the usual backoff. | Settings ▸ Sync footer; Sync Status menu | common.tryAgain |  |
 | `messages.sync.waiting` | Saved on this device. Waiting to sync. | Sync Status’s message when it shows but no sync message is held. Only after the app locked and unlocked while a state that needs the person persists, until the next sync (the lock clears the message, not the state). | Sync Status menu | the state’s action | rare |
 | `messages.sync.pausedForSaveFailure` | Syncing is paused until your changes are saved. Choose Try Again in the entry. | Settings ▸ Sync footer while connected and the open entry’s save has failed. Takes priority over every other footer message; Sync Now is dimmed. | Settings ▸ Sync footer | none here; Try Again in the entry |  |
@@ -110,7 +120,7 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | Key | Text | When it appears | Shown in | Actions | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `messages.error.unsupportedFormat` | Update My Journal to edit this entry. | JournalError.unsupportedFormat: content or a recovery format from a newer version. Also the read-only note under the title of an entry from a newer version (same text). Where an operation fails with it, it appears in that operation’s sheet or the generic alert. | entry editor note; generic alert; sheet errors |  |  |
-| `messages.error.newerVersion` | These journals were saved by a newer version of My Journal. Update My Journal to open them. | JournalError.newerVersion: the library’s database was migrated by a newer version. Shown at launch on the lock screen; nothing can be opened or changed. | lock screen (launch) | none |  |
+| `messages.error.newerVersion` | These journals were saved by a newer version of My Journal. Update My Journal to open them. | JournalError.newerVersion where no more specific text applies: the library’s database was migrated by a newer version. Since build 18 the launch shows `library.problem.newerVersion.message` on the library problem screen instead, so this text is no longer shown at launch. | none at launch (overridden) | none | overridden |
 | `messages.error.invalidData` | This data couldn’t be read. | JournalError.invalidData: a record, archive or server answer that can’t be decoded, where an operation reports its error directly (archive import, connecting). In sync it becomes messages.sync.unexpected. | sheet errors; generic alert |  |  |
 | `messages.error.invalidRecoveryKey` | That password or recovery key couldn’t unlock your journals. | JournalError.invalidRecoveryKey where no more specific text applies: unlocking with the password or recovery key on the lock screen, importing an archive. | lock screen; Import Archive |  |  |
 | `messages.error.locked` | Unlock My Journal to continue. | JournalError.locked: an operation found the journals locked or being replaced. Usually suppressed because the lock closes the sheet; may appear in a sheet’s error if the lock and the error race. | sheet errors (rare) |  | rare |
@@ -213,7 +223,7 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 
 | Key | Text | When it appears | Shown in | Actions | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `common.alertTitle` | Journal | Title of the generic alert that shows model errors (save failures and every “Couldn’t …” or “Save your … before …” message routed to the window). Not shown while locked; the lock screen shows the message instead. | generic alert | common.ok; common.tryAgain while a save has failed |  |
+| `common.alertTitle` | My Journal | Title of the generic alert that shows model errors (save failures and every “Couldn’t …” or “Save your … before …” message routed to the window). The app’s name; it read “Journal” before build 18. Not shown while locked; the lock screen shows the message instead. | generic alert | common.ok; common.tryAgain while a save has failed |  |
 
 ### Save failures
 
@@ -260,10 +270,58 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 
 ### Library can’t be opened
 
+The library problem screen ([screens/unavailable-content](screens/unavailable-content.md)) replaces the window; it has no alert and no generic message of its own. Its text is these keys:
+
 | Key | Text | When it appears | Shown in | Actions | Notes |
 | --- | --- | --- | --- | --- | --- |
+| `library.problem.title` | Your Journals Can’t Be Opened | Heading when the library can’t be opened or its settings can’t be read. | library problem screen | retry-opening, import-archive, erase-unopened, open-library-guide |  |
+| `library.problem.cantOpen.message` | My Journal can’t open the journals on this device. Nothing has been removed. | Can’t open: the library doesn’t open, or its first read fails. | library problem screen |  |  |
+| `library.problem.cantOpen.advice` | Try again. If this keeps happening, restart your {device}. | Can’t open: second paragraph. {device} is the device’s name. | library problem screen |  |  |
+| `library.problem.settingsUnread.message` | My Journal can’t read the settings saved on this device. Nothing has been removed. | Settings unreadable: the settings file exists but doesn’t read or decode. | library problem screen |  |  |
+| `library.problem.settingsUnread.advice` | If you recently used a newer version of My Journal, update it. Then try again. If this keeps happening, restart your {device}. | Settings unreadable: second paragraph. | library problem screen |  |  |
+| `library.problem.updateTitle` | Update My Journal | Heading when the journals were saved by a newer version. | library problem screen | open-library-guide |  |
+| `library.problem.newerVersion.message` | These journals were saved by a newer version of My Journal. Update My Journal in the App Store or TestFlight to open them. | Newer version: the only paragraph. | library problem screen |  |  |
+| `library.problem.mayBeFine` | Your journals may still be fine. Only erase them if this keeps happening. | After one failed Try Again, in secondary text. | library problem screen |  |  |
+| `library.problem.stillClosed` | Still can’t be opened. | Under Try Again after an attempt that ended in a problem again; announced when it appears. | library problem screen |  |  |
+| `library.problem.learnMore` | Learn More | Opens the troubleshooting guide on the web. | library problem screen | open-library-guide |  |
+| `library.problem.learnMore.hint` | Opens the troubleshooting guide in your browser. | Accessibility hint of Learn More. | library problem screen |  |  |
+| `library.problem.importNote` | The journals on this device can’t be opened, but they may still be fine. Restoring removes them from this device and ends any syncing with a server. | Import Archive sheet, above its buttons, while the library can’t be opened. | Import Archive sheet |  |  |
+| `library.problem.missingKey.caption` | Don’t have your {credential}? | Above Import Archive… and Erase Journals and Settings… on the lock screen of a missing device key. | lock screen | import-archive, erase-unopened |  |
+| `settings.libraryProblem` | Settings are available once your journals open. | Settings while the library problem screen is showing. | Settings |  |  |
 | `messages.library.deviceKeyUnavailable` | Your device key is unavailable. Use your recovery key to unlock your journals. | Launch or unlock: the key that opens the journals isn’t in this device’s keychain (for example after restoring a device backup). The lock screen asks for the password or recovery key. | lock screen | unlock with the credential |  |
-| `messages.library.cannotOpen` | Your journals couldn’t be opened. Quit and reopen My Journal. | Unlocking when the journals were never opened (opening the store failed at launch) and no other message is shown. | lock screen | none |  |
+| `messages.library.notOpen` | Your journals need to open before this can be done. | Connecting to a server, pairing and starting a journal while the library problem screen is showing or Try Again is running: they would replace the library. | generic alert; Connect to a Server | common.ok | rare |
+| `messages.library.cannotOpen` | Your journals couldn’t be opened. Quit and reopen My Journal. | Only a guard: unlocking finds no library open. A library that fails to open shows the library problem screen and is never locked, so this text is rarely reachable. | lock screen | none | rare; overridden |
+
+The erase warning for journals that can’t be opened has its own keys, `settings.erase.alert.unopened` and its parts ([flows/erase](flows/erase.md)).
+
+### Failure messages
+
+What the person is told when an operation fails and the failure has no text of its own. One function turns an error into a message and is given whether the operation was **reading** (a list, history or conflict read) or **saving** (anything that writes: Move Entry, Change Date, deleting, restoring, installing, descriptions). The system’s own text never reaches the person, because it can hold SQL, a title or an internal code; it is logged as private data (error domain and code only). The app’s own named errors keep their own text, which is already plain.
+
+| Key | Text | When it appears | Shown in | Actions | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `messages.failure.damagedReading` | My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup. | Reading fails because the database is damaged (malformed, not a database, or the store’s own validation failed). Nothing else counts as damaged: a busy or locked database, a full disk, an unavailable file or a failing disk are temporary. | generic alert; the operation’s sheet | common.ok |  |
+| `messages.failure.damagedSaving` | My Journal can’t save to your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup. | A change can’t be saved because the database is damaged. | generic alert; the operation’s sheet | common.ok |  |
+| `messages.failure.temporaryReading` | My Journal couldn’t use its data on this device right now. Try again. | Reading fails for any other database, file-system or unknown reason. | generic alert; the operation’s sheet | common.ok |  |
+| `messages.failure.temporarySaving` | My Journal couldn’t save your changes right now. Try again. | Saving fails for any other database, file-system or unknown reason. | generic alert; the operation’s sheet | common.ok |  |
+| `messages.failure.full` | There isn’t enough space on this device. Free up space, then try again. | The database is full or a file write ran out of space. | generic alert; the operation’s sheet | common.ok |  |
+| `messages.failure.keychain` | My Journal couldn’t use the device key. Try again. | The secure store (keychain) failed. “Device key” is the term the lock screen uses. | generic alert; the operation’s sheet | common.ok |  |
+| `messages.failure.offline` | You’re offline. Check your connection. | A network error while the device has no connection. | Add Device; the operation’s sheet | common.ok |  |
+| `messages.failure.certificate` | Can’t connect securely to the server because its certificate isn’t valid. | A network error caused by the server’s certificate. | Add Device; the operation’s sheet | common.ok |  |
+| `messages.failure.unreachable` | Couldn’t reach the server. Check your connection. | Every other network error. | Add Device; the operation’s sheet | common.ok |  |
+| `messages.failure.other` | Something went wrong. Try again. | Anything else with no text of its own. | generic alert; the operation’s sheet | common.ok |  |
+
+A network error is classified as sync classifies it, so one place knows what a network error means. Surfaces that already had their own mapping (archive import and export, Export as Markdown, the connection flow, the sync states) keep it and use this function only for what falls through.
+
+### Deletion refused: changes to review
+
+Delete Journal and Delete Permanently on a record that has changes to review do not show the generic alert. They show a standard alert with the buttons `common.reviewChanges` (opens the review sheet for that record) and `common.cancel`. The alert closes when the app locks.
+
+| Key | Text | When it appears | Shown in | Actions | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `messages.deleteConflict.title` | “{name}” Can’t Be Deleted | The alert’s title. {name} is in curly quotes; a title longer than 40 characters is shortened in the middle with an ellipsis; a blank title reads `common.untitledJournal`, `library.entryList.untitledTemplate` or `library.entryList.untitledEntryInAlert`. | deletion conflict alert | common.reviewChanges; common.cancel |  |
+| `messages.deleteConflict.journal` | This journal has changes that need review. | Message for Delete Journal when the journal or one of its entries has changes to review. | deletion conflict alert | common.reviewChanges; common.cancel |  |
+| `messages.deleteConflict.record` | This has changes that need review before it can be deleted. | Message for Delete Permanently of an entry, template or journal in Recently Deleted that has changes to review. | deletion conflict alert | common.reviewChanges; common.cancel |  |
 
 ### Saved, but not displayed
 
@@ -292,11 +350,9 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | `messages.generic.journalUnavailable` | This journal is no longer available. | As messages.generic.journalNamedUnavailable when the journal has no name to show; also JournalMergeError.sourceUnavailable in Merge Into…. | generic alert; Merge Into… | common.ok |  |
 | `messages.generic.templateUnavailable` | This template is no longer available. | Starting an entry from a template that was deleted or is from a newer version. | generic alert; template chooser | common.ok |  |
 | `messages.generic.templateNeedsReview` | Review the changes to this template first. | Starting an entry from a template that has changes to review. | generic alert; template chooser | common.ok |  |
-| `messages.generic.journalDeleteNeedsReview` | This journal has changes that need review before it can be deleted. | Delete Journal when the journal or one of its entries has changes to review, or it changed meanwhile. | generic alert | common.ok |  |
 | `messages.generic.journalDeleteNeedsUpdate` | Update My Journal to delete this journal. | Delete Journal for a journal saved by a newer version. | generic alert | common.ok |  |
 | `messages.generic.deleteChanged` | This has changed since you chose to delete it. Check it and try again. | Delete Permanently when the item changed or was restored meanwhile. | generic alert | common.ok |  |
 | `messages.generic.deleteNeedsUpdate` | Update My Journal to delete this. | Delete Permanently for an item saved by a newer version. | generic alert | common.ok |  |
-| `messages.generic.deleteNeedsReview` | This has changes that need review before it can be deleted. | Delete Permanently for an item with changes to review. | generic alert | common.ok |  |
 
 ### Export and import
 
@@ -338,7 +394,7 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | `messages.history.chooseJournal` | Choose an available journal. | HistoryRecoveryError.destinationUnavailable (Version History restore). In a deletion conflict it shows as messages.conflict.deletion.journalUnavailable. | Version History |  |  |
 | `messages.history.journalChanged` | This journal has changed. Review its settings again. | HistoryRecoveryError.changedJournal. | journal Version History |  |  |
 | `messages.history.settingsInUse` | These settings are already in use. | HistoryRecoveryError.settingsAlreadyApplied. | journal Version History |  |  |
-| `messages.lifecycle.changed` | This journal has changed. Review the entries before deleting it. | JournalLifecycleError.changed (Delete Journal sheet; the delete prompt shows messages.generic.journalDeleteNeedsReview instead). | Delete Journal sheet |  |  |
+| `messages.lifecycle.changed` | This journal has changed. Review the entries before deleting it. | JournalLifecycleError.changed: the entries changed while the Delete Journal alert was open. It is not a conflict, so it shows in the generic alert with OK, not in the deletion conflict alert. | generic alert; Delete Journal sheet |  |  |
 | `messages.lifecycle.changedContinue` | This journal has changed. Review it again before continuing. | Restore Journal sheet when the journal changed meanwhile. | Restore Journal sheet |  |  |
 | `messages.lifecycle.missingJournal` | This journal is unavailable. | JournalLifecycleError.missingJournal. | journal sheets |  |  |
 | `messages.lifecycle.unsupportedJournal` | Update My Journal to make changes to this journal. | JournalLifecycleError.unsupportedJournal: a journal saved by a newer version. | journal sheets |  |  |
@@ -515,12 +571,7 @@ The alert and the notices are not announced separately: an alert is read by the 
 
 ## Errors without their own text
 
-Some errors have no description, so if one reaches a place that shows `localizedDescription`, the person sees the system's generic text, such as "The operation couldn’t be completed. (… error 1.)". Known places:
-
-- `PermanentDeletionError` (`missing`, `notDeleted`, `permanentlyDeleted`) in the deletion review's fallback ([flows/resolve-conflict.md](flows/resolve-conflict.md); [open-questions.md](open-questions.md), A7).
-- Keychain failures (`SecretStoreError`) at launch, on the lock screen.
-- Database errors at launch (the database's own text, which can include SQL), on the lock screen; and database errors from operations whose errors go to the generic alert.
-- Decoding errors of the configuration file at launch, in the generic alert over the first-launch screen.
+Some errors have no description of their own, so if one reached a place that shows its description, the person would see the system’s generic text, such as “The operation couldn’t be completed. (… error 1.)”, or a database error with its SQL. Since build 18 those places use the failure messages above, and the generic fallback is `messages.failure.other`. The places that took this text before were the deletion review’s fallback for `PermanentDeletionError`, keychain failures and database errors at launch and in operations, and the decoding error of a settings file at launch (now the library problem screen).
 
 Sync never shows these: it classifies every error into a state.
 

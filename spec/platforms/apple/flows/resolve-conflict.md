@@ -135,4 +135,4 @@ Design records: [stale-conflict-recovery.md](../../../../docs/design/stale-confl
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Found while writing: the spec says "Keep Both ... the other device's version becomes a new entry where that device had it"; the store writes the copy with the current time as its modification time and keeps its own journal and date fields, which matches, but the spec does not say the copy's modification time changes.
+See [open-questions.md](../../../open-questions.md), C24: the spec says "Keep Both ... the other device's version becomes a new entry where that device had it"; the store writes the copy with the current time as its modification time and keeps its own journal and date fields, which matches, but the spec does not say the copy's modification time changes.

@@ -4,7 +4,7 @@ title: Erase journals and settings (Apple)
 spec: flows/erase.md
 features: [erase-device]
 devices: [iphone, ipad, mac]
-status: verified
+status: draft
 sources:
   - apps/apple/JournalApp/Views/EraseSection.swift
   - apps/apple/JournalApp/Views/SettingsView.swift
@@ -64,7 +64,7 @@ Keyboard: system alert keys; this alert declares no default button and no key eq
 
 - `settings.erase.authReason` has a `mac` variant (lower-case first letter) for the system sentence "My Journal is trying to ...".
 - Messages with `{host}` name the server host from `connectionHost`; `unsent` uses the plural forms.
-- No other differences. The unopened message has no catalog key.
+- No other differences. The unopened message is `settings.erase.alert.unopened` with its parts (`.reasonCantOpen`, `.reasonNeedsKey`, `.serverKnown`, `.serverUnknown`).
 
 ## Accessibility
 
@@ -105,4 +105,4 @@ Design records: `docs/design/erase-device-2026-10-04.md`, `client-only-mac-lists
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), C12. The `unopened` warning is not in the neutral flow; the spec lists five cases.
+See [open-questions.md](../../../open-questions.md), C12. The `unopened` warning is now in the neutral flow ("Erasing journals that can't be opened"). **Screenshots pending:** the unopened warning (see [settings-erase](../screens/settings-erase.md)).

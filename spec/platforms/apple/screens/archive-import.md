@@ -34,7 +34,7 @@ Structure: a `ScrollViewReader` around a `ScrollView` whose content is a `VStack
 Content, by state:
 - **Locked** (`model.lockBlocksImport`: locked and not the missing-key problem): title `settings.archiveImport.title` (`.title2.bold()`), `settings.archiveImport.locked` (secondary) and a `Button` `common.cancel` with `.keyboardShortcut(.cancelAction)`.
 - **Before opening** (`prepared == nil && requiresPassword`): title; a `SecureField` `common.passwordOrRecoveryKey` with `.passwordAutofill()` and `.textFieldStyle(.roundedBorder)`, `onSubmit` runs `inspect()` unless busy; the hint `settings.archiveImport.fieldHint`. `requiresPassword` starts true and is set in `onAppear` by `VaultArchive.requiresPassword(at:)` inside a security-scoped access to the file.
-- **Preview** (after opening, or when no password is needed): `ArchivePreviewSummary` (each journal's title as `.headline`, or `common.untitledJournal`; `settings.archiveImport.entries`; `settings.archiveImport.recentlyDeleted` secondary; when there are unavailable entries `settings.archiveImport.unavailable` and `settings.archiveImport.unavailableNote`). Then, depending on the device: with an open store, `settings.archiveImport.kept` or, when an imported name is already used (`namesUsed`), `settings.archiveImport.keptNumbered`, plus `settings.archiveImport.willSync` when `model.connection != nil`; with no store and a library problem that offers import (`model.libraryProblem?.offersImport`), a sentence that restoring removes the journals that cannot be opened and ends syncing (a literal string, no catalog key).
+- **Preview** (after opening, or when no password is needed): `ArchivePreviewSummary` (each journal's title as `.headline`, or `common.untitledJournal`; `settings.archiveImport.entries`; `settings.archiveImport.recentlyDeleted` secondary; when there are unavailable entries `settings.archiveImport.unavailable` and `settings.archiveImport.unavailableNote`). Then, depending on the device: with an open store, `settings.archiveImport.kept` or, when an imported name is already used (`namesUsed`), `settings.archiveImport.keptNumbered`, plus `settings.archiveImport.willSync` when `model.connection != nil`; with no store and a library problem that offers import (`model.libraryProblem?.offersImport`), `library.problem.importNote`, a sentence that restoring removes the journals that cannot be opened and ends syncing.
 - **Error**: a red selectable `Text` below the content, with an `id` so `proxy.scrollTo` brings it into view when it appears (`onValueChange(of: error)`).
 - **Done** (`completed`): title `settings.archiveImport.imported` or `settings.archiveImport.restored` (`wasAdditive`), after a restore the line `settings.archiveImport.setUpSync`, and a `Button` `common.done` with `.borderedProminent`.
 
@@ -64,7 +64,7 @@ The picker that precedes the sheet starts with `import-archive`, as in [commands
 
 ## Copy differences
 
-None for the sheet's text; every string is the catalog default. One string has no catalog key: the restore-warning sentence for journals that cannot be opened.
+None for the sheet's text; every string is the catalog default, including the restore-warning sentence for journals that cannot be opened (`library.problem.importNote`) and the authentication reason `settings.archiveImport.restoreReason` (`mac` variant in lower case).
 
 ## Accessibility
 

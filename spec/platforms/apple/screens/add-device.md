@@ -140,4 +140,4 @@ Design records: [effortless-connection.md](../../../../docs/design/effortless-co
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Reported with this page: the spec's Content says the placeholder replaces the QR code "while the app isn't active (app switcher, another window in front)", but on the Mac the code hides only in the background; and [open-questions.md](../../../open-questions.md) A9 (system error text) looks fixed by `NetworkFailureMessage`.
+See [open-questions.md](../../../open-questions.md): A9 and A32 were fixed in build 18 (`NetworkFailureMessage`; on the Mac the code hides only in the background) and are marked resolved there, and the spec's Content text now says so. Still open: A31.

@@ -16,7 +16,7 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `archive-import` | screen | `screens/archive-import.md` | draft | Import Archive (sheet) |
 | `change-date` | screen | `screens/change-date.md` | verified | Change Date (sheet) |
 | `change-password` | screen | `screens/change-password.md` | verified | Change Password |
-| `conflict-review` | screen | `screens/conflict-review.md` | verified | Review Changes (conflicts) |
+| `conflict-review` | screen | `screens/conflict-review.md` | draft | Review Changes (conflicts) |
 | `connect-to-server` | screen | `screens/connect-to-server.md` | draft | Connect to a Server (sheet and its steps) |
 | `destination-journal` | screen | `screens/destination-journal.md` | draft | New Journal (from Move Entry and Version History) |
 | `entry-conflict` | screen | `screens/entry-conflict.md` | verified | Review Changes (entry or template) |
@@ -27,7 +27,7 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `journal-history` | screen | `screens/journal-history.md` | verified | Journal Version History |
 | `journals` | screen | `screens/journals.md` | verified | Journals (sidebar and Journals screen) |
 | `library-window` | screen | `screens/library-window.md` | verified | Library window (structure, toolbars, windows, restoration) |
-| `link-editor` | screen | `screens/link-editor.md` | verified | Add Link |
+| `link-editor` | screen | `screens/link-editor.md` | draft | Add Link |
 | `lock-screen` | screen | `screens/lock-screen.md` | verified | Lock screen and privacy cover |
 | `merge-journal` | screen | `screens/merge-journal.md` | verified | Merge Into… (sheet) |
 | `move-entry` | screen | `screens/move-entry.md` | verified | Move Entry / Restore and Move |
@@ -41,16 +41,16 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `settings-agent-access` | screen | `screens/settings-agent-access.md` | verified | Settings ▸ Agent Access |
 | `settings-backup` | screen | `screens/settings-backup.md` | verified | Settings ▸ Backup, and the Export sheets |
 | `settings-devices` | screen | `screens/settings-devices.md` | verified | Settings ▸ Devices |
-| `settings-erase` | screen | `screens/settings-erase.md` | verified | Erase Journals and Settings (section and alerts) |
+| `settings-erase` | screen | `screens/settings-erase.md` | draft | Erase Journals and Settings (section and alerts) |
 | `settings-general` | screen | `screens/settings-general.md` | verified | Settings ▸ Writing (General on the computer) |
 | `settings-privacy` | screen | `screens/settings-privacy.md` | verified | Settings ▸ Privacy |
 | `settings-sync` | screen | `screens/settings-sync.md` | verified | Settings ▸ Sync |
-| `settings` | screen | `screens/settings.md` | verified | Settings |
+| `settings` | screen | `screens/settings.md` | draft | Settings |
 | `sync-status` | screen | `screens/sync-status.md` | draft | Sync Status |
 | `template-chooser` | screen | `screens/template-chooser.md` | verified | Template chooser (Choose a Template, Use a Template…) |
 | `templates` | screen | `screens/templates.md` | verified | Templates (collection) |
 | `turn-on-encryption` | screen | `screens/turn-on-encryption.md` | verified | Turn On Encryption (sheet) |
-| `unavailable-content` | screen | `screens/unavailable-content.md` | verified | Unavailable and read-only content |
+| `unavailable-content` | screen | `screens/unavailable-content.md` | draft | Unavailable and read-only content |
 | `version-history` | screen | `screens/version-history.md` | verified | Version History (entries and templates) |
 | `welcome` | screen | `screens/welcome.md` | verified | Welcome (first launch) |
 
@@ -66,7 +66,7 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `delete-and-restore` | flow | `flows/delete-and-restore.md` | verified | Delete, restore and delete permanently |
 | `edit-table` | flow | `flows/edit-table.md` | verified | Edit a table |
 | `editing-rules` | flow | `flows/editing-rules.md` | draft | Editing rules |
-| `erase` | flow | `flows/erase.md` | verified | Erase journals and settings |
+| `erase` | flow | `flows/erase.md` | draft | Erase journals and settings |
 | `export-archive` | flow | `flows/export-archive.md` | verified | Export an archive |
 | `export-markdown` | flow | `flows/export-markdown.md` | verified | Export journals as Markdown |
 | `forgot-password` | flow | `flows/forgot-password.md` | draft | Forgot password (journals only on this device) |

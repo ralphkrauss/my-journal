@@ -118,4 +118,4 @@ Design records: [devices.md](../../../../docs/design/devices.md), [pre-release-u
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Possible stale state, read from the source and not run: after Connect to a Server or the reconnect button closes its sheet, `DevicesView` does not reload (`connect` has no `onDismiss`, `.task` ran only when the pane appeared), so a pane opened while not connected may show no device rows until it appears again, and an `unauthorized` error may stay on screen after a successful reconnect.
+See [open-questions.md](../../../open-questions.md), A39: possible stale state, read from the source and not run. After Connect to a Server or the reconnect button closes its sheet, `DevicesView` does not reload (`connect` has no `onDismiss`, `.task` ran only when the pane appeared), so a pane opened while not connected may show no device rows until it appears again, and an `unauthorized` error may stay on screen after a successful reconnect.

@@ -51,7 +51,8 @@ A sync reads the server's status first (reused for up to a minute when there is 
 | 11 | Certificate or secure-connection error | certificate not valid | Update or fix |
 | 12 | Server error (5xx), rate limited (429), or an answer that can't be parsed | busy | Temporary |
 | 13 | Any other network error: refused, timed out, host not found, connection lost | can't reach | Temporary |
-| 14 | This device's own database can't be read or written | this device's data | Unexpected |
+| 14 | This device's own database is damaged (malformed or not a database, or the store's own validation failed) | this device's data | Unexpected |
+| 14b | This device's own database can't be used right now (busy or locked, the device is locked, a failing or full disk) | this device's data, temporary | Temporary |
 | 15 | Content or a recovery format from a newer version | update My Journal | Update or fix (stops) |
 | 16 | Anything else | unexpected | Unexpected |
 
@@ -73,7 +74,8 @@ Item-level problems are not states: one record too large or refused, or one imag
 | Server update needed | `messages.sync.serverUpdateNeeded` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
 | Certificate not valid | `messages.sync.certificateInvalid` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
 | Not a journal server | `messages.sync.notJournalServer` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
-| This device's data | `messages.sync.localDataUnreadable` | `common.tryAgain` | shown | backoff |
+| This device's data (damaged) | `messages.sync.localDataUnreadable` | `common.tryAgain` | shown | backoff |
+| This device's data (temporary) | `messages.sync.localDataUnavailable` | `common.tryAgain` | hidden until the long wait | backoff |
 | Unexpected | `messages.sync.unexpected` | `common.tryAgain` | shown | backoff |
 | Item refused (no state) | `messages.sync.recordTooLarge`, `messages.sync.recordRefused`, `messages.sync.imageTooLarge` or `messages.sync.imageRefused` | `messages.sync.action.syncNow` | shown | continues normally |
 

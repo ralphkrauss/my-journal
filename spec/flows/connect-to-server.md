@@ -167,6 +167,10 @@ Failures:
 
 Before anything is sent from a device that has journals, Merge Journals names the server and what will be merged. The person reads it and chooses Merge (Command-Return), Back, or Cancel.
 - Merge records consent for this server for the rest of the sheet (a new code for the same server doesn't ask again), then continues with the step it interrupted: Finish (scanned code), Add This Device (server without encryption), or Enter {credential} (sign in).
+- **Back, like Cancel, gives up the access the step obtained** (owner decision, 2026-10-06): a one-time recovery code's grant or a pairing grant is revoked, and the step Back lands on starts as a new visit:
+  - Sign in: the password field is cleared and focused, with no error; Sign In asks the server again, and Merge Journals comes up again for the same agreement.
+  - Recovery code: the field is cleared and focused, and `settings.connect.codeUsed` shows above it until the person types, announced when the step appears. A new one-time code is needed.
+  - Add This Device: the old code belonged to a withdrawn request, so the screen shows `settings.connect.addThisDevice.gettingCode` and then a new code, and VoiceOver announces `settings.connect.announce.newCode`. The new request starts only after the old one was withdrawn.
 - Consent is checked again just before installing: if the library gained writing since (for example in another window), Merge Journals is shown again and nothing is installed.
 
 ### 8. Sign in with the credential

@@ -77,7 +77,7 @@ Pin, Change Date…, Move Entry…, Save as Template… and Delete Entry aren't 
 2. Alert, title `library.deletePermanently.title` with the item's name (`library.entryList.untitledEntryInAlert`, `library.entryList.untitledTemplate` or `common.untitledJournal` when blank); for a journal with entries `library.deletePermanently.titleWithEntries`. Message: for a journal with entries `library.deletePermanently.journalEntries`, then `library.deletePermanently.retention`. Buttons `common.delete` (destructive) and `common.cancel`.
 3. **Delete:** the row (and for a journal its entries' rows) leaves at once with the list's animation; the item is deleted from this device and the deletion syncs. An open item closes; on iPhone its page goes back at once. No message.
 4. **Cancel:** nothing changes; a row the swipe removed comes back and VoiceOver focus returns to it.
-5. Failures (general error alert; a removed row comes back): `messages.generic.deleteChanged`, `messages.generic.deleteNeedsUpdate`, `messages.generic.deleteNeedsReview`, `messages.save.before.reviewChanges`, `messages.refresh.itemDeleted`. An item already gone is ignored quietly.
+5. An item with changes to review isn't deleted: a standard alert titled `messages.deleteConflict.title` with the item's name, message `messages.deleteConflict.record`, and buttons `common.reviewChanges` (opens the review) and `common.cancel`. Other failures (general error alert; a removed row comes back): `messages.generic.deleteChanged`, `messages.generic.deleteNeedsUpdate`, `messages.save.before.reviewChanges`, `messages.refresh.itemDeleted`. An item already gone is ignored quietly.
 
 ### Delete All
 

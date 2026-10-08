@@ -152,4 +152,4 @@ Tests: `apps/apple/JournalTests/TableEditorTests.swift`.
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Not yet recorded there: the Table items of the edit menus (iPhone, iPad) and the Mac cell menu are offered while the entry is read-only; the changes are then not saved (`InlineTables.commit` guard) but the grid's own copy of the table is changed (not verified how long it stays so; read from source, not run).
+See [open-questions.md](../../../open-questions.md), A43: the Table items of the edit menus (iPhone, iPad) and the Mac cell menu are offered while the entry is read-only; the changes are then not saved (`InlineTables.commit` guard) but the grid's own copy of the table is changed (not verified how long it stays so; read from source, not run).

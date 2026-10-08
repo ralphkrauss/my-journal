@@ -108,4 +108,4 @@ Design record: [agent-access-simplified.md](../../../../docs/design/agent-access
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Found while writing: the view cancels a pending debounced save when the page disappears (`onDisappear`), so a journals or Access Ends change made less than half a second before leaving the page (Done on the Mac, back on iPhone and iPad) may not be saved, while the spec says changes are saved half a second after the last change; the empty-choice sentence is not in the spec or `copy/en.json`.
+See [open-questions.md](../../../open-questions.md): A37 (the view cancels a pending debounced save when the page disappears, so a journals or Access Ends change made less than half a second before leaving may not be saved) and A28 (the empty-choice notice, resolved in build 18; its text is `settings.agents.emptyChoice.keepsAll`).

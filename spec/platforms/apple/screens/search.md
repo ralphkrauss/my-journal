@@ -108,4 +108,4 @@ Design records: `docs/design/pre-release-ui-2026-09-27.md`, `docs/design/pinned-
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): the spec lists the iPad's search as a bottom-bar field, but the iPad screenshots show it under the list title; the spec also says search ends edit mode on iPad, which the code does only on the stacked Journals page ([journals](journals.md)).
+See [open-questions.md](../../../open-questions.md), C20 (the spec lists the iPad's search as a bottom-bar field, but the iPad screenshots show it under the list title) and A44 (search ends edit mode only on the stacked Journals page; [journals](journals.md)).

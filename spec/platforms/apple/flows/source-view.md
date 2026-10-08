@@ -84,7 +84,7 @@ None. The labels and tooltips are the spec's and no `mac` variant applies. The u
 
 - The toolbar, reading-bar and accessory buttons are labelled with the action they perform (`View Source` or `View Preview`), so VoiceOver reads the verb, and the label changes with the mode. Their glyphs are icons only (`.labelStyle(.iconOnly)`); Voice Control uses the label.
 - Mode changes are announced: iPhone and iPad at default priority, Mac at high priority (the spec's rule for the computer).
-- The Mac tooltip gives the reason when preview is unavailable (`common.previewUnavailable`); the iPad pointer help does the same through `.iconHelp`. The keyboard accessory button has no such hint and is not dimmed (see Open questions in the report).
+- The Mac tooltip gives the reason when preview is unavailable (`common.previewUnavailable`); the iPad pointer help does the same through `.iconHelp`. The keyboard accessory button has no such hint and is not dimmed (A42).
 - The source text is a plain text view, so VoiceOver reads the Markdown characters as typed; the list, quote and checkbox accessibility attributes of the preview are absent in source.
 
 ## Differences between iPhone, iPad and Mac
@@ -128,4 +128,4 @@ Design records: `docs/design/markdown-writing-revision.md`, `docs/design/notes-a
 
 ## Open questions
 
-None recorded in [open-questions.md](../../../open-questions.md). One code finding is in the report: the keyboard accessory's View Preview button is not disabled for a source-only entry, unlike the reading bar, toolbar and menu.
+See [open-questions.md](../../../open-questions.md), A42 (the keyboard accessory's View Preview button is not dimmed for a source-only entry, unlike the reading bar, toolbar and menu).

@@ -116,7 +116,8 @@ All sizes are relative to the body text size *s* (computer default 16 pt, View â
 | Type in the body | â€” | Entry editable | Saved as typed (`flows/save-entry.md`). |
 | Format text, paragraphs and lists | `format-*` | Entry editable | `screens/format-sheet.md`, `commands.md#editor`, `flows/editing-rules.md`. |
 | Insert Image | `insert-image-*` | Entry editable | `flows/insert-image.md`. |
-| Add Link | `insert-link` | Entry editable, body or a cell focused | `screens/link-editor.md`. |
+| Add Link, or Edit Link with the caret in a link | `insert-link` | Entry editable, body or a cell focused | `screens/link-editor.md`. |
+| Remove Link | `remove-link` | Entry editable, body focused, the caret or selection touches a link | `flows/editing-rules.md` L-9. |
 | Toggle a checkbox | `toggle-checkbox` | Entry editable | Toggles that item; one undo step; the caret stays where it was. |
 | View Source / View Preview | `view-source` | Entry editable; View Preview also needs Markdown the preview can show | `flows/source-view.md`. |
 | Entry Actions | `entry-actions` | An entry or template is open | Menu; see below. |

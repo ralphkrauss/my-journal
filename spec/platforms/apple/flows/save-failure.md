@@ -70,7 +70,7 @@ Writing paused while the library is replaced:
 
 - The Mac alert for quitting or closing is Mac only (`messages.save.mac.*`).
 - The Mac pause notices say "this Mac" (`messages.writingPaused.*`); iPhone and iPad have no such notice.
-- Everything else is the same on all devices. In the source the alert title is the literal "My Journal", while `common.alertTitle` says "Journal" (see Open questions). All strings are literal English.
+- Everything else is the same on all devices. The alert title is the literal "My Journal", as `common.alertTitle` now says. All strings are literal English.
 
 ## Accessibility
 
@@ -114,4 +114,4 @@ Design records: `docs/design/save-failure-retry.md`, `docs/design/save-failure-r
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), D17. Differences found while writing this page are in the final report of the author: the alert title ("My Journal" in code, "Journal" in `common.alertTitle`), the "Not Saved" announcement when the notice appears, and the missing fade on the Mac encryption notice.
+See [open-questions.md](../../../open-questions.md), D17 and A45 (the Mac encryption notice has no fade). The alert title (B5, resolved: "My Journal") and the alert shown once per failure (A1, resolved in build 18) no longer differ. Still reported: the "Not Saved" announcement when the notice appears.

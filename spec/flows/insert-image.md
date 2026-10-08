@@ -35,7 +35,7 @@ Add pictures to an entry from the photo library, the camera, files, the pasteboa
 | --- | --- | --- |
 | Computer | Toolbar Insert Image (`library.toolbar.insertImage`), Format ▸ Insert ▸ Image…, Formatting ▸ Insert ▸ Image… | The standard open panel, image files only, several at once. |
 | Phone, tablet | Insert Image (photo symbol, label `library.toolbar.insertImage`) in the writing controls: a menu | `editor.insertImage.photoLibrary` (the system photo picker, several at once, in the order chosen, no permission prompt); `editor.insertImage.takePhoto` (camera; only on devices with a camera that isn't restricted); `editor.insertImage.chooseFile` (Files, image files, several at once). |
-| Tablet menu bar | Format ▸ Insert ▸ Image… | The photo picker. |
+| Phone, tablet: Formatting and the Format menu | Formatting ▸ Insert ▸ Image…; tablet menu bar Format ▸ Insert ▸ Image… | Always the photo picker, not the source last used. |
 | All | Paste or drop pictures | See Paste and drop below. |
 
 Insert Image is disabled when the entry can't be edited. Choosing it records the caret (or selection) as the insertion point; the pictures go there even if writing continues meanwhile.
@@ -67,7 +67,7 @@ Insert Image is disabled when the entry can't be edited. Choosing it records the
 | Another Insert Image started | The first ends; nothing of it is inserted; no message | — |
 | The app locks | Nothing inserted; no message; the picker closes | — |
 | The person leaves the entry (opens another, goes back) before it finished | Nothing inserted | `editor.imageImport.left` (one or several) |
-| The entry stops being editable, or the library is replaced, before the images were read | Nothing inserted | `editor.imageImport.left` (the same message; see [open-questions.md](../open-questions.md), B25) |
+| The entry stays open but stops being editable (for example it became read-only), or the library is replaced, before the images were read | Nothing inserted | `editor.imageImport.unchangeable` (one or several); see [open-questions.md](../open-questions.md), B25 |
 | The file picker fails (other than cancelling) | Nothing inserted | The system's error text in the app's error alert. |
 
 ## Paste and drop

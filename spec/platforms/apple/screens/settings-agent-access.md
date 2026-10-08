@@ -134,4 +134,4 @@ Design records: [agent-access-simplified.md](../../../../docs/design/agent-acces
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Found while writing: the design record says the no-server state offers "Set Up Sync…"; the code and `copy/en.json` use "Connect to a Server…" (the copy file is current); the guide URL is a constant in code (`ServerAgentText.guide`) rather than a copy or configuration value.
+See [open-questions.md](../../../open-questions.md), C21 (the design record says the no-server state offers "Set Up Sync…"; the code and `copy/en.json` use "Connect to a Server…").

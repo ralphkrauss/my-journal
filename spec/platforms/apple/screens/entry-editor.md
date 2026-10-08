@@ -192,7 +192,7 @@ Keyboard behaviour:
 
 ## Copy differences
 
-None for the spec's keys: no `mac` variant applies to this screen. Two notes: the editor's own strings (placeholders, labels, announcements, undo names, notice texts) are literals in the Swift files, identical to the catalog; and the code adds strings the catalog lacks: "Edit Link…", "Remove Link", "Link removed." (see [link-editor](link-editor.md)).
+None for the spec's keys: no `mac` variant applies to this screen. Two notes: the editor's own strings (placeholders, labels, announcements, undo names, notice texts) are literals in the Swift files, identical to the catalog; and the link strings "Edit Link…", "Remove Link" and "Link removed." are `library.menu.format.insert.editLink`, `library.menu.format.insert.removeLink` and `editor.link.removed` (see [link-editor](link-editor.md)).
 
 ## Accessibility
 
@@ -286,4 +286,4 @@ Design records (reasons and review outcomes): `docs/design/notes-alignment-revis
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Not recorded there yet: the spec says the 24 pt margins apply "on the computer", the code applies them on every device; the spec's Link section says there is no Edit Link, the code has one ([link-editor](link-editor.md)).
+See [open-questions.md](../../../open-questions.md), C18 (the 24 pt margins apply on every device, the spec says "on the computer"). D8 (Edit Link and Remove Link) is resolved in build 18 and the spec describes them ([link-editor](link-editor.md)).

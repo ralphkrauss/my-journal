@@ -25,9 +25,10 @@ What the window shows at launch, in order of precedence (the same rule after eve
 
 1. Reading the configuration: a progress indicator with `library.app.loading`.
 2. A library exists and is locked: the lock screen ([screens/lock-screen](lock-screen.md)).
-3. No library: this screen.
-4. A library from an early build whose recovery key isn't confirmed yet: screens/recovery-key.
-5. Otherwise the library window (screens/library-window).
+3. The library can't be opened, or its settings can't be read, or a newer version wrote it: the library problem screen ([screens/unavailable-content](unavailable-content.md)). An unreadable settings file is never treated as a first launch, and this screen never starts a new library over it.
+4. No library: this screen.
+5. A library from an early build whose recovery key isn't confirmed yet: screens/recovery-key.
+6. Otherwise the library window (screens/library-window).
 
 ## Content
 
@@ -53,7 +54,7 @@ Opening a `.journalarchive` file from the system (Files, Finder, Mail) while thi
 ## States
 
 - **Loading:** `library.app.loading` with a progress indicator, before anything else.
-- **Error:** a failure while opening the configuration shows the general error alert (`common.alertTitle`, message = the error, `common.ok`).
+- **Error:** a failure while opening the settings no longer reaches this screen: it shows the library problem screen. An error from an action started here (Start a Journal, Connect to a Server, Import Archive…) shows the general error alert (`common.alertTitle`, message, `common.ok`).
 
 ## Rules
 

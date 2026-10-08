@@ -108,4 +108,4 @@ Design record: [agent-access-simplified.md](../../../../docs/design/agent-access
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Found while writing: the two journal-choice notices ("Choose a journal to allow {name}." and, in the detail, "Choose a journal. Until you do, {name} can still read all journals.") are in the source but not in the spec or `copy/en.json`.
+See [open-questions.md](../../../open-questions.md), A28 (resolved in build 18). The two journal-choice notices are in the catalog (`settings.agents.emptyChoice.new` and `.keepsAll`).

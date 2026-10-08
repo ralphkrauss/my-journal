@@ -90,4 +90,4 @@ Design record: `docs/design/journal-name-uniqueness.md`.
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): in the Mac capture the footer paragraph is cut to one line with an ellipsis ("... move t…") in the inset list, so the sentence naming the source and target is not readable there; iOS wraps it.
+See [open-questions.md](../../../open-questions.md), A47: in the Mac capture the footer paragraph is cut to one line with an ellipsis ("... move t…") in the inset list, so the sentence naming the source and target is not readable there; iOS wraps it.

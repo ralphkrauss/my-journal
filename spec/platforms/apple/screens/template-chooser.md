@@ -116,4 +116,4 @@ Design records: `docs/design/new-entry-template-suggestion.md`, `docs/design/tem
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): the spec says the Mac popover is titled `library.templateChooser.popoverTitle`; in code the popover has no visible title, the string is only the internal name of its `ToolbarPopover` (its button's label is replaced by `library.templateChooser.useTemplate`).
+See [open-questions.md](../../../open-questions.md), B45: the spec says the Mac popover is titled `library.templateChooser.popoverTitle`; in code the popover has no visible title, the string is only the internal name of its `ToolbarPopover` (its button's label is replaced by `library.templateChooser.useTemplate`).

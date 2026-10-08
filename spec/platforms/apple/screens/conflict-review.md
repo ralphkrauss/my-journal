@@ -4,7 +4,7 @@ title: Review Changes (conflicts) (Apple)
 spec: screens/conflict-review.md
 features: [conflict-notice, changes-to-review-list, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported]
 devices: [iphone, ipad, mac]
-status: verified
+status: draft
 sources:
   - apps/apple/JournalApp/Views/ConflictRouting.swift
   - apps/apple/JournalApp/Views/EntryConflictReview.swift
@@ -52,7 +52,7 @@ The model is `AppModel.conflicts`, an array of `ConflictVersion` (record id, thi
 - **An entry of a journal with changes to review** (`EntryRecoveryNotice`, `.conflict` case): `common.journalNeedsReview` and `common.reviewChanges`, listed under Unavailable Journals.
 - **A journal's Version History** (`JournalHistoryView`) shows `common.reviewChanges` in its recovery actions in place of restoring while a conflict exists. Move Entry (`MoveEntryView`), Merge Into… (`MergeJournalView`) and the journal lifecycle sheet (`JournalLifecycleView`) show the same button when a conflict blocks them and present `JournalConflictView` or `ConflictReview` nested.
 - **Context menus**: `AppModel.journalActions` (sidebar row context menu and the Mac Journal Actions menu) passes `enabled: !conflicted` for Rename…, Default Template and Merge Into…; a disabled `MenuAction`, not a hidden one.
-- **Alert when deleting**: deleting a journal or permanently deleting a record that has a conflict does not open a deletion sheet. `.deletionConflictAlert` (`DeletionConflictAlert.swift`) shows a standard `.alert` with buttons Review Changes and Cancel (`role: .cancel`); Review Changes presents `ConflictReview` in a `.sheet(item:)`. The alert title is built in code as `“{name}” Can’t Be Deleted` (name shortened in the middle past 40 characters, "Untitled Journal/Template/Entry" when blank) and its message is `This has changes that need review before it can be deleted.` (records) or `This journal has changes that need review.` (journals). These strings are not in `copy/en.json`; see Open questions.
+- **Alert when deleting**: deleting a journal or permanently deleting a record that has a conflict does not open a deletion sheet. `.deletionConflictAlert` (`DeletionConflictAlert.swift`) shows a standard `.alert` with buttons Review Changes and Cancel (`role: .cancel`); Review Changes presents `ConflictReview` in a `.sheet(item:)`. The alert title is built in code as `messages.deleteConflict.title` (name shortened in the middle past 40 characters, `common.untitledJournal`, `library.entryList.untitledTemplate` or `library.entryList.untitledEntryInAlert` when blank) and its message is `messages.deleteConflict.record` (records) or `messages.deleteConflict.journal` (journals). The alert closes when the app locks. **Screenshots pending:** the alert on iPhone, iPad and Mac (conflict-review-delete-alert).
 
 **The Review Changes sheet** is `ConflictReview` (`ConflictRouting.swift`), a `Group` that re-decides its form on every render from `model.conflicts` (the table in the spec). In order: locked shows plain text `messages.conflict.locked` (the child views close the sheet themselves when `model.locked` becomes true; this text only shows if the sheet renders while locked); the entry form `EntryConflictReview` when neither version is permanently deleted, neither carries preserved JSON from a newer version, both documents are `isEditable` and the kind is not `journal`; `DeletionConflictView` when either is permanently deleted; the unsupported form when either has preserved JSON or is not editable; `JournalMetadataConflictReview` for a journal; and when the conflict is no longer in `model.conflicts`, a completed `DeletionSheet` with `messages.conflict.resolved`. `@State entryReviewStarted` keeps the entry form on screen while a committed entry choice removes its conflict from the model, so the sheet does not flip to the resolved text before it closes itself.
 
@@ -155,4 +155,4 @@ Design records: [entry-conflict-accessibility.md](../../../../docs/design/entry-
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Found while writing: the delete-blocked alert (`DeletionConflictAlert.swift`) is not described by the spec and its title and messages are not in `copy/en.json`; the journal form has no Escape binding; the notice does not check `replacingVault`.
+See [open-questions.md](../../../open-questions.md), A17 (the journal form has no Escape binding) and A49 (the notice does not check `replacingVault`). The delete-blocked alert (`DeletionConflictAlert.swift`) is C1, resolved in build 18, and is in the spec and the catalog.

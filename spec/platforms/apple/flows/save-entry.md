@@ -99,4 +99,4 @@ Design records: `docs/design/mac-inactivity-lock-2026-10-03.md`, `docs/design/sy
 
 ## Open questions
 
-None. Not verified: the list of actions that save first was read from the `finishPendingSave()` call sites; whether Pin Entry skips the wait, as the spec says, was not checked.
+None. Pin Entry does not wait for the save (`Model/LibraryOperations.swift`, `setPinned`), as `flows/save-entry` says; `commands.md` and `screens/entry-editor` say otherwise (see [open-questions.md](../../../open-questions.md), A36).

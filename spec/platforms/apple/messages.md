@@ -2,7 +2,7 @@
 id: messages
 title: Messages (Apple)
 spec: messages.md
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, erase-unopened-library, failure-messages, deletion-conflict-alert, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 devices: [iphone, ipad, mac]
 status: draft
 sources:
@@ -97,10 +97,11 @@ Keyboard: alerts follow the system (Return and Escape per button role; the Keep 
 
 ## Copy differences
 
-- `common.alertTitle` is "Journal" in the spec; the code titles the generic alert "My Journal" (`RootView.swift`, build 18 §1.11). One of the two is wrong.
-- Code strings not in `copy/en.json`: the `FailureMessage` texts (for example "Something went wrong. Try again.", the damaged-data text that points to Export Archive in Settings ▸ Backup, "There isn’t enough space on this device. Free up space, then try again."), the `NetworkFailureMessage` texts ("You’re offline. Check your connection."), the library problem screen's text, and `SyncHealth.localDataUnavailable` ("Couldn’t sync right now. My Journal will try again.").
-- `messages.sync.localDataUnreadable`: the spec says "My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup."; the code says "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup." (the same text as `FailureMessage.damagedReading`).
+- `common.alertTitle` is "My Journal", as the generic alert shows it (`RootView.swift`, build 18 §1.11); the spec was corrected to match.
+- The `FailureMessage` and `NetworkFailureMessage` texts are `messages.failure.*` in the catalog; the library problem screen's text is `library.problem.*`; `SyncHealth.localDataUnavailable` is `messages.sync.localDataUnavailable`. The views and the model still hold them as literals.
+- `messages.sync.localDataUnreadable` now reads as the code does: "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup." (the same text as `FailureMessage.damagedReading`, `messages.failure.damagedReading`).
 - `messages.error.newerVersion` and `messages.library.cannotOpen` are no longer shown at launch; the library problem screen replaces them.
+- The deletion conflict alert is `messages.deleteConflict.*`. **Screenshots pending:** none for this page (messages are captured on the pages of the screens that show them).
 - Messages that say "this Mac" (`messages.writingPaused.*`) exist only on the Mac; `messages.encryption.background` only on iPhone and iPad.
 - The model's device wording (iPhone, iPad, Mac) comes from `DeviceUnlockMethod.deviceName`.
 

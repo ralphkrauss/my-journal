@@ -86,4 +86,4 @@ Design record: `docs/design/about-and-ratings-2026-10-05.md` (section 3). Tests:
 
 ## Open questions
 
-None. Small differences from the spec text, for the owner to note: sync health `localDataUnavailable` also counts as quiet (the spec lists offline, unreachable and unavailable), and the spec's "no text field has focus" is checked at the end of the two seconds, together with sheets, not as an interruption.
+See [open-questions.md](../../../open-questions.md), C24: sync health `localDataUnavailable` also counts as quiet (the spec lists offline, unreachable and unavailable), and the spec's "no text field has focus" is checked at the end of the two seconds, together with sheets, not as an interruption.

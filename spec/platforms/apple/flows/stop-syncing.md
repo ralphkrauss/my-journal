@@ -89,4 +89,4 @@ Design records: [sync-health-and-recovery.md](../../../../docs/design/sync-healt
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). The spec says the confirmation is "an action sheet on phone"; the iOS 26 capture shows an anchored popover, and the earlier-system form was not captured. Stop Syncing also forgets Last Synced (the spec's Last Synced rule says it is forgotten when the library connects to another server, and does not mention Stop Syncing).
+See [open-questions.md](../../../open-questions.md), C16 (the spec says the confirmation is "an action sheet on phone"; the iOS 26 capture shows an anchored popover) and C17 (Stop Syncing also forgets Last Synced).

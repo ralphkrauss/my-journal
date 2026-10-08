@@ -105,4 +105,4 @@ Design record: `docs/design/history-recovery.md`.
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): the version summary (`JournalMetadataSummary`) shows a template's raw title, so a template with a blank title gives an empty Default Template value, while the comparison sheet shows `library.entryList.untitledTemplate` for the same template.
+See [open-questions.md](../../../open-questions.md), B22: the version summary (`JournalMetadataSummary`) shows a template's raw title, so a template with a blank title gives an empty Default Template value, while the comparison sheet shows `library.entryList.untitledTemplate` for the same template.

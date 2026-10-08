@@ -126,7 +126,7 @@ Keyboard: Return in a field submits it (`onSubmit` on the address, setup code, p
 - `settings.connect.merge.help`, `settings.connect.merge.hint`, `settings.connect.addThisDevice.connectHelp`, `settings.connect.addThisDevice.connectHint`: tooltip and accessibility hint on the Mac only (the buttons have no tooltip on iPhone and iPad).
 - `messages.writingPaused.connecting` and `messages.writingPaused.connectionFailed` say "this Mac"; they exist only on the Mac.
 - Field labels are hidden on the Mac (`headedField`) because the section header already names the field; VoiceOver still reads the label. iPhone and iPad keep the header and the accessibility label.
-- Two strings in the source have no copy key: the VoiceOver announcement "New code." (a replaced pairing code) and the notice "That code was used. Enter a new one." (`flow.codeUsedNotice`).
+- Two strings are literals in the source: the VoiceOver announcement `settings.connect.announce.newCode` ("New code.", a replaced pairing code) and the notice `settings.connect.codeUsed` ("That code was used. Enter a new one.", `flow.codeUsedNotice`).
 
 ## Accessibility
 
@@ -206,4 +206,4 @@ Design records: [connection-onboarding.md](../../../../docs/design/connection-on
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). The page is `draft` because no capture exists for the Mac or for page 1, Merge Journals, Check Code and Finish. Found while writing: the spec says the heading row appears on "each step" of a Mac sheet before macOS 26, but page 1 has none; the two unkeyed strings listed under Copy differences.
+See [open-questions.md](../../../open-questions.md), A46. The page is `draft` because no capture exists for the Mac or for page 1, Merge Journals, Check Code and Finish. Found while writing: the spec says the heading row appears on "each step" of a Mac sheet before macOS 26, but page 1 has none (A46).

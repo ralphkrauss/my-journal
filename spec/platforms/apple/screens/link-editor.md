@@ -1,10 +1,10 @@
 ---
 id: link-editor
-title: Add Link (Apple)
+title: Add Link and Edit Link (Apple)
 spec: screens/link-editor.md
-features: [links, inert-links]
+features: [links, inert-links, edit-link]
 devices: [iphone, ipad, mac]
-status: verified
+status: draft
 sources:
   - apps/apple/JournalApp/Views/LinkEditorView.swift
   - apps/apple/JournalApp/Editor/LinkEditing.swift
@@ -25,11 +25,11 @@ screenshots:
   - screenshots/ipad/link-editor-default.png
 ---
 
-# Add Link (Apple)
+# Add Link and Edit Link (Apple)
 
 How the Apple apps implement the spec's [link-editor](../../../screens/link-editor.md). Read [platform.md](../platform.md) for sheets (section 9) and the editor's text input conventions. The sheet is shared by the three devices; the Mac fixes its size and the iPhone and iPad add URL keyboard behaviour.
 
-Important: the shipped sheet is more than the spec describes. Since build 18 it is also Edit Link: with the caret or selection inside a link it opens filled with that link's address and offers Remove Link. The spec says there is no edit or remove (spec D8). See Open questions; this page records what the code does today.
+Since build 18 the sheet is also Edit Link: with the caret or selection inside a link it opens filled with that link's address and offers Remove Link. The spec now describes both ([screens/link-editor](../../../screens/link-editor.md); rules L-7 to L-10 in [flows/editing-rules](../../../flows/editing-rules.md)). **Draft:** the screenshots of the Edit Link states are pending (see Screenshots).
 
 ## Controls
 
@@ -37,15 +37,15 @@ Important: the shipped sheet is more than the spec describes. Since build 18 it 
 
 | Spec element | Apple control | Notes |
 | --- | --- | --- |
-| Title `editor.link.title` | `.navigationTitle`, which reads "Add Link" for a new link and "Edit Link" when `editingLink` is set | Both strings are literals in `LinkEditorView`; "Edit Link" has no copy key. On iPhone and iPad the title is the large title below the bar buttons (see screenshots). |
+| Title `editor.link.title`, or `editor.link.editTitle` when editing | `.navigationTitle`, which reads "Add Link" for a new link and "Edit Link" when `editingLink` is set | Both strings are literals in `LinkEditorView`. On iPhone and iPad the title is the large title below the bar buttons (see screenshots). |
 | Text field `editor.link.text` | `TextField("Text", text:)` bound to the editor actions' `linkText` | Filled from `EditorActions.prepareLink`: the link's own text when editing, else the selected text, else empty. Hidden when editing a link whose characters are not one plain line (`EditableLink.editsText` false: it holds an inline image or a line break), so an edit never flattens them. |
 | Address field `editor.link.address` | `TextField("Link", text: $address)` with `.autocorrectionDisabled()`, `@FocusState` | Empty for a new link; for Edit Link it holds the link's address, without `mailto:`. iOS only: `.keyboardType(.URL)`, `.textInputAutocapitalization(.never)`, `.submitLabel(.done)`. Focus is set in `.onPresented`, which on iOS waits for `viewDidAppear` (`PresentedFocus.swift`) because focus set earlier is lost when the sheet opens right after the Formatting popover closes. |
 | Invalid message `editor.link.invalid` | `Text` with `.font(.callout)`, `.foregroundStyle(.secondary)`, below the fields | Shown when the address is not empty and `LinkAddress.url` returns nil. |
-| Add Link | Toolbar button, `ToolbarItem(placement: .confirmationAction)`, `.disabled(!valid)` | Titled "Add Link" (`editor.link.add`) when adding, a literal "Done" when editing. |
+| Add Link | Toolbar button, `ToolbarItem(placement: .confirmationAction)`, `.disabled(!valid)` | Titled "Add Link" (`editor.link.add`) when adding, "Done" (`common.done`) when editing. |
 | Cancel | Toolbar button, `ToolbarItem(placement: .cancellationAction)` | `common.cancel`. |
-| Remove Link (code only) | A `Section` with `Button("Remove Link", role: .destructive)`, only when editing; on the Mac also `.foregroundStyle(.red)` | Removes the link from the text it covers, keeps the text. A literal string, no copy key. |
+| Remove Link `editor.link.remove` | A `Section` with `Button("Remove Link", role: .destructive)`, only when editing; on the Mac also `.foregroundStyle(.red)` | Removes the link from the text it covers, keeps the text (`remove-link`). |
 
-Model: the sheet calls `EditorActions.performFormatting` with `.link`, `.editLink` or `.removeLink`; the text view's coordinator (`NativeEditor.Coordinator.perform`) applies them as one undo step (action names "Edit Link" and "Remove Link", literals) through `LinkInsertion` and `LinkEditing`. `LinkAddress.url` (in `FormattingState.swift`) is the single validator for the sheet and the editors; the rules are the spec's (`LinkInsertionTests`). A table cell's links are not editable here: `.editLink` and `.removeLink` return without effect while a cell is active, and `linkAtSelection` returns nil in a cell and in Markdown source.
+Model: the sheet calls `EditorActions.performFormatting` with `.link`, `.editLink` or `.removeLink`; the text view's coordinator (`NativeEditor.Coordinator.perform`) applies them as one undo step (action names `editor.undo.editLink` and `editor.undo.removeLink`, literals in code) through `LinkInsertion` and `LinkEditing`. `LinkAddress.url` (in `FormattingState.swift`) is the single validator for the sheet and the editors; the rules are the spec's (`LinkInsertionTests`). A table cell's links are not editable here: `.editLink` and `.removeLink` return without effect while a cell is active, and `linkAtSelection` returns nil in a cell and in Markdown source.
 
 States: there is no loading or error state. The empty state is the empty address (button dimmed, no message) and the error state is the invalid message. Locked, another entry opened, or journals erased: `RootView.closePresentations` and the `selectedID` change reset `requestLink` to false, which dismisses the sheet.
 
@@ -72,14 +72,14 @@ Keyboard in the sheet:
 
 ## Copy differences
 
-None for the spec's keys: no `mac` variant applies. The code adds strings that are not in the catalog (they belong to the build 18 edit feature): "Edit Link", "Edit Link…", "Remove Link", "Link removed." (announcement), and "Done" as the confirm button when editing. They are written in Title Case like the rest.
+None: no `mac` variant applies. The code uses `editor.link.editTitle`, `editor.link.remove`, `editor.link.removed` (announcement), `library.menu.format.insert.editLink` and `library.menu.format.insert.removeLink`, and writes them as literals.
 
 ## Accessibility
 
 - Fields are labelled by their placeholders, "Text" and "Link" (`editor.link.text`, `editor.link.address`); the invalid message follows the address field in reading order.
 - iPhone and iPad: Return on an invalid, non-empty address announces `editor.link.invalid` (`announceForAccessibility`). The message is a plain `Text` with no accessibility modifiers; on the Mac nothing announces it when it appears (not verified with VoiceOver).
 - `.onDisappear` calls `performFormatting(.focus)`, so keyboard focus (and VoiceOver focus) returns to the text after the sheet closes, however it closed.
-- Remove Link has the destructive role; the Mac also colours it red.
+- Remove Link has the destructive role; the Mac also colours it red. Any Remove Link, from the sheet or a menu, announces `editor.link.removed` ("Link removed.") with `JournalAccessibility.announce`.
 - Mac standard sheet keys: Escape cancels. Full Keyboard Access reaches both fields and buttons in the system order.
 
 ## Differences between iPhone, iPad and Mac
@@ -97,6 +97,8 @@ None for the spec's keys: no `mac` variant applies. The code adds strings that a
 | iPad | ![Add Link sheet over the split view](../screenshots/ipad/link-editor-default.png) The same sheet as a centred form sheet over the dimmed split view, with the on-screen keyboard. |
 
 None for the Mac (the screenshot set has no Mac capture); the Mac claims above come from the source.
+
+**Screenshots pending** (capture script run needed; none made by hand): the Edit Link sheet on iPhone, iPad and Mac (link-editor-edit: filled address, Remove Link group, "Done"); the Edit Link sheet for a link without a Text field (link-editor-edit-address-only); the Add Link sheet on the Mac (link-editor-default); the Mac right-click menu on a link (link-editor-link-menu). This page stays `draft` until they exist.
 
 ## Source files
 
@@ -119,4 +121,4 @@ Design records: `docs/design/menus-and-popovers.md` (D8) and `docs/design/build-
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), D8: the spec says there is no Edit Link or Remove Link; the code has both. The owner decides which side changes.
+None for this page. D8 (the spec said there was no Edit Link or Remove Link) is resolved: the spec now describes both, see [open-questions.md](../../../open-questions.md). Return in the address field on the Mac is unverified and noted above.

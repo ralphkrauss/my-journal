@@ -38,7 +38,7 @@ Steps, with the code that does each:
 4. **Save dialog**: `.fileExporter(isPresented: $export.presenting, document: JournalFile, contentType: .journalArchive, defaultFilename:)`. The suggested name is `settings.backup.archiveFilename` with the date formatted `yyyy-MM-dd` in the POSIX locale (digits 0 to 9, Gregorian). `JournalFile.fileWrapper` hands the system the package with that preferred name. A cancelled dialog is `CocoaError.userCancelled` and is not an error; any other failure sets `messages.export.archiveSaveFailed`. Success shows nothing.
 5. **Clean-up**: `discard()` removes the package and the dialog's leftover copy `Journal Archive <date>.journalarchive` in the temporary folder when the dialog closes; `ArchiveExportLeftovers.removeAtLaunch` removes anything left by a quit, matching only the app's own names, directories only, no symbolic links.
 
-Errors (red, selectable `Text` under the button, cleared when the next export starts): `messages.save.before.exportArchive` (shown through `JournalError.server`), `messages.export.archiveNoSpace` (`NSFileWriteOutOfSpaceError` or `ENOSPC`), `messages.export.archiveFailed` (anything else), `messages.export.archiveSaveFailed` (dialog result). A failed device authentication shows "Couldn’t verify it’s you. Try again." (no catalog key).
+Errors (red, selectable `Text` under the button, cleared when the next export starts): `messages.save.before.exportArchive` (shown through `JournalError.server`), `messages.export.archiveNoSpace` (`NSFileWriteOutOfSpaceError` or `ENOSPC`), `messages.export.archiveFailed` (anything else), `messages.export.archiveSaveFailed` (dialog result). A failed device authentication shows `settings.backup.verifyFailed` ("Couldn’t verify it’s you. Try again.").
 
 Models: `AppModel`, `ArchiveExport`, `JournalFile`.
 
@@ -62,7 +62,7 @@ Keyboard: Return in the Master Password field checks it when a password is typed
 
 ## Copy differences
 
-None. The authentication reason for an unencrypted library's archive (when App Lock is on) has no catalog key and is lower-cased on the Mac by `AppModel.authenticationReason`.
+The authentication reason for an unencrypted library's archive (when App Lock is on) is `settings.backup.archiveReason`, lower-cased on the Mac by `AppModel.authenticationReason` (it has a `mac` variant).
 
 ## Accessibility
 
@@ -102,4 +102,4 @@ Design records: `docs/design/archives.md`, `export-operation-lifetime.md`, `pre-
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), D2 (looks stale: the code now authenticates the device owner for an unencrypted library's archive when App Lock is on) and A29.
+See [open-questions.md](../../../open-questions.md), A29 and B43. D2 (device authentication before an archive) is resolved: the code authenticates and the spec now says so.

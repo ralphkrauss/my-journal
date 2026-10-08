@@ -81,7 +81,7 @@ None: no `mac` variant applies. The Mac shows the pickers differently (see Diffe
 ## Differences between iPhone, iPad and Mac
 
 - Done in the navigation bar (iPhone, iPad) against a bottom button row (Mac): a `confirmationAction` is placed in the bar by iOS; the Mac sheet has no bar.
-- Version and Journal pickers: on iPhone and iPad the closed control shows the caption above the chosen value, as the spec says. On the Mac the `Menu` becomes a pop-up button that shows only the caption ("Version", "Journal") with up-down arrows; the chosen version or journal is not visible until the menu opens. The cause is not established (the label's accessibility label appears to become the pop-up button's title); it contradicts the spec.
+- Version and Journal pickers: on iPhone and iPad the closed control shows the caption above the chosen value, as the spec says. On the Mac the `Menu` becomes a pop-up button that shows only the caption ("Version", "Journal") with up-down arrows; the chosen version or journal is not visible until the menu opens (A40). The cause is not established (the label's accessibility label appears to become the pop-up button's title); it contradicts the spec.
 - Swipe-down protection while restoring: iOS only.
 - The preview is a nested scroll view on every device (the sheet scrolls and the read-only editor scrolls inside it), so a long version needs a second scroll in the 220 pt preview.
 
@@ -114,4 +114,4 @@ Design records: `docs/design/history-recovery.md`, `docs/design/version-checkpoi
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md); the Mac pop-up buttons that hide the chosen value are reported with this page and are not yet recorded there.
+See [open-questions.md](../../../open-questions.md), A40 (the Mac pop-up buttons show only the caption, not the chosen value).

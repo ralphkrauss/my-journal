@@ -8,6 +8,9 @@ sources:
   - apps/apple/JournalApp/Model/DocumentTransferOperations.swift
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/ContentImport.swift
+  - apps/apple/JournalApp/Model/ArchiveInstalling.swift
+  - apps/apple/JournalApp/Model/LibraryProblem.swift
+  - docs/design/build-18-fixes-2026-10-06.md
   - docs/design/archives.md
   - docs/design/archive-preview-lifecycle.md
   - docs/design/journal-name-uniqueness.md
@@ -21,7 +24,7 @@ Brings journals back from an archive, safely: nothing changes until the person h
 
 ## Entry points
 
-- Settings ▸ Backup ▸ Import Archive…; File ▸ Import Archive…; the first-launch screen's Import Archive…; opening a `.journalarchive` file from the system.
+- Settings ▸ Backup ▸ Import Archive…; File ▸ Import Archive…; the first-launch screen's Import Archive…; the library problem screen's Import Archive… and the missing-device-key lock screen's, when the journals can't be opened ([screens/unavailable-content](../screens/unavailable-content.md)); opening a `.journalarchive` file from the system.
 
 ## Steps
 
@@ -36,6 +39,7 @@ Brings journals back from an archive, safely: nothing changes until the person h
    - **No journals on this device:** Restore Journals. The archive's library becomes this device's library with the archive's password. Done shows `settings.archiveImport.restored` and `settings.archiveImport.setUpSync`.
    - **Journals on this device:** Import as New Journals. A copy of the current library is made; the archive's journals are added to it as separate journals (same names get a number); the copy then replaces the library in one step. Connected devices sync the new journals. Done shows `settings.archiveImport.imported`.
    (`settings.archiveImport.importing` while it runs; writing is paused.)
+   - **Journals on this device that can't be opened** (the library problem screen after a failed open, or a missing device key): the sheet shows `library.problem.importNote` above its buttons and the button reads Restore Journals. With App Lock on, the device owner authenticates before the commit (`settings.archiveImport.restoreReason`); cancelled: nothing changes. The archive was read and checked before anything is replaced, so a bad archive or a wrong password leaves everything as it was. This is why Import is offered at once while Erase waits for a failed Try Again.
 6. Done closes the sheet.
 
 ## Errors while importing
@@ -54,6 +58,8 @@ On failure nothing changes: the staged copy and any key written for it are remov
 
 - Never replaces or merges into existing journals; imported journals are always separate.
 - The import commits in one step (the configuration switch); a crash before it leaves the library as it was.
+- Replacing a library that couldn't be opened records it as superseded, so its files and keys are removed later and none is orphaned; the new library names its own connection item; and the settings App Lock and Lock when inactive carry over from the configuration it replaces, so restoring never turns App Lock off.
+- Journals a newer version wrote, and settings that couldn't be read, are never imported over: Import Archive… isn't offered for them.
 - Cancel, closing and locking discard the opened copy.
 - The computer doesn't lock for inactivity while opening or importing.
 

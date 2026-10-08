@@ -179,4 +179,4 @@ Design records: `docs/design/mac-window-appkit.md`, `docs/design/editor-only.md`
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): the general error alert's title text in code differs from the spec's `common.alertTitle`.
+See [open-questions.md](../../../open-questions.md), B5 (resolved in build 18: the code and `common.alertTitle` both read "My Journal").

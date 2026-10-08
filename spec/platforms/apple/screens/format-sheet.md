@@ -90,7 +90,7 @@ Keyboard behaviour of the surface:
 
 ## Copy differences
 
-None: no `mac` variant applies, and the rows use the same strings on every device. The strings are literals in `FormattingPopover` equal to the catalog (`library.menu.format.*`, `editor.format.*`), plus "Edit Link…" and "Remove Link", which are not in the catalog.
+None: no `mac` variant applies, and the rows use the same strings on every device. The strings are literals in `FormattingPopover` equal to the catalog (`library.menu.format.*`, `editor.format.*`), including `library.menu.format.insert.editLink` and `library.menu.format.insert.removeLink`.
 
 ## Accessibility
 
@@ -104,7 +104,7 @@ None: no `mac` variant applies, and the rows use the same strings on every devic
 ## Differences between iPhone, iPad and Mac
 
 - Panel in place of the keyboard (iPhone, compact iPad), popover (regular iPad, Mac): the spec's rule, taken from Notes. The panel keeps the text focused and visible while the keyboard is not needed; the popover leaves the on-screen area free where there is room.
-- Header with "Format" and a close button: iPhone panel and iPad popover; none on the Mac. The spec says the header is for the phone panel only; the code adds it to the iPad popover as well.
+- Header with "Format" and a close button: iPhone panel and iPad popover; none on the Mac. The spec says the header is for the phone panel only; the code adds it to the iPad popover as well (C19).
 - Row height 44 pt (iOS) against 30 pt (Mac), width 250 pt (Mac popover) against 300 pt (iPad popover) and the full keyboard width (iPhone panel): touch targets against pointer targets.
 - Hover highlight (a 0.08 primary-colour fill) draws on rows where `onHover` fires: under the Mac pointer, and on iPad with a pointer.
 - The surface can also be opened from the Format menu items, but only the Mac and iPad have those menus (see [commands.md](../commands.md)).
@@ -145,4 +145,4 @@ Design records: `docs/design/menus-and-popovers.md`, `docs/design/list-indentati
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Not recorded there yet: the iPad popover shows the "Format" header and close button although the spec says the header is for the phone panel only; the Insert menu and Format menu also offer Edit Link… and Remove Link, which the spec does not list.
+See [open-questions.md](../../../open-questions.md), C19 (the iPad popover shows the "Format" header and close button although the spec says the header is for the phone panel only). D8 (Edit Link… and Remove Link in the Insert menu) is resolved: they are in the spec.

@@ -56,7 +56,7 @@ Focus order: the password field on the check page; New then Confirm on the other
 ## Accessibility
 
 - A wrong password and a failed set are announced with `announceForAccessibility`; focus returns to the password field after a wrong password.
-- The mismatch label on Set New Password is not announced (computed footer).
+- The mismatch label on Set New Password is not announced (computed footer; A38).
 - Fields are labelled by their placeholder text. The bare `ProgressView` has no label.
 
 ## Differences between iPhone, iPad and Mac

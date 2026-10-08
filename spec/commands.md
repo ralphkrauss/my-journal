@@ -97,7 +97,7 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 
 Commands that act on the open entry or template. View, Edit and Entry Actions commands are defined in the sections above (`view-source`, `zoom-in`, `undo`, `find`, `pin-entry`, `change-date`, …). Behaviour is specified in [screens/entry-editor](screens/entry-editor.md), [screens/format-sheet](screens/format-sheet.md) and the rule IDs of [flows/editing-rules](flows/editing-rules.md). The Format, View and Edit menu labels are `library.menu.*`.
 
-**Editable** = the entry or template can be edited ([screens/entry-editor](screens/entry-editor.md), Rules). The whole Format menu is disabled when the open item isn't editable. Format commands act only while the body or a table cell has keyboard focus; from elsewhere they do nothing ([open-questions](open-questions.md), app bugs).
+**Editable** = the entry or template can be edited ([screens/entry-editor](screens/entry-editor.md), Rules). The whole Format menu is disabled when the open item isn't editable, and (since build 18) while neither the body nor a table cell has keyboard focus, so a command never looks available and does nothing.
 
 ### Format
 
@@ -121,11 +121,12 @@ Commands that act on the open entry or template. View, Edit and Entry Actions co
 | `insert-code-block` | `library.menu.format.insert.codeBlock` | Editable | BI-1, BI-2, K-2 |
 | `insert-table` | `library.menu.format.insert.table` | Editable | BI-1, BI-3 |
 | `insert-horizontal-rule` | `library.menu.format.insert.horizontalRule` | Editable | BI-1, BI-2, K-2 |
-| `insert-link` | `library.menu.format.insert.link` | Editable and the body or a cell has focus | `screens/link-editor.md`, L-1 to L-6 |
+| `insert-link` | `library.menu.format.insert.link` (Add Link…) / `library.menu.format.insert.editLink` (Edit Link…, while the caret or selection is in one link) | Editable and the body has focus (in a table cell it adds a link but never edits one) | `screens/link-editor.md`, L-1 to L-10 |
+| `remove-link` | `library.menu.format.insert.removeLink` | Editable, the body has focus and the caret or selection touches a link (never in a table cell) | `screens/link-editor.md`, L-8 to L-10 |
 | `insert-image` | `library.menu.format.insert.image` | Editable | `flows/insert-image.md` |
 | `exit-code-block` | `editor.format.exitCodeBlock` | Caret in a code block | BI-4 |
 
-Format menu order (computer, tablet): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Link…, Image…), then on a computer Table ▸.
+Format menu order (computer, tablet): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Add Link… or Edit Link…, Remove Link, Image…), then on a computer Table ▸.
 
 ### Table
 
@@ -278,6 +279,16 @@ Every command in Settings and the flows it opens. Commands that live on other su
 | --- | --- | --- | --- |
 | `erase-device` | `settings.erase.button` | a library exists and nothing else is changing it | Counts what would be lost; warning (`flows/erase`). |
 | `erase-confirm` | `settings.erase.alert.erase` (destructive, in the warning) | — | Authenticates (App Lock on) and erases. |
+
+### Library problem
+
+The commands of the screen that replaces the library when it can't be opened ([screens/unavailable-content](screens/unavailable-content.md)). `import-archive` and `erase-device`'s warning are the same commands as elsewhere; `erase-unopened` is its own command because it reads nothing and has its own warning ([flows/erase](flows/erase.md)).
+
+| id | Name (copy key) | Enabled when | What it does |
+| --- | --- | --- | --- |
+| `retry-opening` | `common.tryAgain` | the problem is not a newer version; not already trying | Reads the settings and opens the library again from the start. A tap that ends in a problem again counts once towards offering `erase-unopened`. |
+| `erase-unopened` | `settings.erase.button` | on the library problem screen: after one failed `retry-opening` (not for a newer version) and while the phone's or tablet's protected data is available; on the lock screen of a missing device key: at once | Authenticates when App Lock is on or can't be known, then the warning `settings.erase.alert.unopened`; Erase removes everything the app stored ([flows/erase](flows/erase.md)). |
+| `open-library-guide` | `library.problem.learnMore` | always on the screen | Opens the troubleshooting guide on the web. |
 
 ### Agent Access
 

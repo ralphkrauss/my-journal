@@ -4,51 +4,53 @@ Everything in the spec that looks unintended, is worded inconsistently, no longe
 
 Each item names the spec files and the code files involved. Code paths are relative to `apps/apple/JournalApp/`, except those starting with `Packages/`. “Record” means a file in `docs/design/`.
 
+An entry keeps its original text as history. A line in bold at its end says what became of it: **Resolved in build 18** or **Resolved by owner decision** (with the date and the record), **Not a bug**, or “Superseded in 1.1 by simplification X (owner-approved 2026-10-07), still open for 1.0”. The 1.1 simplifications are lettered A to O in [release-1-1-scope.md](../docs/design/release-1-1-scope.md) (owner-approved 2026-10-07). Resolved entries are no longer disagreements between spec and code: the spec was changed to follow the code in the same change.
+
 ## A. Likely app bugs
 
 Behaviour that looks unintended, or that differs from a decision or design record that is probably right. Each needs a fix or an explicit decision.
 
-**A1.** The save-failure alert returns after every edit. Each edit retries the save and sets the alert's message again, so dismissing it and typing one more character brings it back; the review of the design said not to repeat announcements on every edit. Consider one alert per failure and the notice afterwards.
+**A1.** The save-failure alert returns after every edit. Each edit retries the save and sets the alert's message again, so dismissing it and typing one more character brings it back; the review of the design said not to repeat announcements on every edit. Consider one alert per failure and the notice afterwards. **Resolved in build 18:** the alert shows when saving first fails and again only for a retry the person asked for; later failures leave the notice and say nothing (audit item #4, record §1.1). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/save-failure.md](flows/save-failure.md), [messages.md](messages.md). Code: `Model/AppModel.swift`, `Views/RootView.swift`.
 
-**A2.** On the Mac, closing the window or quitting after a failed save shows the app-modal Keep Open alert and also sets the generic alert in the window, so two alerts appear.
+**A2.** On the Mac, closing the window or quitting after a failed save shows the app-modal Keep Open alert and also sets the generic alert in the window, so two alerts appear. **Resolved in build 18:** closing a window and quitting save without the generic alert, so only Keep Open shows (audit item #4, record §1.1). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Model/WindowSafety.swift`, `Model/AppModel.swift`.
 
 **A3.** After a failed save, Back on iPhone removes the entry's page. The notice with Try Again is visible only after reopening the same entry, which the alert doesn't say, and opening another entry falls back to the list with the alert.
 
-Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Model/JournalNavigation.swift`, `Views/SaveFailureNotice.swift`, `Views/EntryHeaderView.swift`.
+Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Views/CompactJournalNavigation.swift`, `Views/SaveFailureNotice.swift`, `Views/EntryHeaderView.swift`.
 
-**A4.** Raw system text reaches the person at launch. A database error shows its own description (for example “SQLite error 11: database disk image is malformed”) on the lock screen, and a failed key read shows the system's generic description. The sync-health rule says no message shows implementation details; text like `messages.sync.localDataUnreadable`, pointing to Export Archive, would fit.
+**A4.** Raw system text reaches the person at launch. A database error shows its own description (for example “SQLite error 11: database disk image is malformed”) on the lock screen, and a failed key read shows the system's generic description. The sync-health rule says no message shows implementation details; text like `messages.sync.localDataUnreadable`, pointing to Export Archive, would fit. **Resolved in build 18:** database and system errors are mapped to plain messages (`messages.failure.*`) and a library that can't be opened gets its own screen (audit items #1 to #3, record §1.14 and §2.1). The spec describes both. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [messages.md](messages.md). Code: `Model/AppModel.swift`, `Model/AppLockOperations.swift`, `Views/UnlockView.swift`.
 
-**A5.** Those launch failures leave the window on the lock screen even when App Lock is off, and its “Unlock with …” button then does nothing, because unlocking with the device needs App Lock.
+**A5.** Those launch failures leave the window on the lock screen even when App Lock is off, and its “Unlock with …” button then does nothing, because unlocking with the device needs App Lock. **Resolved in build 18:** a problem state is never locked; the library problem screen replaces the lock screen, except for a missing device key (audit items #2 and #3, record §2.1). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/unavailable-content.md](screens/unavailable-content.md). Code: `Model/AppModel.swift`, `Views/UnlockView.swift`.
 
-**A6.** An unreadable configuration file looks like a first launch: the welcome screen shows with a generic alert carrying the decoder's text, and Start a Journal then writes a new configuration and library. The old library's files stay on disk but are never opened again.
+**A6.** An unreadable configuration file looks like a first launch: the welcome screen shows with a generic alert carrying the decoder's text, and Start a Journal then writes a new configuration and library. The old library's files stay on disk but are never opened again. **Resolved in build 18:** unreadable settings show the library problem screen, and Start a Journal, connecting and pairing are refused until the library opens (audit item #3, record §2.1). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [screens/welcome.md](screens/welcome.md). Code: `Model/AppModel.swift`, `Views/RootView.swift`.
 
-**A7.** The deletion review shows the system's generic text (“The operation couldn’t be completed. (JournalCore.PermanentDeletionError error 4.)”) for failures it doesn't name, such as a record already deleted permanently or missing. `PermanentDeletionError` has no description, and the generic alert's deletion prompts already handle these cases.
+**A7.** The deletion review shows the system's generic text (“The operation couldn’t be completed. (JournalCore.PermanentDeletionError error 4.)”) for failures it doesn't name, such as a record already deleted permanently or missing. `PermanentDeletionError` has no description, and the generic alert's deletion prompts already handle these cases. **Changed in build 18** (audit item #1, record §1.14): the sheet now shows “Something went wrong. Try again.” (`messages.failure.other`) for a record already deleted permanently or missing, `notDeleted` and `conflict`, which a retry cannot fix; `PermanentDeletionView` maps the same cases to named messages. Still open; recommendation: map them in the review sheet the same way.
 
-Spec: [flows/resolve-conflict.md](flows/resolve-conflict.md), [messages.md](messages.md). Code: `Packages/JournalCore/Sources/JournalCore/DeletionConflict.swift`, `Views/DeletionConflictView.swift`, `Model/PermanentDeletionOperations.swift`.
+Spec: [flows/resolve-conflict.md](flows/resolve-conflict.md), [messages.md](messages.md). Code: `Views/DeletionConflictView.swift` (`handle`), `Model/FailureMessage.swift`, `Views/PermanentDeletionView.swift` (`report`).
 
-**A8.** Pin, Unpin and Move Journal failures always show `messages.generic.pinFailed`, `messages.generic.unpinFailed` or `messages.generic.moveJournalFailed`, including for content from a newer version, for which `messages.library.needsUpdate` exists.
+**A8.** Pin, Unpin and Move Journal failures always show `messages.generic.pinFailed`, `messages.generic.unpinFailed` or `messages.generic.moveJournalFailed`, including for content from a newer version, for which `messages.library.needsUpdate` exists. Superseded in part in 1.1 by simplification C (version-too-old states say “Update My Journal”; owner-approved 2026-10-07), still open for 1.0.
 
-Spec: [messages.md](messages.md), [screens/unavailable-content.md](screens/unavailable-content.md). Code: `Model/EntryActionOperations.swift`, `Model/JournalOperations.swift`.
+Spec: [messages.md](messages.md), [screens/unavailable-content.md](screens/unavailable-content.md). Code: `Model/LibraryOperations.swift`.
 
-**A9.** Network failures while looking up a typed pairing code, or while approving, show the system's own error text (for example “The Internet connection appears to be offline.”) instead of a My Journal message such as `settings.addDevice.unreachable`.
+**A9.** Network failures while looking up a typed pairing code, or while approving, show the system's own error text (for example “The Internet connection appears to be offline.”) instead of a My Journal message such as `settings.addDevice.unreachable`. **Resolved in build 18:** Add Device maps network errors through the same table as sync (`messages.failure.offline`, `.certificate`, `.unreachable`; audit item #23, record §1.13). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/pair-device.md](flows/pair-device.md). Code: `Views/AddDeviceView.swift`, `Model/DeviceOperations.swift`.
 
-**A10.** Sync Status after locking shows `messages.sync.waiting` with a state's connect action, while the Settings ▸ Sync footer is empty: locking clears the held message but not the sync state. For states that stop automatic sync, “Waiting to sync” is also misleading, and it can last up to 10 minutes or until the person acts.
+**A10.** Sync Status after locking shows `messages.sync.waiting` with a state's connect action, while the Settings ▸ Sync footer is empty: locking clears the held message but not the sync state. For states that stop automatic sync, “Waiting to sync” is also misleading, and it can last up to 10 minutes or until the person acts. **Resolved in build 18:** locking keeps the sync state and its message (audit item #5, record §1.2). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/sync-status.md](screens/sync-status.md), [messages.md](messages.md). Code: `Model/SyncHealthOperations.swift`, `Views/SyncNowRows.swift`.
 
-**A11.** On iPhone and iPad, Sync Status lives in the entry's More menu, which is disabled when no entry is open (the Journals list, an empty journal, a deleted journal). A state that needs the person is then visible only in Settings ▸ Sync.
+**A11.** On iPhone and iPad, Sync Status lives in the entry's More menu, which is disabled when no entry is open (the Journals list, an empty journal, a deleted journal). A state that needs the person is then visible only in Settings ▸ Sync. **Reviewed in build 18 and left as is:** Sync Status in the entry menu is the recorded design; a badge on the Settings gear would be new behaviour, left for the owner (audit item #6, record §1.16). This may belong in section D.
 
 Spec: [screens/sync-status.md](screens/sync-status.md), [messages.md](messages.md). Code: `Views/RootView+Toolbar.swift`, `Views/RootView.swift`.
 
@@ -56,55 +58,55 @@ Spec: [screens/sync-status.md](screens/sync-status.md), [messages.md](messages.m
 
 Spec: [screens/sync-status.md](screens/sync-status.md). Code: `Views/Mac/JournalToolbarController.swift`.
 
-**A13.** Temporary sync states retry at once when the app returns from the background, but switching back to an inactive-but-open app (a Mac window behind others, iPad multitasking) retries at once only when the last sync succeeded; while failing it keeps its backoff of up to 5 minutes. The design says “at once”.
+**A13.** Temporary sync states retry at once when the app returns from the background, but switching back to an inactive-but-open app (a Mac window behind others, iPad multitasking) retries at once only when the last sync succeeded; while failing it keeps its backoff of up to 5 minutes. The design says “at once”. The Apple page also notes that the loop restarts only when the scene phase leaves the background, so a Mac that is merely deactivated may not re-check a stopped state until relaunch (not run; `platforms/apple/flows/sync-recovery.md`).
 
 Spec: [flows/sync-recovery.md](flows/sync-recovery.md). Code: `Model/SyncSchedule.swift`.
 
-**A14.** When loading devices is refused, Settings ▸ Devices runs a sync to learn why. If that sync ends in a state that isn't about access (offline or busy, because the network changed meanwhile), Devices still shows `messages.sync.accessRemoved` with Connect Again…, which then disagrees with Settings ▸ Sync.
+**A14.** When loading devices is refused, Settings ▸ Devices runs a sync to learn why. If that sync ends in a state that isn't about access (offline or busy, because the network changed meanwhile), Devices still shows `messages.sync.accessRemoved` with Connect Again…, which then disagrees with Settings ▸ Sync. Superseded in 1.1 by simplifications E and I (Devices folds into Sync; one Reconnect action; owner-approved 2026-10-07), still open for 1.0.
 
-Spec: [flows/sync-recovery.md](flows/sync-recovery.md), [screens/settings-devices.md](screens/settings-devices.md). Code: `Views/DevicesView.swift`, `Model/DeviceOperations.swift`.
+Spec: [flows/sync-recovery.md](flows/sync-recovery.md), [screens/settings-devices.md](screens/settings-devices.md). Code: `Views/DevicesView.swift`, `Model/SyncHealthOperations.swift`.
 
-**A15.** Review Changes does nothing visible when the save fails. The entry notice saves first; if that fails the sheet doesn't open, and only the save-failure alert explains (and only if it isn't already dismissed).
+**A15.** Review Changes does nothing visible when the save fails. The entry notice saves first; if that fails the sheet doesn't open, and only the save-failure alert explains (and only if it isn't already dismissed). Superseded in 1.1 by simplification H, second step (entries auto-resolve; owner-approved 2026-10-07), still open for 1.0.
 
-Spec: [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Views/ConflictRouting.swift`.
+Spec: [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Views/SettingsView.swift` (`ConflictNotice`), `Views/ConflictRouting.swift`.
 
-**A16.** The unsupported-version review offers Export Archive… without saying that a failed save blocks it (the export then reports `messages.save.before.exportArchive`); only the journal review's own, nearly unreachable, unsupported branch adds `messages.save.before.exportArchiveForConflict`.
+**A16.** The unsupported-version review offers Export Archive… without saying that a failed save blocks it (the export then reports `messages.save.before.exportArchive`); only the journal review's own, nearly unreachable, unsupported branch adds `messages.save.before.exportArchiveForConflict`. Superseded in 1.1 by simplification H, first step (the journal and deletion review forms are dropped; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md). Code: `Views/ConflictRouting.swift`, `Views/JournalConflictView.swift`.
 
-**A17.** On the Mac the journal review's Cancel or Done has no cancel shortcut, unlike the entry, deletion and unsupported forms, which close with Escape.
+**A17.** On the Mac the journal review's Cancel or Done has no cancel shortcut, unlike the entry, deletion and unsupported forms, which close with Escape. Superseded in 1.1 by simplification H, first step (the journal review form is dropped; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md). Code: `Views/JournalConflictView.swift`.
 
-**A18.** On iPhone and iPad, Formatting ▸ Insert ▸ Image… reuses the source last chosen in the Insert Image menu, so it can open the camera or Files, while the menu bar's Image… always opens the photo library. Intended?
+**A18.** On iPhone and iPad, Formatting ▸ Insert ▸ Image… reuses the source last chosen in the Insert Image menu, so it can open the camera or Files, while the menu bar's Image… always opens the photo library. Intended? **Resolved in build 18:** Insert ▸ Image… in Formatting and in the Format menu always opens the photo library (audit item #16, record §1.7); `flows/insert-image.md` says so. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/insert-image.md](flows/insert-image.md), [screens/format-sheet.md](screens/format-sheet.md). Code: `Editor/WritingAccessory.swift`, `Views/ImagePickerPresenter.swift`.
 
-**A19.** Format menu items (Bold, headings, …) stay enabled while keyboard focus is outside the editor (the entries list, search); choosing one then does nothing, because the handler needs the editor to be first responder.
+**A19.** Format menu items (Bold, headings, …) stay enabled while keyboard focus is outside the editor (the entries list, search); choosing one then does nothing, because the handler needs the editor to be first responder. **Resolved in build 18:** the Format group is disabled unless the editor has focus (audit item #19, record §1.9); `commands.md` says so. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/entry-editor.md](screens/entry-editor.md), [commands.md](commands.md). Code: `AppCommands.swift`, `Editor/NativeEditor.swift`.
 
 **A20.** Image Descriptions doesn't list images in document order: every image on a line of its own comes first, then images inside lines and table cells, so “Image 1, Image 2…” can differ from the entry's order.
 
-Spec: [screens/image-description.md](screens/image-description.md). Code: `Views/ImageDescriptionsView.swift`, `Packages/JournalCore/Sources/JournalCore/ImageDescriptions.swift`.
+Spec: [screens/image-description.md](screens/image-description.md). Code: `Views/ImageDescriptionsView.swift`, `Packages/JournalCore/Sources/JournalCore/DocumentImages.swift`.
 
-**A21.** The sheet that creates a journal from Move Entry, Restore and Version History doesn't check for a taken name, unlike New Journal and Rename. Two journals can get the same name there, and Move Entry then can't choose between them (“Same name as another journal”).
+**A21.** The sheet that creates a journal from Move Entry, Restore and Version History doesn't check for a taken name, unlike New Journal and Rename. Two journals can get the same name there, and Move Entry then can't choose between them (“Same name as another journal”). **Not a bug (build 18):** `JournalStore.save` refuses a taken journal name on every creation path and the sheet shows the error; duplicates come from earlier versions or sync (record §1.16, audit item #17: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md)). What remains is wording, see B12.
 
 Spec: [screens/destination-journal.md](screens/destination-journal.md), [screens/move-entry.md](screens/move-entry.md). Code: `Views/RecoveryJournalView.swift`, `Model/JournalOperations.swift`.
 
-**A22.** Move Entry lists a journal with an empty name as an empty row; every other journal list shows `common.untitledJournal`.
+**A22.** Move Entry lists a journal with an empty name as an empty row; every other journal list shows `common.untitledJournal`. **Resolved in build 18:** an unnamed journal reads “Untitled Journal” in Move Entry (audit item #20, record §1.10). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/move-entry.md](screens/move-entry.md). Code: `Views/MoveEntryView.swift`.
 
-**A23.** The trailing Delete swipe is offered for any editable entry that isn't deleted yet, including entries in Unavailable Journals, whose context menu offers no Delete Entry.
+**A23.** The trailing Delete swipe is offered for any editable entry that isn't deleted yet, including entries in Unavailable Journals, whose context menu offers no Delete Entry. **Resolved in build 18:** the swipe and the menu share one check, so an entry in an unavailable journal is offered no Delete (audit item #8, record §1.4). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/entry-list.md](screens/entry-list.md). Code: `Views/RootView.swift`, `Views/MenuActions.swift`.
 
-**A24.** The owner decisions ask for Delete and ⌘⌫ in the entries list on the Mac and iPad. Only the Mac has them; on iPad a hardware keyboard has no list shortcut for deleting.
+**A24.** The owner decisions ask for Delete and ⌘⌫ in the entries list on the Mac and iPad. Only the Mac has them; on iPad a hardware keyboard has no list shortcut for deleting. **Owner decision, 2026-09-25:** Delete and ⌘⌫ in the entries list on the Mac and iPad ([owner-decisions-2026-09-25.md](../docs/design/owner-decisions-2026-09-25.md), §1 and §8); the iPad part is not built.
 
 Spec: [screens/entry-list.md](screens/entry-list.md). Code: `Views/CommandDeleteKey.swift`.
 
-**A25.** The VoiceOver actions Move Up and Move Down for journals exist only on iPhone and iPad, while the journal-order record asks for them on every platform, including Mac VoiceOver. The Mac has dragging only.
+**A25.** The VoiceOver actions Move Up and Move Down for journals exist only on iPhone and iPad, while the journal-order record asks for them on every platform, including Mac VoiceOver. The Mac has dragging only. **Resolved by owner decision, 2026-10-03:** no Move Up and Move Down on the Mac; reordering there is by drag only, and VoiceOver's actions stay on iOS ([journal-order.md](../docs/design/journal-order.md), Owner decisions). The code matches. (Mac VoiceOver users have drag only; the owner may want to revisit that.)
 
 Spec: [screens/journals.md](screens/journals.md). Code: `Views/JournalSidebarView.swift`.
 
@@ -112,11 +114,11 @@ Spec: [screens/journals.md](screens/journals.md). Code: `Views/JournalSidebarVie
 
 Spec: [screens/search.md](screens/search.md). Code: `Views/JournalSearchResults.swift`.
 
-**A27.** Waiting agent requests disappear while the server can't be reached (they show only in the ready state), although the agent-access record says an already loaded list stays visible.
+**A27.** Waiting agent requests disappear while the server can't be reached (they show only in the ready state), although the agent-access record says an already loaded list stays visible. **Resolved in build 18:** Requests stay visible while the server can't be reached, once the list has loaded (audit item #13a, record §1.6). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/settings-agent-access.md](screens/settings-agent-access.md). Code: `Views/ServerAgentsView.swift`, `Model/ServerAgentsController.swift`.
 
-**A28.** Switching an agent to Selected Journals with nothing chosen leaves its previous access in place without saying so on screen; the agent-access record says switching narrows access at once.
+**A28.** Switching an agent to Selected Journals with nothing chosen leaves its previous access in place without saying so on screen; the agent-access record says switching narrows access at once. **Resolved in build 18:** while Selected Journals has none chosen, the detail says the agent can still read all journals, and the approval sheet says to choose one (audit item #13b, record §2.2; `settings.agents.emptyChoice.*`). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/agent-detail.md](screens/agent-detail.md). Code: `Views/ServerAgentsView.swift`, `Model/ServerAgentsController.swift`.
 
@@ -124,7 +126,7 @@ Spec: [screens/agent-detail.md](screens/agent-detail.md). Code: `Views/ServerAge
 
 Spec: [screens/settings-backup.md](screens/settings-backup.md). Code: `Views/ArchiveView.swift`, `Model/DocumentTransferOperations.swift`.
 
-**A30.** The Mac settings window opens on Sync (`settingsTab` defaults to `.sync`) although General is the first tab. No design record says Settings should open on Sync.
+**A30.** The Mac settings window opens on Sync (`settingsTab` defaults to `.sync`) although General is the first tab. No design record says Settings should open on Sync. **Resolved in build 18:** the Mac Settings window opens on General (audit item #22, record §1.12). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/settings.md](screens/settings.md). Code: `Model/AppModel.swift`, `Views/SettingsView.swift`.
 
@@ -132,7 +134,7 @@ Spec: [screens/settings.md](screens/settings.md). Code: `Model/AppModel.swift`, 
 
 Spec: [screens/add-device.md](screens/add-device.md). Code: `Views/AddDeviceView.swift`.
 
-**A32.** The QR code is replaced by a placeholder whenever the app isn't active, including on the Mac when another window is in front, although the effortless-connection review asked that clicking another window on the Mac not drop the code.
+**A32.** The QR code is replaced by a placeholder whenever the app isn't active, including on the Mac when another window is in front, although the effortless-connection review asked that clicking another window on the Mac not drop the code. **Resolved by owner decision, 2026-10-06:** on the Mac the Add Device code is hidden only when the app goes to the background, not when another window is in front (owner decision #12, record §3.3, built in build 18). `screens/add-device.md` says so. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/add-device.md](screens/add-device.md). Code: `Views/AddDeviceView.swift`, `Views/PairingCodeImage.swift`.
 
@@ -140,23 +142,79 @@ Spec: [screens/add-device.md](screens/add-device.md). Code: `Views/AddDeviceView
 
 Spec: [flows/connect-to-server.md](flows/connect-to-server.md). Code: `Model/ConnectionFlow.swift`, `Views/ConnectionSteps.swift`.
 
-**A34.** When merging stops because this device's journals include items saved by a newer version, the person sees only the generic `messages.connection.mergeFailed`; the specific `messages.import.mergeNeedsUpdate` is wrapped and never shown there. Should it be?
+**A34.** When merging stops because this device's journals include items saved by a newer version, the person sees only the generic `messages.connection.mergeFailed`; the specific `messages.import.mergeNeedsUpdate` is wrapped and never shown there. Should it be? **Resolved in build 18:** a refusal to merge because of newer-version journals shows `messages.import.mergeNeedsUpdate` and offers no retry (audit item #11, record §1.5). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/connect-to-server.md](flows/connect-to-server.md). Code: `Model/ServerJoining.swift`.
 
-**A35.** Back from Merge Journals, reached after Sign In or a pairing (a connected library facing another library), appears to keep the access grant until the sheet closes, while the sync-health record says Back or Cancel gives it up. Not verified by running.
+**A35.** Back from Merge Journals, reached after Sign In or a pairing (a connected library facing another library), appears to keep the access grant until the sheet closes, while the sync-health record says Back or Cancel gives it up. Not verified by running. **Resolved by owner decision, 2026-10-06:** Back from Merge Journals gives up the one-time grant and the step starts again (owner decision #10, record §3.2, built in build 18; `Model/ConnectionFlow.swift` `leaveMergeWithoutAgreeing`). `flows/connect-to-server.md` says so. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/connect-to-server.md](screens/connect-to-server.md), [flows/reconnect-to-server.md](flows/reconnect-to-server.md). Code: `Model/ServerJoining.swift`, `Views/MergeJournalsView.swift`.
 
-**A36.** The spec contradicts itself on whether pinning waits for the save. [flows/save-entry.md](flows/save-entry.md) says every action that acts on the open entry first finishes its save, but “Pinning doesn’t wait for the save; it doesn’t change the entry’s content”. [commands.md](commands.md) and [screens/entry-editor.md](screens/entry-editor.md) say each Entry Actions item first saves the open writing, and Pin and Unpin are Entry Actions items. The Apple code decides which is right; the Windows mapping follows flows/save-entry.md (pinning does not wait) and is changed if the answer is the other one.
+**A36.** The spec contradicts itself on whether pinning waits for the save. [flows/save-entry.md](flows/save-entry.md) says every action that acts on the open entry first finishes its save, but “Pinning doesn’t wait for the save; it doesn’t change the entry’s content”. [commands.md](commands.md) and [screens/entry-editor.md](screens/entry-editor.md) say each Entry Actions item first saves the open writing, and Pin and Unpin are Entry Actions items. The Apple code decides which is right; the Windows mapping follows flows/save-entry.md (pinning does not wait) and is changed if the answer is the other one. Update after build 18: the Apple code does not wait for the save when pinning (`Model/LibraryOperations.swift`), which matches `flows/save-entry.md`; `commands.md` and `screens/entry-editor.md` say otherwise. The owner confirms before they change.
 
-Spec: [flows/save-entry.md](flows/save-entry.md), [commands.md](commands.md), [screens/entry-editor.md](screens/entry-editor.md), [platforms/windows/screens/entry-list.md](platforms/windows/screens/entry-list.md). Code: `Model/EntryActionOperations.swift`.
+Spec: [flows/save-entry.md](flows/save-entry.md), [commands.md](commands.md), [screens/entry-editor.md](screens/entry-editor.md), [platforms/windows/screens/entry-list.md](platforms/windows/screens/entry-list.md). Code: `Model/LibraryOperations.swift`.
+
+**A37.** In an agent's detail (Settings ▸ Agent Access), a change to the journals or to Access Ends is saved half a second after the last change, but leaving the page cancels the pending wait, so a change made less than half a second before Done (Mac) or Back (iPhone, iPad) is lost without a word. Return or leaving the name field saves at once. Recommendation: save the pending change when the page closes, or say it was not saved.
+
+Spec: [screens/agent-detail.md](screens/agent-detail.md) (Rules, "Saved half a second after the last change"), [platforms/apple/screens/agent-detail.md](platforms/apple/screens/agent-detail.md). Code: `Views/ServerAgentsView.swift:621` (`onDisappear { saving?.cancel() }`), `:711-718` (`scheduleSave`).
+
+**A38.** The "The passwords don’t match." label under Confirm in Change Password and in Check Your Password (Set New Password) is a computed footer and is not announced to VoiceOver, while the spec says every error is announced. Other errors on both sheets call `announceForAccessibility`. Recommendation: announce the label when it first appears.
+
+Spec: [screens/change-password.md](screens/change-password.md) ("Every error is announced"), [screens/password-check.md](screens/password-check.md). Code: `Views/ChangePasswordView.swift:60,96-98`, `Views/PasswordCheckView.swift:150,173`.
+
+**A39.** On the Mac and iPad, Settings ▸ Devices loads its list when the pane appears and after Add Device closes, but the sheet of Connect Again… or Connect to a Server… has no close handler. After a successful reconnect from this pane the access-lost message and an empty list may stay until the pane is opened again. Read from the source and not run on a device. Recommendation: reload when the sheet closes, as Add Device does.
+
+Spec: [screens/settings-devices.md](screens/settings-devices.md), [flows/reconnect-to-server.md](flows/reconnect-to-server.md). Code: `Views/DevicesView.swift:54-56`.
+
+**A40.** On the Mac the Version and Journal choices in Version History show only their captions ("Version", "Journal") with up-down arrows; the chosen version or journal is not visible until the menu opens. On iPhone and iPad the caption sits above the chosen value, as the spec says. The Mac pop-up appears to take the label's accessibility label as its title, not its content (not established). Recommendation: a control that shows the value on the Mac, such as a pop-up picker with the value as its title.
+
+Spec: [screens/version-history.md](screens/version-history.md) (Version and Journal pickers: "caption above the chosen value"), [platforms/apple/screens/version-history.md](platforms/apple/screens/version-history.md). Code: `Views/HistoryMenu.swift:4-22` (`WrappingMenuLabel`), `:47-61` (`HistoryVersionPicker`), `Views/VersionHistoryView.swift:100,141-152`.
+
+**A41.** On the Mac the privacy cover covers only the journal window. The Settings window is a separate scene without the cover, and sheets are not covered, so with App Lock on and another app in front, Settings and open sheets (for example Add Device with its QR code) stay readable. The spec says every window, including sheets, popovers and alerts, is covered. iPhone and iPad cover all windows with an extra window. Whether the Mac's scene phase leaves active whenever another app is in front was not verified. Recommendation: cover the Settings window too, or record the reason it is exempt.
+
+Spec: [screens/lock-screen.md](screens/lock-screen.md) (Privacy cover), [screens/unavailable-content.md](screens/unavailable-content.md), [flows/app-lock.md](flows/app-lock.md). Code: `JournalApp.swift:24-30` (overlay on the journal window's root view only), `:71` (Settings scene), `Model/PrivacyCover.swift`.
+
+**A42.** On iPhone and iPad the View Source / View Preview button in the keyboard accessory is not dimmed for an entry that can only be shown as source, and has no help text. The toolbar button, the reading bar and the Mac button are dimmed with `common.previewUnavailable`. Recommendation: dim it and add the same help text.
+
+Spec: [flows/source-view.md](flows/source-view.md) ("View Preview is disabled ... for an entry whose stored Markdown can only be shown as source"). Code: `Editor/WritingAccessory.swift:74-81`, against `Views/RootView+Toolbar.swift:52-61`.
+
+**A43.** The Table items of the edit menus (iPhone, iPad) and the Mac cell menu are offered while the entry is read-only. The change is not saved (`InlineTables.commit` returns when not editable), but the grid's own copy of the table is changed, and how long that stays on screen was not verified. The spec says a read-only entry has no structure menu. Recommendation: hide or disable the items when the entry is read-only.
+
+Spec: [flows/edit-table.md](flows/edit-table.md) ("Read-only entry: ... no structure menu"). Code: `Editor/InlineTables.swift:172-173`, `Editor/TablePresentation.swift`, `Editor/InlineTableGridMac.swift:33-36`.
+
+**A44.** On iPhone and iPad, starting a search ends the Journals list's edit mode only on the stacked Journals page. The iPad's list-column search does not end it, although the spec says searching ends edit mode on iPhone and iPad (journal-order owner decision, 2026-10-03). Recommendation: end edit mode from the list column's search too.
+
+Spec: [screens/journals.md](screens/journals.md) (edit mode), [screens/search.md](screens/search.md). Code: `Views/CompactJournalNavigation.swift:44-46`, `Views/RootView.swift:430` (`EntrySearch` in the list column).
+
+**A45.** On the Mac the "writing is paused while encryption is turned on" notice appears without the fade that the connection notice has; the spec says both fade in and out, without animation under Reduce Motion. Recommendation: use the same transition.
+
+Spec: [flows/save-failure.md](flows/save-failure.md) ("they fade in and out"). Code: `Views/TurnOnEncryptionView.swift:369-` (`EncryptionPauseNotice`, no transition), against `Views/SaveFailureNotice.swift:79`.
+
+**A46.** On the Mac before macOS 26, the first page of Connect to a Server (`serverReady`) has no heading row, although the spec says a heading row repeats the title at the top of every step because the sheet has no title bar. Recommendation: show the row on that page too.
+
+Spec: [screens/connect-to-server.md](screens/connect-to-server.md) (Accessibility, "Each step's title is a heading"). Code: `Views/ConnectionSteps.swift:22` (`step != .serverReady`).
+
+**A47.** In the Mac capture of Merge Journal the footer paragraph is cut to one line with an ellipsis in the inset list, so the sentence naming the source and the target is unreadable; iOS wraps it. Taken from the capture, not checked in code. Recommendation: let the footer wrap (a multi-line text or a section footer).
+
+Spec: [screens/merge-journal.md](screens/merge-journal.md). Code: `Views/MergeJournalView.swift:150-152` (`.listStyle(.inset)`), `:157-166` (`footer`).
+
+**A48.** Not verified at runtime: a pasted lone space on the Mac passes the `replacingText` guard, because the paste goes through `shouldChangeText` as an adopting replacement, so it may convert a Markdown marker before it. The spec says pasted text, including a pasted space, never converts. Recommendation: test it, and guard on the paste.
+
+Spec: [flows/markdown-as-you-type.md](flows/markdown-as-you-type.md) (rule K, "pasted text (including a pasted space)"). Code: `Editor/MarkdownShortcutEditing.swift:17`, `Editor/InsertedText.swift:30`.
+
+**A49.** The entry's Review Changes button does not check whether the library is being replaced; the spec enables it only when the app is unlocked and the library is not being replaced. Recommendation: disable it, or let the model refuse.
+
+Spec: [screens/conflict-review.md](screens/conflict-review.md) (Actions: "Review Changes ... unlocked, the library not being replaced"). Code: `Views/SettingsView.swift:237-260` (`ConflictNotice`).
+
+**A50.** On the Mac the library problem screen's window has no title, so the title bar reads “Untitled”; the lock screen and the journal window use `library.app.name` (“My Journal”). Taken from the capture, not checked beyond the source (the screen sets no title). Recommendation: title the window `library.app.name` as while locked.
+
+Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [screens/library-window.md](screens/library-window.md). Code: `Views/LibraryProblemView.swift`, `Views/RootView.swift`.
 
 ## B. Copy inconsistencies
 
 The same situation worded differently, wording that no longer matches the product, or text that is never shown. The catalog keeps the text the app shows today.
 
-**B1.** “Save your changes before …”, “Save your entry before …” and “Save your current entry before …” are three wordings for the same situation (`common.saveBeforeMoveEntry`, `common.saveBeforeCreateJournal`, `messages.save.before.*`). They could be one.
+**B1.** “Save your changes before …”, “Save your entry before …” and “Save your current entry before …” are three wordings for the same situation (`common.saveBeforeMoveEntry`, `common.saveBeforeCreateJournal`, `messages.save.before.*`). They could be one. Superseded in 1.1 by simplification B (about 26 save-before messages become two; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [flows/save-failure.md](flows/save-failure.md), [messages.md](messages.md). Code: `Model/JournalOperations.swift`, `Model/AppModel.swift`.
 
@@ -164,23 +222,23 @@ Spec: [flows/save-failure.md](flows/save-failure.md), [messages.md](messages.md)
 
 Spec: [messages.md](messages.md), [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Model/JournalOperations.swift`, `Views/EntryConflictReview.swift`, `Views/JournalConflictView.swift`, `Views/DeletionConflictView.swift`.
 
-**B3.** “These changes were updated. Review both versions again.” (entry review, `messages.conflict.status.updated`) and “These changes have been updated. Review them again.” (journal and deletion reviews, `messages.conflict.updatedReviewAgain`) say the same thing in two ways.
+**B3.** “These changes were updated. Review both versions again.” (entry review, `messages.conflict.status.updated`) and “These changes have been updated. Review them again.” (journal and deletion reviews, `messages.conflict.updatedReviewAgain`) say the same thing in two ways. Superseded in 1.1 by simplification H (owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md), [messages.md](messages.md). Code: `Views/EntryConflictReview.swift`, `Views/JournalConflictView.swift`, `Views/DeletionConflictView.swift`.
 
-**B4.** Settings paths are written “Settings > Backup”, “Settings > Privacy” and “Settings > Devices” in some messages (for example `settings.sync.stopSyncing.message`, `messages.connection.encryptionOffOnHost`), while the spec and newer copy use “Settings ▸ …”.
+**B4.** Settings paths are written “Settings > Backup”, “Settings > Privacy” and “Settings > Devices” in some messages (for example `settings.sync.stopSyncing.message`, `messages.connection.encryptionOffOnHost`), while the spec and newer copy use “Settings ▸ …”. Superseded in 1.1 by simplification E (the Settings tabs and paths change; owner-approved 2026-10-07), still open for 1.0. Build 18 added the opposite form in new texts (`Model/FailureMessage.swift`, `SyncHealth.swift` use “Settings ▸ Backup”).
 
-Spec: [messages.md](messages.md), [screens/connect-to-server.md](screens/connect-to-server.md). Code: `Model/ConnectionFlow.swift`, `Packages/JournalCore/Sources/JournalCore/ServerClient.swift`.
+Spec: [messages.md](messages.md), [screens/connect-to-server.md](screens/connect-to-server.md). Code: `Model/ConnectionFlow.swift`.
 
-**B5.** The generic error alert is titled “Journal” (`common.alertTitle`), not “My Journal” or the name of the failed action; the owner decisions ask that copy names the app “My Journal”, and most messages are written as a full sentence for the message field.
+**B5.** The generic error alert is titled “Journal” (`common.alertTitle`), not “My Journal” or the name of the failed action; the owner decisions ask that copy names the app “My Journal”, and most messages are written as a full sentence for the message field. **Resolved in build 18:** the generic alert is titled “My Journal” and `common.alertTitle` says so (audit item #21, record §1.11). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [messages.md](messages.md), [screens/entry-editor.md](screens/entry-editor.md). Code: `Views/RootView.swift`.
 
-**B6.** Encryption turned on elsewhere has two texts that can show at the same time, in Settings ▸ Sync and Settings ▸ Privacy: `messages.sync.signInNeeded` (“The server now uses encryption or was replaced…”) and `messages.encryption.turnedOnElsewhere`, which the sync-health record says can be wrong for a replaced server.
+**B6.** Encryption turned on elsewhere has two texts that can show at the same time, in Settings ▸ Sync and Settings ▸ Privacy: `messages.sync.signInNeeded` (“The server now uses encryption or was replaced…”) and `messages.encryption.turnedOnElsewhere`, which the sync-health record says can be wrong for a replaced server. Superseded in 1.1 by simplification G (every library is always encrypted; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [flows/sync-recovery.md](flows/sync-recovery.md), [messages.md](messages.md), [flows/reconnect-to-server.md](flows/reconnect-to-server.md). Code: `Packages/JournalCore/Sources/JournalCore/SyncHealth.swift`, `Model/EncryptionUpgrade.swift`.
 
-**B7.** A server that can't be reached has several wordings: sync says “Can’t reach the server right now…”, Connect to a Server says `messages.connection.cannotConnect`, other server requests say `messages.server.unanswered`, and `common.couldntReachHost` and `settings.addDevice.unreachable` word it again (“Couldn’t reach the server. Check your connection.”).
+**B7.** A server that can't be reached has several wordings: sync says “Can’t reach the server right now…”, Connect to a Server says `messages.connection.cannotConnect`, other server requests say `messages.server.unanswered`, and `common.couldntReachHost` and `settings.addDevice.unreachable` word it again (“Couldn’t reach the server. Check your connection.”). Build 18 added “Couldn’t reach the server. Check your connection.” in `Model/NetworkFailureMessage.swift`, equal to `settings.addDevice.unreachable`, and “You’re offline. Check your connection.”.
 
 Spec: [messages.md](messages.md), [screens/add-device.md](screens/add-device.md). Code: `Packages/JournalCore/Sources/JournalCore/ServerClient.swift`, `Views/AddDeviceView.swift`.
 
@@ -190,13 +248,13 @@ Spec: [messages.md](messages.md), [flows/connect-to-server.md](flows/connect-to-
 
 **B9.** Rate limiting is worded three ways: `messages.server.rateLimited` (“Too many attempts. Try again in a few minutes.”), `messages.connection.setupCodeRateLimited` (“Too many incorrect codes. Try again in a few minutes.”) and `settings.allowAgent.error.tooManyAttempts` (“Too many attempts. Try again in a minute.”).
 
-Spec: [messages.md](messages.md), [screens/allow-agent.md](screens/allow-agent.md). Code: `Packages/JournalCore/Sources/JournalCore/ServerClient.swift`, `Model/ServerAgentsController.swift`.
+Spec: [messages.md](messages.md), [screens/allow-agent.md](screens/allow-agent.md). Code: `Packages/JournalCore/Sources/JournalCore/ServerClient.swift`, `Model/ConnectionFlow.swift`, `Model/EncryptionUpgrade.swift`, `Views/ServerAgentsView.swift`.
 
 **B10.** When the password was changed on the server but not on this device, `messages.password.notSavedLocally` says “Try again to finish.” and `settings.changePassword.error.notSavedRetry` says “Free up space, then try again.”
 
-Spec: [flows/change-password.md](flows/change-password.md), [messages.md](messages.md). Code: `Model/PasswordOperations.swift`, `Views/ChangePasswordView.swift`.
+Spec: [flows/change-password.md](flows/change-password.md), [messages.md](messages.md). Code: `Packages/JournalCore/Sources/JournalCore/Crypto.swift`, `Views/ChangePasswordView.swift`.
 
-**B11.** “No longer available” for a journal has five wordings: `common.journalGone` (“That journal …”), `library.merge.destinationGone` (names the journal), `library.templateChooser.journalGone` (“This journal … Close this and choose a journal.”), `messages.conflict.deletion.journalUnavailable` (“… Reload journals and choose another.”) and `messages.history.chooseJournal` (“Choose an available journal.”).
+**B11.** “No longer available” for a journal has five wordings: `common.journalGone` (“That journal …”), `library.merge.destinationGone` (names the journal), `library.templateChooser.journalGone` (“This journal … Close this and choose a journal.”), `messages.conflict.deletion.journalUnavailable` (“… Reload journals and choose another.”) and `messages.history.chooseJournal` (“Choose an available journal.”). Superseded in part in 1.1 by simplifications L and H (owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/move-entry.md](screens/move-entry.md), [screens/merge-journal.md](screens/merge-journal.md), [screens/template-chooser.md](screens/template-chooser.md), [screens/version-history.md](screens/version-history.md). Code: `Views/MoveEntryView.swift`, `Views/MergeJournalView.swift`, `Views/TemplateChooserView.swift`.
 
@@ -220,7 +278,7 @@ Spec: [messages.md](messages.md), [flows/sync-recovery.md](flows/sync-recovery.m
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md), [flows/markdown-as-you-type.md](flows/markdown-as-you-type.md), [screens/entry-editor.md](screens/entry-editor.md). Code: `Editor/MarkdownShortcutEditing.swift`.
 
-**B17.** The Turn On Encryption notice on the Mac says “… but this Mac couldn’t finish …” while the sheet says “… this device couldn’t finish …”; the encryption record says they are the same message. The access-lost error points to Settings > Devices, where the reconnect button is, though Settings > Sync has the same action.
+**B17.** The Turn On Encryption notice on the Mac says “… but this Mac couldn’t finish …” while the sheet says “… this device couldn’t finish …”; the encryption record says they are the same message. The access-lost error points to Settings > Devices, where the reconnect button is, though Settings > Sync has the same action. Superseded in 1.1 by simplification G (owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [flows/turn-on-encryption.md](flows/turn-on-encryption.md). Code: `Views/TurnOnEncryptionView.swift`, `Model/EncryptionUpgrade.swift`.
 
@@ -236,23 +294,23 @@ Spec: [screens/connect-to-server.md](screens/connect-to-server.md). Code: `Model
 
 Spec: [screens/connect-to-server.md](screens/connect-to-server.md). Code: `Views/ConnectionSteps.swift`.
 
-**B21.** Placement and outcome sentences still describe archived versions (“Archived in …”, “will be archived in …”), and the merge footer `library.merge.footer.other` says “including archived and recently deleted ones”, although Archive was removed; “archived” no longer means anything to the person. They appear only for entries archived by an earlier build.
+**B21.** Placement and outcome sentences still describe archived versions (“Archived in …”, “will be archived in …”), and the merge footer `library.merge.footer.other` says “including archived and recently deleted ones”, although Archive was removed; “archived” no longer means anything to the person. They appear only for entries archived by an earlier build. Superseded in part in 1.1 by simplification L (the merge footer goes; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/entry-conflict.md](screens/entry-conflict.md), [flows/resolve-conflict.md](flows/resolve-conflict.md), [screens/merge-journal.md](screens/merge-journal.md). Code: `Views/EntryConflictReview.swift`, `Views/MergeJournalView.swift`.
 
-**B22.** Default Template ▸ lists templates by their display title, which falls back to the template's first line or “New Entry”, while the Restore Settings comparison uses “Untitled Template”.
+**B22.** Default Template ▸ lists templates by their display title, which falls back to the template's first line or “New Entry”, while the Restore Settings comparison uses “Untitled Template”. Version History's metadata summary (`JournalMetadataSummary`) shows an empty value for a template with a blank title (`platforms/apple/screens/journal-history.md`). Superseded in 1.1 by simplifications K and M (owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/journals.md](screens/journals.md), [screens/journal-history.md](screens/journal-history.md). Code: `Views/JournalMoreMenu.swift`, `Views/JournalSettingsConfirmation.swift`.
 
-**B23.** The authentication reason in Check Your Password is lower case on every platform (it was written for the Mac's sentence); on iPhone and iPad it reads “set a new password for your journals”. Should iOS capitalise it like the other reasons? Windows proposes the capitalised form for `settings.passwordCheck.authReason` ([platforms/windows/copy-proposals.md](platforms/windows/copy-proposals.md)), because Windows shows the reason as a message, not as the end of a sentence.
+**B23.** The authentication reason in Check Your Password is lower case on every platform (it was written for the Mac's sentence); on iPhone and iPad it reads “set a new password for your journals”. Should iOS capitalise it like the other reasons? Windows proposes the capitalised form for `settings.passwordCheck.authReason` ([platforms/windows/copy-proposals.md](platforms/windows/copy-proposals.md)), because Windows shows the reason as a message, not as the end of a sentence. Superseded in 1.1 by simplification J (Check Your Password folds into Change Password; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/password-check.md](screens/password-check.md), [flows/forgot-password.md](flows/forgot-password.md). Code: `Views/PasswordCheckView.swift`, `Model/PasswordCheckOperations.swift`.
 
-**B24.** The camera purpose text the system shows (`editor.permission.camera`) is shared with scanning a code to connect a device; the owner decisions proposed “Take photos to add them to your entries.” for taking photos.
+**B24.** The camera purpose text the system shows (`editor.permission.camera`) is shared with scanning a code to connect a device; the owner decisions proposed “Take photos to add them to your entries.” for taking photos. **Owner decision, 2026-09-25:** the camera text for taking photos is “Take photos to add them to your entries.” ([owner-decisions-2026-09-25.md](../docs/design/owner-decisions-2026-09-25.md), §3). The text now also covers scanning a code, so the owner confirms the combined wording; the project still has the combined text.
 
 Spec: [flows/insert-image.md](flows/insert-image.md). Code: `Views/ScanCodeView.swift`, `Views/ImagePickerPresenter.swift`.
 
-**B25.** When the entry stops being editable, or the library is replaced, while images are being read, `editor.imageImport.left` says the person left the entry, which isn't what happened.
+**B25.** When the entry stops being editable, or the library is replaced, while images are being read, `editor.imageImport.left` says the person left the entry, which isn't what happened. **Resolved in build 18:** an entry that only became read-only says `editor.imageImport.unchangeable` instead of “you left the entry” (audit item #18, record §1.8). Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/insert-image.md](flows/insert-image.md). Code: `Editor/ImageInsertionSession.swift`.
 
@@ -320,19 +378,35 @@ Spec: [platforms/windows/screens/settings-devices.md](platforms/windows/screens/
 
 Spec: [platforms/windows/screens/image-description.md](platforms/windows/screens/image-description.md). Code: none yet.
 
+**B42.** Three system permission texts in `project.yml` have no copy key. `NSFaceIDUsageDescription` ("Unlock your journals and confirm adding a device.", iPhone and iPad) and `NSLocalNetworkUsageDescription` ("Find and sync with your server on your local network.", iPhone, iPad and Mac) are shown by the system, but only the camera and Add to Photos texts have keys (`editor.permission.camera`, `editor.permission.photosAdd`). A port that copies the catalog cannot find them. Recommendation: add keys for both, noting they are Info.plist values. (Superseded if the 1.1 server cleanup, simplification O, removes local network discovery.)
+
+Spec: [flows/insert-image.md](flows/insert-image.md), [screens/lock-screen.md](screens/lock-screen.md), [screens/connect-to-server.md](screens/connect-to-server.md), [copy/en.json](copy/en.json). Code: `apps/apple/project.yml:30,76,79`.
+
+**B43.** Authentication reasons are written as literals and cased in code. The Mac text is made by lowercasing the first letter (`AppModel.authenticationReason`, because the system prompt reads "My Journal is trying to ..."), except Add Device, which writes both cases by hand, and Check Your Password, whose reason is lower case on every device (see B23). At the time of the spec commit "Export an archive of your journals" and "Restore journals on this device" had no keys; the rest have keys with a `mac` variant. Recommendation: one rule (key every reason, explicit `mac` variant, sentence case on iOS) and settle it with B23.
+
+Spec: [flows/app-lock.md](flows/app-lock.md), [flows/export-archive.md](flows/export-archive.md), [screens/archive-import.md](screens/archive-import.md), [platforms/apple/flows/app-lock.md](platforms/apple/flows/app-lock.md). Code: `Model/AppLockOperations.swift:72-79,121,292`, `Model/DocumentTransferOperations.swift:151`, `Model/ArchiveInstalling.swift:39`, `Model/MarkdownExportOperations.swift:33-36`, `Views/AddDeviceView.swift:451-456`, `Model/PasswordCheckOperations.swift:48`.
+
+**B44.** Two failures show a fixed sentence where the spec says the alert shows the system's message. Saving the recovery key shows "Couldn’t save the key. Try again, or choose another location." (alert title `settings.recoveryKey.saveFailed`), and a failed file picker in Settings ▸ Backup shows the fixed text of `ArchiveImportView.couldntOpen` under `settings.backup.openFailed`. Neither sentence has a key. The fixed sentences are better than raw system text (build 18 plain failure messages). Recommendation: change the spec to the fixed sentences and add keys.
+
+Spec: [screens/recovery-key.md](screens/recovery-key.md), [screens/settings-backup.md](screens/settings-backup.md), [flows/import-archive.md](flows/import-archive.md). Code: `Views/ExportView.swift:61`, `Views/ArchiveView.swift:279-283`.
+
+**B45.** `library.templateChooser.popoverTitle` ("Use a Template…") is described as the title of the Mac popover, but the popover shows no title. The string is only the tooltip and VoiceOver label of the toolbar button that opens it. Recommendation: say so in the spec, or show a title.
+
+Spec: [screens/template-chooser.md](screens/template-chooser.md). Code: `Views/TemplateSuggestionView.swift:91`, `Views/MacFormattingButton.swift:36-45`.
+
 ## C. Design records lagging the code
 
 The code, not the record, looks right, or the record names something that no longer exists. The record needs updating; the spec follows the code.
 
-**C1.** The owner decisions say a journal with changes to review gets an alert “This journal has changes that need review.” with Review Changes and Cancel. The app shows the error alert `messages.generic.journalDeleteNeedsReview` with OK only.
+**C1.** The owner decisions say a journal with changes to review gets an alert “This journal has changes that need review.” with Review Changes and Cancel. The app showed the error alert with the text “This journal has changes that need review before it can be deleted.” and OK only. **Resolved in build 18:** Delete Journal and Delete Permanently on a record with changes to review show the “Can’t Be Deleted” alert with Review Changes and Cancel (audit item #7, record §1.3; `messages.deleteConflict.*`). The spec describes it. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/journals.md](screens/journals.md). Code: `Views/JournalDeletionPrompt.swift`.
 
-**C2.** `JournalsSheet.swift` and `JournalSettingsView.swift` (a Journals form with name fields, Default Template pickers, Deleted Journals and its own New Journal section) are still in the app, but nothing presents them; the owner decisions asked to remove this pane. Its copy is left out of the catalog.
+**C2.** `JournalsSheet.swift` and `JournalSettingsView.swift` (a Journals form with name fields, Default Template pickers, Deleted Journals and its own New Journal section) are still in the app, but nothing presents them; the owner decisions asked to remove this pane. Its copy is left out of the catalog. **Owner decision, 2026-09-25:** remove the unreachable Journals settings pane ([owner-decisions-2026-09-25.md](../docs/design/owner-decisions-2026-09-25.md), §10); not yet done. Superseded in 1.1 by simplification A (dead code, owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/journals.md](screens/journals.md), [screens/conflict-review.md](screens/conflict-review.md). Code: `Views/JournalsSheet.swift`, `Views/JournalSettingsView.swift`.
 
-**C3.** The Restore Journal view still has a Delete Journal mode (“Delete Journal”, “{count} will move to Recently Deleted. Entries from other devices will appear there when they sync.”), but nothing opens it any more: journals are deleted with the standard alert. Its copy is left out of the catalog.
+**C3.** The Restore Journal view still has a Delete Journal mode (“Delete Journal”, “{count} will move to Recently Deleted. Entries from other devices will appear there when they sync.”), but nothing opens it any more: journals are deleted with the standard alert. Its copy is left out of the catalog. Superseded in 1.1 by simplification A (dead code; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/restore-journal.md](screens/restore-journal.md). Code: `Views/JournalLifecycleView.swift`.
 
@@ -350,9 +424,9 @@ Spec: [flows/connect-to-server.md](flows/connect-to-server.md). Code: `Model/Con
 
 **C7.** `settings.addDevice.httpOnly` and `settings.agents.reach.local` (“this Mac”) were written for the server bundled on the Mac, which was removed; they now apply only to a server the person runs on the same computer. Still needed?
 
-Spec: [screens/add-device.md](screens/add-device.md), [screens/settings-agent-access.md](screens/settings-agent-access.md). Code: `Views/AddDeviceView.swift`, `Views/ServerAgentsView.swift`.
+Spec: [screens/add-device.md](screens/add-device.md), [screens/settings-agent-access.md](screens/settings-agent-access.md). Code: `Views/AddDeviceView.swift`, `Model/ServerAgentsController.swift`.
 
-**C8.** The sync-security record puts the Change Password explanation in the first section's footer and requires 12 characters; the code shows it as a row and accepts any non-empty password (later records dropped the minimum).
+**C8.** The sync-security record puts the Change Password explanation in the first section's footer and requires 12 characters; the code shows it as a row and accepts any non-empty password (later records dropped the minimum). **Resolved by owner decision, 2026-09-29:** a master password has no minimum length and the 12-character rule is removed from Change Password ([connection-onboarding.md](../docs/design/connection-onboarding.md), Owner decisions after testing). Only the sync-security record is out of date.
 
 Spec: [screens/change-password.md](screens/change-password.md). Code: `Views/ChangePasswordView.swift`.
 
@@ -360,7 +434,7 @@ Spec: [screens/change-password.md](screens/change-password.md). Code: `Views/Cha
 
 Spec: [screens/settings-privacy.md](screens/settings-privacy.md). Code: `Views/AppLockSettings.swift`.
 
-**C10.** `sync-now-and-done.md` and `menus-and-popovers.md` define today's Sync Now, Done, Format panel and popover behaviour but aren't in the `docs/design/README.md` index. Also, Check Again syncs exactly like Sync Now; the sync-health record describes a separate check that doesn't exist.
+**C10.** `sync-now-and-done.md` and `menus-and-popovers.md` define today's Sync Now, Done, Format panel and popover behaviour but aren't in the `docs/design/README.md` index. Also, Check Again syncs exactly like Sync Now; the sync-health record describes a separate check that doesn't exist. `docs/design/README.md` still calls the build 18 record “waiting for its independent review (not built yet)”, though build 18 shipped.
 
 Spec: [screens/settings-sync.md](screens/settings-sync.md), [screens/entry-editor.md](screens/entry-editor.md). Code: `Views/SyncNowRows.swift`, `Views/FormattingPopover.swift`.
 
@@ -384,6 +458,42 @@ Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Views/SaveFailureNo
 
 Spec: [flows/pair-device.md](flows/pair-device.md). Code: `Views/AddDeviceView.swift`, `Packages/JournalCore/Sources/JournalCore/Pairing.swift`.
 
+**C16.** The Stop Syncing confirmation is described as an action sheet on phone and a dialog on the computer, with a visible title. The code uses the standard confirmation dialog, and iOS 26 draws it as a popover anchored to the button (seen in the captures); the earlier-system form was not captured. Recommendation: say "the system's confirmation, with a visible title" and not name the form.
+
+Spec: [flows/stop-syncing.md](flows/stop-syncing.md), [screens/settings-sync.md](screens/settings-sync.md), [platforms/apple/flows/stop-syncing.md](platforms/apple/flows/stop-syncing.md). Code: `Views/SyncNowRows.swift:52-60`.
+
+**C17.** The Last Synced rule says the time is forgotten when the library connects to another server. The code also forgets it when the device stops syncing (the connection becomes none), so a later reconnect to the same server starts without it. Recommendation: say that Stop Syncing forgets it as well, or keep it per server.
+
+Spec: [screens/settings-sync.md](screens/settings-sync.md) (Last Synced rule), [flows/stop-syncing.md](flows/stop-syncing.md). Code: `Model/SyncSchedule.swift:285-297` (`connectionChanged`).
+
+**C18.** The spec puts 24 pt margins around the text column "on the computer". The code applies them on every device. Recommendation: say "on every device", or decide a phone margin.
+
+Spec: [screens/entry-editor.md](screens/entry-editor.md) (layout). Code: `Views/RootView.swift:831,843,892`.
+
+**C19.** The spec says the Format header with its close button is for the phone panel only. The code also shows it in the iPad popover. Recommendation: say iPhone and iPad.
+
+Spec: [screens/format-sheet.md](screens/format-sheet.md) (Header). Code: `Views/FormattingPopover.swift:16-22,45-60` (all of `#if os(iOS)`).
+
+**C20.** The spec puts the list's search field in the bottom bar on iPhone and iPad. On iPad it sits under the list title in the column (the system's place for a search field in a regular-width column; the iPad captures show it). Recommendation: update the spec for iPad.
+
+Spec: [screens/search.md](screens/search.md). Code: `Views/RootView.swift:430`.
+
+**C21.** The agent-access design record says the no-server state offers "Set Up Sync…"; the code and `copy/en.json` say "Connect to a Server…". The catalog is current; the record is not.
+
+Spec: [screens/settings-agent-access.md](screens/settings-agent-access.md). Code: `Views/ServerAgentsView.swift`.
+
+**C22.** The Mac app still requested `com.apple.security.network.server` after it stopped running a server, which App Review flags as an entitlement without matching functionality. **Resolved in build 19:** the entitlement was removed (commit 089560c); the Mac app only makes outgoing connections. The Mac test hosts alone are signed with `apps/apple/Signing/JournalMac-Tests.entitlements`, which adds `network.server` for the loopback test servers (commit 80a6e3b); no release archive has it. See [platforms/apple/platform.md](platforms/apple/platform.md) and `docs/app-store/review-notes.md`.
+
+Spec: [platforms/apple/platform.md](platforms/apple/platform.md). Code: `apps/apple/Signing/JournalMac.entitlements`, `apps/apple/Signing/JournalMac-Development.entitlements`, `apps/apple/Signing/JournalMac-Tests.entitlements`.
+
+**C23.** Windows pages still describe Apple behaviour as it was before build 18. Export archive asks for no authentication (`platforms/windows/flows/export-archive.md`, now D2 resolved: Windows Hello when App lock is on and the library isn't encrypted); the save-failure alert repeats after every failed attempt (`platforms/windows/flows/save-failure.md` and D48, now A1 resolved: once per failure); the Mac Settings window opens on Sync (`platforms/windows/screens/settings.md`, now A30 resolved); Return on an empty quote line (`platforms/windows/flows/editing-rules.md`, N-7, now D4 resolved); “whether Back does is unverified” (`platforms/windows/flows/reconnect-to-server.md`, now A35 resolved); “(open-questions A9)” in `platforms/windows/flows/pair-device.md` (fixed on Apple). The library problem screen has no Windows mapping yet (D56). Recommendation: re-read those pages against the spec, which now follows the build 18 behaviour; the owner decides each Windows change.
+
+Spec: [platforms/windows/flows/export-archive.md](platforms/windows/flows/export-archive.md), [platforms/windows/flows/save-failure.md](platforms/windows/flows/save-failure.md), [platforms/windows/screens/settings.md](platforms/windows/screens/settings.md), [platforms/windows/flows/editing-rules.md](platforms/windows/flows/editing-rules.md), [platforms/windows/flows/reconnect-to-server.md](platforms/windows/flows/reconnect-to-server.md), [platforms/windows/flows/pair-device.md](platforms/windows/flows/pair-device.md). Code: none (Windows not started).
+
+**C24.** Build 18 behaviour the Apple notes record but the neutral spec doesn't state: the rating request treats the sync state `messages.sync.localDataUnavailable` as quiet (`platforms/apple/flows/rating-request.md`); Keep Both gives the copy the current modification time (`platforms/apple/flows/resolve-conflict.md`); the iPhone and iPad Face ID usage text and the local network text are Info.plist values with no key (B42). Recommendation: add one sentence for each to the neutral flows.
+
+Spec: [flows/rating-request.md](flows/rating-request.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Model/ReviewRequestTiming.swift`; the Keep Both copy is written by the store (see the Apple page).
+
 ## D. Product questions for the owner
 
 Behaviour no record decides, or choices for the Windows and Android ports.
@@ -394,7 +504,7 @@ Behaviour no record decides, or choices for the Windows and Android ports.
 
 Spec: [flows/delete-and-restore.md](flows/delete-and-restore.md). Code: `Model/JournalOperations.swift`.
 
-**D2.** Export Archive doesn't ask for device authentication when App Lock is on, while Export as Markdown does. An encrypted archive needs the password to open, but an archive of journals without encryption is readable. No record decides this.
+**D2.** Export Archive doesn't ask for device authentication when App Lock is on, while Export as Markdown does. An encrypted archive needs the password to open, but an archive of journals without encryption is readable. No record decides this. **Resolved by owner decision, 2026-10-06:** Export Archive asks for the device's authentication when App Lock is on and the library isn't encrypted (owner decision #9, record §3.1, built in build 18); a cancel says nothing, a failure shows `settings.backup.verifyFailed`. `flows/export-archive.md` says so. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/app-lock.md](flows/app-lock.md), [flows/export-archive.md](flows/export-archive.md). Code: `Model/DocumentTransferOperations.swift`, `Model/PasswordCheckOperations.swift`.
 
@@ -402,7 +512,7 @@ Spec: [flows/app-lock.md](flows/app-lock.md), [flows/export-archive.md](flows/ex
 
 Spec: [flows/change-password.md](flows/change-password.md). Code: `Model/PasswordOperations.swift`.
 
-**D4.** Return on an empty quote line never leaves the quote (N-7), while lists leave on an empty item and Notes leaves a quote the same way. No record decides quotes.
+**D4.** Return on an empty quote line never leaves the quote (N-7), while lists leave on an empty item and Notes leaves a quote the same way. No record decides quotes. **Resolved in build 18:** Return on an empty quote line leaves the quote one level (audit item #14, record §2.3); `flows/editing-rules.md` N-7 now says so. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md), [screens/entry-editor.md](screens/entry-editor.md). Code: `Editor/RichText.swift`.
 
@@ -418,7 +528,7 @@ Spec: [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/RichText.s
 
 Spec: [flows/edit-table.md](flows/edit-table.md), [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/TablePresentation.swift`, `AppCommands.swift`.
 
-**D8.** There is no way to edit or remove an existing link: the sheet doesn't show the current address and there is no Remove Link (only Undo, or retyping the text). No design record covers editing links.
+**D8.** There is no way to edit or remove an existing link: the sheet doesn't show the current address and there is no Remove Link (only Undo, or retyping the text). No design record covers editing links. **Resolved in build 18:** Edit Link… and Remove Link exist (audit item #15, record §2.4); `screens/link-editor.md` and `flows/editing-rules.md` L-7 to L-10 describe them. Record: [build-18-fixes-2026-10-06.md](../docs/design/build-18-fixes-2026-10-06.md).
 
 Spec: [screens/link-editor.md](screens/link-editor.md). Code: `Views/LinkEditorView.swift`.
 
@@ -442,15 +552,15 @@ Spec: [screens/library-window.md](screens/library-window.md). Code: `Views/RootV
 
 Spec: [screens/entry-list.md](screens/entry-list.md). Code: `Views/RootView.swift`.
 
-**D14.** A journal with changes to review leaves the list (it is “unavailable”) and Rename, Default Template and Merge Into… are disabled for it, but then there is no row to open those menus from; the disabled states matter only in the brief time before the list updates.
+**D14.** A journal with changes to review leaves the list (it is “unavailable”) and Rename, Default Template and Merge Into… are disabled for it, but then there is no row to open those menus from; the disabled states matter only in the brief time before the list updates. Superseded in 1.1 by simplifications H, L and M (owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/journals.md](screens/journals.md), [screens/conflict-review.md](screens/conflict-review.md). Code: `Views/JournalSidebarView.swift`, `Views/JournalMoreMenu.swift`.
 
-**D15.** The leading Restore swipe and the Restore menu item restore an entry directly only when its journal is in use; otherwise only the notice's Restore… and Restore and Move… exist, which the person has to open the entry to find.
+**D15.** The leading Restore swipe and the Restore menu item restore an entry directly only when its journal is in use; otherwise only the notice's Restore… and Restore and Move… exist, which the person has to open the entry to find. Superseded in 1.1 by simplification N (Recently Deleted offers plain Restore only; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/recently-deleted.md](screens/recently-deleted.md). Code: `Views/RootView.swift`, `Views/EntryRecoveryNotice.swift`.
 
-**D16.** When “use a template” or New Entry from Template… finds the open entry's body no longer empty, it creates a new entry where New Entry would put it; from All Entries that is the Default Journal, not the open entry's journal. The template-journal record calls this a known limit.
+**D16.** When “use a template” or New Entry from Template… finds the open entry's body no longer empty, it creates a new entry where New Entry would put it; from All Entries that is the Default Journal, not the open entry's journal. The template-journal record calls this a known limit. Superseded in 1.1 by simplification M (one way to start from a template; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [flows/new-entry.md](flows/new-entry.md). Code: `Model/TemplateSuggestion.swift`, `Model/AppModel.swift`.
 
@@ -458,7 +568,7 @@ Spec: [flows/new-entry.md](flows/new-entry.md). Code: `Model/TemplateSuggestion.
 
 Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Model/AppModel.swift`.
 
-**D18.** The deletion review labels versions “Unknown Device” while the journal review shows the recorded device ID under Details, which people can't relate to a device name. One approach could serve both; a device-name lookup is noted as future work in the journal-conflicts record.
+**D18.** The deletion review labels versions “Unknown Device” while the journal review shows the recorded device ID under Details, which people can't relate to a device name. One approach could serve both; a device-name lookup is noted as future work in the journal-conflicts record. **Deferred by owner decision, 2026-10-01:** device names and what changed between versions are “later” ([owner-decisions-2026-10-01.md](../docs/design/owner-decisions-2026-10-01.md), #1). Superseded in 1.1 by simplification H (owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Views/DeletionConflictView.swift`, `Views/JournalConflictView.swift`.
 
@@ -605,3 +715,11 @@ Spec: [platforms/windows/flows/rating-request.md](platforms/windows/flows/rating
 **D54.** A second prompt after Win+L. After Win+L and signing in to Windows, the person has just proved who they are to Windows, then must prove it again to the app, because the spec says a screen lock locks. Draft default: keep the spec's rule and record the friction as a known cost (it is stated in the App Lock flow and in platform.md 13); no new setting in version 1. Alternative, from the design review: a Privacy option "Unlock with Windows sign-in" that skips the second prompt after a session lock (not after the inactivity timer or Ctrl+L), at the price of one more setting, new copy and a weaker lock after a shared PC's session unlock. Ask the owner.
 
 Spec: [platforms/windows/flows/app-lock.md](platforms/windows/flows/app-lock.md), [platforms/windows/platform.md](platforms/windows/platform.md) (13), [flows/app-lock.md](flows/app-lock.md). Code: `Model/AppLockOperations.swift`.
+
+**D55.** When the person chooses Don’t Allow on an agent request and the server does not answer, the request comes back on the next refresh and nothing says the decline did not arrive (the code sends it with `try?`). The spec says the page tells the agent and says nothing about this case. Recommendation: show a short message when the decline fails; the owner decides whether quiet is enough.
+
+Spec: [flows/allow-agent.md](flows/allow-agent.md), [screens/allow-agent.md](screens/allow-agent.md). Code: `Views/ServerAgentsView.swift:564-567`, `Model/ServerAgentsController.swift:114-117`.
+
+**D56.** The Windows mapping of the library problem screen (build 18). The spec now has a screen of its own for a library that can't be opened, with Try Again, Import Archive…, Erase Journals and Settings… and Learn More, and a lock screen group for a missing device key; the Windows page for it still maps the earlier lock-screen note. No default is proposed here: it needs a Windows design that passes the design gate, including the device name in the advice (“PC”), the update channel in `library.problem.newerVersion.message`, and Windows Hello for Erase and Import.
+
+Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [platforms/windows/screens/unavailable-content.md](platforms/windows/screens/unavailable-content.md). Code: `Views/LibraryProblemView.swift`, `Model/LibraryProblem.swift`.

@@ -1,7 +1,7 @@
 ---
 id: format-sheet
 title: Formatting (Format panel and popover)
-features: [format-panel, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, insert-image]
+features: [format-panel, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, edit-link, insert-image]
 sources:
   - apps/apple/JournalApp/Views/FormattingPopover.swift
   - apps/apple/JournalApp/Views/MobileFormattingPresenter.swift
@@ -45,7 +45,7 @@ From top to bottom:
 6. **Lists and quote**, each with a leading symbol: `library.menu.format.bulletedList`, `library.menu.format.numberedList`, `library.menu.format.checklist`, `library.menu.format.blockQuote`; checkmark on the current one (Checklist counts checked and unchecked items).
 7. **Indent row**, always present: `library.menu.format.decreaseIndent` and `library.menu.format.increaseIndent`, icon-only buttons side by side, each dimmed where it doesn't apply.
 8. Only while the caret is in a code block: `editor.format.exitCodeBlock`.
-9. `library.menu.format.insert` ▸ a menu of `library.menu.format.insert.codeBlock`, `library.menu.format.insert.horizontalRule`, `library.menu.format.insert.table`, `library.menu.format.insert.link`, `library.menu.format.insert.image` (this order, which differs from the Format menu’s).
+9. `library.menu.format.insert` ▸ a menu of `library.menu.format.insert.codeBlock`, `library.menu.format.insert.horizontalRule`, `library.menu.format.insert.table`, `library.menu.format.insert.link` (reads `library.menu.format.insert.editLink` when the caret or selection is in one link), `library.menu.format.insert.removeLink` (dimmed unless the selection touches a link), `library.menu.format.insert.image` (this order, which differs from the Format menu’s).
 
 Rows are 44 pt tall on the phone and tablet and 30 pt on the computer; menus show an up-down chevron at the trailing edge. The computer popover is 250 pt wide and as tall as its rows. Disabled rows are dimmed to 30 % and show no hover highlight.
 
@@ -60,7 +60,8 @@ Rows are 44 pt tall on the phone and tablet and 30 pt on the computer; menus sho
 | Decrease Indent, Increase Indent | Per `flows/editing-rules.md` I-1 to I-15 | Moves list items a level, or indents code lines. | Yes |
 | Exit Code Block | Caret in a code block | BI-4. | No |
 | Insert ▸ Code Block, Horizontal Rule, Table | — | BI-1 to BI-3. | No |
-| Insert ▸ Link… | — | Closes, then opens `screens/link-editor.md` for the selection there is now. | No |
+| Insert ▸ Add Link… / Edit Link… | — | Closes, then opens `screens/link-editor.md` (adding, or editing the link the selection is in) for the selection there is now. | No |
+| Insert ▸ Remove Link | The selection touches a link | `flows/editing-rules.md` L-9. Closes. | No |
 | Insert ▸ Image… | — | Closes, then opens the image picker (`flows/insert-image.md`). | No |
 | Close (phone), Escape (all), Formatting again | — | Closes; focus and selection stay in the text. | — |
 
@@ -81,7 +82,7 @@ While the surface is open, each command acts on the **current** selection of whi
 - **Computer (popover)**: one popover per window, kept between uses. Opened with the mouse, the text keeps keyboard focus; opened from the keyboard, the overflow menu or with VoiceOver, the popover takes focus on its first control (Bold). A click anywhere outside closes it and that click takes effect normally. A second click on the Formatting button closes it and never reopens it. Escape closes it, also while the text has focus (but not while an input method is composing). Closing with Escape, the button or a closing row returns focus to where it was; a click outside leaves focus where the person clicked.
 - **Phone, and the tablet in compact width or at accessibility text sizes (panel)**: the panel replaces the on-screen keyboard as the text's input view. The text keeps focus, its caret or selection stays visible and undimmed, and the writing controls stay above the panel with Aa shown selected. Any input-method composition is committed first. The panel is exactly as tall as the keyboard it replaces (without the accessory bar), so the text doesn't move; without an on-screen keyboard (hardware keyboard, or none shown yet in that orientation) it is as tall as its rows, up to 40 % of the window in portrait and 50 % in landscape. Rotation keeps it open and recomputes its height. Opened while reading, writing starts at the remembered selection with the panel instead of the keyboard. Closing brings the keyboard back with the selection as it is.
 - **Tablet in regular width (popover)**: anchored to the Aa that opened it, 300 pt wide, as tall as its rows; the text stays first responder and a tap in the text places the caret and closes the popover. Any selection change not made by a formatting command closes it. A change of width class (Split View, Stage Manager, rotation) closes it and the keyboard returns. A tap on Aa within 0.35 s after a tap outside closed it doesn't reopen it.
-- Choosing Link… or Image… records the selection, closes the surface, then opens the link editor or picker.
+- Choosing Add Link…, Edit Link… or Image… records the selection, closes the surface, then opens the link editor or picker.
 
 ## Accessibility
 

@@ -62,7 +62,7 @@ Placements and the rest are in [commands.md](../commands.md). Approve and Connec
 
 ## Copy differences
 
-`settings.addDevice.authReason` is lower-case on the Mac ("add “{device}” to your journals") because the system's prompt reads "My Journal is trying to …". Nothing else differs between devices. Two new-device strings have no catalog key ("New code." announcement; "That code was used. Enter a new one.").
+`settings.addDevice.authReason` is lower-case on the Mac ("add “{device}” to your journals") because the system's prompt reads "My Journal is trying to …". Nothing else differs between devices. Two new-device strings are `settings.connect.announce.newCode` ("New code.") and `settings.connect.codeUsed` ("That code was used. Enter a new one."); the code holds them as literals.
 
 ## Accessibility
 
@@ -107,4 +107,4 @@ Design records: [effortless-connection.md](../../../../docs/design/effortless-co
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). A9 there (the system's own error text on network failures) appears fixed in the source: `AddDeviceView.show(_:scanned:)` uses `NetworkFailureMessage`, whose offline and certificate texts have no copy key.
+See [open-questions.md](../../../open-questions.md). A9 (the system's own error text on network failures) is resolved in build 18: `AddDeviceView.show(_:scanned:)` uses `NetworkFailureMessage`, whose texts are `messages.failure.offline`, `.certificate` and `.unreachable`.

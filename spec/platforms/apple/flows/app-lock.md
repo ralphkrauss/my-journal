@@ -73,7 +73,7 @@ Implements [flows/app-lock](../../../flows/app-lock.md). The lock screen and pri
 - `settings.privacy.appLock.reason.turnOn`, `.turnOff` and `.change` have Mac variants (lower case); the code lowercases the first letter on the Mac through `AppModel.authenticationReason`.
 - `settings.privacy.appLock.noPasscode` has a Mac variant; the iOS text names the device ("this iPhone" or "this iPad").
 - `settings.lock.turnedOff.*` have Mac variants (see [screens/lock-screen](../screens/lock-screen.md)).
-- Reasons of the other prompts that go through `checkDeviceOwner`: `settings.erase.authReason`, `settings.backup.markdownReason` and `settings.backup.markdownReasonUnencrypted` have `mac` variants (lower case), which is what the Mac produces by lowercasing the first letter in `authenticationReason`. "Export an archive of your journals" and "Restore journals on this device" are literals with no key in the spec's catalog.
+- Reasons of the other prompts that go through `checkDeviceOwner`: `settings.erase.authReason`, `settings.backup.markdownReason` and `settings.backup.markdownReasonUnencrypted` have `mac` variants (lower case), which is what the Mac produces by lowercasing the first letter in `authenticationReason`. `settings.backup.archiveReason` ("Export an archive of your journals") and `settings.archiveImport.restoreReason` ("Restore journals on this device") are also literals in code with a `mac` variant in the catalog.
 
 ## Accessibility
 

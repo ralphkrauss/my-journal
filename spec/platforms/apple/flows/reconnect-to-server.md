@@ -100,4 +100,4 @@ Design record: [sync-health-and-recovery.md](../../../../docs/design/sync-health
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). A35 (whether Back from Merge Journals gives up access) is answered by the source as described above; confirm by running before closing it.
+See [open-questions.md](../../../open-questions.md). A35 (whether Back from Merge Journals gives up access) is resolved by owner decision and built in build 18, as described above; the spec says so. Confirming it by running on a device is still worth doing.

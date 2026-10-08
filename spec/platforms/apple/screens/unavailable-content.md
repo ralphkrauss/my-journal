@@ -2,9 +2,9 @@
 id: unavailable-content
 title: Unavailable and read-only content (Apple)
 spec: screens/unavailable-content.md
-features: [library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover]
+features: [library-open-failure, erase-unopened-library, launch-states, read-only-newer-content, unavailable-journals, privacy-cover]
 devices: [iphone, ipad, mac]
-status: verified
+status: draft
 sources:
   - apps/apple/JournalApp/JournalApp.swift
   - apps/apple/JournalApp/Model/AppModel.swift
@@ -42,7 +42,7 @@ screenshots:
 
 # Unavailable and read-only content (Apple)
 
-Maps [screens/unavailable-content.md](../../../screens/unavailable-content.md). Four separate pieces of UI share the spec page: the library problem screen, the read-only entry, the Unavailable Journals collection and the privacy cover. Important: the spec's section "When the library can't be opened" describes the lock screen with a red note. The code no longer does that (build 18, `docs/design/build-18-fixes-2026-10-06.md` section 2.1): damaged, unreadable and newer-version libraries have their own screen, `LibraryProblemView`, whose text is not in the spec or in `copy/en.json`. The screenshots are of that screen. Only a missing device key still uses the lock screen.
+Maps [screens/unavailable-content.md](../../../screens/unavailable-content.md). Four separate pieces of UI share the spec page: the library problem screen, the read-only entry, the Unavailable Journals collection and the privacy cover. Since build 18 (`docs/design/build-18-fixes-2026-10-06.md` section 2.1) damaged, unreadable and newer-version libraries have their own screen, `LibraryProblemView`, which the spec now describes with the keys `library.problem.*`; the screenshots are of that screen. Only a missing device key still uses the lock screen. **Draft:** the states that need a later capture run are listed under Screenshots.
 
 ## Controls
 
@@ -54,7 +54,7 @@ Model: `AppModel.libraryProblem` (`Model/LibraryProblem.swift`) with four values
 
 `LibraryProblemView`, in a `GeometryReader` and `ScrollView` with `padding(32)`, centered, `multilineTextAlignment(.center)`, the same layout as the lock and welcome screens:
 - Symbol: `exclamationmark.triangle`, or `arrow.down.app` for a newer version; `.largeTitle`, secondary, hidden from accessibility.
-- Title (`.title2`, header trait, takes VoiceOver focus on appearing) and one or two paragraphs; text per problem is in Copy differences.
+- Title (`.title2`, header trait, takes VoiceOver focus on appearing) and one or two paragraphs; the keys per problem are in the spec page and in Copy differences.
 - After a failed Try Again, a secondary paragraph saying the journals may still be fine.
 - Try Again: `.borderedProminent`, `.controlSize(.large)`, `.keyboardShortcut(.defaultAction)`; for `cantOpen` and `settingsUnread` only. While it runs, the buttons give way to `ProgressView("Opening Journal…")` and the text stays. When it ends in a problem again, the line "Still can't be opened." appears under it (also announced) and VoiceOver focus returns to the button.
 - Import Archive…: `.bordered`, for `cantOpen` only; sets `model.archiveImportRequested`, which the window's `.fileImporter` answers (command `import-archive`). It is hidden on iPhone and iPad while protected data is unavailable.
@@ -90,7 +90,7 @@ Settings in a problem state: `SettingsView` shows only secondary text that setti
 - `LockedCover` (`Model/PrivacyCover.swift`): a `Rectangle().fill(.background)` ignoring safe areas, with `Label("…", systemImage: "lock")` (`common.myJournalIsLocked`, secondary) only while `model.locked`; blank otherwise.
 - `JournalApp.swift` adds it as an `.overlay` on `RootView` in the `WindowGroup` on every device, when `scenePhase != .active && model.appLockOn && !model.unlockState.requestInFront`.
 - iPhone and iPad additionally: `PrivacyCover` creates one `UIWindow` per connected scene at `windowLevel = .alert + 1` hosting `LockedCover`, on `UIScene.willDeactivateNotification` (not while App Lock's own authentication request is in front) and `didEnterBackgroundNotification`, and hides them on `didActivateNotification`. That is what hides sheets, popovers and alerts in the app switcher.
-- Mac: only the overlay on the journal window's content. The Settings window is a separate `Settings` scene with no overlay in the source (not verified at runtime; see the report to the owner).
+- Mac: only the overlay on the journal window's content. The Settings window is a separate `Settings` scene with no overlay in the source (not verified at runtime; A41).
 
 ## Layout
 
@@ -103,7 +103,9 @@ Settings in a problem state: `SettingsView` shows only secondary text that setti
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `import-archive` | Problem screen button (cantOpen); lock screen of a missing key; File menu on the Mac | none on the buttons; File ▸ Import Archive… | `AppModel.canImportArchive`: with a problem, only cantOpen and needsKey, and not while retrying |
-| `erase-device` | Problem screen and missing-key lock screen (`UnopenedEraseButton`); elsewhere Settings | none | After one failed Try Again (problem screen), protected data available |
+| `erase-unopened` | Problem screen and missing-key lock screen (`UnopenedEraseButton`) | none | After one failed Try Again (problem screen), protected data available; at once on the lock screen |
+| `retry-opening` | Try Again on the problem screen | Return (default action) | Not for a newer version; not while retrying |
+| `open-library-guide` | Learn More on the problem screen | Return on the Mac for a newer version | Always |
 | `unlock-with-credential`, `use-credential`, `unlock-with-device` | Missing-key lock screen | Return in the credential field (`onSubmit`); the device-unlock Button has `.defaultAction` | As in [commands.md](../commands.md) |
 | `restore-and-move` | Recovery notice | none | As in [commands.md](../commands.md) |
 | `try-syncing-again` | Recovery notice | none | Journal missing and the library syncs |
@@ -116,15 +118,13 @@ Keyboard: Return runs Try Again (the default action), or Learn More on the Mac f
 
 ## Copy differences
 
-These strings are in code but not in `copy/en.json`.
-- Problem screen titles: "Your Journals Can’t Be Opened" (cantOpen and settingsUnread) and "Update My Journal" (newer version).
-- cantOpen: "My Journal can’t open the journals on this device. Nothing has been removed." then "Try again. If this keeps happening, restart your iPhone." The last word is the device: iPhone, iPad or Mac (`DeviceUnlockMethod.deviceName`).
-- settingsUnread: "My Journal can’t read the settings saved on this device. Nothing has been removed." then "If you recently used a newer version of My Journal, update it. Then try again. If this keeps happening, restart your iPhone." (device name as above).
-- newer version: "These journals were saved by a newer version of My Journal. Update My Journal in the App Store or TestFlight to open them."
-- After a failed Try Again: "Your journals may still be fine. Only erase them if this keeps happening." and "Still can’t be opened."; buttons "Try Again", "Import Archive…", "Erase Journals and Settings…", "Learn More".
-- Settings, in a problem state: "Settings are available once your journals open."
-- Missing key lock screen: the caption "Don’t have your {credential}?" (the credential's name, such as Master Password).
+The text is the spec's. Where it is written in code:
+- Problem screen titles `library.problem.title` and `library.problem.updateTitle`; paragraphs `library.problem.cantOpen.message` and `.advice`, `library.problem.settingsUnread.message` and `.advice`, `library.problem.newerVersion.message`. `{device}` is `DeviceUnlockMethod.deviceName`: iPhone, iPad or Mac. The strings are literals in `LibraryProblemView`.
+- After a failed Try Again: `library.problem.mayBeFine` and `library.problem.stillClosed`; buttons `common.tryAgain`, `common.importArchive`, `settings.erase.button`, `library.problem.learnMore`.
+- Settings, in a problem state: `settings.libraryProblem`. Missing-key lock screen: `library.problem.missingKey.caption` with the credential's name (such as Master Password).
+- The erase warning is `settings.erase.alert.unopened` (built in `EraseSection.message` from `.reasonCantOpen` or `.reasonNeedsKey`, and `.serverKnown` or `.serverUnknown`).
 - `messages.error.newerVersion` and `messages.library.cannotOpen` are no longer shown on the lock screen at launch; the first is replaced by the screen above.
+- The Learn More button in the code opens the troubleshooting guide in the project's repository on the web (`AboutLink.cantOpenGuide`).
 
 ## Accessibility
 
@@ -159,6 +159,8 @@ These strings are in code but not in `copy/en.json`.
 
 The read-only entry, the Unavailable Journals list and the privacy cover have no screenshots: the capture set holds only the library problem screens for this page (the recovery notice is shown on [recently-deleted](recently-deleted.md)).
 
+**Screenshots pending** (a capture run is needed; none made by hand): unavailable-content-library-cant-open-retried (cantOpen after one failed Try Again: "Still can't be opened.", the secondary paragraph, the red Erase Journals and Settings… button), unavailable-content-erase-unopened-alert (the erase warning for journals that can't be opened, per device), unavailable-content-import-note (the Import Archive sheet with the extra sentence) and unavailable-content-settings-problem (Settings with the one line of text). The missing-key lock screen is already in the lock-screen captures (master-password, wrong-password). Until then the page is `draft`.
+
 ## Source files
 
 View:
@@ -178,4 +180,4 @@ Design records: `docs/design/build-18-fixes-2026-10-06.md` (section 2.1), `docs/
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), A4 to A6 and B35: A4 to A6 describe launch failures that build 18 fixed with the problem screen. The screen and its text are not yet in the spec (reported to the owner).
+See [open-questions.md](../../../open-questions.md): A4 to A6 (launch failures on the lock screen, the dead-end Unlock button, an unreadable settings file looking like a first launch) are resolved in build 18 by the screen above, which the spec now describes; B35 (the missing-key text names the recovery key); A41 (on the Mac the privacy cover covers only the journal window). D56 records that Windows has no mapping of the problem screen yet.

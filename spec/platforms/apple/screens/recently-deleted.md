@@ -94,7 +94,7 @@ Sections, each present only when it has rows:
 ## Layout
 
 - **iPhone (compact width):** stacked `NavigationStack` (`compactNavigation`): Journals screen, then the Recently Deleted list as a page, then an item as a page. The list page has the bar button at the top right and, at the bottom, the search field and the compose button (`creationActions`, command `new-entry`; creates in the Default Journal and shows that journal). The back button returns to the Journals screen.
-- **iPad (regular width):** `NavigationSplitView` with `.navigationSplitViewStyle(.balanced)`: sidebar (180 / 220 / 320 points min / ideal / max), list column (240 / 300 / 420), detail. The list column holds Recently Deleted; the detail shows the secondary text "Select an Entry" (a literal in `RootView.detailContent`, with no copy key) until something is chosen. The footer sentence is narrow here and wraps onto two lines.
+- **iPad (regular width):** `NavigationSplitView` with `.navigationSplitViewStyle(.balanced)`: sidebar (180 / 220 / 320 points min / ideal / max), list column (240 / 300 / 420), detail. The list column holds Recently Deleted; the detail shows the secondary text `library.window.selectEntry` ("Select an Entry", a literal in `RootView.detailContent`) until something is chosen. The footer sentence is narrow here and wraps onto two lines.
 - **Stacked on iPad:** `usesStackedNavigation` is `horizontalSizeClass == .compact || dynamicTypeSize.isAccessibilitySize`. A narrow Slide Over or Split View window, or an accessibility text size, switches the iPad to the iPhone layout.
 - **Mac:** three columns in AppKit (`NSSplitViewController` via `MacJournalWindow`): journals sidebar, list column with the bar at its top, editor. The list column's toolbar section holds the window title and subtitle, the Journal Actions "…" menu and the compose button; the search field is in the editor-side toolbar section. The window's minimum width is 801 points; narrower hides the sidebar.
 - **Dynamic Type:** rows wrap and lose their one-line limits at accessibility sizes (`entryRow`); the Mac bar and the iOS footer wrap their sentence. The Mac bar's button is `fixedSize` and keeps its place beside the text.
@@ -192,4 +192,4 @@ Design records: `docs/design/recently-deleted-2026-09-30.md`, `docs/design/ios-d
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md) (D15). New differences found while writing this page are reported to the owner: the conflict alert for permanent deletion has no copy key and is not in the spec, and the generic alert title in code is "My Journal" where the spec says "Journal".
+See [open-questions.md](../../../open-questions.md), D15. The conflict alert for permanent deletion is C1 (resolved in build 18, in the spec and the catalog) and the generic alert title is B5 (resolved: "My Journal").

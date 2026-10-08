@@ -18,8 +18,8 @@
 # ======================================================================
 
 launch-states:
-  title: "What the window shows at launch (opening, locked, welcome, recovery key, journals)"
-  specs: [screens/welcome.md]
+  title: "What the window shows at launch (opening, locked, library problem, welcome, recovery key, journals)"
+  specs: [screens/welcome.md, screens/unavailable-content.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -549,6 +549,15 @@ inert-links:
   windows: planned
   android: planned
 
+edit-link:
+  title: "Edit Link… changes the address (and, for plain text, the text) of the link under the caret; Remove Link takes it off"
+  specs: [screens/link-editor.md, flows/editing-rules.md, screens/format-sheet.md]
+  reference: apple
+  apple: shipped
+  apple-notes: "Shipped in build 18. Menu items on iPad and Mac, the Formatting Insert menu, and the Mac context menu on a link."
+  windows: planned
+  android: planned
+
 source-view:
   title: "View Source and View Preview switch the whole entry between its Markdown and the formatted view, keeping the caret"
   specs: [flows/source-view.md, flows/editing-rules.md, screens/entry-editor.md]
@@ -819,10 +828,38 @@ conflict-review-unsupported:
   android: planned
 
 library-open-failure:
-  title: "Missing device key, newer library or unreadable library at launch, explained on the lock screen without writing anything"
-  specs: [screens/unavailable-content.md]
+  title: "A library that can't be opened (damaged, settings unreadable, newer version) shows its own screen with Try Again, Import Archive, Erase and a guide link, without writing anything; a missing device key keeps the lock screen"
+  specs: [screens/unavailable-content.md, screens/lock-screen.md, flows/import-archive.md]
   reference: apple
   apple: shipped
+  apple-notes: "Shipped in build 18 (the library problem screen). The Windows mapping still describes the earlier lock-screen note (open-questions.md)."
+  windows: planned
+  android: planned
+
+erase-unopened-library:
+  title: "Erase Journals and Settings works when nothing can be read: after one failed Try Again, or on the lock screen of a missing device key, with a warning that makes no claim the app can't back up"
+  specs: [screens/unavailable-content.md, screens/lock-screen.md, flows/erase.md]
+  reference: apple
+  apple: shipped
+  apple-notes: "Shipped in build 18."
+  windows: planned
+  android: planned
+
+failure-messages:
+  title: "Failures are told in plain words chosen by one classification (damaged, temporary, full, device key, network), never the system's own text"
+  specs: [messages.md]
+  reference: apple
+  apple: shipped
+  apple-notes: "Shipped in build 18."
+  windows: planned
+  android: planned
+
+deletion-conflict-alert:
+  title: "Delete Journal and Delete Permanently on a record with changes to review show a Can't Be Deleted alert with Review Changes and Cancel"
+  specs: [messages.md, flows/delete-and-restore.md, screens/journals.md, screens/recently-deleted.md, screens/conflict-review.md]
+  reference: apple
+  apple: shipped
+  apple-notes: "Shipped in build 18."
   windows: planned
   android: planned
 
@@ -1073,7 +1110,7 @@ lock-now:
 
 missing-device-key-unlock:
   title: "When the device key is unavailable, the journals open with their password or recovery key"
-  specs: [screens/lock-screen.md]
+  specs: [screens/lock-screen.md, screens/unavailable-content.md]
   reference: apple
   apple: shipped
   windows: planned

@@ -75,7 +75,7 @@ Return and Escape follow the sheet defaults ([commands.md](../commands.md)). Foc
 
 ## Copy differences
 
-None in the flow's own messages (one string per message in `ConnectionFlow.show`). Variants of the pages (`settings.connect.nearby.denied`, the Mac tooltips) are on the screen note. Two flow strings have no key in the catalog: the VoiceOver announcement "New code." when a withdrawn pairing code is replaced, and `codeUsedNotice` ("That code was used. Enter a new one.").
+None in the flow's own messages (one string per message in `ConnectionFlow.show`). Variants of the pages (`settings.connect.nearby.denied`, the Mac tooltips) are on the screen note. Two flow strings are literals with keys in the catalog: the VoiceOver announcement `settings.connect.announce.newCode` ("New code.") when a withdrawn pairing code is replaced, and `codeUsedNotice` (`settings.connect.codeUsed`, "That code was used. Enter a new one.").
 
 ## Accessibility
 

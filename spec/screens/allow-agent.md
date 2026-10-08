@@ -39,7 +39,7 @@ A sheet titled `settings.allowAgent.title` ("Allow Access"). On the computer bef
 
 Section `common.journals` with an unlabelled single choice (accessibility label "Journals"): `settings.agents.allJournals` ("All Journals") or `settings.agents.selectedJournals` ("Selected Journals"). Nothing is chosen at first; until then the footer below shows under this section.
 - **All Journals:** a section listing every journal with a switch shown on and disabled (a reminder of what's included).
-- **Selected Journals:** a section listing every journal with a switch. When the agent's choice includes journals not on this device: `settings.agents.unknownJournals` ("{count} journals that aren’t on this device", plural).
+- **Selected Journals:** a section listing every journal with a switch. While none is switched on, a warning row (warning symbol, announced when it appears) above the switches says `settings.agents.emptyChoice.new` ("Choose a journal to allow {name}."), which explains the dimmed Allow button. When the agent's choice includes journals not on this device: `settings.agents.unknownJournals` ("{count} journals that aren’t on this device", plural).
 - Footer: `settings.agents.includesLater` ("Includes journals you create later. ") for All Journals, then `settings.agents.readOnly` ("{name} can search and read entries in these journals but can’t change anything."), then `settings.agents.aiProvider` (" It may send what it reads to its AI provider.").
 
 ## Actions

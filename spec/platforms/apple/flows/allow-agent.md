@@ -99,4 +99,4 @@ Design record: [agent-access-simplified.md](../../../../docs/design/agent-access
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md). Found while writing: the spec says declining sends no error to the person if the server does not answer and the request reappears; the code does exactly that, but nothing tells the person the decline did not arrive.
+See [open-questions.md](../../../open-questions.md), D55 (a decline that does not reach the server is not reported; the spec says the request reappears, which the code does).

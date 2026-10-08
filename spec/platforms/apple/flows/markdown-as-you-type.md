@@ -103,4 +103,4 @@ Design records: `docs/design/owner-decisions-2026-09-25.md` (section 4), `docs/d
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), B16 (undo step names). Not verified at runtime: a pasted lone space on the Mac passes the `replacingText` guard (the paste is an adopting replacement through `shouldChangeText`), so it may convert a marker before it; the spec says paste never converts.
+See [open-questions.md](../../../open-questions.md), B16 (undo step names) and A48 (not verified at runtime: a pasted lone space on the Mac passes the `replacingText` guard, so it may convert a marker before it; the spec says paste never converts).

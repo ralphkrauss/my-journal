@@ -1,7 +1,7 @@
 {
   "common.alertTitle": {
-    "text": "Journal",
-    "context": "Title of the generic error alert, whose message is the error text: save failures and every “Couldn’t …” or “Save your … before …” message routed to the window. Not shown while locked; the lock screen shows the message instead."
+    "text": "My Journal",
+    "context": "Title of the generic error alert, whose message is the error text: save failures and every “Couldn’t …” or “Save your … before …” message routed to the window. The app's name (it was “Journal” before build 18). Not shown while locked; the lock screen shows the message instead."
   },
   "common.back": {
     "text": "Back",
@@ -698,6 +698,13 @@
     "text": "Stop",
     "context": "Button in the image import notice; ends the import and inserts nothing."
   },
+  "editor.imageImport.unchangeable": {
+    "text": {
+      "one": "The image wasn’t added because this entry can’t be changed right now.",
+      "other": "The images weren’t added because this entry can’t be changed right now."
+    },
+    "context": "Shown when the entry stays open but stops being editable (or the library is replaced) before the chosen images were read. editor.imageImport.left is now only for leaving the entry."
+  },
   "editor.insertImage.cameraOff.message": {
     "text": "Allow camera access in Settings to take photos.",
     "context": "Alert message after Take Photo when camera access is denied."
@@ -726,9 +733,21 @@
     "text": "Link",
     "context": "Add Link field (placeholder): the web or email address. Focused when the sheet opens."
   },
+  "editor.link.editTitle": {
+    "text": "Edit Link",
+    "context": "Title of the sheet when a link is being edited; its confirmation button reads common.done."
+  },
   "editor.link.invalid": {
     "text": "Enter a valid web or email address.",
     "context": "Shown under the Add Link fields while the address isn't empty and isn't valid; announced on Return with an invalid address (iPhone, iPad)."
+  },
+  "editor.link.remove": {
+    "text": "Remove Link",
+    "context": "Destructive button in its own group at the end of the Edit Link sheet: takes the link off and closes the sheet."
+  },
+  "editor.link.removed": {
+    "text": "Link removed.",
+    "context": "VoiceOver announcement after Remove Link."
   },
   "editor.link.text": {
     "text": "Text",
@@ -846,6 +865,10 @@
     "text": "Delete Image",
     "context": "Undo step name after a picture's Delete."
   },
+  "editor.undo.editLink": {
+    "text": "Edit Link",
+    "context": "Undo step name after Edit Link."
+  },
   "editor.undo.horizontalRule": {
     "text": "Horizontal Rule",
     "context": "Undo step name after “---” and Return makes a rule."
@@ -857,6 +880,10 @@
   "editor.undo.paragraph": {
     "text": "Paragraph",
     "context": "Undo step name after Backspace turns an item or quote into a paragraph (Edit ▸ Undo Paragraph)."
+  },
+  "editor.undo.removeLink": {
+    "text": "Remove Link",
+    "context": "Undo step name after Remove Link."
   },
   "editor.undo.typing": {
     "text": "Typing",
@@ -1354,6 +1381,10 @@
     "text": "Code Block",
     "context": "Format ▸ Insert."
   },
+  "library.menu.format.insert.editLink": {
+    "text": "Edit Link…",
+    "context": "Format ▸ Insert ⌘K while the caret or selection is in one link; also the Formatting ▸ Insert item and the first item of the Mac context menu on a link."
+  },
   "library.menu.format.insert.horizontalRule": {
     "text": "Horizontal Rule",
     "context": "Format ▸ Insert."
@@ -1363,8 +1394,12 @@
     "context": "Format ▸ Insert."
   },
   "library.menu.format.insert.link": {
-    "text": "Link…",
-    "context": "Format ▸ Insert ⌘K."
+    "text": "Add Link…",
+    "context": "Format ▸ Insert ⌘K while the caret isn't in a link. Reads library.menu.format.insert.editLink when it is."
+  },
+  "library.menu.format.insert.removeLink": {
+    "text": "Remove Link",
+    "context": "Format ▸ Insert, Formatting ▸ Insert and the Mac context menu on a link; dimmed unless the caret or selection touches a link."
   },
   "library.menu.format.insert.table": {
     "text": "Table",
@@ -1588,6 +1623,58 @@
   "library.newJournal.title": {
     "text": "New Journal",
     "context": "Alert title with a name field (Create, Cancel)."
+  },
+  "library.problem.cantOpen.advice": {
+    "text": "Try again. If this keeps happening, restart your {device}.",
+    "context": "Second paragraph of the same screen. {device} is the device's name: iPhone, iPad or Mac on Apple."
+  },
+  "library.problem.cantOpen.message": {
+    "text": "My Journal can’t open the journals on this device. Nothing has been removed.",
+    "context": "First paragraph of the library problem screen when the library doesn't open or its first read fails."
+  },
+  "library.problem.importNote": {
+    "text": "The journals on this device can’t be opened, but they may still be fine. Restoring removes them from this device and ends any syncing with a server.",
+    "context": "Extra sentence in the Import Archive sheet above its buttons while the library can't be opened."
+  },
+  "library.problem.learnMore": {
+    "text": "Learn More",
+    "context": "Link-style button on the library problem screen; opens the troubleshooting guide on the web. The only button on the update screen."
+  },
+  "library.problem.learnMore.hint": {
+    "text": "Opens the troubleshooting guide in your browser.",
+    "context": "Accessibility hint of Learn More on the library problem screen."
+  },
+  "library.problem.mayBeFine": {
+    "text": "Your journals may still be fine. Only erase them if this keeps happening.",
+    "context": "Secondary paragraph of the library problem screen after one Try Again has failed, where Erase Journals and Settings… is first offered."
+  },
+  "library.problem.missingKey.caption": {
+    "text": "Don’t have your {credential}?",
+    "context": "Caption above Import Archive… and Erase Journals and Settings… on the lock screen of a missing device key. {credential} is the library's own credential name, for example Master Password or Recovery Key. Also the accessibility label of that group."
+  },
+  "library.problem.newerVersion.message": {
+    "text": "These journals were saved by a newer version of My Journal. Update My Journal in the App Store or TestFlight to open them.",
+    "context": "The only paragraph of the update screen. Names the Apple distribution channels; another platform words its own channel."
+  },
+  "library.problem.settingsUnread.advice": {
+    "text": "If you recently used a newer version of My Journal, update it. Then try again. If this keeps happening, restart your {device}.",
+    "context": "Second paragraph of the same screen. {device} is the device's name: iPhone, iPad or Mac on Apple."
+  },
+  "library.problem.settingsUnread.message": {
+    "text": "My Journal can’t read the settings saved on this device. Nothing has been removed.",
+    "context": "First paragraph of the library problem screen when the settings file exists but can't be read."
+  },
+  "library.problem.stillClosed": {
+    "text": "Still can’t be opened.",
+    "context": "Plain line under Try Again after a Try Again that ended in a problem again; announced when it appears; removed when the next attempt starts."
+  },
+  "library.problem.title": {
+    "text": "Your Journals Can’t Be Opened",
+    "context": "Heading of the library problem screen when the library can't be opened or its settings can't be read."
+  },
+  "library.problem.updateTitle": {
+    "text": "Update My Journal",
+    "context": "Heading of the library problem screen when the journals were saved by a newer version."
   },
   "library.recentlyDeleted.deleteAll": {
     "text": {
@@ -2393,6 +2480,18 @@
     "text": "Update My Journal to connect to this server.",
     "context": "Connect to a Server: the server speaks a newer protocol, or a scanned pairing needs a newer app."
   },
+  "messages.deleteConflict.journal": {
+    "text": "This journal has changes that need review.",
+    "context": "Message of the alert for a journal. Buttons: common.reviewChanges and common.cancel."
+  },
+  "messages.deleteConflict.record": {
+    "text": "This has changes that need review before it can be deleted.",
+    "context": "Message of the alert for an entry, template or other record in Recently Deleted. Buttons: common.reviewChanges and common.cancel."
+  },
+  "messages.deleteConflict.title": {
+    "text": "“{name}” Can’t Be Deleted",
+    "context": "Title of the alert when Delete Journal or Delete Permanently finds changes to review. {name} is the title in curly quotes, shortened in the middle with an ellipsis past 40 characters; a blank title reads common.untitledJournal, library.entryList.untitledTemplate or library.entryList.untitledEntryInAlert."
+  },
   "messages.encryption.accessLost": {
     "text": "This device no longer has access to {host}. Connect again in Settings > Devices, then try again.",
     "context": "Turn On Encryption: the server refused this device."
@@ -2499,7 +2598,7 @@
   },
   "messages.error.newerVersion": {
     "text": "These journals were saved by a newer version of My Journal. Update My Journal to open them.",
-    "context": "JournalError.newerVersion: the library’s database was migrated by a newer version. Shown at launch on the lock screen; nothing can be opened or changed."
+    "context": "JournalError.newerVersion where no more specific text applies. Since build 18 the library problem screen (library.problem.newerVersion.message) replaces it at launch."
   },
   "messages.error.unauthorized": {
     "text": "This device no longer has access.",
@@ -2533,6 +2632,46 @@
     "text": "Couldn’t save the files. Try again, or choose another location.",
     "context": "Export as Markdown: writing to the chosen location failed."
   },
+  "messages.failure.certificate": {
+    "text": "Can’t connect securely to the server because its certificate isn’t valid.",
+    "context": "Failure message for a network error caused by the server's certificate (sync health: certificate invalid); the first sentence of messages.sync.certificateInvalid."
+  },
+  "messages.failure.damagedReading": {
+    "text": "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup.",
+    "context": "Failure message when reading the journals fails because the database is damaged (malformed or not a database, or the store's own validation failed). Same wording as messages.sync.localDataUnreadable."
+  },
+  "messages.failure.damagedSaving": {
+    "text": "My Journal can’t save to your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup.",
+    "context": "Failure message when a change can't be saved because the database is damaged."
+  },
+  "messages.failure.full": {
+    "text": "There isn’t enough space on this device. Free up space, then try again.",
+    "context": "Failure message when the device is out of space (database full, out-of-space file error)."
+  },
+  "messages.failure.keychain": {
+    "text": "My Journal couldn’t use the device key. Try again.",
+    "context": "Failure message when the secure store (keychain) fails."
+  },
+  "messages.failure.offline": {
+    "text": "You’re offline. Check your connection.",
+    "context": "Failure message for a network error when the device has no connection (sync health: offline)."
+  },
+  "messages.failure.other": {
+    "text": "Something went wrong. Try again.",
+    "context": "Failure message for an error the app can't classify and that has no text of its own."
+  },
+  "messages.failure.temporaryReading": {
+    "text": "My Journal couldn’t use its data on this device right now. Try again.",
+    "context": "Failure message when reading fails for any other database, file or unknown reason (busy, locked, device locked, disk problem)."
+  },
+  "messages.failure.temporarySaving": {
+    "text": "My Journal couldn’t save your changes right now. Try again.",
+    "context": "Failure message when a change can't be saved for any other database, file or unknown reason."
+  },
+  "messages.failure.unreachable": {
+    "text": "Couldn’t reach the server. Check your connection.",
+    "context": "Failure message for every other network error (sync health: unreachable, unavailable and anything else)."
+  },
   "messages.generic.defaultJournalFailed": {
     "text": "Couldn’t save the default journal.",
     "context": "Choosing Settings ▸ General ▸ Default Journal failed to save."
@@ -2541,17 +2680,9 @@
     "text": "This has changed since you chose to delete it. Check it and try again.",
     "context": "Delete Permanently when the item changed or was restored meanwhile."
   },
-  "messages.generic.deleteNeedsReview": {
-    "text": "This has changes that need review before it can be deleted.",
-    "context": "Delete Permanently for an item with changes to review."
-  },
   "messages.generic.deleteNeedsUpdate": {
     "text": "Update My Journal to delete this.",
     "context": "Delete Permanently for an item saved by a newer version."
-  },
-  "messages.generic.journalDeleteNeedsReview": {
-    "text": "This journal has changes that need review before it can be deleted.",
-    "context": "Delete Journal when the journal or one of its entries has changes to review, or it changed meanwhile."
   },
   "messages.generic.journalDeleteNeedsUpdate": {
     "text": "Update My Journal to delete this journal.",
@@ -2631,7 +2762,7 @@
   },
   "messages.library.cannotOpen": {
     "text": "Your journals couldn’t be opened. Quit and reopen My Journal.",
-    "context": "Unlocking when the journals were never opened (opening the store failed at launch) and no other message is shown."
+    "context": "Unlocking when the journals were never opened and nothing else is shown. Since build 18 a library that fails to open shows the library problem screen and is never locked, so this text is only a guard."
   },
   "messages.library.deviceKeyUnavailable": {
     "text": "Your device key is unavailable. Use your recovery key to unlock your journals.",
@@ -2644,6 +2775,10 @@
   "messages.library.needsUpdate": {
     "text": "Update My Journal to use pinned entries and journal order.",
     "context": "Settings ▸ Sync footer while connected, when the synced library record (pins and journal order) was written by a newer version. Same text as the LibraryError.newerVersion description, which itself is never shown (pin and move failures show their own text)."
+  },
+  "messages.library.notOpen": {
+    "text": "Your journals need to open before this can be done.",
+    "context": "Connecting to a server, pairing and starting a journal while the library problem screen is showing or Try Again is running. They refuse because they would replace the library."
   },
   "messages.library.waitingForServer": {
     "text": "Pinned entries and journal order stay on this device until the server is updated.",
@@ -2659,7 +2794,7 @@
   },
   "messages.lifecycle.changed": {
     "text": "This journal has changed. Review the entries before deleting it.",
-    "context": "JournalLifecycleError.changed (Delete Journal sheet; the delete prompt shows messages.generic.journalDeleteNeedsReview instead)."
+    "context": "JournalLifecycleError.changed (Delete Journal sheet and prompt: the entries changed while the alert was open; the generic alert shows this text)."
   },
   "messages.lifecycle.changedContinue": {
     "text": "This journal has changed. Review it again before continuing.",
@@ -2981,8 +3116,12 @@
     "text": "An image is too large for your server. Entries that include it are saved on this device.",
     "context": "The server refused an image as too large (413); entries that include it wait, the rest syncs."
   },
+  "messages.sync.localDataUnavailable": {
+    "text": "Couldn’t sync right now. My Journal will try again.",
+    "context": "Sync state Temporary (this device's data): the local database was busy or locked, the device was locked, or the disk is failing or full. The data is fine. It makes no claim about saving. Retries continue with the usual backoff."
+  },
   "messages.sync.localDataUnreadable": {
-    "text": "My Journal couldn’t read its data on this device. Your journals haven’t been changed. To keep a copy, choose Export Archive in Settings > Backup.",
+    "text": "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup.",
     "context": "Sync state Unexpected (this device’s data): this device’s own store couldn’t be read or written during a sync. Retries continue with the usual backoff."
   },
   "messages.sync.notJournalServer": {
@@ -3412,6 +3551,14 @@
     "text": "Details aren’t available on this device.",
     "context": "Agent row and detail when its settings can't be read here."
   },
+  "settings.agents.emptyChoice.keepsAll": {
+    "text": "Choose a journal. Until you do, {name} can still read all journals.",
+    "context": "Warning row in an agent's detail while Selected Journals is chosen with no journal switched on. Nothing is saved yet, so the agent still reads what it did."
+  },
+  "settings.agents.emptyChoice.new": {
+    "text": "Choose a journal to allow {name}.",
+    "context": "Warning row in the Allow Access sheet while Selected Journals is chosen with no journal switched on; it explains the dimmed Allow button."
+  },
   "settings.agents.includesLater": {
     "text": "Includes journals you create later. ",
     "context": "Start of the journals footer for All Journals (ends with a space)."
@@ -3650,6 +3797,13 @@
     "text": "Restore Journals",
     "context": "Primary button on a device without journals."
   },
+  "settings.archiveImport.restoreReason": {
+    "text": {
+      "default": "Restore journals on this device",
+      "mac": "restore journals on this device"
+    },
+    "context": "Authentication reason before Import Archive replaces journals that can't be opened, when App Lock is on or can't be known; the Mac form completes “My Journal is trying to …”."
+  },
   "settings.archiveImport.restored": {
     "text": "Journals Restored",
     "context": "Heading after restoring."
@@ -3689,6 +3843,13 @@
   "settings.backup.archiveFilename": {
     "text": "Journal Archive {date}.journalarchive",
     "context": "Suggested archive name; {date} is yyyy-MM-dd with Western digits."
+  },
+  "settings.backup.archiveReason": {
+    "text": {
+      "default": "Export an archive of your journals",
+      "mac": "export an archive of your journals"
+    },
+    "context": "Authentication reason before Export Archive when App Lock is on and the journals aren't encrypted; the Mac form completes “My Journal is trying to …”."
   },
   "settings.backup.exportArchiveSheet.title": {
     "text": "Export Archive",
@@ -3772,6 +3933,10 @@
     "text": "Preparing Files…",
     "context": "Accessibility label of the indicator while Markdown files are prepared."
   },
+  "settings.backup.verifyFailed": {
+    "text": "Couldn’t verify it’s you. Try again.",
+    "context": "Red line under Export Archive or Export as Markdown when the device's authentication failed (not when it was cancelled, which says nothing)."
+  },
   "settings.changePassword.busy": {
     "text": "Changing Password…",
     "context": "Progress while the password changes."
@@ -3848,6 +4013,10 @@
     "text": "https://journal.example.ts.net",
     "context": "Placeholder of the server address field (shown verbatim)."
   },
+  "settings.connect.announce.newCode": {
+    "text": "New code.",
+    "context": "VoiceOver announcement when Add This Device shows a new code after Back from Merge Journals."
+  },
   "settings.connect.busy.checking": {
     "text": "Checking…",
     "context": "Busy row while a server, a scanned code or a setup code is checked; also the first joining phase."
@@ -3887,6 +4056,10 @@
   "settings.connect.choosePassword.intro": {
     "text": "Your master password encrypts your journals on this device before they’re sent to {host}.",
     "context": "Intro of Choose a Master Password when the journals will sync."
+  },
+  "settings.connect.codeUsed": {
+    "text": "That code was used. Enter a new one.",
+    "context": "Line above the recovery code field after Back from Merge Journals gave up the one-time code; shown until the person types, announced when the step appears."
   },
   "settings.connect.download": {
     "text": "Your journals will download to this device.",
@@ -4271,6 +4444,26 @@
     "text": "Export an archive first to keep everything. Your journals may not all be on {host}, and anything that isn’t will be lost. You can’t undo this.",
     "context": "Erase warning: connected, sync not confirmed."
   },
+  "settings.erase.alert.unopened": {
+    "text": "Erasing removes your journals and settings from this device. {reason} {server} You can’t undo this.",
+    "context": "Message of the erase warning when the journals can't be opened (the library problem screen and the lock screen of a missing device key). {reason} is settings.erase.alert.unopened.reasonCantOpen or .reasonNeedsKey; {server} is .serverKnown or .serverUnknown. There is no Export Archive… button: nothing can be exported."
+  },
+  "settings.erase.alert.unopened.reasonCantOpen": {
+    "text": "My Journal can’t open them, so it can’t export them first.",
+    "context": "{reason} of settings.erase.alert.unopened for the library problem screen."
+  },
+  "settings.erase.alert.unopened.reasonNeedsKey": {
+    "text": "My Journal needs your {credential} to open them, so it can’t export them first.",
+    "context": "{reason} of settings.erase.alert.unopened for a missing device key. {credential} is the library's own credential name, as the lock screen shows it."
+  },
+  "settings.erase.alert.unopened.serverKnown": {
+    "text": "Journals that have synced stay on {host}, and this device is signed out. Changes that haven’t synced are lost.",
+    "context": "{server} of settings.erase.alert.unopened when the saved connection could be read and has a server address."
+  },
+  "settings.erase.alert.unopened.serverUnknown": {
+    "text": "If this device syncs with a server, journals that have synced stay there. Changes that haven’t synced are lost.",
+    "context": "{server} of settings.erase.alert.unopened in every other case (the connection is absent or unreadable, or the settings couldn't be read). It never says the journals will be lost or that the device isn't connected, because the app can't know."
+  },
   "settings.erase.alert.unsent": {
     "text": {
       "one": "Export an archive first to keep everything. 1 item hasn’t reached {host} yet and will be lost. You can’t undo this.",
@@ -4330,6 +4523,10 @@
   "settings.general.formatAsYouType.footer": {
     "text": "Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it. Press Delete right after to keep what you typed.",
     "context": "Footer under Format Markdown as You Type."
+  },
+  "settings.libraryProblem": {
+    "text": "Settings are available once your journals open.",
+    "context": "Replaces the whole content of Settings while the library problem screen is showing."
   },
   "settings.lock.failed": {
     "text": "My Journal couldn’t be unlocked. Try again.",

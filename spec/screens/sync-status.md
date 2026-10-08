@@ -59,14 +59,14 @@ The action is chosen from the current state alone, so it always follows the late
 | --- | --- | --- | --- |
 | No server | no | | |
 | Syncing normally, with or without changes waiting | no | | |
-| Temporary: offline, can't reach, server busy | no, unless the long wait applies | `messages.sync.offline`, `messages.sync.unreachable` (or `messages.sync.unreachableTailscale` for a `.ts.net` host), `messages.sync.unavailable` | `common.tryAgain` |
+| Temporary: offline, can't reach, server busy, this device's data busy | no, unless the long wait applies | `messages.sync.offline`, `messages.sync.unreachable` (or `messages.sync.unreachableTailscale` for a `.ts.net` host), `messages.sync.unavailable`, `messages.sync.localDataUnavailable` | `common.tryAgain` |
 | Long wait: the last sync failed, changes are waiting, and more than 24 hours passed since Last Synced (or since the first failure when this connection never synced) | yes, in any state | the state's own message | the state's action |
 | Needs you (sign-in needed) | yes | `messages.sync.signInNeeded` | `common.signIn` |
 | Server changed: not set up | yes | `messages.sync.serverNotSetUp` | `messages.sync.action.setUpServerAgain` |
 | Server changed: restored or replaced | yes | `messages.sync.serverReplaced` | `messages.sync.action.connectAgain` |
 | No access | yes | `messages.sync.accessRemoved` | `messages.sync.action.connectAgain` |
 | Update or fix needed | yes | `messages.sync.appUpdateNeeded`, `messages.sync.serverUpdateNeeded`, `messages.sync.certificateInvalid`, `messages.sync.notJournalServer` | `messages.sync.action.checkAgain` |
-| Unexpected | yes | `messages.sync.unexpected`, or `messages.sync.localDataUnreadable` for this device's own data | `common.tryAgain` |
+| Unexpected | yes | `messages.sync.unexpected`, or `messages.sync.localDataUnreadable` for this device's own data when it is damaged | `common.tryAgain` |
 | One record or image refused, everything else synced | yes | the item-level message | `messages.sync.action.syncNow` |
 
 - **Locked:** not shown. The Mac removes the journal toolbar while locked; iPhone and iPad show the lock screen. Locking also forgets the held message, because a refused item's message names an entry.

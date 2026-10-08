@@ -60,7 +60,7 @@ None.
 ## Accessibility
 
 - Focus starts in Current Password (`onAppear { focus = .current }`) and returns there after a wrong password.
-- Every failure that goes through `show(_:)` and the failed retry calls `announceForAccessibility`, which posts a high-priority announcement on both platforms (`Views/ConnectionView.swift`). The confirmation mismatch is a computed footer and is not announced, although the spec says every error is announced.
+- Every failure that goes through `show(_:)` and the failed retry calls `announceForAccessibility`, which posts a high-priority announcement on both platforms (`Views/ConnectionView.swift`). The confirmation mismatch is a computed footer and is not announced, although the spec says every error is announced (A38).
 - Fields use their placeholder text as the accessibility label. Error labels are plain `Label`s with no custom hint.
 - Reduce Motion, Increase Contrast and Reduce Transparency: nothing page specific.
 
@@ -87,4 +87,4 @@ None.
 
 ## Open questions
 
-The unannounced mismatch is not yet recorded; see [open-questions.md](../../../open-questions.md).
+See [open-questions.md](../../../open-questions.md), A38 (the mismatch label is not announced).

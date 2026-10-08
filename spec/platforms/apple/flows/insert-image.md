@@ -138,4 +138,4 @@ Design records: `docs/design/several-photos-2026-10-03.md`, `docs/design/image-i
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), B25. The code has moved on: when the entry stays open but can no longer be changed, `ImageInsertionSession.unchangeableMessage` shows "The image wasn’t added because this entry can’t be changed right now." (one and several), and `editor.imageImport.left` is only for leaving the entry. That sentence has no key in `copy/en.json`.
+See [open-questions.md](../../../open-questions.md), B25 (resolved in build 18): when the entry stays open but can no longer be changed, `ImageInsertionSession.unchangeableMessage` shows `editor.imageImport.unchangeable`, and `editor.imageImport.left` is only for leaving the entry.

@@ -1,7 +1,7 @@
 ---
 id: lock-screen
 title: Lock screen and privacy cover
-features: [app-lock, privacy-cover, missing-device-key-unlock]
+features: [app-lock, privacy-cover, missing-device-key-unlock, erase-unopened-library]
 sources:
   - apps/apple/JournalApp/Views/UnlockView.swift
   - apps/apple/JournalApp/Model/AppLockOperations.swift
@@ -11,6 +11,8 @@ sources:
   - apps/apple/JournalApp/JournalApp.swift
   - docs/design/app-lock-system-auth.md
   - docs/design/app-lock-accessibility.md
+  - apps/apple/JournalApp/Views/UnopenedEraseButton.swift
+  - docs/design/build-18-fixes-2026-10-06.md
   - docs/design/missing-device-key-unlock.md
   - docs/design/pre-release-fixes-2026-09-27.md
 ---
@@ -24,7 +26,7 @@ While My Journal is locked, its windows show nothing of the journals and one way
 ## Entry points
 
 - App Lock is on and: the app starts; the phone or tablet app goes to the background; the person chooses Lock My Journal; the computer locks after inactivity, when it sleeps, when its screen locks or when the user is switched (`flows/app-lock`).
-- The device key is unavailable (for example after restoring the device from a backup that doesn't include it): the journals can only be opened with their password or recovery key, whether or not App Lock is on.
+- The device key is unavailable (for example after restoring the device from a backup that doesn't include it): the journals can only be opened with their password or recovery key, whether or not App Lock is on. Import Archive… and Erase Journals and Settings… are offered here too.
 
 ## Content
 
@@ -40,7 +42,8 @@ The whole window, scrolling at large text sizes, centred:
    - a secure field labelled with the credential's name (`common.masterPassword`, `library.lock.credential.recoveryKey`, `library.lock.credential.accessPassword`, `common.recoveryCode`; `common.passwordOrRecoveryKey` "Password or Recovery Key" when the name isn't known), with password autofill; Return unlocks;
    - an error in red, when there is one;
    - a prominent button `settings.lock.unlock` ("Unlock"), disabled while the field is empty;
-   - when the device can still unlock: a link-style button `settings.lock.useMethod` ("Use {method}") to go back.
+   - when the device can still unlock: a link-style button `settings.lock.useMethod` ("Use {method}") to go back;
+   - when the device key is unavailable (the credential form is the only way): a group captioned `library.problem.missingKey.caption` ("Don’t have your {credential}?") with link-style Import Archive… (`import-archive`) and a destructive Erase Journals and Settings… (`erase-unopened`), for a person who no longer has the credential ([screens/unavailable-content](unavailable-content.md), [flows/erase](../flows/erase.md)). The group is one container for screen readers, labelled with its caption.
 
 ### Privacy cover
 
@@ -64,7 +67,7 @@ When App Lock turned itself off because the device no longer has a passcode or l
 - **Prompting automatically:** once per lock, when the app is active (at launch, and on phone/tablet after returning from the background), the system is asked without a tap.
 - **Device can't authenticate (unavailable):** tapping Unlock shows `settings.lock.failed` and Use {credential}.
 - **No passcode any more:** App Lock turns off, the journals open, and the App Lock Is Off alert explains.
-- **Credential errors:** `messages.error.invalidRecoveryKey` ("That password or recovery key couldn’t unlock your journals."), `messages.library.deviceKeyUnavailable` ("Your device key is unavailable. Use your recovery key to unlock your journals."), `messages.library.cannotOpen` ("Your journals couldn’t be opened. Quit and reopen My Journal."), or another error's own message.
+- **Credential errors:** `messages.error.invalidRecoveryKey` ("That password or recovery key couldn’t unlock your journals."), `messages.library.deviceKeyUnavailable` ("Your device key is unavailable. Use your recovery key to unlock your journals."), or a failure message in plain words ([messages.md](../messages.md), Failure messages). A library that can't be opened at all, or that a newer version wrote, never reaches this screen: it shows the library problem screen ([screens/unavailable-content](unavailable-content.md)). `messages.library.cannotOpen` remains only as a guard when unlocking finds no library.
 
 ## Rules
 

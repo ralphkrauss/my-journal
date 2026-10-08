@@ -128,11 +128,12 @@ Behaviour is specified in [screens/entry-editor](../../screens/entry-editor.md),
 | `insert-code-block` | Format ▸ Insert ▸ Code Block | — (or type ```` ``` ```` Return) | — | Formatting ▸ Insert ▸ Code Block |
 | `insert-table` | Format ▸ Insert ▸ Table | — | — | Formatting ▸ Insert ▸ Table |
 | `insert-horizontal-rule` | Format ▸ Insert ▸ Horizontal Rule | — (or type `---` Return) | — | Formatting ▸ Insert ▸ Horizontal Rule |
-| `insert-link` | Format ▸ Insert ▸ Link… | ⌘K | ⌘K (menu and *text*) | Formatting ▸ Insert ▸ Link… |
+| `insert-link` | Format ▸ Insert ▸ Add Link…, which reads Edit Link… with the caret or selection in one link; right-click on a link: Edit Link… | ⌘K | ⌘K (menu and *text*) | Formatting ▸ Insert ▸ Add Link… / Edit Link… |
+| `remove-link` | Format ▸ Insert ▸ Remove Link (dimmed unless the caret or selection touches a link); right-click on a link: Remove Link | — | — (menu) | Formatting ▸ Insert ▸ Remove Link |
 | `insert-image` | Format ▸ Insert ▸ Image… (open panel) | — | — (menu: photo library) | Formatting ▸ Insert ▸ Image… |
 | `exit-code-block` | — | Down Arrow at the end of a code block's last line | Down Arrow (*text*) | Formatting ▸ Exit Code Block (only in a code block) |
 
-Format menu order (Mac, iPad): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Link…, Image…), then on the Mac Table ▸.
+Format menu order (Mac, iPad): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Add Link… or Edit Link…, Remove Link, Image…), then on the Mac Table ▸.
 
 ### Table
 
@@ -285,6 +286,14 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | --- | --- | --- | --- |
 | `erase-device` | iPhone/iPad: last section of Settings; Mac: end of General | — |  |
 | `erase-confirm` | warning alert (destructive) | — |  |
+
+### Library problem
+
+| id | Placement | Shortcut | Notes |
+| --- | --- | --- | --- |
+| `retry-opening` | Button on the library problem screen (prominent, large; not for a newer version) | Return (default action) | Replaced by a progress indicator while it runs. |
+| `erase-unopened` | Plain red button on the library problem screen (after one failed Try Again) and under Import Archive… on the missing-key lock screen | — | On the problem screen, not offered on iPhone and iPad while protected data is unavailable; the lock screen has no such gate. |
+| `open-library-guide` | Plain tinted button, last on the library problem screen | Return on the Mac, for a newer version only | The only button for a newer version. |
 
 ### Agent Access
 

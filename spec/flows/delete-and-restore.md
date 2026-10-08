@@ -1,11 +1,12 @@
 ---
 id: delete-and-restore
 title: Delete, restore and delete permanently
-features: [delete-entry, undo-delete, delete-journal, restore-entry, restore-and-move, restore-journal, delete-permanently, delete-all-deleted, recently-deleted]
+features: [delete-entry, undo-delete, delete-journal, deletion-conflict-alert, restore-entry, restore-and-move, restore-journal, delete-permanently, delete-all-deleted, recently-deleted]
 sources:
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Views/JournalDeletionPrompt.swift
   - apps/apple/JournalApp/Views/PermanentDeletionView.swift
+  - apps/apple/JournalApp/Views/DeletionConflictAlert.swift
   - apps/apple/JournalApp/Views/DeleteAllPrompt.swift
   - apps/apple/JournalApp/Views/EntryRecoveryNotice.swift
   - apps/apple/JournalApp/Views/DeletedJournalView.swift
@@ -62,7 +63,8 @@ One path for everything removed: entries, templates and journals go to Recently 
 ## States
 
 - **Locked:** nothing is deleted after locking unless it was already confirmed and stored; swiped rows come back.
-- **Changes to review, newer versions:** permanent deletion and journal deletion refuse with the messages listed in the screens; nothing changes.
+- **Changes to review:** Delete Journal and Delete Permanently refuse with the alert `messages.deleteConflict.title` (“{name}” Can’t Be Deleted), message `messages.deleteConflict.journal` or `messages.deleteConflict.record`, and the buttons Review Changes (opens the review sheet for that record, `review-changes`) and `common.cancel`. The alert closes if the app locks. A journal whose entries changed while the Delete Journal alert was open is not a conflict: it shows `messages.lifecycle.changed` in the generic alert.
+- **Newer versions:** permanent deletion and journal deletion refuse with the messages listed in the screens; nothing changes.
 - **Removed by a sync while open:** the open item closes unless it has unsaved writing.
 
 ## Rules

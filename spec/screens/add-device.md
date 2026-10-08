@@ -39,7 +39,7 @@ An activity indicator while the server is asked whether it takes scanned codes.
 ### Showing a code (server supports scanned codes and has an HTTPS address)
 1. A section, centred:
    - a notice when one applies, in smaller text (for example `settings.addDevice.stoppedConnecting`);
-   - the QR code, black on white with a quiet margin and rounded corners, 220 points plus margin, not scaling with text size (accessibility label `settings.addDevice.qrLabel`). While the app isn't active (app switcher, another window in front) a plain placeholder of the same size replaces it. When the session ended: `settings.addDevice.expired` ("This code has expired.") in its place;
+   - the QR code, black on white with a quiet margin and rounded corners, 220 points plus margin, not scaling with text size (accessibility label `settings.addDevice.qrLabel`). On the phone and tablet, while the app isn't active (app switcher) a plain placeholder of the same size replaces it; on the computer the placeholder shows only when the app goes to the background, so another window in front doesn't hide the code from a phone held up to the screen (owner decision, 2026-10-06). When the session ended: `settings.addDevice.expired` ("This code has expired.") in its place;
    - the instruction `settings.addDevice.scanInstructions`;
    - a status line: `settings.addDevice.waiting` ("Waiting for your new device…") with an indicator, or, after three failed checks in a row, `settings.addDevice.unreachable` ("Couldn’t reach the server. Check your connection."). No status once expired.
 2. A row: `settings.connect.server` → the server's host (selectable), so the person can tell the new device's Merge Journals names the same server.

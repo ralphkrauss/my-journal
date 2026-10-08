@@ -50,7 +50,7 @@ Also: Settings ▸ Privacy ▸ Encryption shows `common.signIn` with the footer 
 2. On access:
    - if the server holds this same library (it holds a record this library synced before, or is empty, and for an encrypted server the same key): this device continues by identity, keeping its pending changes; nothing is merged. Identical records are adopted, different ones become changes to review, missing ones are sent;
    - if the server holds another library: **Merge Journals** appears before anything is sent ("Merge only if {host} is your server."). Merge continues; Cancel leaves everything as it was.
-3. The sheet closes; sync resumes. Cancel or Back from Merge Journals gives up the access just granted, and nothing was sent (whether Back does is unverified: [open-questions.md](../open-questions.md), A35).
+3. The sheet closes; sync resumes. Cancel or Back from Merge Journals gives up the access just granted, and nothing was sent (owner decision, 2026-10-06; the landing steps are in [flows/connect-to-server](connect-to-server.md), Merge Journals).
 
 ### Encryption turned on elsewhere: Sign In…
 

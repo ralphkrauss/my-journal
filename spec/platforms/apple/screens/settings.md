@@ -4,7 +4,7 @@ title: Settings (Apple)
 spec: screens/settings.md
 features: [settings, about-links, erase-device]
 devices: [iphone, ipad, mac]
-status: verified
+status: draft
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
   - apps/apple/JournalApp/Views/SettingsPresenter.swift
@@ -39,7 +39,7 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 
 **Root (`SettingsView.body`).** A `Group` that shows, in order of precedence:
 1. Locked (`model.locked`): one secondary-coloured `Text`, copy key `settings.locked`, with padding. Nothing else is built.
-2. Library problem screen showing (`model.showsLibraryProblem`): one secondary `Text` reading "Settings are available once your journals open." This text has no copy key (see the report in Open questions); the spec does not list this state.
+2. Library problem screen showing (`model.showsLibraryProblem`): one secondary `Text`, copy key `settings.libraryProblem` ("Settings are available once your journals open."), the spec's library problem state. **Screenshot pending:** settings-library-problem.
 3. Otherwise the shell below.
 
 **iPhone and iPad shell.**
@@ -133,4 +133,4 @@ Design records: `docs/design/owner-decisions-2026-09-25.md`, `ios-delete-all-and
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), A30: the question says the Mac window opens on Sync, but the current code initialises `settingsTab` to `.general`, so the item looks resolved and the spec's Rules text is out of date. The locked-library text "Settings are available once your journals open." has no copy key and is not in the spec.
+See [open-questions.md](../../../open-questions.md), A30: the question says the Mac window opens on Sync, but the current code initialises `settingsTab` to `.general`, so the item looks resolved and the spec's Rules text is out of date. The library-problem text is now `settings.libraryProblem` in the spec.

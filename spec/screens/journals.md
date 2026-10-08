@@ -96,7 +96,7 @@ New Entry in this journal starts from the chosen template; Blank Entry means an 
 1. The open entry is saved and the deletion is checked first.
 2. Alert `library.deleteJournal.title` (with the journal's name), message `library.deleteJournal.noEntries` or `library.deleteJournal.message` (count of its entries on this device), buttons `common.delete` (destructive) and `common.cancel`.
 3. **Delete:** the row leaves the list at once (animated unless Reduce Motion). The journal and its entries move to Recently Deleted, and another journal is shown. Nothing else is said.
-4. Failures, in the general error alert: `messages.generic.journalDeleteNeedsReview`, `messages.generic.journalDeleteNeedsUpdate`, `messages.save.before.deleteJournal`, `messages.lifecycle.changed`, `messages.refresh.journalDeletedView`. A journal already deleted elsewhere is ignored quietly.
+4. A journal (or one of its entries) with changes to review isn't deleted: a standard alert titled `messages.deleteConflict.title` with the journal's name, message `messages.deleteConflict.journal`, and buttons `common.reviewChanges` (opens the review) and `common.cancel`. Other failures, in the general error alert: `messages.generic.journalDeleteNeedsUpdate`, `messages.save.before.deleteJournal`, `messages.lifecycle.changed`, `messages.refresh.journalDeletedView`. A journal already deleted elsewhere is ignored quietly.
 
 See [flows/delete-and-restore](../flows/delete-and-restore.md) for restoring.
 

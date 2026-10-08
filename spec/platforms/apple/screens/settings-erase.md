@@ -4,7 +4,7 @@ title: Erase Journals and Settings (section and alerts) (Apple)
 spec: screens/settings-erase.md
 features: [erase-device]
 devices: [iphone, ipad, mac]
-status: verified
+status: draft
 sources:
   - apps/apple/JournalApp/Views/EraseSection.swift
   - apps/apple/JournalApp/Views/SettingsView.swift
@@ -41,11 +41,11 @@ Where it is: iPhone and iPad, a last section of its own in the Settings list; Ma
   | `unconfirmed(host)` | `settings.erase.alert.unconfirmed` |
   | `notSyncing` | `settings.erase.alert.notSyncing` |
   | `nothingWritten` | `settings.erase.alert.nothingWritten` |
-  | `unopened(credential, host)` | no key (see below) |
+  | `unopened(credential, host)` | `settings.erase.alert.unopened` and its parts (see below) |
 
   Buttons in declaration order: `common.exportArchive` ("Export Archive…", only when `losesJournals`: unsent, unconfirmed, not syncing), `settings.erase.alert.erase` with `role: .destructive`, `common.cancel` with `role: .cancel`. The system places the cancel-role button; no button is marked as the default. Export Archive… closes the alert and, after `afterAlertCloses` (a 350 ms wait so the sheet can appear), sets `exporting`, which presents `ArchiveExportSheet` (see `export-archive`); afterwards the person erases again from the button.
 - **Failure alert**: `settings.erase.failed.title`, message `settings.erase.failed.message`, one `common.ok` button (role cancel).
-- **The sixth warning, `unopened`.** Used only by `UnopenedEraseButton` (`Views/UnopenedEraseButton.swift`), the Erase button of the library problem screen and the lock screen of a missing device key, not by this section. It has the same title, Erase and Cancel buttons (no Export Archive…, because nothing can be read), a plain red `.buttonStyle(.plain)` button and the failure alert. It authenticates the device owner before showing the warning (when App Lock is on or cannot be known, `removalNeedsAuthentication`), and not again at Erase. Its message is built in code (`unopenedMessage`) from the credential name and host; it has no catalog key and is not in the neutral spec.
+- **The sixth warning, `unopened`.** Used only by `UnopenedEraseButton` (`Views/UnopenedEraseButton.swift`), the Erase button of the library problem screen and the lock screen of a missing device key, not by this section. It has the same title, Erase and Cancel buttons (no Export Archive…, because nothing can be read), a plain red `.buttonStyle(.plain)` button and the failure alert. It authenticates the device owner before showing the warning (when App Lock is on or cannot be known, `removalNeedsAuthentication`), and not again at Erase. Its message is built in code (`unopenedMessage`) from `settings.erase.alert.unopened.reasonCantOpen` or `.reasonNeedsKey` (with the credential name) and `.serverKnown` (with the host) or `.serverUnknown`; the spec describes it in [flows/erase](../../../flows/erase.md). **Screenshots pending:** the alert on iPhone, iPad and Mac (settings-erase-unopened-alert).
 
 States and transitions:
 - Checking (`checking`): the button is disabled until the alert appears; the open entry is saved first (`eraseWarning()` calls `flush()`).
@@ -76,7 +76,7 @@ Keyboard: the alert follows the system's rules (Return for the default, Escape f
 - `settings.erase.authReason`: lower case first letter on the Mac ("erase journals on this device"), because the system dialog reads "My Journal is trying to {reason}"; `AppModel.authenticationReason` applies it.
 - `settings.erase.footerFormerServer` appears on the Mac only.
 - The Mac draws the button red by code; iOS by role. No other wording differs.
-- The `unopened` message and the problem-screen button text are literal strings (see Open questions).
+- The `unopened` message and the problem-screen button text are literal strings in code; their keys are `settings.erase.alert.unopened*` and `settings.erase.button`.
 
 ## Accessibility
 
@@ -118,4 +118,4 @@ Design records: `docs/design/erase-device-2026-10-04.md`, `client-only-mac-lists
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), C12 (the erase record still describes blocking on a Mac that runs a server). The sixth warning (`unopened`) is in the code but not in the spec or the copy catalog.
+See [open-questions.md](../../../open-questions.md), C12 (the erase record still describes blocking on a Mac that runs a server). The sixth warning (`unopened`) is now in the spec and the catalog.

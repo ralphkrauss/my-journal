@@ -116,4 +116,4 @@ Design records: `docs/design/move-entry.md`, `docs/design/pre-release-fixes-2026
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), A21 (the New Journal sheet does not check for a taken name).
+See [open-questions.md](../../../open-questions.md), A21 (withdrawn: the store refuses a taken journal name on every creation path, so the New Journal sheet shows the error; the wording is B12).

@@ -171,4 +171,4 @@ Design records: `docs/design/journal-order.md`, `docs/design/journal-name-unique
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): (1) the spec says searching ends edit mode on iPhone and iPad; in code only the stacked Journals page's search does, and the iPad list column's search does not. (2) Delete Journal on a journal with changes to review shows an alert of its own (title “Name” Can’t Be Deleted, message “This journal has changes that need review.”, Review Changes and Cancel, from `DeletionConflictAlert`) instead of the general error alert with `messages.generic.journalDeleteNeedsReview`; the alert has no copy key.
+See [open-questions.md](../../../open-questions.md): (1) A44, the spec says searching ends edit mode on iPhone and iPad; in code only the stacked Journals page's search does, and the iPad list column's search does not. (2) C1, resolved in build 18: Delete Journal on a journal with changes to review shows the alert of `DeletionConflictAlert` (`messages.deleteConflict.title`, `messages.deleteConflict.journal`, Review Changes and Cancel), which the spec now describes.

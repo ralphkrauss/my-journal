@@ -2,10 +2,10 @@
   {
     "keys": [
       "common.alertTitle",
-      "editor.history.journalLabel",
-      "library.entryList.journalValue"
+      "library.app.name",
+      "library.welcome.title"
     ],
-    "reason": "Title of the generic alert, caption of a menu, and an accessibility value are separate roles."
+    "reason": "Title of the generic alert, the Mac window title and the first-launch heading are separate roles."
   },
   {
     "keys": [
@@ -35,6 +35,13 @@
       "library.menu.format.paragraph"
     ],
     "reason": "Announcement, undo step name and menu item are separate roles."
+  },
+  {
+    "keys": [
+      "editor.history.journalLabel",
+      "library.entryList.journalValue"
+    ],
+    "reason": "Title of the generic alert, caption of a menu, and an accessibility value are separate roles."
   },
   {
     "keys": [
@@ -71,6 +78,21 @@
       "editor.link.title"
     ],
     "reason": "Button versus sheet title."
+  },
+  {
+    "keys": [
+      "editor.link.editTitle",
+      "editor.undo.editLink"
+    ],
+    "reason": "Sheet title and undo step name are separate roles."
+  },
+  {
+    "keys": [
+      "editor.link.remove",
+      "editor.undo.removeLink",
+      "library.menu.format.insert.removeLink"
+    ],
+    "reason": "Sheet button, undo step name and menu item are separate roles."
   },
   {
     "keys": [
@@ -173,10 +195,31 @@
   },
   {
     "keys": [
+      "library.problem.learnMore",
+      "settings.sync.footer.learnMore"
+    ],
+    "reason": "A button on the library problem screen and a link in the Sync footer are separate roles; they open different guides."
+  },
+  {
+    "keys": [
       "library.toolbar.settings",
       "settings.title"
     ],
     "reason": "Toolbar label versus sheet title."
+  },
+  {
+    "keys": [
+      "messages.failure.damagedReading",
+      "messages.sync.localDataUnreadable"
+    ],
+    "reason": "A failure alert and a sync-state footer are separate roles; the sync state is chosen by sync health."
+  },
+  {
+    "keys": [
+      "messages.failure.unreachable",
+      "settings.addDevice.unreachable"
+    ],
+    "reason": "The shared network failure message is chosen by sync health; Add Device's status line is its own message."
   },
   {
     "keys": [

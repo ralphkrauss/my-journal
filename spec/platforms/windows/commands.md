@@ -130,7 +130,8 @@ Commands that act on the open entry or template. Behaviour is in [screens/entry-
 | `insert-code-block` | `library.menu.format.insert.codeBlock` | Format ▸ Insert ▸ Code block | — | — | Or type three backticks and Enter (K-2). |
 | `insert-table` | `library.menu.format.insert.table` | Format ▸ Insert ▸ Table | — | — |  |
 | `insert-horizontal-rule` | `library.menu.format.insert.horizontalRule` | Format ▸ Insert ▸ Horizontal rule | — | — | Or type three hyphens and Enter (K-2). |
-| `insert-link` | `library.menu.format.insert.link` | Format ▸ Insert ▸ Link… | `Ctrl+K` | editor | Dialog ([screens/link-editor](../../screens/link-editor.md)). |
+| `insert-link` | `library.menu.format.insert.link` / `library.menu.format.insert.editLink` | Format ▸ Insert ▸ Add Link… (Edit Link… with the caret in a link) | `Ctrl+K` | editor | Dialog ([screens/link-editor](../../screens/link-editor.md)). The edit form and the casing of the new labels are not mapped yet (the spec added them after the Apple build 18). |
+| `remove-link` | `library.menu.format.insert.removeLink` | Format ▸ Insert ▸ Remove link; the text context menu on a link | — | — | Proposed, not yet reviewed: the Apple apps have it in the Format menu and the context menu. |
 | `insert-image` | `library.menu.format.insert.image` | Format ▸ Insert ▸ Image… | — | — | Image file picker starting in Pictures. |
 | `exit-code-block` | `editor.format.exitCodeBlock` | The formatting bar's overflow menu (enabled only in a code block) | `Down` | editor | Down Arrow at the end of a code block's last line. |
 
@@ -270,6 +271,16 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 | --- | --- | --- | --- | --- | --- |
 | `erase-device` | `settings.erase.button` | Button in the last group of the General page | — | — | No ellipsis; counts what would be lost, then the warning dialog. |
 | `erase-confirm` | `settings.erase.alert.erase` | Warning dialog: primary button with no default button when nothing would be lost; the secondary button, with Export archive… as the default, when journals would be lost | — | — | Windows Hello first when App Lock is on. The one exception to "primary is the verb" ([screens/settings-erase](screens/settings-erase.md), D44). |
+
+### Library problem
+
+Not mapped yet. The Apple apps added these commands in build 18 (the library problem screen); the Windows page for the screen is written against the earlier lock-screen note and needs a new mapping, which goes through the design gate ([open-questions.md](../../open-questions.md)).
+
+| id | Copy key | Placement | Shortcut | Scope | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `retry-opening` | `common.tryAgain` | Not mapped yet | — | — | Proposed: the primary button of the page that replaces the library. |
+| `erase-unopened` | `settings.erase.button` | Not mapped yet | — | — | Proposed: Windows Hello first when App lock is on or can't be known. |
+| `open-library-guide` | `library.problem.learnMore` | Not mapped yet | — | — | Proposed: a hyperlink button. |
 
 ### Agent Access
 

@@ -1,7 +1,7 @@
 ---
 id: conflict-review
 title: Review Changes (conflicts)
-features: [conflict-notice, changes-to-review-list, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported]
+features: [conflict-notice, changes-to-review-list, deletion-conflict-alert, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported]
 sources:
   - apps/apple/JournalApp/Views/ConflictRouting.swift
   - apps/apple/JournalApp/Views/EntryConflictReview.swift
@@ -41,6 +41,8 @@ When the same entry, template or journal changed on this device and on another o
 | A journal's Version History | When the journal has changes to review, the review appears in place of restoring | the journal's review |
 
 The sidebar's journal context menu and the journal's More menu dim Rename…, Default Template and Merge Into… while the journal has changes to review.
+
+**Deleting.** Delete Journal, and Delete Permanently on a record in Recently Deleted, refuse while the record has changes to review. They show a standard alert, not a sheet: title `messages.deleteConflict.title`, message `messages.deleteConflict.journal` or `messages.deleteConflict.record`, buttons `common.reviewChanges` (opens the review sheet below for that record, `review-changes`) and `common.cancel`. The alert closes when the app locks ([flows/delete-and-restore](../flows/delete-and-restore.md)). Nothing is deleted.
 
 ## Content
 

@@ -74,6 +74,7 @@ A sheet titled `settings.backup.exportMarkdownSheet.title` ("Export as Markdown"
 ## Rules
 
 - One export of each kind at a time.
+- With App Lock on, both exports ask for the device's authentication first: Export Archive only when the journals aren't encrypted (`settings.backup.archiveReason`), Export as Markdown always (`settings.backup.markdownReason`, `settings.backup.markdownReasonUnencrypted`). A cancel says nothing; a failure shows `settings.backup.verifyFailed` in the export's error line ([flows/export-archive](../flows/export-archive.md), [flows/export-markdown](../flows/export-markdown.md)).
 - Leaving the pane or sheet while preparing cancels the export; while the save dialog is open it stays.
 - The computer doesn't lock for inactivity while an export is being prepared (it may while the save dialog waits).
 - Temporary copies are removed after the dialog closes, and at the next launch if the app quit meanwhile.
