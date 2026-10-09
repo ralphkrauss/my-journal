@@ -22,7 +22,7 @@ In version 1 the authenticated manifest protects the whole package against chang
 
 ## Reading an archive
 
-A reader ignores names in `attachments/` that start with `.`, such as `.DS_Store` and the AppleDouble `._` files that appear when a package is copied between volumes, and it ignores other top-level files. Any other name in `attachments/` that isn't a lower-case UUID, a symbolic link or a file that isn't a regular file makes the archive invalid.
+A reader ignores names in `attachments/` that start with `.`, such as `.DS_Store` and the AppleDouble `._` files that appear when a package is copied between volumes, and it ignores other top-level files. Any other name in `attachments/` that isn't a lower-case UUID, a symbolic link or a file that isn't a regular file makes the archive invalid. The same holds for the manifest: a key in `attachments` that isn't a lower-case UUID makes the archive invalid, and a reader checks every key before it uses one as a file name. In version 2 the manifest isn't authenticated, so a name such as `../x` would otherwise reach outside the folder being restored.
 
 Restore recovers the vault key (version 1), authenticates or decodes the manifest, and checks that the files in `attachments/` and the database match it exactly. It copies only `journal.sqlite` and the listed images into a new directory and checks the copies again, so a package changed during copying is refused. It then opens the database, applying any migrations it is missing, and refuses:
 

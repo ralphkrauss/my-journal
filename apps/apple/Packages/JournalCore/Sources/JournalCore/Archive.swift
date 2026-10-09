@@ -56,6 +56,11 @@ public enum VaultArchive {
             header.recovery.requiresPassword
             ? try VaultCrypto.open(header.manifest, key: recovered.0, context: "journal:v1:archive") : header.manifest
         let manifest = try JournalCoding.decoder().decode(Manifest.self, from: bytes)
+        // Listed names become file paths below, so only the names an export writes are accepted: a passwordless
+        // manifest is unauthenticated, and a name such as "../x" must not reach outside the staging directory.
+        for identifier in manifest.attachments.keys where !isAttachmentName(identifier) {
+            throw JournalError.invalidData
+        }
         let manager = FileManager.default
         guard !manager.fileExists(atPath: destination.path) else { throw JournalError.invalidData }
         try manager.createDirectory(
@@ -114,9 +119,7 @@ public enum VaultArchive {
             // System files such as .DS_Store or AppleDouble "._" files appear when a package is copied between
             // volumes. They are never part of an archive: only listed files are copied and verified.
             if name.hasPrefix(".") { continue }
-            guard let identifier = UUID(uuidString: name), identifier.uuidString.lowercased() == name else {
-                throw JournalError.invalidData
-            }
+            guard isAttachmentName(name) else { throw JournalError.invalidData }
             files.append(file)
         }
         // A few files are read at once, which storage serves faster than one after another.
@@ -125,6 +128,11 @@ public enum VaultArchive {
         }
         let hashes = Dictionary(digests, uniquingKeysWith: { first, _ in first })
         return Manifest(database: try digest(directory.appendingPathComponent("journal.sqlite")), attachments: hashes)
+    }
+    /// An image file name as export writes it: a lower-case UUID.
+    private static func isAttachmentName(_ name: String) -> Bool {
+        guard let identifier = UUID(uuidString: name) else { return false }
+        return identifier.uuidString.lowercased() == name
     }
     private static func verify(_ directory: URL, against expected: Manifest) throws {
         let actual = try inventory(directory)

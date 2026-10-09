@@ -51,6 +51,41 @@ final class ArchiveTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: rejectedDestination.path))
     }
 
+    func testPasswordlessManifestCannotNameAFileOutsideTheRestore() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let key = try VaultCrypto.generateKey()
+        let store = try JournalStore(directory: root.appendingPathComponent("source"), key: key, protection: .plaintext)
+        try await store.save(JournalItem(kind: "entry", title: "Passwordless entry"))
+        let archive = root.appendingPathComponent("a/b/c/copy.journalarchive")
+        try FileManager.default.createDirectory(
+            at: archive.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try await VaultArchive.export(store: store, recovery: .unprotected, key: key, to: archive)
+        // The manifest of a passwordless archive is readable and unauthenticated, so anyone can list another name.
+        // From the archive's attachments folder and the restore's, this name points at two places outside both.
+        let name = "../../../planted"
+        try Data("planted".utf8).write(to: root.appendingPathComponent("a/b/planted"))
+        let headerURL = archive.appendingPathComponent("archive.json")
+        var header = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: headerURL)) as? [String: Any])
+        let manifestData = try XCTUnwrap(Data(base64Encoded: XCTUnwrap(header["manifest"] as? String)))
+        var manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: manifestData) as? [String: Any])
+        var attachments = try XCTUnwrap(manifest["attachments"] as? [String: String])
+        attachments[name] = String(repeating: "0", count: 64)
+        manifest["attachments"] = attachments
+        header["manifest"] = try JSONSerialization.data(withJSONObject: manifest).base64EncodedString()
+        try JSONSerialization.data(withJSONObject: header).write(to: headerURL)
+
+        let destination = root.appendingPathComponent("x/restored")
+        try FileManager.default.createDirectory(
+            at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+        do {
+            _ = try await VaultArchive.restore(from: archive, to: destination, phrase: "")
+            XCTFail("A listed name that isn't an image identifier must be refused")
+        } catch {}
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("planted").path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path))
+    }
+
     func testFailedPayloadValidationRemovesStagingAndPreservesExistingDestination() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
