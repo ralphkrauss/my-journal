@@ -16,7 +16,7 @@ Links that leave the app (the privacy policy, support, the source code, the user
 
 ## Entry points
 
-- Phone and tablet: the About section of Settings, after the six pane rows (`screens/settings`).
+- Phone and tablet: the About section of Settings, after the five pane rows (`screens/settings`).
 - Computer, and a tablet with a menu bar or keyboard: the Help menu.
 
 ## Content

@@ -26,7 +26,7 @@ Header `settings.privacy.encryption.header`. One `SettingsCard`:
 | --- | --- |
 | `Header` | `settings.privacy.encryption.on` (icon ShieldLock F5B4) or `settings.privacy.encryption.off` (no icon) |
 | `Description` | Encrypted: `settings.privacy.encryption.footerOn`, the credential's name in lower case. Sign in offered: `messages.encryption.turnedOnElsewhere`. Not encrypted: `common.unencryptedWarning` |
-| Trailing `Button`, the first that applies | Encrypted with a master password: `settings.privacy.changePassword` ([change-password](change-password.md)). Not encrypted and the server's journals are now encrypted: `common.signIn`, accent (opens the Connect task page at signing in: [flows/reconnect-to-server](../../../flows/reconnect-to-server.md)). Not encrypted: `settings.privacy.encryption.turnOn` ([turn-on-encryption](turn-on-encryption.md)). Libraries from early versions (recovery key) show no button |
+| Trailing `Button`, the first that applies | Encrypted with a master password: `settings.privacy.changePassword` ([change-password](change-password.md)). Not encrypted and the server's journals are now encrypted: `common.reconnect`, accent (opens the Connect task page at signing in: [flows/reconnect-to-server](../../../flows/reconnect-to-server.md)). Not encrypted: `settings.privacy.encryption.turnOn` ([turn-on-encryption](turn-on-encryption.md)). Libraries from early versions (recovery key) show no button |
 
 While encryption is being turned on, `settings.privacy.encryption.turnOn` reopens the task page where the work is; the page is the only place the work shows ([flows/turn-on-encryption](../flows/turn-on-encryption.md)). Not enabled while the library is being replaced, except to show a run in progress.
 

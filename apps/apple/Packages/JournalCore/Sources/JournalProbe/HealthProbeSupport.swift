@@ -76,7 +76,7 @@ extension Probe {
         throw ProbeFailure("\(situation): \(device.name) synced")
     }
 
-    /// Connect Again with the password, as the app does: access is granted, lineage finds this library on the
+    /// Reconnect with the password, as the app does: access is granted, lineage finds this library on the
     /// server, and a copy of the library keeping its identities syncs (docs/design/sync-health-and-recovery.md §3.3).
     static func connectAgain(
         _ device: HealthDevice, state: inout HealthState, root: URL, address: String

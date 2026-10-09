@@ -1,7 +1,7 @@
 import JournalCore
 import SwiftUI
 
-/// Last Synced, Not on Server Yet and the sync state's single action in Settings > Sync, on iPhone, iPad and Mac
+/// Last Synced, Not on Server Yet and the sync state's single action in Settings ▸ Sync, on iPhone, iPad and Mac
 /// (docs/design/sync-now-and-done.md, docs/design/sync-health-and-recovery.md §4.1). `connect` shows Connect to a
 /// Server over Settings for the actions that reconnect.
 struct SyncNowRows: View {
@@ -39,7 +39,7 @@ struct SyncNowRows: View {
     static func items(_ count: Int) -> String { count == 1 ? "1 item" : "\(count) items" }
 }
 
-/// Stop Syncing… at the end of Settings > Sync for a server this device doesn't run itself
+/// Stop Syncing… at the end of Settings ▸ Sync for a server this device doesn't run itself
 /// (docs/design/sync-health-and-recovery.md §4.4). Nothing is deleted, so it isn't destructive.
 struct StopSyncingSection: View {
     @EnvironmentObject private var model: AppModel
@@ -62,7 +62,7 @@ struct StopSyncingSection: View {
 
     private var message: String {
         let stays =
-            "Your journals stay on this device. To sync again later, choose Connect to a Server in Settings > Sync."
+            "Your journals stay on this device. To sync again later, choose Connect to a Server in Settings ▸ Sync."
         let waiting = activity.pendingItems
         guard waiting > 0 else { return stays }
         let items = waiting == 1 ? "1 item that isn’t" : "\(waiting) items that aren’t"

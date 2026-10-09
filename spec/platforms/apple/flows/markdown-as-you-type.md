@@ -26,7 +26,7 @@ How the spec's [Markdown as you type](../../../flows/markdown-as-you-type.md) is
 
 ## Controls
 
-- Setting: a SwiftUI `Toggle` in the Settings `Form` (`.formStyle(.grouped)`) with a footer, bound with `@AppStorage(MarkdownShortcuts.settingKey)` (the user default `formatMarkdownAsYouType`, default true). It is in the Writing pane on iPhone and iPad and in the General tab of the Settings window on the Mac (`SettingsView.generalSettings`). Copy keys: `settings.general.formatAsYouType` and `settings.general.formatAsYouType.footer`. Erase Journals and Settings removes the stored value, so the default applies again.
+- Setting: a SwiftUI `Toggle` in the Settings `Form` (`.formStyle(.grouped)`) with a footer, bound with `@AppStorage(MarkdownShortcuts.settingKey)` (the user default `formatMarkdownAsYouType`, default true). It is in the General pane (`SettingsView.generalSettings`). Copy keys: `settings.general.formatAsYouType` and `settings.general.formatAsYouType.footer`. Erase Journals and Settings removes the stored value, so the default applies again.
 - Reading the setting: `MarkdownShortcuts.enabled` reads `UserDefaults` each time, so a change applies to the next key press with no editor restart.
 - Matching: `MarkdownShortcuts.style(forMarker:)` maps a typed prefix with its space to a paragraph kind (`- `, `* `, `+ ` bullet; `[ ] `, `[] ` task; `[x] `, `[X] ` checked; `> ` quote; `#` to `######` plus a space, headings 1 to 6; 1 to 9 ASCII digits plus `.` or `)` plus a space, numbered starting at the number). `MarkdownShortcuts.block(forLine:)` maps a whole line to a rule (`---`, `***`, `___`) or a code fence (three backticks plus letters, digits or `+-_#.`).
 - Where it applies: `MarkdownShortcuts.plainParagraph` accepts only a paragraph of kind `paragraph` that is not a table, in preview (`MarkdownEditing.isSource` false). Headings, items, quotes, code blocks and table cells are other kinds; table cells are separate text views and never reach this code.
@@ -48,7 +48,7 @@ Not applicable: the behaviour has no layout of its own. The Settings toggle is a
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `toggle-format-as-you-type` | Settings ▸ Writing (iPhone, iPad), Settings ▸ General (Mac), as in [commands.md](../commands.md) | none | Settings is open (not while locked) |
+| `toggle-format-as-you-type` | Settings ▸ General, as in [commands.md](../commands.md) | none | Settings is open (not while locked) |
 | `undo` | Edit menu; ⌘Z on a hardware keyboard; shake or the keyboard's undo on iPhone and iPad | ⌘Z | The entry has focus. First Undo gives back the typed marker and space, the second removes the space |
 | `redo` | Edit menu | ⇧⌘Z | as above |
 

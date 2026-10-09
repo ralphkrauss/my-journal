@@ -37,7 +37,7 @@ Title `settings.encryption.title`.
 3. Footer: `settings.encryption.pauseFooter`.
 4. While checking (syncing only): busy row `settings.encryption.checking` ("Checking {host}…").
 5. Error row (red).
-- Primary: `common.continue`; after an error, `common.tryAgain`; when the error is that encryption was turned on from another device, `common.signIn` ("Sign In…"). Disabled while working.
+- Primary: `common.continue`; after an error, `common.tryAgain`; when the error is that encryption was turned on from another device, `common.reconnect` ("Reconnect…"). Disabled while working.
 - Cancel: `common.cancel`.
 
 ### Step 2: Choose a Master Password
@@ -72,7 +72,7 @@ While this computer encrypts (or waits for Try Again after the server switched),
 | Continue | `encryption-continue` | Checks free space and, when syncing, that the server can do this and this device still has access; then step 2. |
 | Turn On | `turn-on-encryption` | Encrypts (`flows/turn-on-encryption`). |
 | Try Again (unfinished) | `encryption-finish` | Finishes the switch the server already made. |
-| Sign In… | `sync-reconnect` | Closes the sheet and opens Connect to a Server at signing in. |
+| Reconnect… | `sync-reconnect` | Closes the sheet and opens Reconnect at signing in. |
 | Cancel | `encryption-cancel` | Stops the work, as long as the server isn't being updated; closes. Disabled while updating the server; hidden while unfinished. |
 | Add Another Device… | `add-device` | Opens Add Device. |
 | Done | `encryption-done` | Closes. |

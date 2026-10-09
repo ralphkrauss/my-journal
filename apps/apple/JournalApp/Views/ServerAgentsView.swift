@@ -5,7 +5,7 @@ import SwiftUI
     import AppKit
 #endif
 
-/// Settings > Agent Access: agents that connect to the sync server's MCP endpoint and read the journals the owner
+/// Settings ▸ Agent Access: agents that connect to the sync server's MCP endpoint and read the journals the owner
 /// allowed (docs/design/agent-access-simplified.md, section 10).
 struct ServerAgentsSections: View {
     @EnvironmentObject var model: AppModel
@@ -70,7 +70,7 @@ struct ServerAgentsSections: View {
                 Text(verbatim: "\(leadingHost) needs an update before agents can connect.")
             case .noAccess:
                 Text(verbatim: "This device no longer has access to \(host).")
-                Button("Connect Again…") { controller.connecting = true }
+                Button("Reconnect…") { controller.connecting = true }
             case .addressUnavailable(let reason):
                 Text(
                     reason == "public-url-required"

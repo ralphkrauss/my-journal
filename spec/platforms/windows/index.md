@@ -100,7 +100,7 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `import-archive` | flow | `flows/import-archive.md` | draft | File activation, Open picker, preview, restore or add. |
 | `export-archive` | flow | `flows/export-archive.md` | draft | Save picker, progress, password check. |
 | `export-markdown` | flow | `flows/export-markdown.md` | draft | Folder picker, Windows-safe file names, Windows Hello when App Lock is on. |
-| `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | Set Up Server Again, Connect Again, Sign In. |
+| `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | Reconnect. |
 | `stop-syncing` | flow | `flows/stop-syncing.md` | reviewed | Confirmation dialog. |
 | `sync-recovery` | flow | `flows/sync-recovery.md` | reviewed | Triggers: window activation, network change, resume; paces. |
 | `resolve-conflict` | flow | `flows/resolve-conflict.md` | reviewed | What each choice does. |

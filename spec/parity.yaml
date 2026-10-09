@@ -716,7 +716,7 @@ sync-health:
   android: planned
 
 sync-recovery:
-  title: "Guided recovery actions (Set Up Server Again…, Connect Again…, Sign In…, Check Again) with lineage deciding join or merge"
+  title: "Guided recovery actions (one Reconnect…, Check Again) with lineage deciding join or merge"
   specs: [flows/sync-recovery.md, flows/reconnect-to-server.md, screens/connect-to-server.md, screens/settings-privacy.md, screens/settings-sync.md]
   reference: apple
   apple: shipped
@@ -896,12 +896,12 @@ accessibility-announcements:
 # ======================================================================
 
 settings:
-  title: "Settings with six panes (Writing/General, Sync, Devices, Privacy, Backup, Agent Access); a sheet on phones and tablets, a tabbed window on computers"
+  title: "Settings with five panes (General, Sync, Privacy, Backup, Agent Access; Devices is a section of Sync); a sheet on phones and tablets, a tabbed window on computers"
   specs: [screens/settings.md]
   reference: apple
   apple: shipped
   windows: planned
-  windows-notes: "Mapping proposes different-by-design (D26): Settings is a page in the main window with a breadcrumb and a back button, About on its home page, General instead of Writing, no Done button."
+  windows-notes: "Mapping proposes different-by-design (D26): Settings is a page in the main window with a breadcrumb and a back button, About on its home page, no Done button. The mapping still describes six panes (Devices as its own); see open question C27."
   android: planned
 
 markdown-as-you-type:
@@ -1009,8 +1009,8 @@ former-mac-server-notice:
   android-reason: "Android never had a bundled server."
 
 devices-list:
-  title: "Settings ▸ Devices lists the devices with access and how and when each was added"
-  specs: [screens/settings-devices.md]
+  title: "Settings ▸ Sync ▸ Devices lists the devices with access and how and when each was added"
+  specs: [screens/settings-devices.md, screens/settings-sync.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -1018,7 +1018,7 @@ devices-list:
 
 revoke-device:
   title: "Revoke another device's access after a confirmation"
-  specs: [screens/settings-devices.md]
+  specs: [screens/settings-devices.md, screens/settings-sync.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -1026,7 +1026,7 @@ revoke-device:
 
 add-device:
   title: "Add Device — show a QR code or enter a new device's code, then approve with the device owner's authentication"
-  specs: [screens/add-device.md, flows/pair-device.md, screens/settings-devices.md]
+  specs: [screens/add-device.md, flows/pair-device.md, screens/settings-devices.md, screens/settings-sync.md]
   reference: apple
   apple: shipped
   windows: planned

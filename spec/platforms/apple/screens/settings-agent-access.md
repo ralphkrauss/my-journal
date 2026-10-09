@@ -42,7 +42,7 @@ Order of the spec's Content section. The container is a `Form` with `.formStyle(
    - not connected: `settings.agents.connect.notConnected` and a `Button` `common.connectToServer`, which sets `controller.connecting` to present `ConnectionView` as a sheet;
    - `.loading` and nothing loaded yet: `connectionStatus` (a small `ProgressView` and `settings.agents.loading`);
    - `.needsUpdate`: `settings.agents.connect.needsUpdate`;
-   - `.noAccess`: `settings.agents.connect.noAccess` and a button `messages.sync.action.connectAgain` (the button's title in the source is "Connect Again…") that also presents `ConnectionView`;
+   - `.noAccess`: `settings.agents.connect.noAccess` and a button `common.reconnect` ("Reconnect…") that also presents `ConnectionView`, titled Reconnect;
    - `.addressUnavailable(reason)`: `settings.agents.connect.publicUrlRequired` when the server reports that a public address is required, else `settings.agents.connect.httpsRequired`, plus a `Link` `settings.agents.connect.guide`;
    - `.unreachable`: `settings.agents.connect.unreachable` and `common.tryAgain` (`controller.load`);
    - `.ready` (default): `MCPAddressRow`, then `ServerAgentText.reachability` (callout, secondary: `settings.agents.reach.local` for `127.0.0.1`, `localhost` or `::1`; `settings.agents.reach.tailnet` for a host ending in the Tailscale domain `.ts.net`).
@@ -76,7 +76,7 @@ On the Mac, at launch `LocalAgentCleanup.run` removes what the earlier local age
 | `open-agent-guide` | Link in the footer and in the address-unavailable state | None | Always |
 | `agents-try-again` | Try Again | None | Server unreachable |
 | `connect-to-server` | Connect to a Server… | None | Not connected |
-| `sync-reconnect` | Connect Again… | None | This device lost access |
+| `sync-reconnect` | Reconnect… | None | This device lost access |
 
 Placement and shortcuts are as in [commands.md](../commands.md). The pane has no keyboard shortcuts of its own: rows are buttons reached by Tab (Full Keyboard Access) and Space or Return on the Mac, and by a hardware keyboard on iPad.
 

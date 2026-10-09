@@ -42,7 +42,7 @@ Header `settings.agents.connect.header`, then by state:
 | Not connected | A [primary button card](settings.md#card-patterns): `Header` `settings.agents.connect.notConnected`, accent `Button` `common.connectToServer` |
 | Loading, first time | A card with a small indeterminate `ProgressBar` and `settings.agents.loading` (the page stays usable) |
 | Server needs an update | `InfoBar` (Warning), `settings.agents.connect.needsUpdate` |
-| This device lost access | `InfoBar` (Warning), `settings.agents.connect.noAccess`, `ActionButton` `messages.sync.action.connectAgain` |
+| This device lost access | `InfoBar` (Warning), `settings.agents.connect.noAccess`, `ActionButton` `common.reconnect` |
 | No public HTTPS address | `InfoBar` (Warning), `settings.agents.connect.publicUrlRequired` or `settings.agents.connect.httpsRequired`, and a `HyperlinkButton` `settings.agents.connect.guide` |
 | Unreachable | `InfoBar` (Error), `settings.agents.connect.unreachable`, `ActionButton` `common.tryAgain` |
 | Ready | A card: `Header` `settings.agents.mcpAddress`; `Description` the address in `Cascadia Mono` (`IsTextSelectionEnabled`, wrapping, below the label at text size 200% or more); trailing `Button` `common.copy` |

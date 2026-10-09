@@ -27,7 +27,7 @@ Only the sample library is ever shown. Two guards keep other things out: the Con
 | Part | Files |
 | --- | --- |
 | iPhone and iPad tests | `apps/apple/JournalScreenshots/iOS/Spec*CaptureTests.swift`; `SpecCaptureCase.swift` is the base class (launching on a copy of the sample library, finding, capturing). Classes run in the order in `capture.sh`: warm-up (closes a new simulator's keyboard tips), browse, editor, library, settings, start, data, conflict, journal, sync, then dark |
-| Mac test | `apps/apple/JournalScreenshots/Mac/SpecMacCapture.swift` (the states), `SpecMacSupport.swift` (opening, arranging, capturing, sheets), `SpecMacSyncStates.swift` (server, devices, agent), `SpecMacLibraryStates.swift` (welcome, library problems, changes to review in a second window) |
+| Mac test | `apps/apple/JournalScreenshots/Mac/SpecMacCapture.swift` (the states), `SpecMacSupport.swift` (opening, arranging, capturing, sheets), `SpecMacSyncStates.swift` (server, devices in Sync, agent), `SpecMacLibraryStates.swift` (welcome, library problems, changes to review in a second window) |
 | Shared fixtures | `apps/apple/JournalScreenshots/Shared/SpecLibraryFixtures.swift`: changes to review and the damage that makes a library unopenable (the same as `JournalTests/LibraryFixture.swift`) |
 | Project | `apps/apple/screenshots.yml` (the scheme and targets; generated into `JournalScreenshots.xcodeproj`, not committed) |
 | Seed | `design/app-store/seed-library.sh` and `apps/apple/Packages/JournalCore/Sources/JournalMeasure/ScreenshotLibrary.swift` |
@@ -49,7 +49,7 @@ The App Store captures (`design/app-store/capture-ios.sh`, `capture-mac.sh`) are
 - System sheets and panels (the file picker, the share sheet, save and open panels, Face ID and Touch ID prompts): they belong to the system and are not drawn by the app. Menus of the Mac menu bar and context menus are not windows the test can capture; the menu structure is in the Apple commands file.
 - The Mac Formatting popover: the popover window comes back as a dark panel without its material; the iPad capture shows the same panel.
 - The first step of Connect to a Server where the machine's network lists a server (see above), and Recovery Key (only for libraries created by early builds).
-- Dates that are not the sample library's: Settings ▸ Devices shows the day the capture was made ("Added during server setup on …").
+- Dates that are not the sample library's: Settings ▸ Sync ▸ Devices shows the day the capture was made ("Added during server setup on …").
 
 ## Adding or changing a state
 

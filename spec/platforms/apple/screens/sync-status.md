@@ -34,7 +34,7 @@ A control that appears only when sync needs the person. It is a SwiftUI `Menu` i
 **Menu contents.** The same three items on every device:
 
 1. The message, a non-interactive item: `model.syncError ?? "Saved on this device. Waiting to sync."` (`syncStatusMessage`; `messages.sync.waiting` is the fallback). `syncError` is `SyncHealth.message(host:)` for a state or the engine's item-level problem text (`messages.sync.recordTooLarge`, `messages.sync.recordRefused`, `messages.sync.imageTooLarge`, `messages.sync.imageRefused`).
-2. One action, titled `model.syncStatusAction.title` (`messages.sync.action.syncNow`, `common.tryAgain`, `messages.sync.action.checkAgain`, `messages.sync.action.setUpServerAgain`, `messages.sync.action.connectAgain`, `common.signIn`). Its closure is `model.perform(action) { model.encryption.signInRequested = true }`: a non-connecting action runs `syncNow()` (the same code as Settings ▸ Sync, including the half-second minimum and the VoiceOver announcement); a connecting action sets `signInRequested`, which presents `ConnectionView` as a sheet over the journal window through `EncryptionPresentation` ([reconnect-to-server](../flows/reconnect-to-server.md)).
+2. One action, titled `model.syncStatusAction.title` (`messages.sync.action.syncNow`, `common.tryAgain`, `messages.sync.action.checkAgain`, `common.reconnect`). Its closure is `model.perform(action) { model.encryption.signInRequested = true }`: a non-connecting action runs `syncNow()` (the same code as Settings ▸ Sync, including the half-second minimum and the VoiceOver announcement); a connecting action (Reconnect…) sets `signInRequested`, which presents `ConnectionView`, titled Reconnect, as a sheet over the journal window through `EncryptionPresentation` ([reconnect-to-server](../flows/reconnect-to-server.md)).
 3. `messages.syncStatus.settings` (Sync Settings…), calling `model.openSyncSettings()`: Mac, `settingsTab = .sync` then `settingsPresented = true` (the Settings window opens on its Sync tab); iPhone and iPad, `settingsRequestedTab = .sync` then `settingsPresented = true` (the Settings sheet opens already pushed to Sync).
 
 The label, tooltip and accessibility label are `messages.syncStatus.title`; the symbol is `exclamationmark.icloud` (SF Symbols), always. There is no busy state in the control; a sync the person started shows "Syncing…" only in Settings ▸ Sync ([settings-sync](settings-sync.md)).
@@ -56,7 +56,7 @@ The label, tooltip and accessibility label are `messages.syncStatus.title`; the 
 | --- | --- | --- | --- |
 | `sync-status` | Toolbar item (Mac); Entry Actions submenu (iPhone, iPad), as in [commands.md](../commands.md) | none | `showsSyncStatus`; on iPhone and iPad also an entry open |
 | `sync-now` | Action row (titles Sync Now, Try Again, Check Again) | none | the state's action is non-connecting |
-| `sync-reconnect` | Action row (titles Set Up Server Again…, Connect Again…, Sign In…) | none | the state's action connects |
+| `sync-reconnect` | Action row (title Reconnect…) | none | the state's action connects |
 
 Sync Settings… has no command id of its own in `commands.md`; it is the menu's last row. No menu bar command and no keyboard shortcut. Keyboard: the Mac button opens its menu from the mouse-down and from `performClick` (keyboard activation and VoiceOver), and the menu then follows the system's arrow-key navigation; whether Full Keyboard Access reaches the toolbar item was not run.
 

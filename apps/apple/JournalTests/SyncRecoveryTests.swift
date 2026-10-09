@@ -127,7 +127,7 @@ final class SyncRecoveryTests: XCTestCase {
         await running.value
     }
 
-    func testAResetServerOffersSetUpServerAgainAndStopsAskingIt() async throws {
+    func testAResetServerOffersReconnectAndStopsAskingIt() async throws {
         let server = try await LibraryServer.start()
         server.update { $0.initialized = false }
         let model = try await library(address: server.address)
@@ -135,7 +135,7 @@ final class SyncRecoveryTests: XCTestCase {
         await model.sync()
         XCTAssertEqual(model.syncHealth, .serverNotSetUp)
         XCTAssertEqual(model.syncError, "The server isn’t set up. Your journals are still on this device.")
-        XCTAssertEqual(model.syncStatusAction, .setUpServerAgain)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
         XCTAssertEqual(
             server.requests.map(\.path), ["/v1/status"], "Nothing else is asked of a server that isn't set up")
 
@@ -147,7 +147,7 @@ final class SyncRecoveryTests: XCTestCase {
         try await runAutomaticSync(model, for: 1.5)
         XCTAssertEqual(server.requests.count, 2, "Becoming active after a while checks once")
 
-        // Set Up Server Again… goes straight to the setup-code step at this device's server.
+        // Reconnect… goes straight to the setup-code step at this device's server.
         XCTAssertTrue(model.reconnectsOnConnect)
         let flow = ConnectionFlow(model: model)
         flow.address = server.address
@@ -157,7 +157,7 @@ final class SyncRecoveryTests: XCTestCase {
         flow.close()
     }
 
-    func testSettingUpAResetServerAgainReplacesTheOldConnectionEntirely() async throws {
+    func testReconnectingToAResetServerReplacesTheOldConnectionEntirely() async throws {
         let server = try await LibraryServer.start()
         server.update { $0.initialized = false }
         let model = try await library(address: server.address)
@@ -171,7 +171,7 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertNotNil(try Keychain.read(account))
     }
 
-    func testConnectAgainAsksToMergeOnlyOnceAccessShowsAnotherLibrary() async throws {
+    func testReconnectAsksToMergeOnlyOnceAccessShowsAnotherLibrary() async throws {
         let server = try await LibraryServer.start()
         let password = "the other library's password"
         let envelope = try VaultCrypto.makeRecovery(masterKey: VaultCrypto.generateKey(), phrase: password).0
@@ -182,7 +182,7 @@ final class SyncRecoveryTests: XCTestCase {
         }
         let model = try await library(address: server.address)
         await model.sync()
-        XCTAssertEqual(model.syncStatusAction, .connectAgain)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
         let folders = { () throws -> [String] in
             try FileManager.default.contentsOfDirectory(atPath: model.directory.path).filter { $0.hasPrefix("vault-") }
         }
@@ -439,8 +439,8 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertFalse(model.showsSyncStatus, "Without a server there's nothing to sync")
     }
 
-    /// The action follows the state the last sync found, and nothing else: after Sign In… was offered, a reset server
-    /// asks to set it up again, and a server that works again offers Sync Now with a quiet symbol.
+    /// The action follows the state the last sync found, and nothing else: after Reconnect… was offered for one state,
+    /// a reset server offers it for another, and a server that works again offers Sync Now with a quiet symbol.
     func testTheActionFollowsOnlyTheCurrentState() async throws {
         let server = try await LibraryServer.start()
         let model = try await library(address: server.address)
@@ -458,12 +458,12 @@ final class SyncRecoveryTests: XCTestCase {
         server.update(replacedByEncrypted)
         await model.sync()
         XCTAssertEqual(model.syncHealth, .signInNeeded)
-        XCTAssertEqual(model.syncStatusAction, .signIn)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
 
         server.update { $0.initialized = false }
         await model.sync()
         XCTAssertEqual(model.syncHealth, .serverNotSetUp)
-        XCTAssertEqual(model.syncStatusAction, .setUpServerAgain)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
 
         server.update {
             $0.initialized = true
@@ -472,16 +472,16 @@ final class SyncRecoveryTests: XCTestCase {
         }
         await model.syncNow()
         XCTAssertEqual(model.syncHealth, .serverReplaced)
-        XCTAssertEqual(model.syncStatusAction, .connectAgain)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
 
         server.update { $0.serverID = "server-one" }
         await model.syncNow()
         XCTAssertEqual(model.syncHealth, .accessRemoved)
-        XCTAssertEqual(model.syncStatusAction, .connectAgain)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
 
         server.update(replacedByEncrypted)
         await model.syncNow()
-        XCTAssertEqual(model.syncStatusAction, .signIn)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
         server.update {
             $0.serverID = "server-one"
             $0.parameters = plain
@@ -493,6 +493,62 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertFalse(model.encryption.offersSignIn)
         XCTAssertFalse(model.syncNeedsAttention)
         XCTAssertFalse(model.showsSyncStatus)
+    }
+
+    /// One Reconnect… for every state in which the server doesn't accept this device as it is, and only that action
+    /// opens the connection sheet.
+    func testEveryStateThatNeedsAReconnectOffersTheSameAction() async throws {
+        let model = try await library(address: "http://127.0.0.1:9")
+        let states: [SyncHealth] = [
+            .signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved, .offline, .unreachable, .unavailable,
+            .appUpdateNeeded, .serverUpdateNeeded, .certificateInvalid, .notJournalServer, .localDataUnreadable,
+            .localDataUnavailable, .unexpected,
+        ]
+        for state in states {
+            model.syncHealth = state
+            let reconnects = [.needsYou, .serverChanged, .noAccess].contains(state.kind)
+            XCTAssertEqual(model.syncStatusAction == .reconnect, reconnects, "\(state)")
+            XCTAssertEqual(model.syncStatusAction.connects, reconnects, "\(state)")
+            XCTAssertEqual(model.serverRefusesThisDevice, reconnects, "\(state)")
+        }
+        let others: [SyncStatusAction] = [.syncNow, .tryAgain, .checkAgain]
+        XCTAssertEqual(others.filter(\.connects), [])
+        XCTAssertEqual(SyncStatusAction.reconnect.title, "Reconnect…")
+    }
+
+    /// Devices has nothing to show once the server refuses this device, and the Server section says why: the state a
+    /// sync found, or "no longer has access" when the device list was refused before any sync could say.
+    func testARefusedDeviceListLearnsWhyFromTheSyncAndFallsBackToRemoved() async throws {
+        let server = try await LibraryServer.start()
+        let model = try await library(address: server.address)
+        await model.sync()
+        XCTAssertFalse(model.serverRefusesThisDevice)
+
+        server.update { $0.refusesDevices = true }
+        await model.learnWhyAccessWasRefused()
+        XCTAssertEqual(model.syncHealth, .accessRemoved)
+        XCTAssertTrue(model.serverRefusesThisDevice)
+        XCTAssertEqual(model.syncError, model.syncMessage(of: .accessRemoved))
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
+
+        let plain = try JournalCoding.encoder().encode(RecoveryParameters(.unprotected))
+        server.update {
+            $0.serverID = "another-library"
+            $0.parameters = plain
+        }
+        await model.learnWhyAccessWasRefused()
+        XCTAssertEqual(model.syncHealth, .serverReplaced, "The sync's answer is kept, not replaced by a guess")
+        XCTAssertEqual(model.syncError, model.syncMessage(of: .serverReplaced))
+    }
+
+    /// The message after a removal follows the library on this device: a password, or a recovery code without one.
+    func testTheRemovedMessageFollowsTheLibrarysMode() async throws {
+        let withPassword = try await library(address: "http://127.0.0.1:9", encrypted: true)
+        XCTAssertTrue(
+            withPassword.syncMessage(of: .accessRemoved).hasSuffix("you need your password or a connected device."))
+        let without = try await library(address: "http://127.0.0.1:9")
+        XCTAssertTrue(
+            without.syncMessage(of: .accessRemoved).hasSuffix("you need a connected device or a recovery code."))
     }
 
     /// A stopped state doesn't retry on unlock, so its own sentence must still be there afterwards.
@@ -509,7 +565,7 @@ final class SyncRecoveryTests: XCTestCase {
         await model.unlockForTesting()
         XCTAssertEqual(model.syncHealth, .accessRemoved)
         XCTAssertEqual(model.syncError, message)
-        XCTAssertEqual(model.syncStatusAction, .connectAgain)
+        XCTAssertEqual(model.syncStatusAction, .reconnect)
     }
 
     func testStopSyncingKeepsTheLibraryAndGivesUpAccess() async throws {
@@ -595,7 +651,7 @@ final class SyncRecoveryTests: XCTestCase {
             let model = try await library(address: server.address)
             await model.sync()
             XCTAssertEqual(model.syncHealth, testCase.health, testCase.name)
-            XCTAssertEqual(model.syncError, testCase.health.message(), testCase.name)
+            XCTAssertEqual(model.syncError, model.syncMessage(of: testCase.health), testCase.name)
             XCTAssertEqual(model.syncStatusAction, testCase.action, testCase.name)
             XCTAssertTrue(model.syncNeedsAttention || testCase.health.kind == .temporary, testCase.name)
             XCTAssertEqual(model.automaticSyncStopped, testCase.wait == nil, testCase.name)

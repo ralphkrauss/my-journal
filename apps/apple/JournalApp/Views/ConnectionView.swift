@@ -21,8 +21,14 @@ private struct ConnectionSheet: View {
     @StateObject private var browser = ServerBrowser()
     @State private var scanning = false
     @State private var searchedLong = false
+    /// Opened by Reconnect… rather than Connect to a Server…: fixed when the sheet opens, so the title doesn't change
+    /// while the flow's own work changes the sync state behind it.
+    @State private var reconnecting: Bool
 
-    init(model: AppModel) { _flow = StateObject(wrappedValue: ConnectionFlow(model: model)) }
+    init(model: AppModel) {
+        _flow = StateObject(wrappedValue: ConnectionFlow(model: model))
+        _reconnecting = State(initialValue: model.reconnectsOnConnect)
+    }
 
     var body: some View {
         NavigationStack(path: $flow.path) {
@@ -39,7 +45,7 @@ private struct ConnectionSheet: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("Connect to a Server")
+            .navigationTitle(reconnecting ? "Reconnect" : "Connect to a Server")
             #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -78,8 +84,8 @@ private struct ConnectionSheet: View {
         .onAppear {
             if flow.address.isEmpty { flow.address = model.connection?.address ?? "" }
             browse(choosing)
-            // Reconnecting this device's server (set up again, connect again, or sign in after encryption was turned on
-            // elsewhere) goes to its next step straight away.
+            // Reconnecting to this device's server (after it was set up again, access was removed, or encryption was
+            // turned on elsewhere) goes to its next step straight away.
             if model.reconnectsOnConnect, flow.path.isEmpty, !flow.address.isEmpty { flow.check() }
         }
     }
@@ -119,7 +125,7 @@ private struct ConnectionSheet: View {
                     Label("Scan Code", systemImage: "qrcode.viewfinder")
                 }
             } footer: {
-                Text("On a connected device, open Settings > Devices > Add Device, then scan the code it shows.")
+                Text("On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then scan the code it shows.")
             }
         }
         Section("Servers on This Network") {

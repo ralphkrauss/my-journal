@@ -5,7 +5,7 @@
     import SwiftUI
     import UIKit
 
-    /// Scan Code: reads the pairing code a connected device shows under Settings > Devices > Add Device.
+    /// Scan Code: reads the pairing code a connected device shows under Settings ▸ Sync ▸ Devices ▸ Add Device.
     struct ScanCodeView: View {
         let onScan: (PairingInvite) -> Void
         @Environment(\.dismiss) private var dismiss

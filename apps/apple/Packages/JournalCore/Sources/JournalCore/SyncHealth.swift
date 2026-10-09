@@ -10,13 +10,13 @@ public enum SyncHealth: Equatable, Sendable {
     /// The server answered, but can't serve now: a server error or too many requests.
     case unavailable
     /// The server's journals are encrypted now and this library's aren't: encryption was turned on elsewhere, or the
-    /// server was replaced by an encrypted one. Signing in again decides which.
+    /// server was replaced by an encrypted one. Reconnecting decides which.
     case signInNeeded
     /// The server was reset and waits for a setup code.
     case serverNotSetUp
     /// The server holds another identity and doesn't know this device: restored, or set up again.
     case serverReplaced
-    /// The same server refuses this device: removed from Devices, or its credential no longer works.
+    /// The same server refuses this device: removed from Settings ▸ Sync ▸ Devices, or its credential no longer works.
     case accessRemoved
     /// The server speaks a newer protocol or recovery format than this app.
     case appUpdateNeeded
@@ -55,8 +55,10 @@ public enum SyncHealth: Equatable, Sendable {
         }
     }
 
-    /// What the person sees in Settings > Sync and Sync Status. `host` adds the Tailscale hint for a `.ts.net` server.
-    public func message(host: String = "") -> String {
+    /// What the person sees in Settings ▸ Sync and Sync Status. `host` adds the Tailscale hint for a `.ts.net` server.
+    /// `hasPassword` is false for a library without encryption, which has no password to sign in again with: the
+    /// way back after a removal is a connected device or the server's recovery code.
+    public func message(host: String = "", hasPassword: Bool = true) -> String {
         let saved = "Your changes are saved on this device."
         let still = "Your journals are still on this device."
         switch self {
@@ -70,11 +72,13 @@ public enum SyncHealth: Equatable, Sendable {
         case .unavailable:
             return
                 "The server isn’t available right now. Your changes are saved on this device and will sync automatically."
-        case .signInNeeded: return "The server now uses encryption or was replaced. Sign in to keep syncing."
+        case .signInNeeded: return "The server now uses encryption or was replaced. Reconnect to keep syncing."
         case .serverNotSetUp: return "The server isn’t set up. \(still)"
         case .serverReplaced:
             return "The server was restored or replaced and doesn’t recognize this device. \(still)"
-        case .accessRemoved: return "This device no longer has access to the server. \(still)"
+        case .accessRemoved:
+            let needed = hasPassword ? "your password or a connected device" : "a connected device or a recovery code"
+            return "This device no longer has access to the server. \(still) To reconnect, you need \(needed)."
         case .appUpdateNeeded: return "Update My Journal to sync with this server. \(saved)"
         case .serverUpdateNeeded: return "The server needs an update before this device can sync. \(saved)"
         case .certificateInvalid:

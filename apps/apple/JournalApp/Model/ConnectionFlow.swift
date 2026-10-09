@@ -676,7 +676,7 @@ final class ConnectionFlow: ObservableObject {
             message = mergeFailure(sent: interrupted.sent)
         case ServerConnectionError.encryptionOff:
             message =
-                "The journals on this device are encrypted, but \(host) doesn’t use encryption. Turn on encryption in Settings > Privacy on a connected device, then try again."
+                "The journals on this device are encrypted, but \(host) doesn’t use encryption. Turn on encryption in Settings ▸ Privacy on a connected device, then try again."
         case is URLError:
             canRetryScannedCode = invite != nil
             message =

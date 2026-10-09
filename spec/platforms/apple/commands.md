@@ -185,12 +185,12 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | `settings-open-pane` | a tab in the Settings window | a row in Settings |  |
 | `settings-done` | — | Settings sheet, confirming position |  |
 
-### Writing / General
+### General
 
 | id | Placement | Shortcut | Notes |
 | --- | --- | --- | --- |
-| `choose-default-journal` | Settings ▸ Writing/General | — |  |
-| `toggle-format-as-you-type` | Settings ▸ Writing/General | — |  |
+| `choose-default-journal` | Settings ▸ General | — |  |
+| `toggle-format-as-you-type` | Settings ▸ General | — |  |
 
 ### Sync
 
@@ -198,7 +198,7 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | --- | --- | --- | --- |
 | `connect-to-server` | Settings ▸ Sync, Devices, Agent Access (not connected); first-launch screen | — |  |
 | `sync-now` | Settings ▸ Sync | — |  |
-| `sync-reconnect` | Settings ▸ Sync; Settings ▸ Devices (access refused); Settings ▸ Privacy (Sign In…); Settings ▸ Agent Access (no access) | — |  |
+| `sync-reconnect` | Settings ▸ Sync (Reconnect…); Sync Status; Settings ▸ Privacy (Reconnect…); Settings ▸ Agent Access (no access) | — |  |
 | `stop-syncing` | Settings ▸ Sync | — |  |
 | `open-setup-guide` | Settings ▸ Sync footer; Set Up Server footer | — |  |
 | `open-former-server-guide` | Settings ▸ Sync footer (Mac only) | — | Mac only (the footer of Settings ▸ Sync). |
@@ -222,7 +222,7 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | `connect-retry` | — |  |
 | `connect-cancel` | ⎋ |  |
 | `connect-done` | ↩ |  |
-| `show-connection` | — | Mac only. |
+| `show-connection` | — | Mac only. Opens Settings at the Sync tab. |
 
 ### Devices
 

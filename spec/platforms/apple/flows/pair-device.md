@@ -49,7 +49,7 @@ Server calls are `ServerClient` methods in `Packages/JournalCore/Sources/Journal
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `add-device` | Settings ▸ Devices, Server Is Ready, Turn On Encryption: opens the connected side | none | connected, unlocked |
+| `add-device` | Settings ▸ Sync ▸ Devices, Server Is Ready, Turn On Encryption: opens the connected side | none | connected, unlocked |
 | `add-device-enter-code` | Connected device, code step | none | showing a code |
 | `add-device-look-up` | Connected device, typed-code step | Return in the field | code not empty |
 | `add-device-approve` | Connected device, confirmation | Command-Return | a request is confirmable |

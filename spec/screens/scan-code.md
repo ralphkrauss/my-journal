@@ -12,7 +12,7 @@ sources:
 
 ## Purpose
 
-Reads the code a connected device shows under Settings ▸ Devices ▸ Add Device, so a new phone or tablet can join without typing anything.
+Reads the code a connected device shows under Settings ▸ Sync ▸ Devices ▸ Add Device, so a new phone or tablet can join without typing anything.
 
 ## Entry points
 

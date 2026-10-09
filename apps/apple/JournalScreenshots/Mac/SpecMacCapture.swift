@@ -150,8 +150,8 @@ final class SpecMacCapture: SpecMacCase {
     private func settingsStates(_ model: AppModel) async throws {
         for (tab, name) in [
             (AppSettingsTab.general, "settings-general-default"), (.sync, "settings-sync-default"),
-            (.devices, "settings-devices-default"), (.privacy, "settings-privacy-default"),
-            (.backup, "settings-backup-default"), (.agents, "settings-agent-access-default"),
+            (.privacy, "settings-privacy-default"), (.backup, "settings-backup-default"),
+            (.agents, "settings-agent-access-default"),
         ] {
             let settings = try await openSettings(tab, model: model)
             try await capture(settings, name)

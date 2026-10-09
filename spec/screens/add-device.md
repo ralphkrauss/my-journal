@@ -23,7 +23,7 @@ On a device that's already connected, lets a new device join: by showing a code 
 
 ## Entry points
 
-- Settings ▸ Devices ▸ Add Device… (`screens/settings-devices`).
+- Settings ▸ Sync ▸ Devices ▸ Add Device… (`screens/settings-devices`).
 - Connect to a Server ▸ Server Is Ready ▸ Add Another Device….
 - Turn On Encryption ▸ Your Journals Are Encrypted ▸ Add Another Device….
 

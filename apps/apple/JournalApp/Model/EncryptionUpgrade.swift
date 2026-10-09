@@ -12,7 +12,7 @@ import JournalCore
 final class EncryptionUpgrade: ObservableObject {
     enum Step: Hashable { case password, done }
     enum Field: Hashable { case current, password, verify }
-    static let turnedOnElsewhereMessage = "Encryption was turned on from another device. Sign in to keep syncing."
+    static let turnedOnElsewhereMessage = "Encryption was turned on from another device. Reconnect to keep syncing."
 
     private weak var model: AppModel?
     @Published var path: [Step] = []
@@ -23,17 +23,17 @@ final class EncryptionUpgrade: ObservableObject {
     /// A failure that isn't about one field, and the step it belongs to (nil is the first step).
     @Published private(set) var error: String?
     @Published private(set) var errorStep: Step?
-    /// The failure says encryption was turned on from another device; the primary button signs in.
+    /// The failure says encryption was turned on from another device; the primary button reconnects.
     @Published private(set) var errorOffersSignIn = false
     @Published private(set) var fieldErrors: [Field: String] = [:]
     @Published var focusRequest: Field?
     /// The server switched, but this device couldn't finish; only Try Again is offered.
     @Published private(set) var unfinished = false
-    /// The sheet, shown from Settings > Privacy.
+    /// The sheet, shown from Settings ▸ Privacy.
     @Published var presented = false
     /// The sheet over the app, on iPhone and iPad, when finishing after a relaunch failed.
     @Published var presentedOverApp = false
-    /// Sign In, from a sync message: Connect to a Server for this server.
+    /// Reconnect, from a sync message: Reconnect for this server.
     @Published var signInRequested = false
     /// This device's server was encrypted from another device; it has to sign in to keep syncing.
     @Published var turnedOnElsewhere = false
@@ -60,7 +60,7 @@ final class EncryptionUpgrade: ObservableObject {
     var host: String { model?.connection.map { ServerAddress.host($0.address) } ?? "" }
     private var capitalizedHost: String { host.prefix(1).uppercased() + host.dropFirst() }
     var needsCurrentPassword: Bool { model?.configuration?.recovery.formatVersion == 3 }
-    /// Sign In is offered while this device's journals aren't encrypted and its server's are.
+    /// Reconnect is offered while this device's journals aren't encrypted and its server's are.
     var offersSignIn: Bool {
         turnedOnElsewhere && model?.configuration?.encrypted == false && model?.connection != nil
     }
@@ -139,7 +139,7 @@ final class EncryptionUpgrade: ObservableObject {
             presentedOverApp = false
         }
     }
-    /// Encryption was turned on from another device: the sheet closes, and Settings signs in instead.
+    /// Encryption was turned on from another device: the sheet closes, and Settings reconnects instead.
     func signIn() {
         pendingSignIn = true
         presented = false
@@ -258,7 +258,7 @@ final class EncryptionUpgrade: ObservableObject {
             message = "There isn’t enough space to encrypt your journals. Free up \(size) and try again."
         case .accessLost:
             message =
-                "This device no longer has access to \(host). Connect again in Settings > Devices, then try again."
+                "This device no longer has access to \(host). Reconnect in Settings ▸ Sync, then try again."
         case .turnedOnElsewhere:
             turnedOnElsewhere = true
             errorOffersSignIn = true

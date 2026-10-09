@@ -128,6 +128,31 @@ final class SyncHealthTests: XCTestCase {
         }
     }
 
+    /// The device was removed on purpose, so the message says what signing in again needs: a library without a
+    /// password has none, and the way back is a connected device or the server's recovery code. Every state that
+    /// stops sync names the one Reconnect action, never a button that no longer exists.
+    func testRemovedAccessSaysWhatReconnectingNeedsForTheLibrarysMode() {
+        XCTAssertEqual(
+            SyncHealth.accessRemoved.message(),
+            "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need your password or a connected device."
+        )
+        XCTAssertEqual(
+            SyncHealth.accessRemoved.message(hasPassword: false),
+            "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need a connected device or a recovery code."
+        )
+        XCTAssertEqual(
+            SyncHealth.signInNeeded.message(),
+            "The server now uses encryption or was replaced. Reconnect to keep syncing.")
+        for health: SyncHealth in [.signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved] {
+            for hasPassword in [true, false] {
+                let message = health.message(hasPassword: hasPassword)
+                for oldLabel in ["Sign in", "Connect again", "Set up the server again"] {
+                    XCTAssertFalse(message.contains(oldLabel), "“\(message)” names an action that is now Reconnect")
+                }
+            }
+        }
+    }
+
     func testAResetServerIsNotSetUpAndNothingElseIsAsked() async throws {
         let server = HealthServer()
         let store = try library()

@@ -2,23 +2,21 @@ import Foundation
 import JournalCore
 import Network
 
-/// The single action a sync state offers in Settings > Sync and Sync Status
-/// (docs/design/sync-health-and-recovery.md §2).
+/// The single action a sync state offers in Settings ▸ Sync and Sync Status
+/// (docs/design/sync-health-and-recovery.md §2; one Reconnect, docs/design/1-1-conflicts-and-reconnect.md §7).
 enum SyncStatusAction: Equatable {
-    case syncNow, tryAgain, checkAgain, setUpServerAgain, connectAgain, signIn
+    case syncNow, tryAgain, checkAgain, reconnect
 
     var title: String {
         switch self {
         case .syncNow: return "Sync Now"
         case .tryAgain: return "Try Again"
         case .checkAgain: return "Check Again"
-        case .setUpServerAgain: return "Set Up Server Again…"
-        case .connectAgain: return "Connect Again…"
-        case .signIn: return "Sign In…"
+        case .reconnect: return "Reconnect…"
         }
     }
-    /// Opens Connect to a Server at this device's server instead of syncing.
-    var connects: Bool { [.setUpServerAgain, .connectAgain, .signIn].contains(self) }
+    /// Opens Reconnect at this device's server instead of syncing.
+    var connects: Bool { self == .reconnect }
 }
 
 extension AppModel {
@@ -30,11 +28,14 @@ extension AppModel {
         guard let syncHealth else { return .syncNow }
         switch syncHealth.kind {
         case .temporary, .unexpected: return .tryAgain
-        case .needsYou: return .signIn
-        case .serverChanged: return syncHealth == .serverNotSetUp ? .setUpServerAgain : .connectAgain
-        case .noAccess: return .connectAgain
+        case .needsYou, .serverChanged, .noAccess: return .reconnect
         case .updateOrFix: return .checkAgain
         }
+    }
+
+    /// The server doesn't accept this device as it is: Reconnect is the way back, and Devices has nothing to list.
+    var serverRefusesThisDevice: Bool {
+        [.needsYou, .serverChanged, .noAccess].contains(syncHealth?.kind)
     }
 
     /// The person must act, as opposed to waiting while it syncs by itself.
@@ -73,8 +74,8 @@ extension AppModel {
 
     func recordSyncHealth(_ health: SyncHealth?, failure: Error?) {
         if syncHealth != health { syncHealth = health }
-        // Sign In… opens Connect to a Server, which signs in to this device's server straight away; any other state,
-        // or a sync that succeeds, ends that.
+        // Reconnect… opens Reconnect, which signs in to this device's server straight away; any other state, or a sync
+        // that succeeds, ends that.
         let signIn = health == .signInNeeded
         if encryption.turnedOnElsewhere != signIn { encryption.turnedOnElsewhere = signIn }
         syncTiming.retryAfter = (failure as? ServerRateLimited)?.retryAfter
@@ -84,6 +85,11 @@ extension AppModel {
         } else if syncTiming.failingSince == nil {
             syncTiming.failingSince = Date()
         }
+    }
+
+    /// The sync state's message, worded for this library (a library without a password names a recovery code).
+    func syncMessage(of health: SyncHealth) -> String {
+        health.message(host: connectionHost, hasPassword: configuration?.requiresPassword != false)
     }
 
     /// Sync Settings… in Sync Status: Settings at Sync, where the state is explained and fixed.
@@ -107,7 +113,7 @@ extension AppModel {
         if syncLongWait { syncLongWait = false }
     }
 
-    /// Reads how many items wait for the server, for Settings > Sync.
+    /// Reads how many items wait for the server, for Settings ▸ Sync.
     func refreshPendingItems() async {
         var count = 0
         if let store, connection != nil { count = (try? await store.pendingItemCount()) ?? 0 }
@@ -124,19 +130,17 @@ extension AppModel {
         }
     }
 
-    /// Connect to a Server goes straight to this device's server: setting it up again, signing in again, or
-    /// signing in after encryption was turned on elsewhere.
-    var reconnectsOnConnect: Bool {
-        encryption.offersSignIn || [.needsYou, .serverChanged, .noAccess].contains(syncHealth?.kind)
-    }
+    /// Reconnect goes straight to this device's server: after it was set up again, after access was removed or the
+    /// server was restored, or after encryption was turned on elsewhere.
+    var reconnectsOnConnect: Bool { encryption.offersSignIn || serverRefusesThisDevice }
 
-    /// Why the server refuses this device, for Settings > Devices, which learns it outside a sync.
-    func lostAccessHealth() async -> SyncHealth {
+    /// The device list was refused as unauthorised: learns why with a sync, which sets the state Settings ▸ Sync
+    /// explains. Without an answer the device was removed. Devices then has nothing to show.
+    func learnWhyAccessWasRefused() async {
         await sync()
-        guard let syncHealth, [.needsYou, .serverChanged, .noAccess].contains(syncHealth.kind) else {
-            return .accessRemoved
-        }
-        return syncHealth
+        guard !serverRefusesThisDevice else { return }
+        recordSyncHealth(.accessRemoved, failure: nil)
+        syncError = syncMessage(of: .accessRemoved)
     }
 
     /// Stop Syncing… (docs/design/sync-health-and-recovery.md §4.4): this device stops using its server and keeps its

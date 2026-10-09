@@ -1,11 +1,11 @@
 import JournalCore
 import SwiftUI
 
-/// Settings > Privacy > Encryption (docs/design/enable-encryption.md).
+/// Settings ▸ Privacy ▸ Encryption (docs/design/enable-encryption.md).
 struct EncryptionSettingsSection: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var upgrade: EncryptionUpgrade
-    /// Opens Connect to a Server, which signs in to this device's server.
+    /// Opens Reconnect, which signs in to this device's server.
     let signIn: () -> Void
 
     var body: some View {
@@ -17,7 +17,7 @@ struct EncryptionSettingsSection: View {
             if encrypted {
                 ChangePasswordButton()
             } else if upgrade.offersSignIn {
-                Button("Sign In…", action: signIn).disabled(model.locked)
+                Button("Reconnect…", action: signIn).disabled(model.locked)
             } else {
                 Button("Turn On Encryption…") { upgrade.present() }
                     .disabled(model.locked || (model.replacingVault && !upgrade.pausesWriting))
@@ -183,7 +183,7 @@ private struct EncryptionStepView: View {
         if upgrade.synced {
             Section {
                 wrapped(
-                    "On each of your other devices, choose Sign In and enter your master password, or add it from this device."
+                    "On each of your other devices, choose Reconnect and enter your master password, or add it from this device."
                 )
                 Button("Add Another Device…") { addingDevice = true }
             } header: {
@@ -253,7 +253,7 @@ private struct EncryptionStepView: View {
         switch step {
         case nil:
             if upgrade.errorOffersSignIn && upgrade.errorMessage(on: nil) != nil {
-                Button("Sign In…") { upgrade.signIn() }
+                Button("Reconnect…") { upgrade.signIn() }
             } else {
                 Button(upgrade.errorMessage(on: nil) == nil ? "Continue" : "Try Again") { upgrade.continueFromAbout() }
                     .disabled(upgrade.busy)
@@ -339,7 +339,7 @@ struct ConnectionBusyRow: View {
     }
 }
 
-/// The encryption sheet over the app after a relaunch couldn't finish (iPhone and iPad), and Sign In from a sync
+/// The encryption sheet over the app after a relaunch couldn't finish (iPhone and iPad), and Reconnect from a sync
 /// message.
 struct EncryptionPresentation: ViewModifier {
     @ObservedObject var model: AppModel

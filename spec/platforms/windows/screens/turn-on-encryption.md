@@ -28,7 +28,7 @@ Page heading `settings.encryption.title`.
 | Footer | `Caption` text `settings.encryption.pauseFooter` |
 | Checking (syncing only) | A `ProgressRing` and `settings.encryption.checking` |
 | Error | An `InfoBar` (Error) at the end of the step |
-| Buttons | Primary `common.continue`; after an error `common.tryAgain`; when the error is that encryption was turned on from another device `common.signIn`, which leaves this page and opens the Connect task page at signing in. Disabled while working. Cancel `common.cancel` |
+| Buttons | Primary `common.continue`; after an error `common.tryAgain`; when the error is that encryption was turned on from another device `common.reconnect`, which leaves this page and opens the Connect task page at signing in. Disabled while working. Cancel `common.cancel` |
 
 ### Step 2: Choose a master password
 
@@ -82,7 +82,7 @@ Sentence case applies ("Turn on encryption", "Choose a master password", "Your j
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
-| `settings.encryption.done.otherDevices` | On each of your other devices, choose Sign In and enter your master password, or add it from this device. | …select Sign in… | vocabulary, B26 |
+| `settings.encryption.done.otherDevices` | On each of your other devices, choose Reconnect and enter your master password, or add it from this device. | …select Reconnect… | vocabulary, B26 |
 | `messages.writingPaused.encrypting`, `messages.writingPaused.encryptionUnfinished`, `messages.writingPaused.showProgress` | this Mac…, Show Progress | this PC…; Show Progress not offered | vocabulary (platform.md, 12.3) |
 | `messages.encryption.background` | Encryption stopped because My Journal was in the background… | Not shown | removed: Windows desktop apps are not suspended in the background |
 

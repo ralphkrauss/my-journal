@@ -29,7 +29,7 @@
   },
   "common.connectToServer": {
     "text": "Connect to a Server…",
-    "context": "First-launch secondary action; opens the connection flow (flows/connect-to-server). Also: Button in Settings ▸ Sync, Devices and Agent Access when this device isn't connected. Opens Connect to a Server."
+    "context": "First-launch secondary action; opens the connection flow (flows/connect-to-server). Also: Button in Settings ▸ Sync and Agent Access when this device isn't connected. Opens Connect to a Server."
   },
   "common.connecting": {
     "text": "Connecting…",
@@ -49,7 +49,7 @@
   },
   "common.couldntRevokeAccess": {
     "text": "Couldn’t revoke access. Check your connection and try again.",
-    "context": "Detail when revoking failed. Also: Settings ▸ Devices when revoking failed; Try Again retries it."
+    "context": "Detail when revoking failed. Also: Settings ▸ Sync ▸ Devices when revoking failed; Try Again retries it."
   },
   "common.create": {
     "text": "Create",
@@ -196,6 +196,10 @@
     "text": "Recently Deleted",
     "context": "Sidebar row and collection title. Also: Location of a version in Recently Deleted."
   },
+  "common.reconnect": {
+    "text": "Reconnect…",
+    "context": "The single action when the sync state needs the person: the server was reset, restored or replaced, encryption was turned on from another device, or this device’s access was removed. Opens Reconnect at this device’s server, which goes straight to the next step (flows/reconnect-to-server). Used in Settings ▸ Sync, the Sync Status menu, Settings ▸ Privacy ▸ Encryption, Turn On Encryption and Settings ▸ Agent Access."
+  },
   "common.recoveryCode": {
     "text": "Recovery Code",
     "context": "{credential} for a library set up with a one-time recovery code. Also: Recovery code field."
@@ -255,10 +259,6 @@
   "common.showPassword": {
     "text": "Show Password",
     "context": "Password step, toggle that shows both fields as plain text. Also: Switch showing the new password fields as plain text."
-  },
-  "common.signIn": {
-    "text": "Sign In…",
-    "context": "The single action for Needs you: opens Connect to a Server at this device’s server, which signs in straight away. Also: Settings ▸ Privacy button, and Turn On Encryption's primary, after encryption was turned on from another device."
   },
   "common.templateCount": {
     "text": {
@@ -2365,7 +2365,7 @@
     "context": "ServerConnectionError.encryptionOff, shown as is only when finishing a pairing. Checking the address shows messages.connection.encryptionOffOnHost instead."
   },
   "messages.connection.encryptionOffOnHost": {
-    "text": "The journals on this device are encrypted, but {host} doesn’t use encryption. Turn on encryption in Settings > Privacy on a connected device, then try again.",
+    "text": "The journals on this device are encrypted, but {host} doesn’t use encryption. Turn on encryption in Settings ▸ Privacy on a connected device, then try again.",
     "context": "Connect to a Server, checking an address whose server stores journals without encryption while this library is encrypted."
   },
   "messages.connection.finishFailed": {
@@ -2469,7 +2469,7 @@
     "context": "Title of the alert when Delete Journal or Delete Permanently finds changes to review. {name} is the title in curly quotes, shortened in the middle with an ellipsis past 40 characters; a blank title reads common.untitledJournal, library.entryList.untitledTemplate or library.entryList.untitledEntryInAlert."
   },
   "messages.encryption.accessLost": {
-    "text": "This device no longer has access to {host}. Connect again in Settings > Devices, then try again.",
+    "text": "This device no longer has access to {host}. Reconnect in Settings ▸ Sync, then try again.",
     "context": "Turn On Encryption: the server refused this device."
   },
   "messages.encryption.announce.done": {
@@ -2517,8 +2517,8 @@
     "context": "Turn On Encryption: other devices’ changes are still arriving, or the server changed meanwhile."
   },
   "messages.encryption.turnedOnElsewhere": {
-    "text": "Encryption was turned on from another device. Sign in to keep syncing.",
-    "context": "Settings ▸ Privacy ▸ Encryption footer while sign-in is offered, and Turn On Encryption’s error when the server switched to encryption meanwhile. Sync itself says messages.sync.signInNeeded."
+    "text": "Encryption was turned on from another device. Reconnect to keep syncing.",
+    "context": "Settings ▸ Privacy ▸ Encryption footer while Reconnect… is offered, and Turn On Encryption’s error when the server switched to encryption meanwhile. Sync itself says messages.sync.signInNeeded."
   },
   "messages.encryption.unfinished": {
     "text": "Your journals are encrypted on {host}, but this device couldn’t finish. Free up space, then try again.",
@@ -2989,20 +2989,16 @@
     "context": "Setting up a server with a library whose recovery format the server doesn’t list as supported."
   },
   "messages.sync.accessRemoved": {
-    "text": "This device no longer has access to the server. Your journals are still on this device.",
-    "context": "Sync state No access: the same server refuses this device (removed in Devices, or its credential stopped working). Automatic sync stops. Also Settings ▸ Devices’ text when loading devices is refused."
+    "text": "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need your password or a connected device.",
+    "context": "Sync state No access for a library with a password: the same server refuses this device (removed in Settings ▸ Sync ▸ Devices on another device, or its credential stopped working). Automatic sync stops. A library without a password says messages.sync.accessRemovedNoPassword."
+  },
+  "messages.sync.accessRemovedNoPassword": {
+    "text": "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need a connected device or a recovery code.",
+    "context": "Sync state No access for a library without a password (unencrypted libraries in 1.1 have none): the way back is a connected device or the server’s recovery code. Same situation as messages.sync.accessRemoved, worded by the library’s mode."
   },
   "messages.sync.action.checkAgain": {
     "text": "Check Again",
     "context": "The single action for Update or fix needed: runs a full sync now."
-  },
-  "messages.sync.action.connectAgain": {
-    "text": "Connect Again…",
-    "context": "The single action when the server was restored or replaced, or this device lost access: opens Connect to a Server at this device’s server, which goes to sign-in."
-  },
-  "messages.sync.action.setUpServerAgain": {
-    "text": "Set Up Server Again…",
-    "context": "The single action when the server isn’t set up: opens Connect to a Server at this device’s server, which goes to the setup-code step."
   },
   "messages.sync.action.syncNow": {
     "text": "Sync Now",
@@ -3073,7 +3069,7 @@
     "context": "Sync state Update or fix needed (server): the server lacks an endpoint this app needs (404 or 405 on a sync request). Checked again every 5 minutes."
   },
   "messages.sync.signInNeeded": {
-    "text": "The server now uses encryption or was replaced. Sign in to keep syncing.",
+    "text": "The server now uses encryption or was replaced. Reconnect to keep syncing.",
     "context": "Sync state Needs you: this device was refused and the server’s identity changed to an encrypted library while this library isn’t encrypted (encryption turned on from another device, or the server replaced). Automatic sync stops."
   },
   "messages.sync.unavailable": {
@@ -3260,7 +3256,7 @@
     "context": "Accessibility label of the QR code."
   },
   "settings.addDevice.scanInstructions": {
-    "text": "On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings > Sync.",
+    "text": "On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings ▸ Sync.",
     "context": "Instruction under the QR code."
   },
   "settings.addDevice.showNewCode": {
@@ -3437,7 +3433,7 @@
   },
   "settings.agents.connect.noAccess": {
     "text": "This device no longer has access to {host}.",
-    "context": "Agent Access when the server refuses this device; followed by Connect Again…."
+    "context": "Agent Access when the server refuses this device; followed by Reconnect…."
   },
   "settings.agents.connect.notConnected": {
     "text": "To let agents read your journals, connect to a server.",
@@ -3914,7 +3910,7 @@
     "context": "Busy row before the pairing code arrives."
   },
   "settings.connect.addThisDevice.instructions": {
-    "text": "On a connected device, open Settings > Devices > Add Device, then choose Enter Code Instead.",
+    "text": "On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then choose Enter Code Instead.",
     "context": "Instruction under the pairing code."
   },
   "settings.connect.addThisDevice.title": {
@@ -4100,6 +4096,10 @@
     "text": "Server Is Ready",
     "context": "Heading after setting up a server."
   },
+  "settings.connect.reconnect.title": {
+    "text": "Reconnect",
+    "context": "Title of the Connect to a Server sheet when it was opened by Reconnect… (fixed while the sheet is open). Opened by Connect to a Server… the title is settings.connect.title."
+  },
   "settings.connect.recoveryCode.footer": {
     "text": "Ask your server administrator for a one-time recovery code.",
     "context": "Footer under the recovery code field; followed by “Your journals will download to this device.” when nothing is written here."
@@ -4121,7 +4121,7 @@
     "context": "Button on Connect to a Server's first page (iPhone, iPad with a camera scanner)."
   },
   "settings.connect.scanCode.footer": {
-    "text": "On a connected device, open Settings > Devices > Add Device, then scan the code it shows.",
+    "text": "On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then scan the code it shows.",
     "context": "Footer under Scan Code."
   },
   "settings.connect.server": {
@@ -4166,7 +4166,7 @@
   },
   "settings.connect.signIn.introEncrypted": {
     "text": "The server now uses encryption. Enter its master password.",
-    "context": "Sign-in intro after the server started using encryption (Sign In…)."
+    "context": "Sign-in intro after the server started using encryption (Reconnect…)."
   },
   "settings.connect.signIn.introRecoveryKey": {
     "text": "Enter the recovery key you saved when you set up {host}.",
@@ -4186,7 +4186,7 @@
   },
   "settings.connect.title": {
     "text": "Connect to a Server",
-    "context": "Title of the Connect to a Server sheet's first page, and of the Finish on Your Other Device step."
+    "context": "Title of the Connect to a Server sheet's first page when opened by Connect to a Server… (Reconnect… uses settings.connect.reconnect.title), and of the Finish on Your Other Device step."
   },
   "settings.connect.waitingForApproval": {
     "text": "Waiting for approval…",
@@ -4194,7 +4194,7 @@
   },
   "settings.devices.add": {
     "text": "Add Device…",
-    "context": "Button at the end of Settings ▸ Devices; opens Add Device."
+    "context": "Button at the end of Settings ▸ Sync ▸ Devices; opens Add Device."
   },
   "settings.devices.added.accessPassword": {
     "text": "Added with your access password on {when}",
@@ -4230,15 +4230,11 @@
   },
   "settings.devices.error.load": {
     "text": "Couldn’t load devices. Check your connection and try again.",
-    "context": "Settings ▸ Devices when the list can't be read."
+    "context": "Settings ▸ Sync ▸ Devices when the list can't be read."
   },
   "settings.devices.loading": {
     "text": "Loading Devices…",
     "context": "Progress while the device list loads."
-  },
-  "settings.devices.notConnected": {
-    "text": "Connect to a server to add your other devices.",
-    "context": "Settings ▸ Devices when not connected, above Connect to a Server…."
   },
   "settings.devices.revoke": {
     "text": "Revoke Access…",
@@ -4273,7 +4269,7 @@
     "context": "Under the heading of the last step."
   },
   "settings.encryption.done.otherDevices": {
-    "text": "On each of your other devices, choose Sign In and enter your master password, or add it from this device.",
+    "text": "On each of your other devices, choose Reconnect and enter your master password, or add it from this device.",
     "context": "Last step, Your Other Devices, when syncing."
   },
   "settings.encryption.intro": {
@@ -4498,16 +4494,9 @@
     "text": "Backup",
     "context": "Settings row or tab for archives and Markdown export."
   },
-  "settings.pane.devices": {
-    "text": "Devices",
-    "context": "Settings row or tab listing devices on the server."
-  },
   "settings.pane.general": {
-    "text": {
-      "default": "Writing",
-      "mac": "General"
-    },
-    "context": "Settings row (iPhone, iPad) or tab (Mac) for the default journal and Markdown formatting. The Mac tab also holds Erase Journals and Settings, so it's called General there."
+    "text": "General",
+    "context": "Settings row or tab for the default journal and Markdown formatting, on every device. The computer’s tab also holds Erase Journals and Settings…; on phone and tablet that action is its own last section of the list."
   },
   "settings.pane.privacy": {
     "text": "Privacy",
@@ -4738,6 +4727,10 @@
     "text": "Point your camera at the code on your connected device.",
     "context": "Instruction at the bottom of the scanner."
   },
+  "settings.sync.devices.header": {
+    "text": "Devices",
+    "context": "Header of the Devices section of Settings ▸ Sync, the one heading above Add Device… and the device rows. Shown only while connected and the server accepts this device."
+  },
   "settings.sync.footer.formerMacServer": {
     "text": "My Journal no longer runs a server on this Mac, so this Mac stopped syncing. Your journals are saved on this Mac. To sync again, connect to a server.",
     "context": "Mac only: Settings ▸ Sync footer after the server earlier Mac versions ran was removed; followed on a new line by Learn More."
@@ -4751,7 +4744,7 @@
     "context": "Link after the former-Mac-server footer, to the guide's section for people who used Use This Mac."
   },
   "settings.sync.footer.notConnected": {
-    "text": "Your journals are saved on this device.",
+    "text": "Your journals are saved on this device. To sync them with your other devices, connect to a server.",
     "context": "Settings ▸ Sync footer when not connected, followed on a new line by the How to Set Up a Server link."
   },
   "settings.sync.lastSynced": {
@@ -4783,7 +4776,7 @@
     "context": "Confirming button of the Stop Syncing confirmation (not destructive)."
   },
   "settings.sync.stopSyncing.message": {
-    "text": "Your journals stay on this device. To sync again later, choose Connect to a Server in Settings > Sync.",
+    "text": "Your journals stay on this device. To sync again later, choose Connect to a Server in Settings ▸ Sync.",
     "context": "Message of the Stop Syncing confirmation."
   },
   "settings.sync.stopSyncing.messageUnsent": {

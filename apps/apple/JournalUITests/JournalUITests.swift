@@ -208,12 +208,14 @@ final class JournalUITests: XCTestCase {
             (app.textViews["Entry text"].value as? String ?? "").contains("Arrived privately from the other device."))
         let devices = try await owner.devices()
         XCTAssertEqual(devices.filter { !$0.revoked }.count, 2)
-        // Settings ▸ Devices says how each device was added, without identifiers.
+        // Settings ▸ Sync ▸ Devices says how each device was added, without identifiers.
         NavigationTestSupport.openSettings(app)
-        app.buttons["Devices"].tap()
+        app.buttons["Sync"].tap()
         func row(_ text: String) -> XCUIElement {
             app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
         }
+        // The Devices section sits below Server, so a phone scrolls to it.
+        for _ in 0..<6 where !row("Fixture Mac").exists { app.swipeUp() }
         XCTAssertTrue(row("Fixture Mac").waitToAppear(timeout: 10))
         XCTAssertTrue(row("This Device").exists)
         XCTAssertFalse(row(" · ").exists, "Device identifiers appear only to tell identical rows apart.")

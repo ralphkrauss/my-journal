@@ -73,9 +73,9 @@ The messages and actions are the spec's table; this adds the Windows severity an
 | Key | Severity | Page | Flyout |
 | --- | --- | --- | --- |
 | `messages.sync.offline`, `messages.sync.unreachable`, `messages.sync.unreachableTailscale`, `messages.sync.unavailable` | Informational | Always; action `common.tryAgain` | Only after the long wait |
-| `messages.sync.signInNeeded` | Warning | Action `common.signIn` | Yes |
-| `messages.sync.serverNotSetUp` | Warning | Action `messages.sync.action.setUpServerAgain` | Yes |
-| `messages.sync.serverReplaced`, `messages.sync.accessRemoved` | Warning | Action `messages.sync.action.connectAgain`; also the Devices page | Yes |
+| `messages.sync.signInNeeded` | Warning | Action `common.reconnect` | Yes |
+| `messages.sync.serverNotSetUp` | Warning | Action `common.reconnect` | Yes |
+| `messages.sync.serverReplaced`, `messages.sync.accessRemoved`, `messages.sync.accessRemovedNoPassword` | Warning | Action `common.reconnect` | Yes |
 | `messages.sync.appUpdateNeeded`, `messages.sync.serverUpdateNeeded`, `messages.sync.certificateInvalid`, `messages.sync.notJournalServer` | Warning | Action `messages.sync.action.checkAgain`; the app-update message adds a "Get updates" link (D51) | Yes |
 | `messages.sync.localDataUnreadable` | Error | Action `common.tryAgain` | Yes |
 | `messages.sync.unexpected` | Warning | Action `common.tryAgain` | Yes |

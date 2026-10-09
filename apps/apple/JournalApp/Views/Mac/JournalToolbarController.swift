@@ -7,7 +7,7 @@
         /// What Sync Status shows when the person must act (sync-health-and-recovery.md §4.2).
         struct SyncStatus: Equatable {
             let message: String
-            /// The sync state's single action, such as Try Again or Connect Again… (sync-health-and-recovery.md).
+            /// The sync state's single action, such as Try Again or Reconnect… (sync-health-and-recovery.md).
             let action: String
         }
 

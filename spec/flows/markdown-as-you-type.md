@@ -19,7 +19,7 @@ Let people who know Markdown format while typing, as in Notes, Bear and Google D
 
 ## Start
 
-Typing in the body, in preview (not source view), with **Format Markdown as You Type** on (Settings ▸ Writing on the phone and tablet, Settings ▸ General on the computer; on by default; specified in `screens/settings-general.md`).
+Typing in the body, in preview (not source view), with **Format Markdown as You Type** on (Settings ▸ General; on by default; specified in `screens/settings-general.md`).
 
 ## Steps
 

@@ -2,7 +2,7 @@ import JournalCore
 import SwiftUI
 
 /// "Change Password…" for libraries protected by a master password; renders nothing otherwise.
-/// Intended as a row in Settings > Privacy > Encryption.
+/// Intended as a row in Settings ▸ Privacy ▸ Encryption.
 struct ChangePasswordButton: View {
     @EnvironmentObject private var model: AppModel
     @State private var presented = false

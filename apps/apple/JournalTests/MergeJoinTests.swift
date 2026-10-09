@@ -123,7 +123,7 @@ final class MergeJoinTests: XCTestCase {
         XCTAssertTrue(flow.path.isEmpty)
         XCTAssertEqual(
             flow.errorMessage(on: nil),
-            "The journals on this device are encrypted, but \(flow.host) doesn’t use encryption. Turn on encryption in Settings > Privacy on a connected device, then try again."
+            "The journals on this device are encrypted, but \(flow.host) doesn’t use encryption. Turn on encryption in Settings ▸ Privacy on a connected device, then try again."
         )
         XCTAssertEqual(pairingRequests(server), 0)
         flow.close()

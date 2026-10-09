@@ -263,7 +263,7 @@ extension AppModel {
 }
 
 /// When this device last synchronized completely with its server, and whether a sync the person started runs, for
-/// Settings > Sync (docs/design/sync-now-and-done.md). Kept apart from AppModel, so the time every automatic sync
+/// Settings ▸ Sync (docs/design/sync-now-and-done.md). Kept apart from AppModel, so the time every automatic sync
 /// records redraws only what shows it. The time is stored per library and connection, written at most once a minute
 /// and when the app leaves the screen, and forgotten when the library connects to another server.
 @MainActor final class SyncActivity: ObservableObject {

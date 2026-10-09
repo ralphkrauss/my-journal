@@ -177,23 +177,23 @@ Every command in Settings and the flows it opens. Commands that live on other su
 
 | id | Name (copy key) | Enabled when | What it does |
 | --- | --- | --- | --- |
-| `settings-open-pane` | `settings.pane.*` | always | Shows Writing/General, Sync, Devices, Privacy, Backup or Agent Access. |
+| `settings-open-pane` | `settings.pane.*` | always | Shows General, Sync, Privacy, Backup or Agent Access. |
 | `settings-done` | `common.done` | always | Closes Settings. |
 
-### Writing / General
+### General
 
 | id | Name (copy key) | Location | Enabled when | What it does |
 | --- | --- | --- | --- | --- |
-| `choose-default-journal` | `settings.general.defaultJournal` | Settings ▸ Writing/General | at least one journal | Sets where New Entry files entries outside a journal. |
-| `toggle-format-as-you-type` | `settings.general.formatAsYouType` | Settings ▸ Writing/General | always | Turns Markdown shortcuts at line starts on or off. |
+| `choose-default-journal` | `settings.general.defaultJournal` | Settings ▸ General | at least one journal | Sets where New Entry files entries outside a journal. |
+| `toggle-format-as-you-type` | `settings.general.formatAsYouType` | Settings ▸ General | always | Turns Markdown shortcuts at line starts on or off. |
 
 ### Sync
 
 | id | Name (copy key) | Location | Enabled when | What it does |
 | --- | --- | --- | --- | --- |
-| `connect-to-server` | `common.connectToServer` | Settings ▸ Sync, Devices, Agent Access (not connected); first-launch screen | unlocked | Opens Connect to a Server (`flows/connect-to-server`). |
+| `connect-to-server` | `common.connectToServer` | Settings ▸ Sync, Agent Access (not connected); first-launch screen | unlocked | Opens Connect to a Server (`flows/connect-to-server`). |
 | `sync-now` | `messages.sync.action.syncNow` / `common.tryAgain` / `messages.sync.action.checkAgain` | Settings ▸ Sync | connected, unlocked, not replacing the journals, no failed save, no sync the person started running | Syncs once, resending refused items; announces the result. |
-| `sync-reconnect` | `messages.sync.action.setUpServerAgain` / `messages.sync.action.connectAgain` / `common.signIn` | Settings ▸ Sync; Settings ▸ Devices (access refused); Settings ▸ Privacy (Sign In…); Settings ▸ Agent Access (no access) | the sync state calls for it | Opens Connect to a Server at this server's next step (`flows/reconnect-to-server`). |
+| `sync-reconnect` | `common.reconnect` | Settings ▸ Sync (the Server section); Sync Status; Settings ▸ Privacy; Settings ▸ Agent Access (no access) | the sync state calls for it | Opens Reconnect at this server's next step (`flows/reconnect-to-server`). |
 | `stop-syncing` | `settings.sync.stopSyncing` | Settings ▸ Sync | connected, not replacing the journals | Confirmation, then `flows/stop-syncing`. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` (both footers) | Settings ▸ Sync footer; Set Up Server footer | always | Opens the sync guide. |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Settings ▸ Sync footer (computer only) | after the former Mac server stopped | Opens the guide's section for people who used Use This Mac. |
@@ -217,13 +217,13 @@ Every command in Settings and the flows it opens. Commands that live on other su
 | `connect-retry` | `common.tryAgain` / `settings.connect.scanAgain` | after a failure | Tries the same step again, or scans a new code. |
 | `connect-cancel` | `common.cancel` | not installing | Stops, withdraws requests, gives up unused access, closes. |
 | `connect-done` | `common.done` | Server Is Ready | Closes. |
-| `show-connection` | `messages.writingPaused.showConnection` | computer, while connecting from Settings | Brings Settings and the sheet forward. |
+| `show-connection` | `messages.writingPaused.showConnection` | computer, while connecting from Settings | Opens Settings at Sync and brings the sheet forward. |
 
-### Devices
+### Devices (a section of Settings ▸ Sync)
 
 | id | Name (copy key) | Enabled when | What it does |
 | --- | --- | --- | --- |
-| `add-device` | `settings.devices.add`; `settings.connect.ready.addDevice` | connected, devices loaded, access not refused | Opens Add Device (`flows/pair-device`). |
+| `add-device` | `settings.devices.add`; `settings.connect.ready.addDevice` | connected, devices loaded, not busy; the Devices section is absent while access is refused | Opens Add Device (`flows/pair-device`). |
 | `revoke-device` | `settings.devices.revoke` | another device; not busy | Confirmation, then revokes. |
 | `devices-try-again` | `common.tryAgain` | after a load or revoke error | Retries. |
 | `add-device-enter-code` | `settings.addDevice.enterCodeInstead` | showing a code | Switches to typing the new device's code. |

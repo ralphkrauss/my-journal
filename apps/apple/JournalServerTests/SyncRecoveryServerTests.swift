@@ -28,25 +28,25 @@
             }
         }
 
-        func testConnectAgainAfterARemovalJoinsByIdentity() async throws {
+        func testReconnectAfterARemovalJoinsByIdentity() async throws {
             let (server, model) = try await connectedLibrary()
             try await removeDevices(except: nil, server: server)
             try await write("After removal", model)
             await model.syncNow()
             XCTAssertEqual(model.syncHealth, .accessRemoved)
-            XCTAssertEqual(model.syncStatusAction, .connectAgain)
+            XCTAssertEqual(model.syncStatusAction, .reconnect)
 
             try await model.recoverServer(address: server.address, phrase: password, uploadLocal: true)
             try expectSyncing(model)
             try await expectOnce(["Before", "After removal"], server: server, password: password)
         }
 
-        func testSetUpServerAgainAfterAReset() async throws {
+        func testReconnectAfterAReset() async throws {
             let (server, model) = try await connectedLibrary()
             try await server.wipe()
             await model.syncNow()
             XCTAssertEqual(model.syncHealth, .serverNotSetUp)
-            XCTAssertEqual(model.syncStatusAction, .setUpServerAgain)
+            XCTAssertEqual(model.syncStatusAction, .reconnect)
             XCTAssertTrue(model.automaticSyncStopped)
 
             try await model.initializeServer(
@@ -55,7 +55,7 @@
             try await expectOnce(["Before"], server: server, password: password)
         }
 
-        func testConnectAgainAfterARestoreSendsWhatTheBackupLacks() async throws {
+        func testReconnectAfterARestoreSendsWhatTheBackupLacks() async throws {
             let (server, model) = try await connectedLibrary()
             let backup = server.root.appendingPathComponent("backup")
             try server.run("--backup", backup.path)
@@ -65,7 +65,7 @@
             try await server.restore(backup)
             await model.syncNow()
             XCTAssertEqual(model.syncHealth, .serverReplaced)
-            XCTAssertEqual(model.syncStatusAction, .connectAgain)
+            XCTAssertEqual(model.syncStatusAction, .reconnect)
 
             try await model.recoverServer(address: server.address, phrase: password, uploadLocal: true)
             try expectSyncing(model)
@@ -78,7 +78,7 @@
             try await setUpAnotherLibrary(server, encrypted: true)
             await model.syncNow()
             XCTAssertEqual(model.syncHealth, .serverReplaced)
-            XCTAssertEqual(model.syncStatusAction, .connectAgain)
+            XCTAssertEqual(model.syncStatusAction, .reconnect)
             let connection = model.connection
 
             do {
@@ -124,7 +124,7 @@
             try await setUpAnotherLibrary(server, encrypted: true)
             await model.syncNow()
             XCTAssertEqual(model.syncHealth, .signInNeeded)
-            XCTAssertEqual(model.syncStatusAction, .signIn)
+            XCTAssertEqual(model.syncStatusAction, .reconnect)
 
             do {
                 try await model.recoverServer(address: server.address, phrase: otherPassword, uploadLocal: true)

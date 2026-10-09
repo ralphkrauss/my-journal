@@ -36,7 +36,7 @@ There is no keyboard shortcut and no menu bar command.
 A menu, in this order:
 
 1. **The state's message**, as non-interactive text: the sync message (`messages.sync.*`, see the table in Rules), or an item-level message (`messages.sync.recordTooLarge`, `messages.sync.recordRefused`, `messages.sync.imageTooLarge`, `messages.sync.imageRefused`). When no message is held, `messages.sync.waiting` (see Open questions).
-2. **The state's single action** (one of `messages.sync.action.syncNow`, `common.tryAgain`, `messages.sync.action.checkAgain`, `messages.sync.action.setUpServerAgain`, `messages.sync.action.connectAgain`, `common.signIn`).
+2. **The state's single action** (one of `messages.sync.action.syncNow`, `common.tryAgain`, `messages.sync.action.checkAgain`, `common.reconnect`).
 3. **Sync Settings…** (`messages.syncStatus.settings`).
 
 The control's label, help tag and accessibility label are `messages.syncStatus.title`. Its symbol is always a cloud with an exclamation mark; the plain cloud is never used.
@@ -46,7 +46,7 @@ The control's label, help tag and accessibility label are `messages.syncStatus.t
 | Action | What it does | Afterwards |
 | --- | --- | --- |
 | Sync Now, Try Again, Check Again | Runs one full sync now (the same as Sync Now in Settings ▸ Sync): it reads the server's status, this device's access and identity first, and resends records and images the server refused before. | Sync Status stays as it is until the sync finishes, then shows or hides by the rule below. VoiceOver announces the result (see Accessibility). |
-| Set Up Server Again…, Connect Again…, Sign In… | Opens Connect to a Server over the journal window, at this device's server, and checks it at once. See [flows/sync-recovery.md](../flows/sync-recovery.md). | When the connection succeeds, the state is cleared and Sync Status hides. |
+| Reconnect… | Opens Reconnect over the journal window, at this device's server, and checks it at once. See [flows/sync-recovery.md](../flows/sync-recovery.md) and [flows/reconnect-to-server.md](../flows/reconnect-to-server.md). | When the connection succeeds, the state is cleared and Sync Status hides. |
 | Sync Settings… | Opens Settings at Sync. Mac: the Settings window, on its Sync tab. iPhone and iPad: Settings, pushed to Sync. | |
 
 The action is chosen from the current state alone, so it always follows the latest sync.
@@ -61,10 +61,10 @@ The action is chosen from the current state alone, so it always follows the late
 | Syncing normally, with or without changes waiting | no | | |
 | Temporary: offline, can't reach, server busy, this device's data busy | no, unless the long wait applies | `messages.sync.offline`, `messages.sync.unreachable` (or `messages.sync.unreachableTailscale` for a `.ts.net` host), `messages.sync.unavailable`, `messages.sync.localDataUnavailable` | `common.tryAgain` |
 | Long wait: the last sync failed, changes are waiting, and more than 24 hours passed since Last Synced (or since the first failure when this connection never synced) | yes, in any state | the state's own message | the state's action |
-| Needs you (sign-in needed) | yes | `messages.sync.signInNeeded` | `common.signIn` |
-| Server changed: not set up | yes | `messages.sync.serverNotSetUp` | `messages.sync.action.setUpServerAgain` |
-| Server changed: restored or replaced | yes | `messages.sync.serverReplaced` | `messages.sync.action.connectAgain` |
-| No access | yes | `messages.sync.accessRemoved` | `messages.sync.action.connectAgain` |
+| Needs you (sign-in needed) | yes | `messages.sync.signInNeeded` | `common.reconnect` |
+| Server changed: not set up | yes | `messages.sync.serverNotSetUp` | `common.reconnect` |
+| Server changed: restored or replaced | yes | `messages.sync.serverReplaced` | `common.reconnect` |
+| No access | yes | `messages.sync.accessRemoved` (`messages.sync.accessRemovedNoPassword` for a library without a password) | `common.reconnect` |
 | Update or fix needed | yes | `messages.sync.appUpdateNeeded`, `messages.sync.serverUpdateNeeded`, `messages.sync.certificateInvalid`, `messages.sync.notJournalServer` | `messages.sync.action.checkAgain` |
 | Unexpected | yes | `messages.sync.unexpected`, or `messages.sync.localDataUnreadable` for this device's own data when it is damaged | `common.tryAgain` |
 | One record or image refused, everything else synced | yes | the item-level message | `messages.sync.action.syncNow` |

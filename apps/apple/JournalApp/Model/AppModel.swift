@@ -5,7 +5,7 @@ import LocalAuthentication
 import SwiftUI
 import os
 
-enum AppSettingsTab: Hashable { case general, sync, devices, privacy, backup, agents }
+enum AppSettingsTab: Hashable { case general, sync, privacy, backup, agents }
 
 /// Why writing is paused for a server connection: it is being set up, or a failed one waits for Try Again.
 enum ServerConnectionPause: Equatable { case connecting, waitingForRetry }
@@ -726,7 +726,7 @@ final class AppModel: ObservableObject {
         // Views update only when what they show changes; most synchronizations change nothing.
         let health = failure.map(SyncHealth.init(classifying:))
         recordSyncHealth(health, failure: failure)
-        let problem = health.map { $0.message(host: connectionHost) } ?? report?.problem
+        let problem = health.map(syncMessage(of:)) ?? report?.problem
         if syncError != problem { syncError = problem }
         if syncFailed != (failure != nil) { syncFailed = failure != nil }
         updateSyncLongWait()

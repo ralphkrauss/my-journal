@@ -32,9 +32,9 @@ Moves journals without encryption to encryption with a master password, on this 
    4. An encrypted copy of the journals is made, keeping every identity (`settings.encryption.progress`, with progress). Writing is paused from here.
    5. When syncing: the server switches to the encrypted copy (`settings.encryption.updatingServer`, announced; can't be cancelled). If another device wrote meanwhile, the copy is made again once; a second time stops with `messages.encryption.stillSyncing`.
    6. This device opens the encrypted copy; writing resumes.
-3. **Your Journals Are Encrypted** (announced `messages.encryption.announce.done`). When syncing, it explains that other devices sign in, and offers Add Another Device….
+3. **Your Journals Are Encrypted** (announced `messages.encryption.announce.done`). When syncing, it explains that other devices reconnect with the master password, and offers Add Another Device….
 
-After success, other devices see `messages.sync.signInNeeded` and use Sign In… (`flows/reconnect-to-server`). Agents with access on the server lose it.
+After success, other devices see `messages.sync.signInNeeded` and use Reconnect… (`flows/reconnect-to-server`). Agents with access on the server lose it.
 
 ## Errors
 
@@ -46,8 +46,8 @@ After success, other devices see `messages.sync.signInNeeded` and use Sign In…
 | Couldn't reach the server, on step 2 | `messages.encryption.unreachable` ("Couldn’t reach {host}. Encryption wasn’t turned on. Check your connection and try again.") | Step 2 | Try Again. |
 | Server too old | `messages.encryption.serverOutdated` ("{Host} needs an update before you can turn on encryption.", host capitalised) | Current step | — |
 | Not enough space | `messages.encryption.notEnoughSpace` ("There isn’t enough space to encrypt your journals. Free up {size} and try again.") | Current step | Try Again. |
-| This device lost access | `messages.encryption.accessLost` ("This device no longer has access to {host}. Connect again in Settings > Devices, then try again.") | Current step | — |
-| Encryption was already turned on from another device | `messages.encryption.turnedOnElsewhere` | Current step | Primary becomes Sign In…; Settings ▸ Privacy then offers Sign In…. |
+| This device lost access | `messages.encryption.accessLost` ("This device no longer has access to {host}. Reconnect in Settings ▸ Sync, then try again.") | Current step | — |
+| Encryption was already turned on from another device | `messages.encryption.turnedOnElsewhere` | Current step | Primary becomes Reconnect…; Settings ▸ Privacy then offers Reconnect…. |
 | Other devices still writing | `messages.encryption.stillSyncing` ("Your other devices are still syncing. Wait for them to finish, then try again.") | Current step | Try Again. |
 | Images not downloaded | `messages.encryption.imagesMissing` | Current step | Try Again after a moment. |
 | Server switched, this device couldn't finish | `messages.encryption.unfinished` ("Your journals are encrypted on {host}, but this device couldn’t finish. Free up space, then try again.") | Step 2, unfinished | Only Try Again; writing stays paused; at the next launch it finishes or shows this again (phone/tablet: the sheet over the app; computer: Settings ▸ Privacy). |

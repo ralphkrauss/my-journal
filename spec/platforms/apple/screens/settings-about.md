@@ -23,7 +23,7 @@ The same five destinations are reached two ways. iPhone and iPad list four of th
 
 ## Controls
 
-**Settings ▸ About (iPhone and iPad only).** `AboutSection`, declared inside `#if os(iOS)` in `Views/AboutLinks.swift` and placed by `SettingsView` between the six pane rows and the Erase section.
+**Settings ▸ About (iPhone and iPad only).** `AboutSection`, declared inside `#if os(iOS)` in `Views/AboutLinks.swift` and placed by `SettingsView` between the five pane rows and the Erase section.
 - A `Section` with header `settings.about.header`.
 - Four `Link` rows in the order of `AboutLink.settingsRows`: `common.privacyPolicy`, `settings.about.support`, `settings.about.sourceCode`, `common.rateMyJournal`. A row is built only when its `URL` is non-nil. Each `Link(title, destination:)` opens the address with the system (the browser, or the App Store for the review page); the rows are tint-coloured text with no chevron (screenshot).
 - Section footer: the version, a `Text` with `.textSelection(.enabled)` and `.accessibilityLabel(...)`. `AboutLink.version` reads `CFBundleShortVersionString` and `CFBundleVersion` from the main bundle and gives `settings.about.version` ("Version 1.0 (1)"), or `settings.about.versionWithoutBuild` when there is no build number; the spoken form is `settings.about.version.spoken`.
@@ -42,7 +42,7 @@ The same five destinations are reached two ways. iPhone and iPad list four of th
 
 ## Layout
 
-- **iPhone.** The About section is the second section of the Settings list, below the six pane rows and above the red Erase section, with the version under it (screenshot).
+- **iPhone.** The About section is the second section of the Settings list, below the five pane rows and above the red Erase section, with the version under it (screenshot).
 - **iPad.** The same section in the Settings sheet; the sheet is shorter than the list, so the section is partly cut off at the bottom in the capture and scrolls.
 - **Mac.** No section. The Help menu is the last menu in the menu bar; the Mac's About My Journal window (the standard About panel from the application menu) shows the version.
 - Dynamic Type: standard row and footer wrapping; the version footer wraps.

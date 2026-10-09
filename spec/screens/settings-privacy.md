@@ -22,7 +22,7 @@ sources:
 
 ## Purpose
 
-Shows whether the journals are encrypted and offers the next step (turn it on, change the password, or sign in after it was turned on elsewhere), and controls App Lock.
+Shows whether the journals are encrypted and offers the next step (turn it on, change the password, or reconnect after it was turned on elsewhere), and controls App Lock.
 
 ## Entry points
 
@@ -40,11 +40,11 @@ Header `settings.privacy.encryption.header`.
 1. A status line: `settings.privacy.encryption.on` ("Your Journals Are Encrypted") or `settings.privacy.encryption.off` ("Encryption Is Off").
 2. One action, the first that applies:
    - encrypted, with a master password: `settings.privacy.changePassword` ("Change Password…") → `screens/change-password`. Encrypted libraries from early versions (recovery key) show no action.
-   - not encrypted, and the server's journals are now encrypted (encryption was turned on from another device): `common.signIn` ("Sign In…") → Connect to a Server, straight to signing in (`flows/reconnect-to-server`).
+   - not encrypted, and the server's journals are now encrypted (encryption was turned on from another device): `common.reconnect` ("Reconnect…") → Reconnect, straight to signing in (`flows/reconnect-to-server`).
    - not encrypted: `settings.privacy.encryption.turnOn` ("Turn On Encryption…") → `screens/turn-on-encryption`.
 3. Footer:
    - encrypted: `settings.privacy.encryption.footerOn` ("Keep your {credential} somewhere safe. It can’t be recovered."), with the credential's name in lower case (master password, recovery key);
-   - sign in offered: `messages.encryption.turnedOnElsewhere`;
+   - Reconnect… offered: `messages.encryption.turnedOnElsewhere`;
    - not encrypted: `common.unencryptedWarning`.
 
 ### 2. App Lock section
@@ -71,7 +71,7 @@ Header `settings.privacy.appLock.header`.
 | --- | --- | --- | --- |
 | Turn On Encryption… | `turn-on-encryption` | Unlocked, and not while the journals are being replaced (except to show a run in progress) | Opens Turn On Encryption (`flows/turn-on-encryption`). |
 | Change Password… | `change-password` | Unlocked | Opens Change Password (`flows/change-password`). |
-| Sign In… | `sync-reconnect` | Unlocked | Opens Connect to a Server at signing in. |
+| Reconnect… | `sync-reconnect` | Unlocked | Opens Reconnect at signing in. |
 | Require {method} | `toggle-app-lock` | Not while the system is asking; turning on needs authentication to be available; turning off is always possible | Asks for authentication, then saves (`flows/app-lock`). |
 | Lock when inactive (computer) | `set-inactivity-lock` | App Lock on; not while the system is asking | A shorter time saves at once; a longer time or Never asks for authentication first. |
 | Lock My Journal | `lock-my-journal` | App Lock on | Saves what's open, locks, and closes Settings. |

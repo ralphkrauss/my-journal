@@ -16,8 +16,8 @@ The first apps are for iPhone, iPad and Mac. This guide uses the names of menus 
 
 ## Where to find Settings
 
-- **Mac:** My Journal > Settings… (⌘,). The tabs are General, Sync, Devices, Privacy, Backup and Agent Access. **Erase Journals and Settings…** is at the end of General.
-- **iPhone and iPad:** tap Settings (the gear) in Journals. The sections are Writing, Sync, Devices, Privacy, Backup and Agent Access, with **Erase Journals and Settings…** at the end.
+- **Mac:** My Journal > Settings… (⌘,). The tabs are General, Sync (which lists your devices), Privacy, Backup and Agent Access. **Erase Journals and Settings…** is at the end of General.
+- **iPhone and iPad:** tap Settings (the gear) in Journals. The sections are General, Sync (which lists your devices), Privacy, Backup and Agent Access, with **Erase Journals and Settings…** at the end.
 
 ## More help
 

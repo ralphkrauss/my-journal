@@ -20,6 +20,7 @@ sources:
   - docs/design/erase-device-2026-10-04.md
   - docs/design/about-and-ratings-2026-10-05.md
   - docs/design/client-only-mac-lists-markdown-2026-10-05.md
+  - docs/design/1-1-settings-messages-editor.md
 screenshots:
   - screenshots/iphone/settings-default.png
   - screenshots/iphone/settings-default-dark.png
@@ -29,9 +30,9 @@ screenshots:
 
 # Settings (Apple)
 
-Neutral spec: [screens/settings.md](../../../screens/settings.md). Conventions: [platform.md](../platform.md#10-settings). This page is the container; each pane has its own page: `settings-general`, `settings-sync`, `settings-devices`, `settings-privacy`, `settings-backup`, `settings-agent-access`, plus `settings-about` and `settings-erase`.
+Neutral spec: [screens/settings.md](../../../screens/settings.md). Conventions: [platform.md](../platform.md#10-settings). This page is the container; each pane has its own page: `settings-general`, `settings-sync` (with its Devices section, `settings-devices`), `settings-privacy`, `settings-backup`, `settings-agent-access`, plus `settings-about` and `settings-erase`.
 
-The two shells are different controls, not one layout at two sizes. iPhone and iPad show a sheet with a navigation list (Writing, Sync, Devices, Privacy, Backup, Agent Access, then the About and Erase sections). The Mac shows a separate Settings window with six tabs (General, Sync, Devices, Privacy, Backup, Agent Access); its General tab holds the default journal, the Markdown switch and the Erase button, and it has no About section and no Done button. One SwiftUI view, `SettingsView`, builds both, switching on `#if os(macOS)`.
+The two shells are different controls, not one layout at two sizes. iPhone and iPad show a sheet with a navigation list (General, Sync, Privacy, Backup, Agent Access, then the About and Erase sections). The Mac shows a separate Settings window with five tabs (General, Sync, Privacy, Backup, Agent Access), in the same order; its General tab holds the default journal, the Markdown switch and the Erase button, and it has no About section and no Done button. One SwiftUI view, `SettingsView`, builds both, switching on `#if os(macOS)`.
 
 ## Controls
 
@@ -44,7 +45,7 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 
 **iPhone and iPad shell.**
 - `NavigationStack(path: $panes)` with a `List` as root. `panes` is `[AppSettingsTab]`; a requested pane is pushed by setting it. The navigation title is `settings.title`, `.navigationBarTitleDisplayMode(.inline)`. The sheet is `.sheet(isPresented: $model.settingsPresented) { SettingsView() }` on `RootView`.
-- Section 1: six `NavigationLink(value: tab)` rows, each a `Label` with an SF Symbol: Writing `square.and.pencil` (`settings.pane.general`), Sync `arrow.triangle.2.circlepath` (`settings.pane.sync`), Devices `laptopcomputer.and.iphone` (`settings.pane.devices`), Privacy `hand.raised` (`settings.pane.privacy`), Backup `externaldrive` (`settings.pane.backup`), Agent Access `person.badge.key` (`settings.pane.agents`). The pushed pane's inline title is the same word (`navigationDestination(for:)` with `.navigationTitle`).
+- Section 1: five `NavigationLink(value: tab)` rows, each a `Label` with an SF Symbol: General `gearshape` (`settings.pane.general`), Sync `arrow.triangle.2.circlepath` (`settings.pane.sync`), Privacy `hand.raised` (`settings.pane.privacy`), Backup `externaldrive` (`settings.pane.backup`), Agent Access `person.badge.key` (`settings.pane.agents`). The pushed pane's inline title is the same word (`navigationDestination(for:)` with `.navigationTitle`).
 - Section 2: `AboutSection` (iOS only): see `settings-about`.
 - Section 3: `EraseSection`, a section of its own: see `settings-erase`.
 - Toolbar: one `ToolbarItem(placement: .confirmationAction)` `Button("Done")` (`common.done`, command `settings-done`) calling `dismiss()`.
@@ -52,11 +53,11 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 
 **Mac shell.**
 - A `Settings { SettingsView().environmentObject(model) }` scene in `JournalApp.swift`. The system supplies the My Journal ▸ Settings… item and ⌘, (`open-settings`).
-- `TabView(selection: $model.settingsTab)` whose children carry `.tabItem { Label(title, systemImage:) }`: General `gearshape`, Sync, Devices, Privacy, Backup and Agent Access with the same symbols as the iPhone list. The window title is the selected tab's name (standard Settings scene behaviour). Tab titles are the English words in the view; `settings.pane.general` has the `mac` variant "General".
-- Opening it from code (Sync Status, Show Progress): `SettingsPresenter` (a zero-size `Color.clear` in the journal window's `.background`) watches `model.settingsPresented`, calls `openSettings()` (the `\.openSettings` environment action, macOS 14 and later) and resets the flag; `showSettingsWindow:` is the fallback below macOS 14. The tab to show is set first: `openSyncSettings()` sets `settingsTab = .sync`; `EncryptionUpgrade.showProgress()` sets `.privacy` and presents the Turn On Encryption sheet.
+- `TabView(selection: $model.settingsTab)` whose children carry `.tabItem { Label(title, systemImage:) }`: General `gearshape`, Sync, Privacy, Backup and Agent Access with the same symbols as the iPhone list. The window title is the selected tab's name (standard Settings scene behaviour). Tab titles are the English words in the view.
+- Opening it from code (Sync Status, Show Progress): `SettingsPresenter` (a zero-size `Color.clear` in the journal window's `.background`) watches `model.settingsPresented`, calls `openSettings()` (the `\.openSettings` environment action, macOS 14 and later) and resets the flag; `showSettingsWindow:` is the fallback below macOS 14. The tab to show is set first: `openSyncSettings()` sets `settingsTab = .sync`; the journal window's "Show Connection" notice (`Views/SaveFailureNotice.swift`) sets `.sync`, where the Connect to a Server sheet it brings forward belongs; `EncryptionUpgrade.showProgress()` sets `.privacy` and presents the Turn On Encryption sheet.
 - `model.settingsTab` is an `AppModel` property, so the window reopens on the last selected tab for the life of the process. Its initial value is `.general`.
 
-**Sheets owned by the Settings view on both platforms:** `.sheet(item: $connect) { ConnectionView() }` (Connect to a Server, opened by the Sync, Devices, Privacy and Agent Access panes) and `.sheet(item: $reviewingConflict) { ConflictReview }`. Locking sets `reviewingConflict` to nil.
+**Sheets owned by the Settings view on both platforms:** `.sheet(item: $connect, onDismiss:) { ConnectionView() }` (Connect to a Server and Reconnect, opened by the Sync and Privacy panes; its `onDismiss` raises `devicesReload`, which makes the Devices section read its list again; Agent Access has its own sheet) and `.sheet(item: $reviewingConflict) { ConflictReview }`. Locking sets `reviewingConflict` to nil.
 
 **States.**
 - Empty: no pane has an empty state of its own here; the Privacy pane builds nothing when `model.configuration` is nil (just after Erase, while Settings closes).
@@ -68,7 +69,7 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 
 - **iPhone (compact width).** The sheet is the system's page sheet covering the screen below the status area; the list is a single column of grouped rows. The entry point is a toolbar button at the top left of the Journals screen (`CompactJournalNavigation`, `ToolbarItem(placement: .topBarLeading)`, `Label("Settings", systemImage: "gearshape")`). The Erase section is below the fold; scroll to reach it.
 - **iPad (regular width).** The same sheet, drawn by the system as a centred form sheet (about 580 by 650 points in the capture) over the three-column library. The entry is the last row of the journals sidebar (`JournalSidebarView`, `#if os(iOS)`, a `Button` with `Label("Settings", systemImage: "gearshape")`). While the sidebar is in edit mode that row is replaced by a dimmed, disabled `Label`. In the capture the About section is cut off at the sheet's bottom edge: the list scrolls. In compact width on iPad (Slide Over, narrow Stage Manager window) or at accessibility Dynamic Type sizes, `RootView.usesStackedNavigation` is true and the entry point is the iPhone's top-left button instead. How the system sizes the sheet in those widths is system behaviour and was not captured.
-- **Mac.** A window titled by the selected tab. Each tab pane is `.frame(width: 560)` with `.frame(minHeight: 440 (General: none), maxHeight: min screen height minus 120, alignment: .top)` and `.fixedSize()`, so the window resizes to each tab (as Apple's own Settings windows do) and longer content scrolls. The 440-point minimum keeps sheets (Connect to a Server, Turn On Encryption, Add Device, the password check) inside the window. `BouncesOnlyWhenScrollable` applies `.scrollBounceBehavior(.basedOnSize)` so a pane that fits does not rubber-band. The window opens independently of the journal window.
+- **Mac.** A window titled by the selected tab. Each tab pane is `.frame(width: 560)` with `.frame(minHeight: 440 (General: none), maxHeight: min screen height minus 120, alignment: .top)` and `.fixedSize()`, so the window resizes to each tab (as Apple's own Settings windows do) and longer content scrolls. The Sync tab alone has one height, `min(640, screen height minus 120)` (`syncPaneHeight`, `paneContent(_:)`), because it gains and loses sections (Devices, Changes to Review) as the connection changes and the device list arrives, and the window must not jump; it scrolls inside that height. The 440-point minimum keeps sheets (Connect to a Server, Turn On Encryption, Add Device, the password check) inside the window. `BouncesOnlyWhenScrollable` applies `.scrollBounceBehavior(.basedOnSize)` so a pane that fits does not rubber-band. The window opens independently of the journal window.
 - **Dynamic Type.** Standard `List` and `Form` rows grow and wrap; no custom layout in this file. At accessibility sizes the stacked navigation of the library applies, not a change inside Settings.
 
 ## Commands and shortcuts
@@ -85,7 +86,7 @@ Keyboard: on iPad with a hardware keyboard, the list is reachable with arrow key
 
 ## Copy differences
 
-- `settings.pane.general`: "Writing" on iPhone and iPad, "General" on the Mac (`mac` variant), because the Mac tab also holds Erase Journals and Settings….
+- `settings.pane.general`: "General" on every device (the `mac` variant went in 1.1).
 - Pane titles in the view are literal English strings, not catalog lookups; they equal the catalog's default text.
 - Sentence case for controls inside Mac forms is covered on `settings-general` and `settings-privacy`.
 
@@ -101,7 +102,7 @@ Keyboard: on iPad with a hardware keyboard, the list is reachable with arrow key
 
 - Sheet versus window: iPhone and iPad are modal over the library, because a sheet is the iOS idiom; the Mac uses the Settings scene so it opens alone and can stay open with no journal window (`open-settings`, ⌘,).
 - List versus tabs: pushed `NavigationLink` rows on iOS; toolbar tabs on the Mac, as System Settings and Apple's Mac apps do.
-- The first pane is Writing on iOS and General on the Mac, and Erase Journals and Settings… is its own last section on iOS but the last group of General on the Mac, as iOS Settings and System Settings each end General with Transfer or Reset.
+- The first pane is General on every device. Erase Journals and Settings… is its own last section on iOS but the last group of General on the Mac, as iOS Settings and System Settings each end General with Transfer or Reset (owner decision: not inside General on iPhone and iPad).
 - About exists only on iPhone and iPad (`AboutSection` is `#if os(iOS)`); on the Mac it is in the Help menu.
 - Done exists only on iOS, where a sheet needs an explicit close; the Mac window has its close button.
 - A requested pane is pushed on iOS (`settingsRequestedTab`, consumed once) and selected on the Mac (`settingsTab`, kept).
@@ -111,7 +112,7 @@ Keyboard: on iPad with a hardware keyboard, the list is reachable with arrow key
 
 | State | iPhone | iPad |
 | --- | --- | --- |
-| Settings list, light. The six pane rows, the About section with the version, the Erase section starting at the bottom edge | ![Settings list on iPhone, light](../screenshots/iphone/settings-default.png) | ![Settings sheet on iPad, light](../screenshots/ipad/settings-default.png) |
+| Settings list, light. The pane rows (five since 1.1; this capture predates the change and shows Writing and Devices), the About section with the version, the Erase section starting at the bottom edge | ![Settings list on iPhone, light](../screenshots/iphone/settings-default.png) | ![Settings sheet on iPad, light](../screenshots/ipad/settings-default.png) |
 | Settings list, dark | ![Settings list on iPhone, dark](../screenshots/iphone/settings-default-dark.png) | ![Settings sheet on iPad, dark](../screenshots/ipad/settings-default-dark.png) |
 
 The iPad captures show the sheet over the library with the sample journals; its list is cut off after Source Code and Rate My Journal. The Mac captures are on each pane's page (`settings-general`, `settings-privacy`, `settings-backup`).

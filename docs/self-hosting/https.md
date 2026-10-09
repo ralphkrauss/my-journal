@@ -18,7 +18,7 @@ These commands build the checked-out source on your server. To run a published i
    ```
 
    Keep `JOURNAL_DOMAIN` in your deployment environment or a local `.env` file for future Compose commands. It is a hostname, without `https://` or a path. Do not combine this Compose file with the other deployment examples: each is a complete alternative.
-4. In My Journal, open Settings > Sync, choose Connect to a Server… and enter `https://journal.example.com` with the one-time setup code the last command showed, such as `K7Q-M4X`. Add your other devices in Settings > Devices. The setup code is deleted after setup. Until then, anyone who can reach the server can try codes, slowed down after 10 wrong attempts an hour, so set it up right after it starts. Keep your master password separately; the app PIN does not replace it.
+4. In My Journal, open Settings > Sync, choose Connect to a Server… and enter `https://journal.example.com` with the one-time setup code the last command showed, such as `K7Q-M4X`. Add your other devices in Settings > Sync > Devices. The setup code is deleted after setup. Until then, anyone who can reach the server can try codes, slowed down after 10 wrong attempts an hour, so set it up right after it starts. Keep your master password separately; the app PIN does not replace it.
 
 Caddy obtains and renews a publicly trusted certificate. Its persistent volumes retain the certificate and ACME account. Public certificate issuance generally records the hostname in public certificate-transparency logs. It does not publish journal contents.
 

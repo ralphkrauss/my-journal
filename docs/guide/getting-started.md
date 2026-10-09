@@ -37,7 +37,7 @@ When you start, you can choose **Continue Without Encryption** instead. Then the
 
 To turn encryption on later, open Settings > Privacy and choose **Turn On Encryption…**. Choose a master password and enter it again to verify it, then choose **Turn On**. You can’t write while your journals are being encrypted. Encryption can’t be turned off again.
 
-If your journals sync, update My Journal on your other devices and let them sync first. Afterwards, sign in on each of them with the new master password (**Sign In…** appears where the sync problem shows), or add them from this device. Agents with access through your server must be given access again. Archives and backups made earlier stay unencrypted, so make a new archive and delete the old ones.
+If your journals sync, update My Journal on your other devices and let them sync first. Afterwards, sign in on each of them with the new master password (**Reconnect…** appears where the sync problem shows), or add them from this device. Agents with access through your server must be given access again. Archives and backups made earlier stay unencrypted, so make a new archive and delete the old ones.
 
 ## Write
 

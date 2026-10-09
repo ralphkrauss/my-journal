@@ -1,6 +1,6 @@
 ---
 id: settings-general
-title: Settings ▸ Writing (General on the computer) (Apple)
+title: Settings ▸ General (Apple)
 spec: screens/settings-general.md
 features: [default-journal, markdown-as-you-type, erase-device]
 devices: [iphone, ipad, mac]
@@ -19,11 +19,11 @@ screenshots:
   - screenshots/mac/settings-general-default.png
 ---
 
-# Settings ▸ Writing (General on the computer) (Apple)
+# Settings ▸ General (Apple)
 
 Neutral spec: [screens/settings-general.md](../../../screens/settings-general.md). Container: `settings`. Conventions: [platform.md](../platform.md#10-settings).
 
-This pane is called Writing on iPhone and iPad (a pushed list row) and General on the Mac (a tab). The Mac tab also holds Erase Journals and Settings…; on iPhone and iPad Erase is a separate last section of the Settings list (`settings-erase`).
+This pane is called General on every device (a pushed list row on iPhone and iPad, a tab on the Mac; until 1.1 it was Writing on iPhone and iPad). The Mac tab also holds Erase Journals and Settings…; on iPhone and iPad Erase is a separate last section of the Settings list (`settings-erase`), by the owner's decision.
 
 ## Controls
 
@@ -41,7 +41,7 @@ There is no empty, loading or offline state; with no journals the first section 
 
 ## Layout
 
-- **iPhone.** A pushed screen titled "Writing" with a back button; two grouped sections, then empty space (screenshot).
+- **iPhone.** A pushed screen titled "General" with a back button; two grouped sections, then empty space (screenshot).
 - **iPad.** The same screen inside the Settings sheet (a centred form sheet), with the back button at the top left.
 - **Mac.** The first tab of the Settings window. The pane has no minimum height (`tab == .general ? nil : 440` in `SettingsView.tab`), so the window is only as tall as its three groups; it is 560 points wide.
 - Dynamic Type: standard form rows wrap, nothing custom.
@@ -59,7 +59,7 @@ Keyboard: the page adds no keys; the picker and switch are standard controls.
 ## Copy differences
 
 - `settings.general.defaultJournal` and `settings.general.formatAsYouType`: sentence case on the Mac ("Default journal", "Format Markdown as you type"), title case on iPhone and iPad (`mac` variants), as System Settings does. The code selects them with `#if os(macOS)`.
-- `settings.pane.general` is the pane name: "Writing" or "General" (see `settings`).
+- `settings.pane.general` is the pane name: "General" on every device (see `settings`).
 
 ## Accessibility
 
@@ -68,7 +68,6 @@ Keyboard: the page adds no keys; the picker and switch are standard controls.
 
 ## Differences between iPhone, iPad and Mac
 
-- Name: Writing (iOS) versus General (Mac), because only the Mac tab holds Erase.
 - Erase is in this pane only on the Mac, following System Settings ▸ General's Transfer or Reset; iOS has a last section instead.
 - Label casing differs by platform convention (see Copy differences).
 - The picker is a pop-up on the Mac and a menu on iOS, from the system's `Form` style, not a custom choice.
@@ -77,8 +76,8 @@ Keyboard: the page adds no keys; the picker and switch are standard controls.
 
 | Device | State |
 | --- | --- |
-| iPhone | ![Writing on iPhone](../screenshots/iphone/settings-general-default.png) Default journal "Personal", Markdown switch on, both footers. |
-| iPad | ![Writing on iPad](../screenshots/ipad/settings-general-default.png) The same inside the Settings sheet. |
+| iPhone | ![General on iPhone](../screenshots/iphone/settings-general-default.png) (the capture predates the rename and its title still reads Writing) Default journal "Personal", Markdown switch on, both footers. |
+| iPad | ![General on iPad](../screenshots/ipad/settings-general-default.png) The same inside the Settings sheet. |
 | Mac | ![General on Mac](../screenshots/mac/settings-general-default.png) The General tab, with the Erase group at the bottom; the window is inactive in the capture, so the controls are drawn in their inactive colours. |
 
 ## Source files

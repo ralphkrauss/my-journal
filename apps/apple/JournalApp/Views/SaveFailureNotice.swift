@@ -72,8 +72,11 @@ struct SaveFailureNotice: View {
                         )
                         .font(.callout).fixedSize(horizontal: false, vertical: true)
                         if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-                        // The connection sheet sits on the Settings window; this brings it forward.
-                        Button("Show Connection") { model.settingsPresented = true }
+                        // The connection sheet sits on the Settings window, over its Sync tab; this brings it forward.
+                        Button("Show Connection") {
+                            model.settingsTab = .sync
+                            model.settingsPresented = true
+                        }
                     }
                     .padding().frame(maxWidth: .infinity, alignment: .leading).background(.quaternary)
                     .transition(.opacity)

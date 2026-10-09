@@ -1,6 +1,6 @@
 ---
 id: settings-general
-title: Settings ▸ Writing (General on the computer)
+title: Settings ▸ General
 features: [default-journal, markdown-as-you-type, erase-device]
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
@@ -11,7 +11,7 @@ sources:
   - docs/design/erase-device-2026-10-04.md
 ---
 
-# Settings ▸ Writing / General
+# Settings ▸ General
 
 ## Purpose
 
@@ -19,7 +19,7 @@ Choose where new entries go when they're created outside a journal, and whether 
 
 ## Entry points
 
-- Settings ▸ Writing (phone, tablet) or the General tab (computer). See `screens/settings`.
+- Settings ▸ General (phone, tablet) or the General tab (computer). See `screens/settings`.
 
 ## Content
 
@@ -59,7 +59,7 @@ Choose where new entries go when they're created outside a journal, and whether 
 ## Platform notes (Apple)
 
 - Mac labels are in sentence case: `settings.general.defaultJournal` → "Default journal", `settings.general.formatAsYouType` → "Format Markdown as you type". iPhone and iPad use title case.
-- On the Mac, the tab is called General because Erase Journals and Settings… is its last group (as System Settings ▸ General ends with Transfer or Reset). On iPhone and iPad the pane is called Writing and Erase has its own last section in the Settings list.
+- The pane is called General on every device. On the Mac, Erase Journals and Settings… is its last group (as System Settings ▸ General ends with Transfer or Reset). On iPhone and iPad Erase has its own last section in the Settings list, below About, as a function of its own.
 
 ## Open questions
 

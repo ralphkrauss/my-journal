@@ -5,6 +5,8 @@ struct SettingsView: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) var dismiss
     @State private var connect: ConnectionRequest?
+    /// Changes when a Connect or Reconnect sheet opened from Sync closes, so Devices reads its list again.
+    @State private var devicesReload = 0
     @State private var reviewingConflict: ConflictVersion?
     @StateObject private var serverAgents = ServerAgentsController()
     #if os(iOS)
@@ -49,7 +51,6 @@ struct SettingsView: View {
                 TabView(selection: $model.settingsTab) {
                     tab(.general, "General", symbol: "gearshape")
                     tab(.sync, "Sync", symbol: "arrow.triangle.2.circlepath")
-                    tab(.devices, "Devices", symbol: "laptopcomputer.and.iphone")
                     tab(.privacy, "Privacy", symbol: "hand.raised")
                     tab(.backup, "Backup", symbol: "externaldrive")
                     tab(.agents, "Agent Access", symbol: "person.badge.key")
@@ -57,9 +58,8 @@ struct SettingsView: View {
             #else
                 List {
                     Section {
-                        row(.general, "Writing", symbol: "square.and.pencil")
+                        row(.general, "General", symbol: "gearshape")
                         row(.sync, "Sync", symbol: "arrow.triangle.2.circlepath")
-                        row(.devices, "Devices", symbol: "laptopcomputer.and.iphone")
                         row(.privacy, "Privacy", symbol: "hand.raised")
                         row(.backup, "Backup", symbol: "externaldrive")
                         row(.agents, "Agent Access", symbol: "person.badge.key")
@@ -73,7 +73,7 @@ struct SettingsView: View {
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             #endif
         }
-        .sheet(item: $connect) { _ in ConnectionView() }
+        .sheet(item: $connect, onDismiss: { devicesReload += 1 }) { _ in ConnectionView() }
         .sheet(item: $reviewingConflict) { ConflictReview(id: $0.id) }
         .onValueChange(of: model.locked) { locked in
             if locked { reviewingConflict = nil }
@@ -83,11 +83,20 @@ struct SettingsView: View {
         private func tab(_ tab: AppSettingsTab, _ title: String, symbol: String) -> some View {
             // Each tab is as tall as its content, so the window resizes with the tab as in Apple's apps, but never
             // taller than the screen allows; longer content scrolls. Tabs that present sheets keep enough height
-            // for them, so a sheet never extends past the window.
-            pane(tab).modifier(BouncesOnlyWhenScrollable()).frame(width: 560)
-                .frame(minHeight: tab == .general ? nil : 440, maxHeight: maxPaneHeight, alignment: .top).fixedSize()
-                .tabItem { Label(title, systemImage: symbol) }.tag(tab)
+            // for them, so a sheet never extends past the window. Sync gains and loses sections as the connection
+            // changes and the device list arrives, so it has one height and scrolls inside it.
+            paneContent(tab).tabItem { Label(title, systemImage: symbol) }.tag(tab)
         }
+        @ViewBuilder private func paneContent(_ tab: AppSettingsTab) -> some View {
+            let content = pane(tab).modifier(BouncesOnlyWhenScrollable()).frame(width: 560)
+            if tab == .sync {
+                content.frame(height: min(Self.syncPaneHeight, maxPaneHeight), alignment: .top)
+            } else {
+                content.frame(minHeight: tab == .general ? nil : 440, maxHeight: maxPaneHeight, alignment: .top)
+                    .fixedSize()
+            }
+        }
+        private static let syncPaneHeight: CGFloat = 640
         /// The screen's usable height, less room for the window's title bar and tabs.
         private var maxPaneHeight: CGFloat {
             max(440, (NSScreen.main?.visibleFrame.height ?? 800) - 120)
@@ -98,9 +107,8 @@ struct SettingsView: View {
         }
         private static func title(_ tab: AppSettingsTab) -> String {
             switch tab {
-            case .general: return "Writing"
+            case .general: return "General"
             case .sync: return "Sync"
-            case .devices: return "Devices"
             case .privacy: return "Privacy"
             case .backup: return "Backup"
             case .agents: return "Agent Access"
@@ -111,7 +119,6 @@ struct SettingsView: View {
         switch tab {
         case .general: generalSettings
         case .sync: syncSettings
-        case .devices: DevicesView()
         case .privacy: privacySettings
         case .backup:
             Form {
@@ -185,8 +192,12 @@ struct SettingsView: View {
                     Text(footer)
                 }
             }
-            if model.connection != nil { StopSyncingSection(activity: model.syncActivity) }
             ConflictSettingsSection { reviewingConflict = $0 }
+            if model.connection != nil {
+                // Absent when the server doesn't accept this device: the Server section says why.
+                if !model.serverRefusesThisDevice { DevicesSection(reload: devicesReload) }
+                StopSyncingSection(activity: model.syncActivity)
+            }
         }.formStyle(.grouped)
     }
     /// Where a server comes from, or why this Mac stopped syncing with the server it once ran
@@ -199,7 +210,8 @@ struct SettingsView: View {
                 ) + AboutLink.link("Learn More", to: AboutLink.formerMacServerGuide)
             }
         #endif
-        return Text("Your journals are saved on this device.\n")
+        return Text(
+            "Your journals are saved on this device. To sync them with your other devices, connect to a server.\n")
             + AboutLink.link("How to Set Up a Server", to: AboutLink.syncGuide)
     }
     private var privacySettings: some View {

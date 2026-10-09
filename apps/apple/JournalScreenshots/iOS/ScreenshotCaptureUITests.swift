@@ -68,8 +68,11 @@ final class ScreenshotCaptureUITests: XCTestCase {
             try capture(app, "03-personal-list-light")
         }
         NavigationTestSupport.openSettings(app)
-        app.buttons["Devices"].tap()
-        try require(app.staticTexts["MacBook Pro"].firstMatch, timeout: 10)
+        app.buttons["Sync"].tap()
+        // Devices is a section of Sync, below Server.
+        let device = app.staticTexts["MacBook Pro"].firstMatch
+        for _ in 0..<6 where !device.exists { app.swipeUp() }
+        try require(device, timeout: 10)
         if isPad { try approveIPhone(app, meeting: meeting) } else { try capture(app, "03-devices-light") }
     }
 
@@ -221,7 +224,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
         try capture(app, "06-dark")
     }
 
-    /// Frame 7: Settings > Backup, with Export as Markdown… below the archive.
+    /// Frame 7: Settings ▸ Backup, with Export as Markdown… below the archive.
     @MainActor func test7Backup() throws {
         let app = try launch()
         if isPad { NavigationTestSupport.openEntry("Slow Sunday", journal: "Personal", app: app) }

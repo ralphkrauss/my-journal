@@ -2,7 +2,7 @@ import JournalCore
 import LocalAuthentication
 import SwiftUI
 
-/// Settings > Devices > Add Device (docs/design/effortless-connection.md): shows a code a new iPhone or iPad scans,
+/// Settings ▸ Sync ▸ Devices ▸ Add Device (docs/design/effortless-connection.md): shows a code a new iPhone or iPad scans,
 /// or takes the pairing code a new device shows and compares check codes.
 struct AddDeviceView: View {
     private enum Step {
@@ -168,7 +168,7 @@ struct AddDeviceView: View {
                         .frame(width: 252, height: 252).accessibilityHidden(true)
                 }
                 Text(
-                    "On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings > Sync."
+                    "On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings ▸ Sync."
                 )
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 if !expired {

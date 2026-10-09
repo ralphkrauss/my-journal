@@ -129,7 +129,7 @@ final class PermanentDeletionUITests: XCTestCase {
         capture(app, "New entry after Recently Deleted")
         // With the Default journal gone, Work takes its place as the default.
         NavigationTestSupport.openSettings(app)
-        app.buttons["Writing"].tap()
+        app.buttons["General"].tap()
         let picker = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Default Journal'")).firstMatch
         XCTAssertTrue(picker.waitToAppear(timeout: 5))
         assertEventually(picker.label.contains("Work") || (picker.value as? String) == "Work")

@@ -1,10 +1,11 @@
 ---
 id: settings-sync
 title: Settings ▸ Sync
-features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changes-to-review-list, former-mac-server-notice]
+features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changes-to-review-list, former-mac-server-notice, devices-list, revoke-device, add-device]
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
+  - apps/apple/JournalApp/Views/DevicesSection.swift
   - apps/apple/JournalApp/Views/ConflictRouting.swift
   - apps/apple/JournalApp/Views/AboutLinks.swift
   - apps/apple/JournalApp/Model/SyncHealthOperations.swift
@@ -16,18 +17,22 @@ sources:
   - docs/design/sync-health-and-recovery.md
   - docs/design/quiet-sync-and-title-alignment.md
   - docs/design/client-only-mac-lists-markdown-2026-10-05.md
+  - docs/design/1-1-settings-messages-editor.md
+  - docs/design/1-1-conflicts-and-reconnect.md
 ---
 
 # Settings ▸ Sync
 
 ## Purpose
 
-Shows which server this device syncs with and how syncing stands, offers the one action that fits the current state, and lets the person connect, stop syncing, or review changes from another device that need a decision.
+Shows which server this device syncs with and how syncing stands, offers the one action that fits the current state, lists the devices that can sync with the server, and lets the person connect, add a device, remove a device's access, stop syncing, or review changes from another device that need a decision.
 
 ## Entry points
 
 - Settings ▸ Sync (`screens/settings`).
 - Sync Status ▸ Sync Settings… opens Settings directly at this pane (`screens/sync-status`).
+- The computer's "Show Connection" notice opens Settings at this pane (`screens/settings`).
+- Any text that sends the person here writes the path as “Settings ▸ Sync” (for adding a device, “Settings ▸ Sync ▸ Devices ▸ Add Device”).
 
 ## Content
 
@@ -58,10 +63,10 @@ Header: `settings.connect.server`.
    | --- | --- | --- |
    | No problem | Sync Now | `messages.sync.action.syncNow` |
    | Temporary (offline, server unreachable, server unavailable) or unexpected | Try Again | `common.tryAgain` |
-   | Needs the person (the server now uses encryption or was replaced by an encrypted one) | Sign In… | `common.signIn` |
-   | Server was reset and waits for a setup code | Set Up Server Again… | `messages.sync.action.setUpServerAgain` |
-   | Server was restored or replaced and doesn't know this device | Connect Again… | `messages.sync.action.connectAgain` |
-   | This device's access was removed | Connect Again… | `messages.sync.action.connectAgain` |
+   | Needs the person (the server now uses encryption or was replaced by an encrypted one) | Reconnect… | `common.reconnect` |
+   | Server was reset and waits for a setup code | Reconnect… | `common.reconnect` |
+   | Server was restored or replaced and doesn't know this device | Reconnect… | `common.reconnect` |
+   | This device's access was removed | Reconnect… | `common.reconnect` |
    | App or server update needed, certificate invalid, address isn't a journal server | Check Again | `messages.sync.action.checkAgain` |
 
 Footer (only one, the first that applies):
@@ -74,16 +79,24 @@ Footer (only one, the first that applies):
    - this app is older than the library record on the server: `messages.library.needsUpdate`;
    - the server is older and doesn't store it yet: `messages.library.waitingForServer`.
 
-### 2. Stop Syncing section (connected only)
+The action is the only place that reconnects: Reconnect… is never repeated in another section of this pane.
 
-- Button `settings.sync.stopSyncing` ("Stop Syncing…"), not styled as destructive (nothing is deleted).
+### 2. Changes to Review section (only when there are conflicts and My Journal is unlocked)
 
-### 3. Changes to Review section (only when there are conflicts and My Journal is unlocked)
-
-Header `messages.conflict.settingsSection`. One row per conflict:
+Above Devices, because it asks for a decision. Header `messages.conflict.settingsSection`. One row per conflict:
 - the item's title (for a permanently deleted item, the deleted-item title the conflict screens use);
 - the date of the local version, or of the deletion, in secondary text (date and time);
 - a button `common.reviewChanges` ("Review Changes"), accessibility label `common.reviewChangesFor` ("Review Changes for {title}"). It opens the conflict review (`screens/conflict-review`, owned by the conflicts specification) as a sheet.
+
+### 3. Devices section (connected, and the server accepts this device)
+
+The devices that can sync with the server, as one section with one header, `settings.sync.devices.header` ("Devices"): Add Device…, then one row per device with a trailing Revoke Access…. It is [screens/settings-devices](settings-devices.md).
+
+The section is absent, not dimmed, when the device isn't connected (the Server section offers Connect to a Server…) and when the server doesn't accept this device (a sync state that stops automatic sync: the Server section says why and offers Reconnect…).
+
+### 4. Stop Syncing section (connected only)
+
+- Button `settings.sync.stopSyncing` ("Stop Syncing…"), in a section of its own, last, not styled as destructive (nothing is deleted).
 
 ## Actions
 
@@ -92,9 +105,10 @@ Header `messages.conflict.settingsSection`. One row per conflict:
 | Connect to a Server… | `connect-to-server` | Always (unlocked) | Opens Connect to a Server (`flows/connect-to-server`) as a sheet over Settings. |
 | Sync Now / Try Again | `sync-now` | Not while a sync the person started runs; not while locked, while the journals are being replaced (connecting, importing, encrypting), while a save has failed, or without a working connection. | Syncs once, also resending records and images the server refused before. See Rules. |
 | Check Again | `sync-now` | As Sync Now | Syncs once; the state is checked again. |
-| Set Up Server Again… / Connect Again… / Sign In… | `sync-reconnect` | Not while a sync the person started runs | Opens Connect to a Server, which goes straight to this server's next step (`flows/reconnect-to-server`). |
+| Reconnect… | `sync-reconnect` | Not while a sync the person started runs | Opens Reconnect, which goes straight to this server's next step (`flows/reconnect-to-server`). |
 | Stop Syncing… | `stop-syncing` | Not while the journals are being replaced | Asks first (below), then `flows/stop-syncing`. |
 | Review Changes | `review-changes` | Unlocked | Opens the conflict review for that item. |
+| Add Device…, Revoke Access… | `add-device`, `revoke-device` | See [screens/settings-devices](settings-devices.md) | Adds a device; removes a device's access. |
 | How to Set Up a Server | `open-setup-guide` | Always | Opens the sync guide (`<repository>/blob/main/docs/guide/sync.md`) in the browser. |
 | Learn More (former Mac server) | `open-former-server-guide` | Always | Opens `<repository>/blob/main/docs/guide/sync.md#if-you-used-use-this-mac`. |
 
@@ -107,11 +121,11 @@ A confirmation (action sheet on phone, dialog on computer), with a visible title
 
 ## States
 
-- **Not connected:** Server section shows Connect to a Server…; footer explains where journals are and links to How to Set Up a Server. No Stop Syncing section.
+- **Not connected:** Server section shows Connect to a Server…; footer explains where journals are and links to How to Set Up a Server. No Devices and no Stop Syncing section.
 - **Syncing (person started it):** Last Synced shows Syncing… and an indicator; the action button is disabled.
 - **Syncing automatically:** nothing changes; normal syncing is quiet.
 - **Offline / server unreachable / unavailable:** footer shows the message; button Try Again; automatic retries continue.
-- **Needs the person / server changed / no access:** footer shows the message; button Sign In…, Set Up Server Again… or Connect Again…; automatic sync has stopped until the person acts.
+- **Needs the person / server changed / no access:** footer shows the message; button Reconnect…; no Devices section; automatic sync has stopped until the person acts. After Reconnect succeeds the Devices section appears and lists the devices without reopening the pane.
 - **Update or fix needed:** footer shows the message; Check Again.
 - **Save failed:** footer `messages.sync.pausedForSaveFailure`; Sync Now disabled.
 - **Locked:** Settings shows only its locked text; the Changes to Review section is never shown while locked, and an open review closes when the app locks.
@@ -123,7 +137,7 @@ A confirmation (action sheet on phone, dialog on computer), with a visible title
 - **Last Synced** is the last time this device completed a sync with this server, including one that left a single refused entry or image behind. It is stored per library and connection, survives relaunches, and is forgotten when the library connects to another server. It never moves backwards.
 - **Not on Server Yet** is read when the pane appears and after every sync.
 - The action is chosen from the current state alone; there is exactly one.
-- Connect actions open Connect to a Server where the person is: over Settings when pressed here.
+- Reconnect… opens Reconnect where the person is: over Settings when pressed here.
 - **Stop Syncing** never deletes anything: the journals, unsent changes and the identity they last synced with stay, so connecting to the same server later continues by identity. The device's access on the server is given up when the server still accepts it (best effort).
 - The former-Mac-server footer appears only on a computer whose library was connected to the server earlier versions of the Mac app ran on itself; it stays until the library connects to any server.
 - Normal syncing is quiet: nothing in this pane changes while automatic sync works.
@@ -131,14 +145,15 @@ A confirmation (action sheet on phone, dialog on computer), with a visible title
 ## Accessibility
 
 - Last Synced and Not on Server Yet are each read as one element (label and value together).
-- The action button's title says what it does; connect actions end with an ellipsis because they open a sheet.
+- The action button's title says what it does; Connect to a Server… and Reconnect… end with an ellipsis because they open a sheet. Add Device… and Stop Syncing… end with one because they open a sheet or ask first.
+- The Devices header is the section's one heading, followed by Add Device… and one row per device.
 - Sync Now's result is announced (see Rules).
 - Review Changes buttons name their item.
 
 ## Platform notes (Apple)
 
 - iPhone and iPad: a pushed pane in the Settings sheet. The Stop Syncing confirmation is an action sheet with a visible title.
-- Mac: the Sync tab of the Settings window; Connect to a Server opens as a sheet on the Settings window, sized to fit inside it. The Stop Syncing confirmation is a dialog.
+- Mac: the Sync tab of the Settings window, which has one height (the smaller of 640 points and the room the screen allows) and scrolls inside it; Connect to a Server and Reconnect open as a sheet on the Settings window, sized to fit inside it. The Stop Syncing confirmation is a dialog.
 - The former-Mac-server footer exists only on the Mac (`docs/design/client-only-mac-lists-markdown-2026-10-05.md` §1.2).
 
 ## Open questions

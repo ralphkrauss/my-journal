@@ -29,11 +29,12 @@ One sheet that takes this device from "not syncing" (or "sync stopped working") 
 ## Entry points
 
 - First-launch screen: Connect to a Server… (`screens/welcome`, owned by onboarding).
-- Settings ▸ Sync: Connect to a Server…, and Set Up Server Again… / Connect Again… / Sign In… (`screens/settings-sync`).
-- Settings ▸ Devices: Connect to a Server… (not connected) or the reconnect action (access lost) (`screens/settings-devices`).
-- Settings ▸ Privacy: Sign In… after encryption was turned on elsewhere (`screens/settings-privacy`).
-- Settings ▸ Agent Access: Connect to a Server… / Connect Again… (`screens/settings-agent-access`).
-- Sync Status's reconnect actions, and a sync message's Sign In (`screens/sync-status`).
+- Settings ▸ Sync: Connect to a Server… (not connected), and Reconnect… (`screens/settings-sync`).
+- Settings ▸ Privacy: Reconnect… after encryption was turned on elsewhere (`screens/settings-privacy`).
+- Settings ▸ Agent Access: Connect to a Server…, and Reconnect… when this device lost access (`screens/settings-agent-access`).
+- Sync Status's Reconnect… (`screens/sync-status`).
+
+Opened by Reconnect… the sheet is titled `settings.connect.reconnect.title` ("Reconnect") instead; everything else on it is the same.
 
 The sheet is a navigation stack: the first page chooses a server; each later step is pushed. Work and its failure stay on the step where it started; the next step appears only once the work succeeds.
 
@@ -50,7 +51,7 @@ The sheet is a navigation stack: the first page chooses a server; each later ste
 
 ### Page 1: Choose a server
 
-Title `settings.connect.title` ("Connect to a Server").
+Title `settings.connect.title` ("Connect to a Server"), or `settings.connect.reconnect.title` ("Reconnect") when the sheet was opened by Reconnect…; the title is fixed when the sheet opens.
 
 - **Locked:** only `settings.connect.locked`; no primary button.
 - **A scanned code is being used:** a section with the label `settings.connect.server` and the code's server host (selectable); while it's checked, a busy row `settings.connect.busy.checking`. If checking failed, the primary button is `common.tryAgain` (the connection failed and the same code can be used again) or `settings.connect.scanAgain` ("Scan Again", the code can't be used again).
@@ -213,7 +214,7 @@ While the computer connects to a server from the Settings window, the journal wi
 - **Locked:** page 1 shows `settings.connect.locked`. Locking while the sheet is open cancels everything (as Cancel) and closes it.
 - **Checking / working:** fields and choices disabled; busy row; Cancel disabled while installing; the sheet can't be swiped away while installing.
 - **Error:** shown on the step where the work started (see `flows/connect-to-server` for every message).
-- **Reconnecting:** when this device's server needs it to set up again, connect again or sign in again, and the address is known, the sheet checks the server as soon as it opens and goes straight to its next step.
+- **Reconnecting:** when this device's server needs Reconnect… (set up again, access lost or restored, or encryption turned on elsewhere), and the address is known, the sheet checks the server as soon as it opens and goes straight to its next step.
 - **Computer inactivity:** while the sheet is waiting on the server or another device, My Journal doesn't lock for inactivity.
 
 ## Rules

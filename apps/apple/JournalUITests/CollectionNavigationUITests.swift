@@ -185,7 +185,7 @@ final class CollectionNavigationUITests: XCTestCase {
         }
         capture(app, "Journals toolbar")
         settings.tap()
-        XCTAssertTrue(app.buttons["Writing"].waitToAppear(timeout: 5))
+        XCTAssertTrue(app.buttons["General"].waitToAppear(timeout: 5))
         NavigationTestSupport.closeSettings(app)
         XCTAssertTrue(newJournal.waitToAppear(timeout: 5))
         newJournal.tap()

@@ -11,7 +11,7 @@ import XCTest
 /// `JOURNAL_DATA_DIR`; `JOURNAL_SCREENSHOT_PASSWORD_FILE` and `JOURNAL_SCREENSHOT_OUTPUT` come from the same script.
 /// For frames 4 and 3 it also starts a disposable server and passes `JOURNAL_SCREENSHOT_SERVER` (its loopback
 /// address), `JOURNAL_SCREENSHOT_SETUP_CODE` and `JOURNAL_SCREENSHOT_PUBLIC_URL` (the public address the server is
-/// configured with, which Agent Access and Settings > Sync show).
+/// configured with, which Agent Access and Settings ▸ Sync show).
 @MainActor
 final class MacScreenshotCapture: XCTestCase {
     private var environment: [String: String] { ProcessInfo.processInfo.environment }
@@ -107,7 +107,7 @@ final class MacScreenshotCapture: XCTestCase {
     // MARK: - Agent Access
 
     /// Frame 4: the library on a disposable server set up by "MacBook Pro", "Writing Assistant" allowed to read
-    /// Personal and Work and used once, then Settings > Agent Access and the agent's page. Returns the agent's page,
+    /// Personal and Work and used once, then Settings ▸ Agent Access and the agent's page. Returns the agent's page,
     /// still open.
     private func captureAgentAccess(model: AppModel, reading entryID: UUID) async throws -> NSWindow {
         guard let address = environment["JOURNAL_SCREENSHOT_SERVER"], address.hasPrefix("http://127.0.0.1:"),
@@ -163,7 +163,7 @@ final class MacScreenshotCapture: XCTestCase {
         XCTAssertFalse(agentPage.isVisible, "Return didn't close the agent's page.")
     }
 
-    /// Frame 3: Settings > Sync connected to the server that frame 4 set up. The server's public address is
+    /// Frame 3: Settings ▸ Sync connected to the server that frame 4 set up. The server's public address is
     /// https://journal.example.net, as Agent Access shows, but that name doesn't lead to the disposable server, so the
     /// library keeps syncing with it on its loopback port while the connection names the public address. Then it
     /// syncs once more, so Last Synced is a real synchronization with that server.

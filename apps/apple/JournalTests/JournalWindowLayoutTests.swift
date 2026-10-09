@@ -91,7 +91,7 @@
             let before = host.frames(of: ["formatting", "editorOnly", "search"])
             XCTAssertGreaterThan(slot.view?.frame.width ?? 0, 20)
 
-            host.state.syncStatus = .init(message: "The server isn’t set up.", action: "Set Up Server Again…")
+            host.state.syncStatus = .init(message: "The server isn’t set up.", action: "Reconnect…")
             try await host.settle()
             XCTAssertFalse(button.isHidden)
             XCTAssertTrue(slot.isBordered)
@@ -100,7 +100,7 @@
                 let menu = try XCTUnwrap(menu)
                 menu.delegate?.menuNeedsUpdate?(menu)
                 XCTAssertEqual(
-                    menu.items.map(\.title), ["The server isn’t set up.", "Set Up Server Again…", "Sync Settings…"])
+                    menu.items.map(\.title), ["The server isn’t set up.", "Reconnect…", "Sync Settings…"])
             }
             XCTAssertEqual(host.frames(of: ["formatting", "editorOnly", "search"]), before)
 

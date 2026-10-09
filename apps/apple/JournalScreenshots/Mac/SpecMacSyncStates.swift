@@ -69,16 +69,17 @@ extension SpecMacCapture {
     private func connectedPanes(_ model: AppModel) async throws {
         let sync = try await openSettings(.sync, model: model)
         try await capture(sync, "settings-sync-connected")
-        tap(sync, at: 85, fromTop: 282)
+        // Devices is a section of Sync, and the pane has one height, so the Sync window shows it as it is.
+        try await capture(sync, "settings-devices-connected")
+        // The places of Add Device… and Stop Syncing… in the 1.1 pane are estimates: measure them from the capture.
+        tap(sync, at: 70, fromTop: 320)
+        try await settle(4)
+        try await captureSheet(sync, "add-device-default")
+        try await closeSheets(of: sync)
+        tap(sync, at: 85, fromTop: 400)
         try await settle(1.5)
         try await captureSheet(sync, "stop-syncing-default")
         try await closeSheets(of: sync)
-        let devices = try await openSettings(.devices, model: model)
-        try await capture(devices, "settings-devices-connected")
-        tap(devices, at: 70, fromTop: 205)
-        try await settle(4)
-        try await captureSheet(devices, "add-device-default")
-        try await closeSheets(of: devices)
     }
 
     // MARK: - A server that was replaced

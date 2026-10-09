@@ -33,11 +33,11 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `editor.imageImport.cause.mixed` | Try again, or choose other images. | Try again, or select other images. | vocabulary | B26 |
 | `library.merge.footer.targetNone` | the journal you choose | the journal you select | vocabulary | B26 |
 | `library.entryList.empty.noTemplatesHelp` | To create a template, open an entry and choose Save as Template. | To create a template, open an entry and select Save as template. | vocabulary | B26, B27 |
-| `settings.addDevice.scanInstructions` | On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings > Sync. | On your iPhone or iPad, select Connect to a server, then Scan code. If it already has journals, Connect to a server is in Settings > Sync. | vocabulary | B26, B27 |
+| `settings.addDevice.scanInstructions` | On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings ▸ Sync. | On your iPhone or iPad, select Connect to a server, then Scan code. If it already has journals, Connect to a server is in Settings ▸ Sync. | vocabulary | B26, B27 |
 | `settings.addDevice.codeFooter` | On the new device, choose Connect to a Server, then Add This Device. | On the new device, select Connect to a server, then Add this device. | vocabulary | B26, B27 |
-| `settings.connect.addThisDevice.instructions` | On a connected device, open Settings > Devices > Add Device, then choose Enter Code Instead. | On a connected device, open Settings > Devices > Add Device, then select Enter code instead. | vocabulary | B26, B27 |
-| `settings.encryption.done.otherDevices` | On each of your other devices, choose Sign In and enter your master password, or add it from this device. | On each of your other devices, select Sign in and enter your master password, or add it from this device. | vocabulary | B26, B27 |
-| `settings.sync.stopSyncing.message` | Your journals stay on this device. To sync again later, choose Connect to a Server in Settings > Sync. | Your journals stay on this device. To sync again later, select Connect to a server in Settings > Sync. | vocabulary | B26, B27 |
+| `settings.connect.addThisDevice.instructions` | On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then choose Enter Code Instead. | On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then select Enter code instead. | vocabulary | B26, B27 |
+| `settings.encryption.done.otherDevices` | On each of your other devices, choose Reconnect and enter your master password, or add it from this device. | On each of your other devices, select Reconnect and enter your master password, or add it from this device. | vocabulary | B26, B27 |
+| `settings.sync.stopSyncing.message` | Your journals stay on this device. To sync again later, choose Connect to a Server in Settings ▸ Sync. | Your journals stay on this device. To sync again later, select Connect to a server in Settings ▸ Sync. | vocabulary | B26, B27 |
 | `messages.connection.serverChanged` | This server has changed since you checked it. Choose Continue to check it again. | This server has changed since you checked it. Select Continue to check it again. | vocabulary | B26 |
 | `messages.connection.setUpElsewhere` | This server has just been set up. Choose it again to sign in. | This server has just been set up. Select it again to sign in. | vocabulary | B26 |
 | `messages.save.before.tryAgain` | Your changes aren’t saved yet. Choose Try Again, then repeat what you were doing. | Your changes aren’t saved yet. Select Try again, then repeat what you were doing. | vocabulary | B26, B27 |
@@ -60,7 +60,7 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `messages.entry.dateChanged` | This entry’s date changed. Close this sheet and try again. | This entry’s date changed. Close this dialog and try again. | vocabulary | 12.3 |
 | `settings.addDevice.enterCodeInstead.footer` | For a Mac or a device that can’t scan the code. | For a computer or a device that can’t scan the code. | vocabulary | B28 |
 | `settings.general.formatAsYouType.footer` | Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it. Press Delete right after to keep what you typed. | Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it. Press Backspace right after to keep what you typed. | vocabulary | 12.3 |
-| `settings.pane.general` | Writing (Mac: General) | General | vocabulary | 12.3 (default is “Writing”; Mac already “General”) |
+| `settings.pane.general` | General | General | none: the same text on every platform since 1.1 | 12.3 |
 | `library.menu.view.showSidebarAndList` | Show Sidebar and List | Show all panes | vocabulary | 12.3 |
 | `settings.lock.unlockWith` | Unlock with {method} | Unlock with Windows Hello | vocabulary | 12.3, D25 |
 | `library.lock.method.*` | Face ID, Touch ID, Optic ID, Passcode, Login Password | Windows Hello (one method) | vocabulary | 12.3, D25 |
@@ -193,7 +193,7 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.lock.turnedOff.pinRetired` | App Lock now uses your {device} passcode instead of a PIN. This {device} doesn’t have a passcode, so App Lock is off. | Not shown: Windows never had an app PIN | removed | 12.3 |
 | `settings.connect.nearby.denied` | To find servers automatically, turn on Local Network for My Journal in Settings. | Not shown: Windows has no Local Network prompt | removed | 12.3, platform.md 32 |
 | `settings.connect.scanCode` | Scan Code | Not shown: a PC does not scan (D24) | removed | D24 |
-| `settings.connect.scanCode.footer` | On a connected device, open Settings > Devices > Add Device, then scan the code it shows. | Not shown: a PC does not scan (D24) | removed | D24 |
+| `settings.connect.scanCode.footer` | On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then scan the code it shows. | Not shown: a PC does not scan (D24) | removed | D24 |
 | `settings.connect.scanAgain` | Scan Again | Not shown: a PC does not scan (D24) | removed | D24 |
 | `settings.connect.finish.*` | (the group) | Not shown: a PC does not scan (D24) | removed | D24 |
 | `settings.scan.*` | (the group) | Not shown: a PC does not scan (D24) | removed | D24 |

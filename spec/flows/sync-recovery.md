@@ -11,7 +11,7 @@ sources:
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/JournalApp/Model/ServerJoining.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
-  - apps/apple/JournalApp/Views/DevicesView.swift
+  - apps/apple/JournalApp/Views/DevicesSection.swift
   - docs/design/sync-health-and-recovery.md
   - docs/design/quiet-sync-and-title-alignment.md
   - docs/design/sync-now-and-done.md
@@ -27,7 +27,7 @@ Every way sync can fail ends in exactly one state with one message and at most o
 
 - Automatic sync (see Rules for its pace).
 - Sync Now in Settings ▸ Sync, and the action in Sync Status ([screens/sync-status.md](../screens/sync-status.md)) or in Settings ▸ Sync.
-- Settings ▸ Devices, which learns that this device lost access when it loads the device list.
+- Settings ▸ Sync ▸ Devices, which learns that this device lost access when it loads the device list: it runs a sync, whose state then appears in the Server section.
 - Try Syncing Again in the notice of an entry whose journal hasn't arrived ([screens/unavailable-content.md](../screens/unavailable-content.md)).
 
 ## Steps
@@ -66,10 +66,10 @@ Item-level problems are not states: one record too large or refused, or one imag
 | Offline | `messages.sync.offline` | `common.tryAgain` | hidden until the long wait | backoff; at once when the network returns |
 | Can't reach | `messages.sync.unreachable`, or `messages.sync.unreachableTailscale` for a `.ts.net` host | `common.tryAgain` | hidden until the long wait | backoff; at once when the network returns |
 | Busy | `messages.sync.unavailable` | `common.tryAgain` | hidden until the long wait | backoff, at least the server's Retry-After |
-| Sign-in needed | `messages.sync.signInNeeded` | `common.signIn` | shown | stops |
-| Not set up | `messages.sync.serverNotSetUp` | `messages.sync.action.setUpServerAgain` | shown | stops |
-| Restored or replaced | `messages.sync.serverReplaced` | `messages.sync.action.connectAgain` | shown | stops |
-| Access removed | `messages.sync.accessRemoved` | `messages.sync.action.connectAgain` | shown | stops |
+| Sign-in needed | `messages.sync.signInNeeded` | `common.reconnect` | shown | stops |
+| Not set up | `messages.sync.serverNotSetUp` | `common.reconnect` | shown | stops |
+| Restored or replaced | `messages.sync.serverReplaced` | `common.reconnect` | shown | stops |
+| Access removed | `messages.sync.accessRemoved`, or `messages.sync.accessRemovedNoPassword` for a library without a password | `common.reconnect` | shown | stops |
 | Update My Journal | `messages.sync.appUpdateNeeded` | `messages.sync.action.checkAgain` | shown | stops |
 | Server update needed | `messages.sync.serverUpdateNeeded` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
 | Certificate not valid | `messages.sync.certificateInvalid` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
@@ -79,13 +79,13 @@ Item-level problems are not states: one record too large or refused, or one imag
 | Unexpected | `messages.sync.unexpected` | `common.tryAgain` | shown | backoff |
 | Item refused (no state) | `messages.sync.recordTooLarge`, `messages.sync.recordRefused`, `messages.sync.imageTooLarge` or `messages.sync.imageRefused` | `messages.sync.action.syncNow` | shown | continues normally |
 
-The message appears in the footer of Settings ▸ Sync's Server section, and in Sync Status when it shows. The action is the last row of that section, after Last Synced and Not on Server Yet. In Settings ▸ Devices, a refused device shows the access message (`messages.sync.accessRemoved`, `messages.sync.serverReplaced` or `messages.sync.signInNeeded`) with the state's connect action, or Connect Again… (`messages.sync.action.connectAgain`) when the state's action doesn't connect.
+The message appears in the footer of Settings ▸ Sync's Server section, and in Sync Status when it shows. The action is the last row of that section, after Last Synced and Not on Server Yet. Settings ▸ Sync ▸ Devices has no message or reconnect button of its own: while the server refuses this device, the Devices section is absent and the Server section says why. If the device list is refused before any sync has said so, the device runs a sync to learn why, and without an answer the state is access removed.
 
 ### 3. The person's action
 
 **Try Again, Check Again, Sync Now.** Run one full sync now, which also resends refused records and images and anything waiting after a failure. The button is dimmed while it runs and while sync can't run (locked, the library being replaced, a save failed). Settings ▸ Sync shows "Syncing…" next to Last Synced for at least half a second. The outcome is the state the sync ends in; VoiceOver announces it.
 
-The connect actions (**Set Up Server Again…**, **Connect Again…**, **Sign In…**) are specified step by step in [reconnect-to-server.md](reconnect-to-server.md). Each opens Connect to a Server at this device's server and checks it at once; lineage decides whether the library joins the server by identity or asks to merge. Everything about those flows lives there.
+**Reconnect…** is specified step by step in [reconnect-to-server.md](reconnect-to-server.md). It opens Reconnect at this device's server and checks it at once; the server's answer decides which step follows, and lineage decides whether the library joins the server by identity or asks to merge. Everything about that flow lives there.
 
 **Sync Settings…** (in Sync Status). Opens Settings at Sync, where the same message and action are shown.
 
@@ -94,8 +94,8 @@ The connect actions (**Set Up Server Again…**, **Connect Again…**, **Sign In
 ### 4. Outcome
 
 - A sync that succeeds clears the state: no message, Sync Now, Sync Status hidden, Last Synced updated. A refused item's message stays until it is sent or edited.
-- Any connect action that succeeds starts the connection from a clean state: no message, automatic sync running, Last Synced empty until the first sync, which joining runs at once.
-- A connect action cancelled or failed leaves the state as it was. Connect to a Server explains its own failures (`messages.connection.*`).
+- Reconnect, when it succeeds, starts the connection from a clean state: no message, automatic sync running, Last Synced empty until the first sync, which joining runs at once.
+- Reconnect cancelled or failed leaves the state as it was. Connect to a Server explains its own failures (`messages.connection.*`).
 
 ## Rules
 
@@ -125,7 +125,7 @@ The connect actions (**Set Up Server Again…**, **Connect Again…**, **Sign In
 
 ## Accessibility
 
-- VoiceOver announcements come only from the result of an action the person started: Sync Now, Try Again, Check Again (the held message, else `messages.sync.announce.synced`, else `messages.sync.announce.failed`), and the guided connect actions (Connect to a Server announces its own errors). Background changes aren't announced.
+- VoiceOver announcements come only from the result of an action the person started: Sync Now, Try Again, Check Again (the held message, else `messages.sync.announce.synced`, else `messages.sync.announce.failed`), and the guided connect actions (Connect to a Server and Reconnect announce their own errors). Background changes aren't announced.
 - Last Synced and Not on Server Yet each read as one element ("Last Synced, Just now"; "Not on Server Yet, 3 items"). The spinner next to "Syncing…" is hidden from VoiceOver.
 - Footers wrap at every text size. Actions that open a flow end in "…".
 

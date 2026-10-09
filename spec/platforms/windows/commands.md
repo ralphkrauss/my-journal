@@ -183,7 +183,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 | --- | --- | --- | --- | --- | --- |
 | `connect-to-server` | `common.connectToServer` | Accent button in the Sync, Devices and Agent access pages when not connected; first-launch page | — | — | Opens the Connect task page. |
 | `sync-now` | `messages.sync.action.syncNow` / `common.tryAgain` / `messages.sync.action.checkAgain` | The `ActionButton` of the Sync page's bar when a bar shows, otherwise a button in the server card (never both, D49); the Sync status flyout | — | — | "Syncing…" with a small indeterminate `ProgressBar` (or the text alone) for at least half a second: the page stays usable, so it is not a ring ([11](platform.md#11-progress-and-announcements)). |
-| `sync-reconnect` | `messages.sync.action.setUpServerAgain` / `messages.sync.action.connectAgain` / `common.signIn` | The state's action in an `InfoBar` or card on the Sync, Devices, Privacy and Agent access pages | — | — |  |
+| `sync-reconnect` | `common.reconnect` | The state's action in an `InfoBar` or card on the Sync, Privacy and Agent access pages | — | — |  |
 | `stop-syncing` | `settings.sync.stopSyncing` | A card with a Stop syncing button in its own group on the Sync page | — | — | No ellipsis; confirmation dialog with no default button. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` | Hyperlink in the card description | — | — |  |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Not offered | — | — | Mac-only state. |

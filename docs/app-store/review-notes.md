@@ -112,7 +112,7 @@ Sync needs a server the person runs, and the apps only connect to one. Without a
 1. Run the server from [self-hosting](../self-hosting/README.md) behind public HTTPS ([HTTPS example](../self-hosting/https.md)) at an address used only for review.
 2. Set it up from a test device or simulator with an encrypted library, a long generated demo master password (not one you use anywhere else), and the sample journals from [screenshots-plan.md](screenshots-plan.md#sample-content). Never put real journal content on it.
 3. Put the address and the demo password into both Notes fields. They're test credentials for review, not a customer account. Don't commit them.
-4. Keep it running through review and each update's review. Afterwards, stop it or rotate the password, and revoke the reviewer's devices in Settings > Devices.
+4. Keep it running through review and each update's review. Afterwards, stop it or rotate the password, and revoke the reviewer's devices in Settings > Sync > Devices.
 
 Signing in with the master password lets any number of reviewer devices join without a one-time setup code. The server slows down repeated wrong passwords (SECURITY.md, "Password guessing").
 

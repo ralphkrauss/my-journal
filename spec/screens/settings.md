@@ -20,7 +20,7 @@ sources:
 
 ## Purpose
 
-One place for everything that isn't writing: where new entries go, sync and its server, the devices on that server, encryption and App Lock, backups, agents, and (on phones and tablets) the project's pages and erasing this device.
+One place for everything that isn't writing: where new entries go, sync with its server and the devices on that server, encryption and App Lock, backups, agents, and (on phones and tablets) the project's pages and erasing this device.
 
 ## Entry points
 
@@ -30,7 +30,7 @@ One place for everything that isn't writing: where new entries go, sync and its 
 - From elsewhere, opening Settings at a given pane:
   - Sync Status ▸ Sync Settings… opens Settings at **Sync** (see `screens/sync-status`).
   - The computer's journal-window notice "Show Progress" (turning on encryption) opens Settings at **Privacy** with the Turn On Encryption sheet on top.
-  - The computer's journal-window notice "Show Connection" (connecting) brings Settings, with Connect to a Server over it, to the front.
+  - The computer's journal-window notice "Show Connection" (connecting) opens Settings at **Sync**, where the Connect to a Server sheet it brings to the front belongs.
 
 ## Content
 
@@ -38,10 +38,9 @@ One place for everything that isn't writing: where new entries go, sync and its 
 
 A sheet titled `settings.title`, with a confirming Done button (`common.done`) that closes it. Its content is a grouped list:
 
-1. A section of six rows, each opening a pane by pushing it, each with a leading icon:
-   - `settings.pane.general` ("Writing") → `screens/settings-general`
-   - `settings.pane.sync` → `screens/settings-sync`
-   - `settings.pane.devices` → `screens/settings-devices`
+1. A section of five rows, in this order on every device, each opening a pane by pushing it, each with a leading icon:
+   - `settings.pane.general` → `screens/settings-general`
+   - `settings.pane.sync` → `screens/settings-sync` (which holds the devices: `screens/settings-devices`)
    - `settings.pane.privacy` → `screens/settings-privacy`
    - `settings.pane.backup` → `screens/settings-backup`
    - `settings.pane.agents` → `screens/settings-agent-access`
@@ -51,16 +50,15 @@ A sheet titled `settings.title`, with a confirming Done button (`common.done`) t
 
 ### Computer
 
-A standard settings window with a tab bar of six tabs, each with an icon, in this order; the window title is the selected tab's name:
+A standard settings window with a tab bar of five tabs, each with an icon, in the same order as the phone's rows; the window title is the selected tab's name:
 
-1. `settings.pane.general` (shows "General" on the computer; `{"mac": …}` variant)
+1. `settings.pane.general`
 2. `settings.pane.sync`
-3. `settings.pane.devices`
-4. `settings.pane.privacy`
-5. `settings.pane.backup`
-6. `settings.pane.agents`
+3. `settings.pane.privacy`
+4. `settings.pane.backup`
+5. `settings.pane.agents`
 
-Each tab's content is a grouped form, 560 points wide. The window resizes to each tab's content, up to the screen's usable height (less room for the title bar and tabs); longer content scrolls. Every tab except General keeps a minimum height of 440 points so the sheets it presents fit inside the window. A tab whose content fits doesn't rubber-band when scrolled.
+Each tab's content is a grouped form, 560 points wide. The window resizes to each tab's content, up to the screen's usable height (less room for the title bar and tabs); longer content scrolls. Every tab except General keeps a minimum height of 440 points so the sheets it presents fit inside the window. The Sync tab has one height, the smaller of 640 points and the room the screen allows, and scrolls inside it, because it gains and loses sections (Devices, Changes to Review) as the connection changes and the device list arrives, and the window must not jump. A tab whose content fits doesn't rubber-band when scrolled.
 
 There is no About section and no Done button: About is in the Help menu (`screens/settings-about`), and Erase Journals and Settings… is the last group of General (`screens/settings-general`).
 
@@ -76,7 +74,7 @@ There is no About section and no Done button: About is in the Help menu (`screen
 - **Locked** (App Lock on and My Journal locked): the whole of Settings shows only `settings.locked`, in secondary text. Locking while Settings is open closes the Settings sheet on phone and tablet (every window's presentations close when the app locks); on the computer the window shows the locked text.
 - **Library problem** (the journals can't be opened, so there is no library to set up): the whole of Settings shows only `settings.libraryProblem`, in secondary text, in place of its panes, on every device ([screens/unavailable-content](unavailable-content.md)). Every sheet closes when a problem appears.
 - **No library** (just after Erase Journals and Settings, while Settings closes): Privacy shows nothing; Settings then closes by itself.
-- **Requested pane:** when another screen asks for a pane (Sync Status, Show Progress), Settings opens on that pane. On phone and tablet the pane is pushed on top of the list; on the computer that tab is selected.
+- **Requested pane:** when another screen asks for a pane (Sync Status, Show Progress, Show Connection), Settings opens on that pane. On phone and tablet the pane is pushed on top of the list; on the computer that tab is selected.
 
 ## Rules
 
@@ -97,7 +95,7 @@ There is no About section and no Done button: About is in the Help menu (`screen
 - iPhone: Settings is a sheet over the Journals screen, opened from its top-left toolbar button.
 - iPad: Settings is a sheet, opened from the sidebar's last row. On an iPad with a menu bar, the Help menu is also present.
 - Mac: a standard Settings window (⌘,) with toolbar tabs, as in Apple's own apps. Labels use sentence case for controls inside forms on the Mac (for example "Default journal", "Format Markdown as you type", "Lock when inactive"), as macOS System Settings does; iPhone and iPad use title case. Copy keys carry `{"default": …, "mac": …}` variants for these.
-- The pane is called **Writing** on iPhone and iPad and **General** on the Mac, because the Mac's General tab also holds Erase Journals and Settings….
+- The first pane is **General** on every device. Erase Journals and Settings… is the last group of General on the Mac, whose window has no list level, and its own last section of the list on iPhone and iPad (the owner's decision after build 15: it is a function of its own, not part of a pane).
 
 ## Open questions
 

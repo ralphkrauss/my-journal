@@ -47,7 +47,7 @@ Built by `SettingsView.privacySettings`: a `Form` with `.formStyle(.grouped)` th
 - Status `Text`: `settings.privacy.encryption.on` when `model.configuration?.encrypted != false`, otherwise `settings.privacy.encryption.off`. The Turn On Encryption sheet is attached to this `Text` (`.sheet(isPresented: $upgrade.presented, onDismiss:)`), so it can be presented from the Mac's "Show Progress" notice while the pane is on screen.
 - One action `Button`, the first that applies:
   - encrypted: `ChangePasswordButton` (`Views/ChangePasswordView.swift`): `settings.privacy.changePassword`, shown only when `configuration.recovery.formatVersion == 2` (master-password libraries; a recovery-key library shows nothing), `.disabled(model.locked)`, opens `ChangePasswordView` as a sheet.
-  - not encrypted and `upgrade.offersSignIn`: `common.signIn`, `.disabled(model.locked)`. It calls the closure passed in by `SettingsView`, which sets `connect = ConnectionRequest()`; the Settings view presents Connect to a Server over the pane. When the Turn On Encryption sheet is dismissed after a sign-in request, `onDismiss` runs the same closure.
+  - not encrypted and `upgrade.offersSignIn`: `common.reconnect`, `.disabled(model.locked)`. It calls the closure passed in by `SettingsView`, which sets `connect = ConnectionRequest()`; the Settings view presents the sheet, titled Reconnect, over the pane. When the Turn On Encryption sheet is dismissed after a reconnect request, `onDismiss` runs the same closure.
   - otherwise: `settings.privacy.encryption.turnOn`, `.disabled(model.locked || (model.replacingVault && !upgrade.pausesWriting))`, calls `upgrade.present()`. While encryption is running, the same button reopens the sheet where the work is shown.
 - Footer, same order: `settings.privacy.encryption.footerOn` with the credential's name lower-cased (`credentialName`, "password" if unknown); `messages.encryption.turnedOnElsewhere`; `common.unencryptedWarning`.
 - On the Mac the Turn On Encryption sheet has `.frame(minWidth: 440, idealWidth: 480, minHeight: 460, idealHeight: 560)` and `.interactiveDismissDisabled(upgrade.busy || upgrade.unfinished)` on both platforms.
@@ -75,7 +75,7 @@ Built by `SettingsView.privacySettings`: a `Form` with `.formStyle(.grouped)` th
 | --- | --- | --- | --- |
 | `turn-on-encryption` | the action row of the Encryption section | none | not locked, and not while the journals are being replaced unless the work is already running |
 | `change-password` | same row | none | master-password library, not locked |
-| `sync-reconnect` | same row, labelled `common.signIn` | none | not locked |
+| `sync-reconnect` | same row, labelled `common.reconnect` | none | not locked |
 | `toggle-app-lock` | the switch | none | not while the system asks; turning on needs authentication available |
 | `set-inactivity-lock` | Mac only: the pop-up | none | App Lock on, not while asking |
 | `lock-my-journal` | button below the switch (and pop-up on the Mac); the Mac also has ⌃⌘L in the application menu per [commands.md](../commands.md) | none in the pane | App Lock on |

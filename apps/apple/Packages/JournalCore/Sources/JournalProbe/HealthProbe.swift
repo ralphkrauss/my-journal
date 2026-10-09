@@ -173,8 +173,8 @@ extension Probe {
         guard let client = setUpAgain.client,
             try await serverRecords(client) == setUpAgain.store.syncedRecordIDs(),
             try await setUpAgain.store.pending().isEmpty
-        else { throw ProbeFailure("server reset: Set Up Server Again didn't send a's whole library") }
-        print("PASS: server reset: Set Up Server Again sent a's whole library")
+        else { throw ProbeFailure("server reset: Reconnect didn't send a's whole library") }
+        print("PASS: server reset: Reconnect sent a's whole library")
         try await expectState(.serverReplaced, syncing: deviceB, "set up again by another device")
         let rejoinedB = try await connectAgain(deviceB, state: &state, root: root, address: address)
         let anonymous = try ServerClient(address: address)

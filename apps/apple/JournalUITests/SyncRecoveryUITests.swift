@@ -1,7 +1,7 @@
 import JournalCore
 import XCTest
 
-/// Every action Settings > Sync offers when sync breaks (docs/design/sync-health-and-recovery.md §2), end to end
+/// Every action Settings ▸ Sync offers when sync breaks (docs/design/sync-health-and-recovery.md §2), end to end
 /// against a real server that scripts/test-sync-recovery-ui.sh changes when a test asks: removing this device,
 /// restoring a backup, wiping the data folder, stopping it, putting another web server at its address, and turning
 /// on encryption from another device. Each journey ends with a new device downloading every entry exactly once.
@@ -24,9 +24,8 @@ final class SyncRecoveryUITests: XCTestCase {
         control = URL(fileURLWithPath: controlPath)
     }
 
-    /// Connect Again after a removal and after a restore, Set Up Server Again after a reset, Try Again while the server
-    /// is down for two days' worth of waiting, Check Again for another web server at its address, and Stop Syncing,
-    /// then connecting again.
+    /// Reconnect after a removal, after a restore and after a reset, Try Again while the server is down for two days'
+    /// worth of waiting, Check Again for another web server at its address, and Stop Syncing, then connecting again.
     @MainActor func testEveryRecoveryActionWithAPasswordLibrary() async throws {
         try request("reset")
         let library = UUID().uuidString
@@ -43,17 +42,23 @@ final class SyncRecoveryUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Last Synced"].waitToAppear(timeout: 30))
         capture(app, "1 Syncing normally")
 
-        // Removed in Devices on another device: Connect Again signs in, with no Merge step.
+        // Removed in Devices on another device: Reconnect signs in, with no Merge step.
         try await Self.removeThisDevice(address: address, password: password)
         tap(app.buttons["Sync Now"])
         expectMessage(
-            "This device no longer has access to the server. Your journals are still on this device.", app: app)
+            "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need your password or a connected device.",
+            app: app)
+        XCTAssertFalse(app.buttons["Add Device…"].exists, "Devices is absent while the server refuses this device.")
         capture(app, "2 This device was removed")
-        tap(app.buttons["Connect Again…"])
+        tap(app.buttons["Reconnect…"])
+        XCTAssertTrue(app.navigationBars["Reconnect"].waitToAppear(timeout: 15))
         signIn(app)
         expectSynced(app)
+        // Devices lists the devices again without reopening the pane, this one included.
+        XCTAssertTrue(scrollTo(app.buttons["Add Device…"], app: app))
+        XCTAssertTrue(scrollTo(labeled("Fixture iPad", app: app), app: app))
 
-        // Restored from a backup that lacks the latest entry: Connect Again sends it back.
+        // Restored from a backup that lacks the latest entry: Reconnect sends it back.
         try request("backup")
         app.terminate()
         app = launch(library)
@@ -69,18 +74,18 @@ final class SyncRecoveryUITests: XCTestCase {
             "The server was restored or replaced and doesn’t recognize this device. Your journals are still on this device.",
             app: app)
         capture(app, "3 Restored from a backup")
-        tap(app.buttons["Connect Again…"])
+        tap(app.buttons["Reconnect…"])
         signIn(app)
         expectSynced(app)
 
-        // Wiped: automatic sync stopped, so opening the app again checks it; Set Up Server Again uses the new code.
+        // Wiped: automatic sync stopped, so opening the app again checks it; Reconnect uses the new code.
         app.terminate()
         try request("reset")
         app = launch(library)
         openSyncSettings(app)
         expectMessage("The server isn’t set up. Your journals are still on this device.", app: app)
         capture(app, "4 The server isn't set up")
-        tap(app.buttons["Set Up Server Again…"])
+        tap(app.buttons["Reconnect…"])
         try setUpServer(app, password: true)
         expectSynced(app)
 
@@ -137,7 +142,7 @@ final class SyncRecoveryUITests: XCTestCase {
             password: password)
     }
 
-    /// Sign In after another device turned on encryption for a library without it.
+    /// Reconnect after another device turned on encryption for a library without it.
     @MainActor func testSignInAfterEncryptionWasTurnedOnElsewhere() async throws {
         try request("reset")
         let app = launch(UUID().uuidString)
@@ -157,9 +162,9 @@ final class SyncRecoveryUITests: XCTestCase {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         try await Self.turnOnEncryptionElsewhere(address: address, password: password, recoveryCode: code)
         tap(app.buttons["Sync Now"])
-        expectMessage("The server now uses encryption or was replaced. Sign in to keep syncing.", app: app)
+        expectMessage("The server now uses encryption or was replaced. Reconnect to keep syncing.", app: app)
         capture(app, "9 Encryption turned on elsewhere")
-        tap(app.buttons["Sign In…"])
+        tap(app.buttons["Reconnect…"])
         signIn(app)
         expectSynced(app)
         app.terminate()
@@ -270,7 +275,7 @@ final class SyncRecoveryUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Server Is Ready"].waitToAppear(timeout: 30))
         app.buttons["Done"].tap()
     }
-    /// Connect to a Server, opened by an action, goes straight to signing in to this device's server.
+    /// Reconnect, opened by an action, goes straight to signing in to this device's server.
     @MainActor private func signIn(_ app: XCUIApplication) {
         let enter = app.navigationBars["Enter Master Password"]
         XCTAssertTrue(enter.waitToAppear(timeout: 20))
@@ -304,6 +309,14 @@ final class SyncRecoveryUITests: XCTestCase {
     @MainActor private func expectMessage(_ message: String, app: XCUIApplication) {
         XCTAssertTrue(app.staticTexts[message].waitToAppear(timeout: 30), message)
         shownMessage = message
+    }
+    /// Scrolls the pane until `element` exists, which a list may not build until it is near the screen.
+    @MainActor private func scrollTo(_ element: XCUIElement, app: XCUIApplication) -> Bool {
+        for _ in 0..<6 {
+            if element.waitToAppear(timeout: 5) { return true }
+            app.swipeUp()
+        }
+        return element.exists
     }
     @MainActor private func tap(_ element: XCUIElement) {
         XCTAssertTrue(element.waitToAppear(timeout: 15))

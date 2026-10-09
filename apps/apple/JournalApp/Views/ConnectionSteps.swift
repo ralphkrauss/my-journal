@@ -373,7 +373,7 @@ struct ConnectionStepView: View {
                 .textSelection(.enabled).accessibilityIdentifier("pairing-code").accessibilityLabel("Pairing code")
                 .accessibilityValue(ticket.code.map(String.init).joined(separator: " "))
             Button("Copy Code") { copyCode(ticket.code) }
-            Text("On a connected device, open Settings > Devices > Add Device, then choose Enter Code Instead.")
+            Text("On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then choose Enter Code Instead.")
                 .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if flow.busy { connectionStatus(flow.installing ? flow.activityLabel : "Waiting for approval…") }
         }

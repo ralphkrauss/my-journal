@@ -15,10 +15,9 @@ final class SpecSettingsCaptureTests: SpecCaptureCase {
     }
 
     @MainActor func testSettingsRoot() throws { try capturePage(nil, id: "settings") }
-    @MainActor func testWriting() throws { try capturePage("Writing", id: "settings-general") }
+    @MainActor func testGeneral() throws { try capturePage("General", id: "settings-general") }
     @MainActor func testPrivacy() throws { try capturePage("Privacy", id: "settings-privacy") }
     @MainActor func testSync() throws { try capturePage("Sync", id: "settings-sync") }
-    @MainActor func testDevices() throws { try capturePage("Devices", id: "settings-devices") }
     @MainActor func testBackup() throws { try capturePage("Backup", id: "settings-backup") }
     @MainActor func testAgentAccess() throws { try capturePage("Agent Access", id: "settings-agent-access") }
 }

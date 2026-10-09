@@ -1,6 +1,6 @@
 import XCTest
 
-/// Settings > Agent Access (docs/design/agent-access-simplified.md): an MCP client asks for access and its request
+/// Settings ▸ Agent Access (docs/design/agent-access-simplified.md): an MCP client asks for access and its request
 /// appears on its own. A wrong number declines it and sends the page back. The owner allows the next request with its
 /// page's number and All Journals, changes it to one journal afterwards, and revokes it; the page then says access
 /// wasn't allowed. The test plays the MCP client (which never redeems its code) against the disposable server

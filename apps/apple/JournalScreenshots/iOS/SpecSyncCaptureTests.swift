@@ -144,13 +144,14 @@ final class SpecSyncCaptureTests: SpecCaptureCase {
         try tapButton("Sync", in: app)
         try require(app.buttons["Sync Now"], app: app, timeout: 15)
         try shot(app, "settings-sync-connected")
+        // Devices is a section of Sync, below Server, and Stop Syncing… ends the pane.
+        let stop = app.buttons["Stop Syncing…"].firstMatch
+        for _ in 0..<6 where !(stop.exists && stop.isHittable) { app.swipeUp() }
+        try shot(app, "settings-devices-connected")
         try tapButton("Stop Syncing…", in: app)
         try shot(app, "stop-syncing-default")
         // The confirmation has no Cancel button: a tap outside it closes it.
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.75)).tap()
-        goBack(app)
-        try tapButton("Devices", in: app)
-        try shot(app, "settings-devices-connected")
         goBack(app)
         try tapButton("Agent Access", in: app)
         try shot(app, "settings-agent-access-connected")

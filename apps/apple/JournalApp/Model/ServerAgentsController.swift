@@ -8,7 +8,7 @@ import SwiftUI
     import UIKit
 #endif
 
-/// Settings > Agent Access for agents that connect to the sync server's MCP endpoint (docs/design/agent-access-server.md
+/// Settings ▸ Agent Access for agents that connect to the sync server's MCP endpoint (docs/design/agent-access-server.md
 /// and agent-access-simplified.md). The list and its state belong to the pane; the agents themselves are on the server.
 @MainActor
 final class ServerAgentsController: ObservableObject {

@@ -40,9 +40,9 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `settings-about` | screen | `screens/settings-about.md` | verified | Settings ▸ About, and the Help menu |
 | `settings-agent-access` | screen | `screens/settings-agent-access.md` | verified | Settings ▸ Agent Access |
 | `settings-backup` | screen | `screens/settings-backup.md` | verified | Settings ▸ Backup, and the Export sheets |
-| `settings-devices` | screen | `screens/settings-devices.md` | verified | Settings ▸ Devices |
+| `settings-devices` | screen | `screens/settings-devices.md` | verified | Settings ▸ Sync ▸ Devices (a section of Sync) |
 | `settings-erase` | screen | `screens/settings-erase.md` | draft | Erase Journals and Settings (section and alerts) |
-| `settings-general` | screen | `screens/settings-general.md` | verified | Settings ▸ Writing (General on the computer) |
+| `settings-general` | screen | `screens/settings-general.md` | verified | Settings ▸ General |
 | `settings-privacy` | screen | `screens/settings-privacy.md` | verified | Settings ▸ Privacy |
 | `settings-sync` | screen | `screens/settings-sync.md` | verified | Settings ▸ Sync |
 | `settings` | screen | `screens/settings.md` | draft | Settings |

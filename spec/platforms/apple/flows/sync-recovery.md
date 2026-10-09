@@ -14,7 +14,7 @@ sources:
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/JournalApp/Model/ServerJoining.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
-  - apps/apple/JournalApp/Views/DevicesView.swift
+  - apps/apple/JournalApp/Views/DevicesSection.swift
   - docs/design/sync-health-and-recovery.md
   - docs/design/quiet-sync-and-title-alignment.md
   - docs/design/sync-now-and-done.md
@@ -30,7 +30,7 @@ Where each step of the spec's flow lives:
 
 1. **Detection.** `SyncEngine.synchronize(_:)` (core) reads the server's status first (`checkedStatus()`: not decodable gives `SyncFailure(.notJournalServer)`; protocol above 1 `.appUpdateNeeded`, below 1 `.serverUpdateNeeded`; not initialised `.serverNotSetUp`), refuses a device the server no longer accepts (`lostAccess`: `.accessRemoved` for the same server identity, `.signInNeeded` when this library is unencrypted and the server now is, else `.serverReplaced`), and lets everything else propagate. `ServerClient` turns an HTTP 404 or 405 into `.serverUpdateNeeded`. `AppModel.sync(...)` catches the error and calls `SyncHealth(classifying:)` (`SyncHealth.swift`): a `SyncFailure` keeps its state; a `URLError` becomes `.offline` (codes not connected, data not allowed, roaming off, call in progress), `.certificateInvalid` (secure-connection and certificate codes), `.unavailable` (garbled answers) or `.unreachable`; `ServerRateLimited`, `ServerUnavailable` and cancellation become `.unavailable`; a database error becomes `.localDataUnreadable` or `.localDataUnavailable`; `JournalError.unauthorized` is `.accessRemoved`; unsupported format or newer version is `.appUpdateNeeded`; anything else `.unexpected`. A sync cancelled by leaving the foreground returns early and records nothing.
 2. **Holding the state.** `AppModel.recordSyncHealth(_:failure:)` stores `syncHealth` (`SyncHealth?`), sets `encryption.turnedOnElsewhere` for `.signInNeeded`, keeps `syncTiming.retryAfter` from `ServerRateLimited`, `syncTiming.stoppedCheckAt` for states that stop automatic sync, and `syncTiming.failingSince`; non-temporary states also tell `reviewRequests.noteProblem()` (a state the person must act on counts against asking for a rating; offline does not). `syncError` is `health.message(host: connectionHost)` or, with no failure, the report's item-level problem. `syncFailed` records that the sync as a whole failed. A new connection, library or Stop Syncing calls `resetSyncHealth()` through `configureSync()`.
-3. **What the person sees.** `SyncHealth.Kind` (`.temporary`, `.needsYou`, `.serverChanged`, `.noAccess`, `.updateOrFix`, `.unexpected`) decides the action in `AppModel.syncStatusAction`: temporary and unexpected give Try Again; needs-you gives Sign In…; server changed gives Set Up Server Again… (not set up) or Connect Again… (replaced); no access gives Connect Again…; update or fix gives Check Again; no state gives Sync Now. The message is in the Settings ▸ Sync footer (`SettingsView.syncSettings`, the Server section's `footer:`), in Sync Status (only when `showsSyncStatus`), and in Settings ▸ Devices when the device list answers unauthorized (`DevicesView.load()` calls `lostAccessHealth()`, which runs a sync to learn the reason and falls back to `.accessRemoved`). `SyncHealth.message(host:)` supplies the text; the Tailscale hint is added when the host ends in `.ts.net`.
+3. **What the person sees.** `SyncHealth.Kind` (`.temporary`, `.needsYou`, `.serverChanged`, `.noAccess`, `.updateOrFix`, `.unexpected`) decides the action in `AppModel.syncStatusAction`: temporary and unexpected give Try Again; needs-you, server changed (not set up, or replaced) and no access all give Reconnect… (`SyncStatusAction.reconnect`); update or fix gives Check Again; no state gives Sync Now. The message is in the Settings ▸ Sync footer (`SettingsView.syncSettings`, the Server section's `footer:`) and in Sync Status (only when `showsSyncStatus`). The Devices section of Settings ▸ Sync is not built while `serverRefusesThisDevice`; when its device list answers unauthorized, `DevicesSection.load()` calls `learnWhyAccessWasRefused()`, which runs a sync to learn the reason and falls back to `.accessRemoved`, and the Server section shows the result. `SyncHealth.message(host:hasPassword:)` supplies the text (through `AppModel.syncMessage(of:)`); the Tailscale hint is added when the host ends in `.ts.net`.
 4. **The person's action.** `syncNow()` (`Model/SyncSchedule.swift`): one at a time (`syncActivity.syncingNow`), runs `sync(retryingRefused: true)` only if `canSyncNow` (unlocked, library not being replaced, no save failure, an engine exists), holds "Syncing…" for at least half a second, and announces the result. Connect actions go through `perform(_:presentConnection:)`.
 5. **Outcome.** A successful sync (`failure == nil`) clears health and `syncError` through `recordSyncHealth(nil, ...)`, sets `syncActivity.synced()` and updates the pending count; a connect action that succeeds ends in `configureSync()`, which starts clean.
 
@@ -60,7 +60,7 @@ The flow has no layout of its own; see the three screen notes. The only device-d
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `sync-now` | Settings ▸ Sync button, Sync Status menu (titles Sync Now, Try Again, Check Again) | none | `canSyncNow` and not already syncing |
-| `sync-reconnect` | Same places (titles Set Up Server Again…, Connect Again…, Sign In…); Settings ▸ Devices when access was refused | none | not while a sync the person started runs |
+| `sync-reconnect` | Same places (title Reconnect…) | none | not while a sync the person started runs |
 | `sync-status` | Sync Status control | none | the state needs the person, or the long wait applies |
 | `stop-syncing` | Settings ▸ Sync | none | not while the library is being replaced |
 | `try-syncing-again` | Notice of an entry whose journal has not arrived | none | as in [commands.md](../commands.md) |
@@ -103,7 +103,7 @@ Model:
 - `apps/apple/JournalApp/Model/ServerJoining.swift`: what a reconnect does.
 
 View:
-- `apps/apple/JournalApp/Views/SyncNowRows.swift`, `apps/apple/JournalApp/Views/DevicesView.swift`: where the state is shown.
+- `apps/apple/JournalApp/Views/SyncNowRows.swift`, `apps/apple/JournalApp/Views/DevicesSection.swift`: where the state is shown and where Devices reads it.
 
 Design records: [sync-health-and-recovery.md](../../../../docs/design/sync-health-and-recovery.md), [quiet-sync-and-title-alignment.md](../../../../docs/design/quiet-sync-and-title-alignment.md), [sync-now-and-done.md](../../../../docs/design/sync-now-and-done.md).
 

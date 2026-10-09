@@ -43,7 +43,7 @@ Implements [flows/turn-on-encryption](../../../flows/turn-on-encryption.md). The
 
 **Background time (iOS only).** `run` calls `UIApplication.beginBackgroundTask(withName: "Turn on encryption")`. When time runs out and `canCancel && busy`, `backgroundExpired` is set and the task cancelled; the cancellation then reports `messages.encryption.background`. On the Mac `beginBackgroundTime` is a no-op. With App Lock on, leaving the app on iPhone or iPad locks first (`applicationEnteredBackground` → `lockImmediately`), `stopForLock` cancels the work and closes the sheet, and no message is shown because `backgroundExpired` is false.
 
-**Other devices.** After success another device sees the sync state `messages.sync.signInNeeded` and uses Sign In… (`sync-reconnect`); `AppModel.lostAccess` is what tells a refused device that encryption was turned on elsewhere, and `reencryptForRejoin` encrypts that device's own journals while it signs in, showing the same `EncryptionProgressRow` in Connect to a Server (`ConnectionBusyRow`).
+**Other devices.** After success another device sees the sync state `messages.sync.signInNeeded` and uses Reconnect… (`sync-reconnect`); `AppModel.lostAccess` is what tells a refused device that encryption was turned on elsewhere, and `reencryptForRejoin` encrypts that device's own journals while it reconnects, showing the same `EncryptionProgressRow` in Connect to a Server (`ConnectionBusyRow`).
 
 ## Layout
 

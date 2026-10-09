@@ -54,7 +54,7 @@ Header `settings.agents.connect.header` ("Connect an Agent"). Content by state:
 - **Not connected to a server:** `settings.agents.connect.notConnected` ("To let agents read your journals, connect to a server.") and `common.connectToServer` ("Connect to a Server…").
 - **Loading (first time):** busy row `settings.agents.loading` ("Loading…").
 - **Server needs an update:** `settings.agents.connect.needsUpdate` ("{Host} needs an update before agents can connect.").
-- **This device lost access:** `settings.agents.connect.noAccess` ("This device no longer has access to {host}.") and `messages.sync.action.connectAgain` → Connect to a Server.
+- **This device lost access:** `settings.agents.connect.noAccess` ("This device no longer has access to {host}.") and `common.reconnect` ("Reconnect…") → Reconnect (`flows/reconnect-to-server`).
 - **The server has no public HTTPS address:** `settings.agents.connect.publicUrlRequired` ("Set your server’s public address before agents can connect.") when the server says a public address is required, otherwise `settings.agents.connect.httpsRequired` ("{Host} doesn’t know its HTTPS address. Set its public address before agents can connect."); plus the link `settings.agents.connect.guide` ("How to Connect an Agent").
 - **Unreachable:** `settings.agents.connect.unreachable` ("Couldn’t reach {host}.") and `common.tryAgain`.
 - **Ready:** a row labelled `settings.agents.mcpAddress` ("MCP Server Address") with the address in monospaced type (selectable; below the label at accessibility sizes); a button `common.copy` ("Copy", reading `settings.agents.copied` "Copied" for two seconds; accessibility label `settings.agents.copyLabel` "Copy MCP Server Address"); on phone/tablet also `common.share` ("Share…", accessibility label `settings.agents.shareLabel`). Under it, when reach is limited:
@@ -72,7 +72,8 @@ Header `settings.agents.connect.header` ("Connect an Agent"). Content by state:
 | Open an agent | `open-agent` | Opens its detail. |
 | Copy | `copy-mcp-address` | Copies the address; announces `settings.agents.copiedAnnouncement` ("Copied."). |
 | Share… | `share-mcp-address` | The system share sheet with the address (phone/tablet). |
-| Connect to a Server… / Connect Again… | `connect-to-server` | Opens Connect to a Server. |
+| Connect to a Server… | `connect-to-server` | Opens Connect to a Server. |
+| Reconnect… | `sync-reconnect` | Opens Reconnect (this device lost access). |
 | Try Again | `agents-try-again` | Loads again. |
 | How to Connect an Agent | `open-agent-guide` | Opens `<repository>/blob/main/docs/guide/agent-access.md`. |
 
