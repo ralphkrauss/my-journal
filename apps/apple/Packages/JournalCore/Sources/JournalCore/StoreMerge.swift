@@ -48,6 +48,7 @@ extension JournalStore {
         // Pins of merged entries, and journals added here after the server's; combined journals don't move.
         let identities = plan.mergedIdentities.filter { !plan.skipped.contains($0.key) }
         try importArrangement(arrangement, identities: identities)
+        try resolveConflicts(at: .local)
         try await source.rememberMergeQueued(try queuedPayloadDigests())
     }
     private func writeMerged(

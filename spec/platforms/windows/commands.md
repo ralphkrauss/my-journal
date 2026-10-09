@@ -31,9 +31,8 @@ On Windows the menus are File, Edit, Format, View and Help; the application and 
 | `open-settings` | `library.toolbar.settings` | The navigation pane's built-in Settings item (gear, last item); File ▸ Settings | `Ctrl+,` | app | No ellipsis: it opens a page. Not available while locked. |
 | `lock-my-journal` | `common.lockMyJournal` | File ▸ Lock My Journal; Settings ▸ Privacy ▸ App lock (button) | `Ctrl+L` | app | Enabled while App Lock is on. The editor's own Ctrl+L (align left) is turned off ([7](platform.md#7-keyboard-shortcuts), rule 6). Win+L is the system lock and is unaffected. |
 | `quit`, `hide`, `services` | system | `quit`: File ▸ Exit. `hide` and `services`: not offered | `Alt+F4` | system | Alt+F4 closes the window, which ends the app, after the open entry is saved; if it can't be, the Keep Open dialog shows and the window stays ([3](platform.md#3-windows-and-instances)). Windows has no Hide or Services. |
-| `new-entry` | `library.menu.file.newEntry` | File ▸ New entry; the New entry button in the entry list header (primary) | `Ctrl+N` | app | Enabled as on Apple. The button works without a journal in use; the menu item needs one. |
-| `new-blank-entry` | `library.menu.file.newBlankEntry` | File ▸ New blank entry | `Ctrl+Shift+N` | app | Ctrl+Shift+N is Microsoft's "new secondary item". |
-| `new-entry-from-template` | `library.menu.file.newEntryFromTemplate` | File ▸ New entry from template… | — | — | Opens the template chooser flyout anchored to the New entry button; with two or more journals and no journal open it asks which journal first. |
+| `new-entry` | `library.menu.file.newEntry` | File ▸ New entry; the New entry button in the entry list header (primary) | `Ctrl+N` | app | Enabled as on Apple. The button works without a journal in use; the menu item needs one. `Ctrl+Shift+N` is not used. |
+| `use-a-template` | `library.menu.file.useTemplate`; `library.templateChooser.useTemplate`; `editor.body.placeholder.templateLink` | File ▸ Use a template…; the link in an empty entry's placeholder, opening a flyout | — | app | Template chooser flyout ([9](platform.md#9-sheets-popovers-and-notices)) anchored to the editor; the menu item is dimmed, not hidden, unless the link is shown. |
 | `new-journal` | `common.newJournalEllipsis` | File ▸ New journal…; New journal button above the navigation pane items | `Ctrl+Shift+J` | app | A dialog with a name field. Leaves Editor Only first. |
 | `pin-entry` | `library.entryActions.pin` / `library.entryActions.unpin` | File ▸ Pin entry / Unpin entry (own group after New journal…) | — | — | No shortcut: Ctrl+P is Print on Windows. |
 | `import-archive` | `common.importArchive` | File ▸ Import archive…; first-launch page; Settings ▸ Backup (button) | — | — | Open picker for a `.journalarchive` file (the archive is one file, D29), then the Import archive task page. Dropping an archive file on the window or double-clicking it in Explorer starts the same flow ([19](platform.md#19-single-instance-and-activation)). |
@@ -72,11 +71,8 @@ Entry actions each first save the open writing; if that fails, nothing happens. 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `choose-collection` | `library.journals.*` | Navigation pane item; ↑ and ↓ in the focused pane | — | — | Saves the open entry first. |
-| `journal-actions` | `library.toolbar.journalActions` | Entry list header ▸ More (…) menu | — | — | New journal… first, then the shown journal's actions. |
+| `journal-actions` | `library.toolbar.journalActions` | Entry list header ▸ More (…) menu | — | — | New journal… first, then Rename… and Delete journal…. |
 | `rename-journal` | `library.journalActions.rename` | Journal context menu; Journal actions menu | `F2` | list | F2 renames the focused journal (Microsoft's list). A dialog with a name field. |
-| `journal-default-template` | `common.defaultTemplate` | Journal context menu and Journal actions menu, as a sub-menu | — | — | Radio items; a stale choice stays visible and checked. |
-| `merge-journal` | `library.journalActions.mergeInto` | Journal context menu; Journal actions menu | — | — | Dialog; Merge is the default button, Enter chooses it once a journal is chosen ([8](platform.md#8-dialogs)). |
-| `journal-version-history` | `common.versionHistoryEllipsis` | Journal context menu; Journal actions menu; a deleted journal's page | — | — | A page ([9](platform.md#9-sheets-popovers-and-notices)). |
 | `delete-journal` | `library.journalActions.deleteJournal` | Journal context menu; Journal actions menu | — | — | No Delete-key shortcut for journals (there is no undo, open-questions D1). Confirmation dialog, no ellipsis. |
 | `reorder-journal` | `library.journals.undoMove` (undo name); `library.journals.moveUp`, `library.journals.moveDown` | Drag a journal in the navigation pane; Move up and Move down in the journal context menu | `Alt+Shift+Up`, `Alt+Shift+Down` | list | Move up and Move down are the keyboard, Narrator and switch route; the two keys are provisional ([2.1](platform.md#21-controls)). Announced and undoable. |
 | `journals-edit` | `library.toolbar.edit` / `common.done` | Not offered | — | — | No edit mode, as on the Mac. |
@@ -84,17 +80,14 @@ Entry actions each first save the open writing; if that fails, nothing happens. 
 | `entry-actions` | `library.toolbar.entryActions` | Editor header ▸ More (…) menu; the same items in the entry row's context menu | — | — | One command list, two presentations ([5](platform.md#5-context-menus)). |
 | `find-in-entry` | `library.entryActions.findInEntry` | Edit ▸ Find; the find bar | same as Find | — | Not repeated in the Entry actions menu: Windows has the Edit menu. |
 | `pin-entry-row` | `library.entryList.swipe.pin` / `library.entryList.swipe.unpin`; `library.entryActions.pin` / `library.entryActions.unpin` | Entry row context menu; swipe (touch and pen); Entry actions | — | — | Leading swipe with full swipe. Does not change the selection. |
-| `new-entry-in` | `library.entryActions.newEntryIn` / `library.entryActions.newEntryFromTemplate` | Template row context menu; Entry actions | — | — | Sub-menu of journals. |
-| `review-changes` | `common.reviewChanges` | The conflict notice's action; Settings ▸ Sync ▸ Changes to review | — | — | A page ([9](platform.md#9-sheets-popovers-and-notices)). |
+| `review-changes` | `common.reviewChanges` | The notice's action for an entry or template with changes to review; Settings ▸ Sync ▸ Changes to review | — | — | A page ([9](platform.md#9-sheets-popovers-and-notices)). |
 | `change-date` | `library.entryActions.changeDate` | Entry row context menu; Entry actions | — | — | Dialog with a `CalendarDatePicker`, date only: the entry keeps its time of day, as the spec says ([31](platform.md#31-dates-time-zones-and-formats)). |
 | `move-entry` | `library.entryActions.moveEntry` | Entry row context menu; Entry actions | — | — | Dialog. |
 | `save-as-template` | `library.entryActions.saveAsTemplate` | Entry row context menu; Entry actions | — | — | Dialog with a name field. |
 | `image-descriptions` | `library.entryActions.imageDescriptions` | Entry row context menu; Entry actions | — | — | Shown only when the item has pictures; a page. |
 | `entry-version-history` | `common.versionHistoryEllipsis` | Entry row context menu; Entry actions | — | — | A page. |
-| `restore` | `common.restore` | Entry row context menu; Entry actions; the recovery notice; leading swipe | — | — | Restores without confirmation. |
-| `restore-with-journal` | `library.recoveryNotice.restoreWithJournal` | The recovery notice's action | — | — | Dialog. |
-| `restore-and-move` | `library.recoveryNotice.restoreAndMove` | The recovery notice's second action | — | — | Move entry in its restoring form. |
-| `restore-journal` | `library.recentlyDeleted.restoreJournal` | Button on a deleted journal's page | — | — | Dialog; no default button. |
+| `restore` | `common.restore`; `library.recentlyDeleted.restoreTo` | Entry row context menu; Entry actions; the recovery notice; leading swipe (only `common.restore`, when the entry returns to its own journal) | — | — | Restores at once. The cross-journal label is never on a swipe. |
+| `restore-journal` | `library.recentlyDeleted.restoreJournal` | Button on a deleted journal's page, below the count | — | — | Acts at once; no dialog. |
 | `try-syncing-again` | `common.trySyncingAgain` | The recovery notice's action; the Restore dialog | — | — |  |
 | `delete-permanently` | `library.entryActions.deletePermanently` | Entry row context menu; Entry actions; a deleted journal's page | `Delete`, `Shift+Delete` | list | In Recently deleted both keys ask. No ellipsis. Elsewhere Shift+Delete is not bound. |
 | `delete-entry` | `library.entryActions.deleteEntry` / `library.entryActions.deleteTemplate`; `common.delete` (swipe) | Entry row context menu; Entry actions (destructive, last); trailing swipe | `Delete` | list | Moves to Recently deleted at once; Undo brings it back. |
@@ -102,7 +95,6 @@ Entry actions each first save the open writing; if that fails, nothing happens. 
 | `empty-new-entry` | `library.menu.file.newEntry` | Button in the empty list | — | — | As `new-entry`. |
 | `finish-editing` | `common.done` | Not offered | — | — | No Done button: editing is always live, as on the Mac. |
 | `sync-status` | `messages.syncStatus.title` | Button with an `InfoBadge` (only when sync needs the person) in the title bar's trailing area at every width (D47); Settings ▸ Sync | — | — | One place at every width, so it is reachable from every page and from Settings. |
-| `use-a-template` | `library.templateChooser.useTemplate`; `editor.body.placeholder.templateLink` | The link in an empty entry's placeholder, opening a flyout | — | — | Template chooser flyout ([9](platform.md#9-sheets-popovers-and-notices)). |
 
 ## Editor
 
@@ -187,6 +179,8 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 | `stop-syncing` | `settings.sync.stopSyncing` | A card with a Stop syncing button in its own group on the Sync page | — | — | No ellipsis; confirmation dialog with no default button. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` | Hyperlink in the card description | — | — |  |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Not offered | — | — | Mac-only state. |
+| `open-kept-note` | the row's own sentence; `messages.conflict.kept.rowHint` | A `SettingsCard` row in the Changed on two devices group, clickable as a whole, with a chevron | — | — | One control per row; a row with nothing to open (a journal rename) is plain text. |
+| `clear-kept-notes` | `messages.conflict.kept.clear` | Last item of that group, a text button | — | — | No confirmation. |
 
 ### Connect to a Server
 

@@ -2,7 +2,7 @@
 id: delete-and-restore
 title: Delete, restore and delete permanently (Windows)
 spec: flows/delete-and-restore.md
-features: [delete-entry, undo-delete, delete-journal, restore-entry, restore-and-move, restore-journal, delete-permanently, delete-all-deleted, recently-deleted]
+features: [delete-entry, undo-delete, delete-journal, restore-entry, restore-journal, delete-permanently, delete-all-deleted, recently-deleted]
 status: reviewed
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/dialogs-and-flyouts/dialogs
@@ -12,7 +12,7 @@ sources:
 
 # Delete, restore and delete permanently (Windows)
 
-One path for everything removed: entries, templates and journals go to Recently deleted, can be restored from there, and leave only when deleted permanently. There is no Archive. The steps and rules are the spec's [delete-and-restore](../../../flows/delete-and-restore.md); each surface has its own mapping: [entry-list](../screens/entry-list.md), [journals](../screens/journals.md), [recently-deleted](../screens/recently-deleted.md), [restore-journal](../screens/restore-journal.md), [move-entry](../screens/move-entry.md). This file follows one person through the whole path on Windows.
+One path for everything removed: entries, templates and journals go to Recently deleted, can be restored from there, and leave only when deleted permanently. There is no Archive. The steps and rules are the spec's [delete-and-restore](../../../flows/delete-and-restore.md); each surface has its own mapping: [entry-list](../screens/entry-list.md), [journals](../screens/journals.md), [recently-deleted](../screens/recently-deleted.md), [move-entry](../screens/move-entry.md). This file follows one person through the whole path on Windows.
 
 ## Controls
 
@@ -34,13 +34,17 @@ No toast, no "Undo" bar and no message: deleting is quiet, and the Undo is in th
 
 ### Restore
 
+Restore is one verb. It acts at once on entries, templates and journals: no confirmation, no dialog and no destination picker. The label says where an entry goes ([recently-deleted](../screens/recently-deleted.md)).
+
 | What | Windows |
 | --- | --- |
-| Entry whose journal is in use | `restore`: row context menu, Entry actions, the recovery notice's button, the leading swipe. Restores at once with no confirmation. It returns to its journal, which is shown with the entry open; pins come back |
-| Template | `restore`; returns to Templates, which is shown with the template open |
-| Entry whose journal is also deleted | The notice's `library.recoveryNotice.restoreWithJournal` opens the Restore entry dialog ([restore-journal](../screens/restore-journal.md)), which restores the journal too |
-| Entry into another journal | `library.recoveryNotice.restoreAndMove` opens [move-entry](../screens/move-entry.md) in its restoring form; only that entry moves |
-| Journal | `restore-journal` on a deleted journal's page opens the Restore journal dialog. Entries deleted with it return, including those that sync later; entries deleted separately stay; a taken name returns with a number (`common.restoredAsRenamed`); it returns to its place in the order or the end |
+| Entry whose journal is in use | `restore`, labelled `common.restore`: row context menu, Entry actions, the recovery notice's button, and the leading swipe. It returns to its journal, which is shown with the entry open; pins come back |
+| Template | `restore` (`common.restore`); returns to Templates, which is shown with the template open |
+| Entry that cannot return to its own journal (its journal is in Recently deleted, or missing or deleted permanently) | `restore`, labelled `library.recentlyDeleted.restoreTo` with the Default Journal's name: the row context menu, Entry actions and the notice's button, never the swipe. The entry goes to the Default Journal (Settings ▸ General, else the oldest journal in use), which is shown with the entry open; the deleted journal stays deleted and keeps its other entries. On a syncing library the unavailable notice also keeps `common.trySyncingAgain` ([unavailable-content](../screens/unavailable-content.md)) |
+| No journal in use at all, or the journal or entry is saved by a newer version or held | Not offered; the notice says `library.recoveryNotice.createJournalFirst` or `common.updateToRestoreEntry` |
+| Journal | `restore-journal` on a deleted journal's page (`library.recentlyDeleted.restoreJournal`, acts at once). Entries deleted with it return, including those that sync later; entries deleted separately stay; a taken name returns with a number (`common.restoredAsRenamed` says so on the page before the button is pressed); it returns to its place in the order or the end, and is shown |
+
+The store decides when Restore is chosen: the label is drawn earlier and may be out of date, so the destination is decided again inside one write transaction (the Default Journal is the fallback). The app opens the returned journal with the entry and, when the entry did not go to its own journal, announces `messages.announce.restoredIn` as a notification event; if the entry's own journal came back meanwhile, the entry simply goes home and nothing is said. If neither journal can be used, nothing is restored and the alert dialog shows `messages.restore.destinationGone`. A restored entry follows the grants of the journal it lands in, so the cross-journal case is named in the label and kept off the swipe.
 
 ### Delete permanently
 
@@ -51,7 +55,8 @@ One item: `delete-permanently` from the row's context menu, Entry actions, the D
 | State | Windows |
 | --- | --- |
 | Locked | The lock page replaces the window and every dialog hides. Nothing is deleted after locking unless it was already confirmed and stored. No row is ever pending removal, because a Windows swipe asks before the row leaves in Recently deleted, and entry deletion needs no question |
-| Changes to review, newer versions | Permanent deletion and journal deletion refuse with the messages in [messages](../messages.md) (`messages.generic.*`), shown in the alert dialog; nothing changes |
+| Changes to review, newer versions | A journal is never refused for changes made on two devices: the device settles them ([resolve-conflict](resolve-conflict.md)). A journal with a change from a newer version that stays held behaves like one saved by a newer version. Journal deletion and permanent deletion of such items refuse with the messages in [messages](../messages.md) (`messages.generic.*`, `messages.lifecycle.unsupportedJournal`), shown in the alert dialog; an entry or template that still has changes to review is refused with `messages.generic.deleteChanged`. There is no dialog with a Review changes button; nothing changes |
+| Deleted permanently on one device, changed on another | The deletion stays final. The changed entry or template is saved separately in Recently deleted (Unavailable journals when its journal is gone), where Restore brings it back; a journal stays deleted. Settings ▸ Sync ▸ Changed on two devices says so ([settings-sync](../screens/settings-sync.md)) |
 | Removed by a sync while open | The open item closes unless it has unsaved writing; the editor column shows `library.window.selectEntry` |
 
 Rules of the spec kept: deleting never asks for entries and templates, always asks for journals and for permanent deletion; only Recently deleted's own actions delete permanently; nothing is ever deleted automatically.
@@ -67,14 +72,14 @@ As the screens it uses: the list header and its Delete all button ([recently-del
 | `delete-entry` | Row context menu; Entry actions; trailing swipe | Delete | Focus is in the list, never while typing in the editor |
 | `undo`, `redo` | Edit menu | Ctrl+Z, Ctrl+Y | The last list action was a delete |
 | `delete-journal` | Journal context menu; Journal actions | none | Always |
-| `restore` | Row context menu; Entry actions; notice; leading swipe | none | In Recently deleted, journal in use (entries) |
-| `restore-with-journal`, `restore-and-move`, `restore-journal` | The notice; a deleted journal's page | none | As [recently-deleted](../screens/recently-deleted.md) |
+| `restore` | Row context menu; Entry actions; notice; leading swipe (`common.restore` only) | none | In Recently deleted, as [recently-deleted](../screens/recently-deleted.md) |
+| `restore-journal` | A deleted journal's page | none | Not while the library is being replaced |
 | `delete-permanently` | Row context menu; Entry actions; a deleted journal's page | Delete, Shift+Delete in Recently deleted | Focus in the list with an item selected |
 | `delete-all-recently-deleted` | File menu; the list header button | Ctrl+Shift+Delete | Recently deleted has rows and no search |
 
 ## Copy differences
 
-Sentence case and the ellipsis rule ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): "Delete entry", "Delete template", "Delete journal", "Delete permanently", "Delete all", "Restore", "Restore and move…", "Version history…". Dialog titles that are questions read as sentences ("Delete “{name}” permanently?"). The proposed variants are in [journals](../screens/journals.md) and [recently-deleted](../screens/recently-deleted.md); nothing new here.
+Sentence case and the ellipsis rule ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): "Delete entry", "Delete template", "Delete journal", "Delete permanently", "Delete all", "Restore", "Restore to “{name}”", "Restore journal", "Version history…". Dialog titles that are questions read as sentences ("Delete “{name}” permanently?"). The proposed variants are in [journals](../screens/journals.md) and [recently-deleted](../screens/recently-deleted.md); nothing new here.
 
 ## Accessibility
 

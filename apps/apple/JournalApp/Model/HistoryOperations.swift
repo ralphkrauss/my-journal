@@ -25,15 +25,4 @@ extension AppModel {
             }
         }
     }
-    func restoreHistoricalJournalSettings(_ version: JournalItem, expectedJournal: JournalItem) async throws -> Bool {
-        guard !locked, !replacingVault else { throw JournalError.locked }
-        guard await finishPendingSave() else {
-            throw JournalError.saveRequired
-        }
-        try Task.checkCancellation()
-        guard !locked, !replacingVault, let store else { throw JournalError.locked }
-        return try await commitJournalResolution {
-            try await store.restoreJournalSettings(version, expectedJournal: expectedJournal)
-        }
-    }
 }

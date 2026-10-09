@@ -97,7 +97,7 @@ From the leading swipe, the context menu, Entry Actions, or File ▸ Pin Entry (
 - No confirmation, no message. The row moves into or out of Pinned with the list's animation (none with Reduce Motion). The open entry stays open and selected; the list scrolls just enough to keep it in view.
 - VoiceOver announces `messages.announce.pinned` or `messages.announce.unpinned`, and its focus follows the row to its new section.
 - Undo and Redo: Edit ▸ Undo Pin Entry / Undo Unpin Entry (`library.entryActions.pinUndo`, `library.entryActions.unpin`).
-- A pin belongs to the entry: it's kept through edits, Change Date, Move Entry, deletion (hidden in Recently Deleted) and restoring. Copies (Save as Template, New Entry from Template, Version History copies) aren't pinned. Pins sync.
+- A pin belongs to the entry: it's kept through edits, Change Date, Move Entry, deletion (hidden in Recently Deleted) and restoring. Copies (Save as Template, Version History copies) aren’t pinned. Pins sync.
 - Can be pinned: an entry listed in a journal in use, while unlocked and not replacing the library, including read-only entries and entries with changes to review. Not templates, not entries in Recently Deleted or Unavailable Journals.
 - Failure: error alert `messages.generic.pinFailed` or `messages.generic.unpinFailed`; `messages.library.needsUpdate` when the library record is from a newer version.
 
@@ -126,7 +126,7 @@ Alert `library.saveTemplate.title` with a name field (placeholder `common.name`,
 
 ## Rules
 
-- Only entries are listed here (no templates). A journal shows its entries; All Entries shows the entries of every journal in use; Unavailable Journals shows entries whose journal is missing, saved by a newer version, or has changes to review.
+- Only entries are listed here (no templates). A journal shows its entries; All Entries shows the entries of every journal in use; Unavailable Journals shows entries whose journal is missing or saved by a newer version.
 - Entries in Recently Deleted never appear in these lists.
 - Pinned entries come first in a journal and All Entries, also in Previous/Next Entry order and when choosing the next entry after Delete.
 - The list keeps showing rows while the library is saved or synced; it changes only when what it shows changes.

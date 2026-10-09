@@ -32,13 +32,17 @@ Preparation refuses records this client can't fully read, missing, unsupported o
 ## Receiving and saving
 
 - A canonical incoming marker, for a record with no local changes and no unresolved conflict, replaces the record and removes its local history. A replayed older revision is ignored before anything is removed.
-- If the record has local changes or an unresolved conflict, the incoming marker is kept as a conflict for review. A newer version of a conflicting record keeps the earlier conflicting version in history first.
+- If the record has local changes or an unresolved conflict, the incoming marker is kept as a conflict, which a client that implements [conflicts.md](conflicts.md) settles on its own and an earlier client keeps for review. A newer version of a conflicting record keeps the earlier conflicting version in history first.
 - A newer ordinary revision over a current marker becomes a conflict, unless it carries the matching `restoredFromDeletionID` (see below).
-- A save made from a copy read before a marker arrived becomes a deletion conflict instead of bringing the item back. Ordinary saves can't create or overwrite a marker, copying from Version History or restoring journal settings can't revive a marked record, and ordinary conflict choices refuse a marker on either side.
+- A save made from a copy read before a marker arrived becomes a deletion conflict instead of bringing the item back. Ordinary saves can't create or overwrite a marker, copying from Version History can't revive a marked record, and ordinary conflict choices refuse a marker on either side.
 - A journal marker doesn't remove entries this device hasn't seen yet; they stay Unavailable while the journal is deleted.
 - Lists, search and agent access omit marked records. Additive import keeps markers through a creation-only path with fresh identities, and archives keep marker fields and unknown content unchanged.
 
 No automatic deletion timers exist, and history-only membership is never inferred from old versions.
+
+## Settling a deletion conflict automatically
+
+A client that implements [conflicts.md](conflicts.md) does not ask. The marker stays the record (an earlier version's Keep Deletion), and the edited version is parked as a new entry or template in Recently Deleted; two markers keep the other device's. A journal against a marker stays deleted and no journal is made. Markers are never revived, so no `restoredFromDeletionID` is written for these conflicts. The section below describes the review of a client that predates conflicts.md.
 
 ## Resolving a deletion conflict
 
@@ -56,4 +60,4 @@ Resolution retires the superseded pending request and queues a new operation aga
 
 ## Tests
 
-Real SQLite tests cover rollback after a failure midway through a multi-record deletion (including the original pending bytes), shared images, entries deleted on their own, history of moved entries, history-only entries, stale scope and wrong-store refusal, replay after acknowledgement, intentional restoration and refusal of stale restoration after a second deletion, copies with images and history, and journal-settings recovery. The sync test client (`scripts/test-sync.sh`) publishes markers over the real server, retries them, deletes a journal with pending changes, resolves an offline edit with Keep Entry and checks that other devices converge.
+Real SQLite tests cover rollback after a failure midway through a multi-record deletion (including the original pending bytes), shared images, entries deleted on their own, history of moved entries, history-only entries, stale scope and wrong-store refusal, replay after acknowledgement, intentional restoration and refusal of stale restoration after a second deletion, and copies with images and history. The automatic settlement is covered by the conflicts.md fixtures and scenarios. The sync test client (`scripts/test-sync.sh`) publishes markers over the real server, retries them, deletes a journal with pending changes, lets an offline edit meet a deletion (the deletion stays final and the edit is parked in Recently Deleted) and checks that other devices converge.

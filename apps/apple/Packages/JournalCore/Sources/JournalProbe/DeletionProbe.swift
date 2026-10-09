@@ -41,26 +41,29 @@ extension Probe {
         let received = try await clean.item(entryID)
         let history = try await clean.history(for: entryID)
         let visible = try await clean.viewSnapshot()
-        let conflicts = try await offline.conflicts()
-        guard received == marker, history.isEmpty, !visible.items.contains(where: { $0.id == entryID }),
-            conflicts.count == 1, conflicts[0].remote == marker,
-            conflicts[0].local.document == edit.document
-        else { throw ProbeFailure("the deletion marker did not arrive, or the offline edit is not kept for review") }
-        print("PASS: deletion marker retries converge while a concurrent offline edit remains available for review")
-        guard let journalID = edit.journalID else { throw ProbeFailure("the offline edit has no journal") }
-        let review = try await offline.prepareDeletionConflict(entryID)
-        let kept = try await offline.resolveDeletionConflict(review, choice: .keepEntry(journalID: journalID))
-        try await offlineSync.synchronize()
-        try await cleanSync.synchronize()
-        let restored = try await clean.item(entryID)
-        let unresolved = try await clean.conflicts()
-        guard restored == kept, unresolved.isEmpty, kept.document == edit.document,
-            kept.restoredFromDeletionID == marker.permanentDeletionID
-        else {
-            throw ProbeFailure(
-                "keeping the edited entry did not revive it on the other device without a second conflict")
+        guard received == marker, history.isEmpty, !visible.items.contains(where: { $0.id == entryID }) else {
+            throw ProbeFailure("the deletion marker did not arrive on the clean device")
         }
-        print("PASS: explicitly keeping the edited entry revives it on another device without a second conflict")
+        // The offline edit meets the marker: the deletion stays final and the edit is parked in Recently Deleted.
+        let unresolved = try await offline.conflicts()
+        let offlineMarker = try await offline.item(entryID)
+        let parkedOffline = try await parkedEntries(in: offline, edit: edit, marker: marker)
+        let parkedClean = try await parkedEntries(in: clean, edit: edit, marker: marker)
+        guard unresolved.isEmpty, offlineMarker == marker, parkedOffline.count == 1, parkedClean.count == 1,
+            parkedOffline.map(\.id) == parkedClean.map(\.id)
+        else { throw ProbeFailure("the deletion did not stay final with the offline edit parked on both devices") }
+        let queued = try await offline.pending()
+        guard queued.isEmpty else { throw ProbeFailure("the parked edit was not sent") }
+        print("PASS: a permanent deletion stays final while a concurrent offline edit is parked in Recently Deleted")
+    }
+    /// Entries other than `marker`'s record that hold the edited document, deleted at the marker's time.
+    private static func parkedEntries(in store: JournalStore, edit: JournalItem, marker: JournalItem) async throws
+        -> [JournalItem]
+    {
+        try await store.items().filter {
+            $0.kind == "entry" && $0.id != marker.id && !$0.isPermanentlyDeleted && $0.document == edit.document
+                && $0.deletedAt == marker.permanentlyDeletedAt && $0.title == edit.title
+        }
     }
 }
 

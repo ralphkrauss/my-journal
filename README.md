@@ -62,7 +62,7 @@ Many journaling apps are good at what they do. Most are built around an account 
 - Lists with Increase and Decrease Indent; new items start with a capital letter, as anywhere else on your device.
 - Markdown shortcuts as you type, and a source view for the Markdown itself.
 - Photos and images: add several at once, describe them for VoiceOver, and copy, share or save them again. Location data (GPS coordinates and place names) is removed when you add a photo.
-- Templates you create, with a default template for each journal. New libraries start without templates, so there’s nothing to clear away.
+- Templates you create. Start an entry from one inside a new entry, with “use a template” or File > Use a Template…. New libraries start without templates, so there’s nothing to clear away.
 - Dated entries: the date is shown in the list and changed with Change Date.
 - On the Mac, View > Show Editor Only hides the sidebar and entry list for focused writing.
 
@@ -90,7 +90,7 @@ Many journaling apps are good at what they do. Most are built around an account 
 - Add a device by scanning a QR code on a device you already use, by signing in with your master password, or with a pairing code and a check code.
 - Servers on your local network can be found with Bonjour, if you turn on the optional announcer.
 - Quiet by design: sync runs in the background and only shows a status when you need to act. Changes wait on the device while you’re offline.
-- If an entry changes on two devices at once, both versions are kept for you to review. Nothing is overwritten silently.
+- If an entry or template changes on two devices at once, both versions are kept for you to review. Journals and permanent deletions settle themselves, keeping both versions, and Settings > Sync lists what was settled. Nothing is overwritten silently.
 - Server backups and restores with integrity checks.
 
 ### Backups and portability

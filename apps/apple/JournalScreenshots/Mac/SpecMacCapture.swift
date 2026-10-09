@@ -112,15 +112,11 @@ final class SpecMacCapture: SpecMacCase {
         try await settle(2)
         try await captureSheet(window, "journals-new-journal")
         try await closeSheets(of: window)
-        for (action, name) in [
-            ("Merge Into…", "merge-journal-default"), ("Delete Journal…", "journals-delete-confirm"),
-        ] {
-            let toolbar = try toolbarController(of: window)
-            try perform(action, in: toolbar.configuration.journalActions())
-            try await settle(2)
-            try await captureSheet(window, name)
-            try await closeSheets(of: window)
-        }
+        let toolbar = try toolbarController(of: window)
+        try perform("Delete Journal…", in: toolbar.configuration.journalActions())
+        try await settle(2)
+        try await captureSheet(window, "journals-delete-confirm")
+        try await closeSheets(of: window)
     }
 
     // MARK: - App Lock

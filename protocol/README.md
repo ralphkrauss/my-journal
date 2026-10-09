@@ -9,6 +9,7 @@ This contract is implemented by the ASP.NET Core server and the shared Swift cor
 | [archive.md](archive.md) | The `.journalarchive` package and its database |
 | [markdown-export.md](markdown-export.md) | Export as Markdown: the folder of Markdown files with front matter and images, for other apps |
 | [journal-lifecycle.md](journal-lifecycle.md), [permanent-deletion.md](permanent-deletion.md), [entry-archiving.md](entry-archiving.md), [history-recovery.md](history-recovery.md) | Deletion, restoration and history rules |
+| [conflicts.md](conflicts.md) | Settling a record changed on two devices without asking (conflicts v1): the rules, identities of parked entries, when they run, and the pass over conflicts an earlier version left |
 | [server-backup.md](server-backup.md) | The server's backup directory, upgrades and downgrades |
 | [agent-access-server.md](agent-access-server.md) | Agent access through the server's MCP endpoint: transport, authorization, keys and the agent's copy |
 | [conformance/](conformance/README.md) | Fixed, versioned test vectors every client and the server must read and produce |
@@ -22,6 +23,8 @@ Outside /v1, GET /health answers while the process runs and GET /ready (`{status
 ## Versioning and capabilities
 
 `/v1` is the wire major version. Within v1, changes are additive only: new endpoints, new optional request fields, new response fields and new error codes. Breaking changes use a new path prefix (`/v2`); a server lists every major version it implements. Servers ignore unknown request fields, so a new request field or record kind whose loss would change meaning is used only after the server advertises a capability for it. Clients ignore unknown response fields. The one exception, made before the first release, is `private-envelope`: those servers leave `wrappedKey` out of GET /recovery.
+
+Contracts that only clients implement are versioned on their own and change no wire format: **conflicts v1** ([conflicts.md](conflicts.md)) is the first. A client without it remains conforming; the server never learns whether a client has it.
 
 - GET /server (unauthenticated, no database access): `protocolVersions` (supported major versions, currently `[1]`), `serverVersion` (the server build, for display and diagnostics only: the release version, or `0.0.0-dev` for development builds), `features` (capabilities, the same list as `/status`) and `recoveryVersions`. Servers from before this endpoint return 404.
 
@@ -162,7 +165,7 @@ A restored server's change cursors and revisions restart from the backup. Client
 - the local payload appears earlier in the server's log for that record: apply the server version (it descends from local content);
 - the server version predates the identity (cursor ≤ serverIdCursor) and its revision is not newer than the local revision: the server lost later versions this device has; re-upload the local version based on the server revision;
 - a server version that predates the identity with a newer revision: normal rules (apply, or conflict if edited locally);
-- otherwise, including versions written after a restore: a normal conflict for review;
+- otherwise, including versions written after a restore: a normal conflict for review (a client that implements [conflicts.md](conflicts.md) settles it there, once the whole log is compared);
 - records the server lacks: upload again from revision 0; pending conflicts are kept and rebased onto the server's revision.
 Images are then checked with HEAD /attachments/{id} (200 present, 404 missing) and uploaded again if missing. Nothing is discarded silently and no conflicting edit is overwritten.
 
@@ -190,7 +193,7 @@ PUT /sync/{recordId}: operationId, baseRevision, kind, payload, and optionally `
 
 With capability `sync-short-receipt`, a client may send `shortReceipt: true`; the receipt then leaves out `payload` and has `payloadDigest` instead: the lower-case hex SHA-256 of the stored payload text's UTF-8 bytes (as `afterDigest`). Its members are cursor, recordId, revision, kind, deviceId, modifiedAt and payloadDigest. `shortReceipt` is not part of the operation: a retry returns the same change in the form that retry asks for, and toggling it never causes `operation_reused`. Receipts of operations kept whole by older servers are returned whole, so a client that asks for a short receipt still accepts a full one. A client accepts a short receipt only if it names the record and kind it sent and the next revision, and its digest is that of exactly the payload it sent; a receipt with both members must have both agree, and a member that is null counts as present and invalid. It then completes the change with the payload it sent. Errors, including 409 conflicts with `current`, are unchanged.
 
-Each operation UUID identifies an immutable request. Retrying it returns the original receipt even after newer revisions exist. Reusing it with different content returns 409 `operation_reused`. A stale baseRevision returns 409 `revision_conflict` with `current`, the server's record (id, revision, kind, payload, deviceId, modifiedAt). The client retains its local version until an explicit resolution. Conflict resolution creates a new revision based on the reviewed remote revision and can itself conflict if another edit arrives.
+Each operation UUID identifies an immutable request. Retrying it returns the original receipt even after newer revisions exist. Reusing it with different content returns 409 `operation_reused`. A stale baseRevision returns 409 `revision_conflict` with `current`, the server's record (id, revision, kind, payload, deviceId, modifiedAt). The client retains its local version until an explicit resolution. A client that implements [conflicts.md](conflicts.md) resolves automatically instead. Conflict resolution creates a new revision based on the reviewed remote revision and can itself conflict if another edit arrives.
 
 Record payloads are 29 bytes to 4 MiB after base64 decoding in every protection mode; other values return 400 `invalid_record`. A rejected write (400, 413 or 409 `operation_reused`) was not applied; clients keep that record on the device, check the size limit before sending, and continue with other records instead of stopping sync. Changing a record's kind returns 400 `kind_is_immutable`. A base ahead of the server returns 409 `revision_ahead` with `current` (null when the server has no record).
 

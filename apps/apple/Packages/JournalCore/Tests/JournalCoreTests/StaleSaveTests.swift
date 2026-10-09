@@ -80,7 +80,7 @@ final class StaleSaveTests: XCTestCase {
         XCTAssertNil(kept?.deletedAt)
     }
 
-    func testTypingIntoAnEntryDeletedElsewhereAsksForReviewInsteadOfFailing() async throws {
+    func testTypingIntoAnEntryDeletedElsewhereIsParkedInsteadOfFailing() async throws {
         let store = try openStore()
         let opened = try await synchronizedEntry("Kept writing", in: store)
         let marker = JournalItem.permanentDeletionMarker(for: opened, at: Date())
@@ -88,9 +88,18 @@ final class StaleSaveTests: XCTestCase {
         var typed = opened
         typed.document = .plain("Kept writing after it was deleted elsewhere")
         try await store.save(typed)
-        let review = try await store.prepareDeletionConflict(opened.id)
-        XCTAssertEqual(review.edited?.document.text, typed.document.text)
-        XCTAssertTrue(review.deletion.isPermanentlyDeleted)
+        let report = try await store.resolveConflicts(at: .local)
+        guard case .deletedAndChanged(let parkedID?) = try XCTUnwrap(report.resolved.first).result else {
+            return XCTFail("The edit was not parked.")
+        }
+        let record = try await store.item(opened.id)
+        XCTAssertEqual(record?.permanentDeletionID, marker.permanentDeletionID)
+        let storedParked = try await store.item(parkedID)
+        let parked = try XCTUnwrap(storedParked)
+        XCTAssertEqual(parked.document.text, typed.document.text)
+        XCTAssertEqual(parked.deletedAt, marker.permanentlyDeletedAt)
+        let conflicts = try await store.conflicts()
+        XCTAssertTrue(conflicts.isEmpty)
     }
 
     func testASaveNeverReplacesARecordFromANewerVersion() async throws {

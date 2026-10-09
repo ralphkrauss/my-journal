@@ -11,7 +11,7 @@
 #   <platform>-reason        required for different-by-design and not-applicable
 #   <platform>-notes         optional: where iPhone, iPad and Mac differ, or what a port must watch
 # "apple" covers iPhone, iPad and Mac; the notes say where they differ.
-# Removed features (export-entry, archive-entry) are kept as not-applicable on every platform so nobody rebuilds them.
+# Removed features (export-entry, archive-entry, and the 1.1 removals of simplifications H, K, L, M and N) are kept as not-applicable on every platform so nobody rebuilds them.
 
 # ======================================================================
 # Library and navigation
@@ -176,19 +176,25 @@ rename-journal:
 
 journal-default-template:
   title: "Choose the template New Entry uses in a journal"
-  specs: [flows/new-entry.md, screens/journals.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
 
 merge-journal:
   title: "Move every entry of a journal into another and move the emptied journal to Recently Deleted"
-  specs: [screens/journals.md, screens/merge-journal.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
 
 delete-journal:
   title: "Move a journal and its entries to Recently Deleted after a confirmation"
@@ -210,15 +216,18 @@ reorder-journals:
 
 journal-version-history:
   title: "Earlier versions of a journal's name and default template, put back only after a side-by-side comparison"
-  specs: [screens/journal-history.md, screens/journals.md, screens/recently-deleted.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
 
 unique-journal-names:
-  title: "Journals in use never share a name; restores and syncs add a number"
-  specs: [screens/journals.md, screens/merge-journal.md]
+  title: "Journals in use never share a name; restores, imports and syncs add a number, and Rename is how a numbered journal gets its name back"
+  specs: [screens/journals.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -289,7 +298,7 @@ save-as-template:
   android: planned
 
 templates-collection:
-  title: "A list of the library's templates, with New Entry In ▸ a journal"
+  title: "A list of the library's templates to edit, describe images, see versions of, and delete"
   specs: [screens/templates.md]
   reference: apple
   apple: shipped
@@ -297,7 +306,7 @@ templates-collection:
   android: planned
 
 new-entry:
-  title: "New Entry in the shown journal or the Default Journal, with the journal's default template"
+  title: "New Entry in the shown journal or the Default Journal; always an empty entry"
   specs: [flows/new-entry.md, screens/library-window.md]
   reference: apple
   apple: shipped
@@ -306,22 +315,28 @@ new-entry:
 
 new-blank-entry:
   title: "New Blank Entry ignores the default template (⇧⌘N)"
-  specs: [flows/new-entry.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
 
 new-entry-from-template:
   title: "Start an entry from a chosen template, in a chosen journal"
-  specs: [flows/new-entry.md, screens/template-chooser.md, screens/templates.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
 
 template-chooser:
-  title: "A searchable, keyboard-friendly list of templates, with a Journal picker outside a journal"
+  title: "A searchable, keyboard-friendly list of templates that fills the open entry; it never creates one"
   specs: [screens/template-chooser.md]
   reference: apple
   apple: shipped
@@ -329,7 +344,7 @@ template-chooser:
   android: planned
 
 template-suggestion:
-  title: "“use a template” in an empty entry fills it from a template"
+  title: "“use a template” in an empty entry, and File ▸ Use a Template…, fill the entry from a template"
   specs: [flows/new-entry.md, screens/entry-editor.md, screens/template-chooser.md]
   reference: apple
   apple: shipped
@@ -370,8 +385,8 @@ recently-deleted:
   android: planned
 
 restore-entry:
-  title: "Restore an entry or template from Recently Deleted"
-  specs: [flows/delete-and-restore.md, screens/recently-deleted.md, screens/restore-journal.md]
+  title: "Restore an entry or template from Recently Deleted at once; an entry whose journal is gone goes to the Default Journal, named in the label"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -379,15 +394,18 @@ restore-entry:
 
 restore-and-move:
   title: "Restore an entry from Recently Deleted into a chosen journal"
-  specs: [flows/delete-and-restore.md, screens/move-entry.md, screens/recently-deleted.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1, simplification K/L/M/N; see docs/design/1-1-library-simplifications.md"
 
 restore-journal:
-  title: "Restore a deleted journal with the entries deleted with it"
-  specs: [flows/delete-and-restore.md, screens/recently-deleted.md, screens/restore-journal.md]
+  title: "Restore a deleted journal at once, with the entries deleted with it"
+  specs: [flows/delete-and-restore.md, screens/recently-deleted.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -788,7 +806,7 @@ conflict-notice:
   android: planned
 
 changes-to-review-list:
-  title: "Settings ▸ Sync lists every record with changes to review, including journals and deleted records"
+  title: "Settings ▸ Sync lists every entry and template with changes to review, and every one saved by a newer version"
   specs: [screens/conflict-review.md, flows/resolve-conflict.md, screens/settings-sync.md]
   reference: apple
   apple: shipped
@@ -806,20 +824,25 @@ conflict-review-entry:
 
 conflict-review-journal:
   title: "Compare and keep one version of a journal's name, default template and location"
-  specs: [screens/conflict-review.md, flows/resolve-conflict.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  windows-notes: "A page; the entry point is an attention dot on the journal's navigation row and Review changes in the journal menus, because Windows has no journal settings surface (D52)."
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
 
 conflict-review-deletion:
   title: "Resolve an edit against a permanent deletion (keep, keep as copy, or keep the deletion)"
-  specs: [screens/conflict-review.md, flows/resolve-conflict.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
 
 conflict-review-unsupported:
   title: "Changes with content from a newer version can't be resolved; update or export an archive"
@@ -858,10 +881,29 @@ failure-messages:
 
 deletion-conflict-alert:
   title: "Delete Journal and Delete Permanently on a record with changes to review show a Can't Be Deleted alert with Review Changes and Cancel"
-  specs: [messages.md, flows/delete-and-restore.md, screens/journals.md, screens/recently-deleted.md, screens/conflict-review.md]
+  specs: []
+  reference: apple
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
+
+conflict-kept-both:
+  title: "Journals and permanent deletions settle themselves, keeping both versions: a journal keeps the later name, a deleted item stays deleted and the changed version is saved in Recently Deleted"
+  specs: [flows/resolve-conflict.md]
+  reference: apple
+  apple: partial
+  apple-notes: "Journals and permanent deletions only; entries and templates still use the review until conflicts step 2."
+  windows: planned
+  android: planned
+
+changed-on-two-devices-list:
+  title: "Settings ▸ Sync lists, for 30 days, what the app settled itself, with a row that opens the saved item and Clear List"
+  specs: [screens/settings-sync.md, flows/resolve-conflict.md]
   reference: apple
   apple: shipped
-  apple-notes: "Shipped in build 18."
   windows: planned
   android: planned
 

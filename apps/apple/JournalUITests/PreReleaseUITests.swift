@@ -64,31 +64,6 @@ final class PreReleaseUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Gratitude"].firstMatch.exists)
     }
 
-    /// A template's context menu starts an entry from it, in the journal New Entry uses, and Back leads to that
-    /// journal's entries (docs/design/new-entry-template-suggestion.md).
-    @MainActor func testNewEntryFromTheTemplatesScreen() throws {
-        let app = launchWithoutEncryption(dark: false)
-        defer { app.terminate() }
-        saveTemplates(["Gratitude"], app: app)
-        NavigationTestSupport.selectCollection("Templates", app: app)
-        let template = app.staticTexts["Gratitude"].firstMatch
-        XCTAssertTrue(template.waitToAppear(timeout: 10))
-        template.press(forDuration: 1)
-        let start = app.buttons["New Entry from Template"]
-        XCTAssertTrue(start.waitToAppear(timeout: 5))
-        capture(app, "Template context menu with New Entry")
-        start.tap()
-        let body = app.textViews["Entry text"]
-        let filled = NSPredicate(format: "value CONTAINS %@", "What am I grateful for")
-        XCTAssertEqual(
-            Waiting.wait(for: XCTNSPredicateExpectation(predicate: filled, object: body), timeout: 10), .completed)
-        XCTAssertTrue(NavigationTestSupport.title(app).exists)
-        if !isPad {
-            app.navigationBars.buttons.element(boundBy: 0).tap()
-            XCTAssertTrue(app.navigationBars["Default"].waitToAppear(timeout: 5), "Back leads to the journal")
-        }
-    }
-
     /// Item 1 in dark appearance and at the largest text size: the Templates section and its footer.
     @MainActor func testRecentlyDeletedTemplateRowsInDarkAndLargestText() throws {
         for (dark, largest) in [(true, false), (false, true)] {

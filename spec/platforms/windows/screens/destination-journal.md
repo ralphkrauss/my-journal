@@ -18,9 +18,8 @@ A `ContentDialog` cannot open another `ContentDialog` ([8.1](../platform.md#81-r
 
 | Used from | Surface |
 | --- | --- |
-| [Move entry](move-entry.md) and Restore and move | A step of the same dialog: its title becomes `library.newJournal.title`, a back arrow at the top left of the content returns to the list, and the buttons are the step's |
+| [Move entry](move-entry.md) | A step of the same dialog: its title becomes `library.newJournal.title`, a back arrow at the top left of the content returns to the list, and the buttons are the step's |
 | Version history (a page) | A `ContentDialog` over the page |
-| Permanent-deletion conflict review (a page) | A `ContentDialog` over the page |
 
 Content, in both:
 
@@ -46,7 +45,7 @@ Create saves the open entry first, then creates a journal with the trimmed name 
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `new-journal` | The link or button in Move entry, in Version history and in the deletion review that opens this step | none (the app-wide Ctrl+Shift+J is not active while a dialog is open) | Not while moving or creating |
+| `new-journal` | The link or button in Move entry and in Version history that open this step | none (the app-wide Ctrl+Shift+J is not active while a dialog is open) | Not while moving or creating |
 
 Enter creates; Esc goes back or closes.
 

@@ -2,7 +2,7 @@
 id: messages
 title: Messages (Apple)
 spec: messages.md
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, erase-unopened-library, failure-messages, deletion-conflict-alert, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-unsupported, conflict-kept-both, changed-on-two-devices-list, library-open-failure, erase-unopened-library, failure-messages, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 devices: [iphone, ipad, mac]
 status: draft
 sources:
@@ -17,9 +17,6 @@ sources:
   - apps/apple/JournalApp/Views/LibraryProblemView.swift
   - apps/apple/JournalApp/Views/ConflictRouting.swift
   - apps/apple/JournalApp/Views/EntryConflictReview.swift
-  - apps/apple/JournalApp/Views/JournalConflictView.swift
-  - apps/apple/JournalApp/Views/DeletionConflictView.swift
-  - apps/apple/JournalApp/Views/DeletionConflictAlert.swift
   - apps/apple/JournalApp/Views/JournalAccessibility.swift
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/JournalApp/Model/FailureMessage.swift
@@ -58,7 +55,8 @@ The spec's surfaces and their Apple implementation. `AppModel` (`Model/AppModel.
 | Writing paused | Mac only: `ConnectionPauseNotice` and `EncryptionPauseNotice`, bands above the editor in the journal window (HStack, stacked at accessibility sizes, `.quaternary` background, fade unless Reduce Motion) with Show Connection or Show Progress. The connecting notice appears after one second | `AppModel.serverConnectionPause`, `EncryptionUpgrade.pausesWriting` |
 | Entry notices | `ConflictNotice` (conflict), `EntryRecoveryNotice` (recovery and unavailable), `EntryEditingNote` (read-only and Markdown-source note under the title). iOS: in the entry's header or just above the editor; Mac: bands above the title | `AppModel.conflicts`, `JournalLifecycleSnapshot.location(of:)`, `JournalDocument.isEditable` |
 | Changes to Review | `ConflictSettingsSection` in Settings ▸ Sync, shown only when unlocked and there is a conflict; the exclamation mark on a list row has the accessibility label `messages.conflict.needsReview` | `AppModel.conflicts` |
-| Review sheets | `ConflictReview` routes to `EntryConflictReview`, `JournalMetadataConflictReview`, `DeletionConflictView` or a `DeletionSheet` with the update message. A deletion refused for changes to review uses `DeletionConflictAlert` first | `AppModel.conflicts`, `DeletionConflict` |
+| Review sheets | `ConflictReview` routes to `EntryConflictReview` or a `DeletionSheet` with the update message. Journals and permanent deletions have no sheet and no alert: `JournalStore.resolveConflicts(at:)` settles them | `AppModel.conflicts`, `ConflictResolution` |
+| Changed on Two Devices | The section of Settings ▸ Sync built from the sealed “kept-notes” key (`KeptNote`), with the footer line `messages.conflict.kept.updateNeeded` for held changes | `KeptNotes`, `JournalStore.heldConflictIDs()` |
 | Privacy cover | `LockedCover` overlay and, on iOS, system-level windows, see [screens/unavailable-content](screens/unavailable-content.md) | `PrivacyCover` |
 | Announcements | `JournalAccessibility.announce` (`UIAccessibility` announcement on iOS, `NSAccessibility` on the Mac) and the model's `announceForAccessibility` | after a manual sync (`SyncSchedule.swift`), pin and journal moves (`LibraryOperations.swift`), encryption progress (`EncryptionUpgrade.swift`), errors in open sheets |
 
@@ -66,13 +64,13 @@ Which messages go where, by the spec's groups:
 - **Sync states, sync actions, item refusals** (`messages.sync.*`, `common.reconnect`): produced by `SyncHealth` (14 states, among them `localDataUnavailable`) in JournalCore and `AppModel.syncError`; shown in the Settings ▸ Sync footer, the single action Button and the Sync Status menu; `messages.sync.pausedForSaveFailure` is `SyncPauseNotice.saveFailed`. Record and image refusals set `syncError` without a failure state, so the action stays Sync Now.
 - **Library record** (`messages.library.needsUpdate`, `messages.library.waitingForServer`): `AppModel.libraryFooter`, Settings ▸ Sync footer, only while connected.
 - **Server and network errors outside sync, connecting, pairing, password change, Turn On Encryption** (`messages.server.*`, `messages.connection.*`, `messages.pairing.*`, `messages.password.*`, `messages.encryption.*`): errors inside the sheet of the flow (the error text of `ConnectionView`, `AddDeviceView`, `ChangePasswordView`, `TurnOnEncryptionView`), not the generic alert. Network failures are worded by `NetworkFailureMessage`.
-- **JournalError and other operation errors** (`messages.error.*`, `messages.lifecycle.*`, `messages.restore.*`, `messages.entry.*`, `messages.history.*`, `messages.merge.*`, `common.journalGone`): the error text of the sheet that ran the operation ([screens/move-entry](screens/move-entry.md), [screens/change-date](screens/change-date.md), [screens/restore-journal](screens/restore-journal.md) and the history and merge sheets); the generic alert when the operation has no sheet (pin, move journal, default journal, Delete Journal).
+- **JournalError and other operation errors** (`messages.error.*`, `messages.lifecycle.*`, `messages.restore.*`, `messages.entry.*`, `messages.history.*`, `common.journalGone`): the error text of the sheet that ran the operation ([screens/move-entry](screens/move-entry.md), [screens/change-date](screens/change-date.md) and the history sheet); the generic alert when the operation has no sheet (pin, move journal, default journal, Delete Journal, Restore, Restore Journal).
 - **Save failures** (`common.saveFailed`, `messages.save.*`): `common.saveFailed` is the generic alert's message with Try Again; `messages.save.notSaved` and `messages.save.saving` are `SaveFailureNotice`; `messages.save.mac.*` is the Keep Open alert; `common.saveFailedLocked` is the lock screen note; `messages.save.before.goBack` is the text of `JournalError.saveRequired`, thrown by the model before an operation that needs the open entry saved starts, and appears in that operation's sheet or pane; the generic alert reports it as `messages.save.before.tryAgain` (`AppModel.report(_:_:)`, `AppModel.alertText`). On the Mac, "go back to your entry" means closing the sheet, or switching from the Settings window to the journal window: the Settings window is a window, not a sheet, and has no Try Again. There is no Mac variant of the text.
-- **Saved, but not displayed** (`messages.refresh.*`): `AppModel.error` assigned after a committed change whose refresh failed, so the generic alert; `library.restoreEntry.displayFailed` and the restore sheet's own text stay in their sheet.
-- **Other generic alert messages** (`messages.generic.*`): the generic alert; the deletion refusals also reach it, except changes to review, which have their own alert.
+- **Saved, but not displayed** (`messages.refresh.*`): `AppModel.error` assigned after a committed change whose refresh failed, so the generic alert; a restore that was stored but can't be shown uses `messages.refresh.journalRestored`, `messages.refresh.templateRestored` or `common.entryMovedNotDisplayed`.
+- **Other generic alert messages** (`messages.generic.*`): the generic alert; the deletion refusals also reach it (there is no longer an alert of its own for changes to review).
 - **Export and import, images** (`messages.export.*`, `messages.import.*`, `messages.image.*`): the error line of the export, import and archive sheets; image import errors set `AppModel.error` (generic alert). The progress notice `ImageImportNotice` (Adding Image…, with Stop) is progress, not one of these messages.
 - **Unavailable and read-only content, privacy cover** : see [screens/unavailable-content](screens/unavailable-content.md) and [screens/recently-deleted](screens/recently-deleted.md).
-- **Conflicts** (`messages.conflict.*`): the conflict notice, the Changes to Review section, the row mark and the review sheets, as in the table.
+- **Conflicts** (`messages.conflict.*`): the conflict notice, the Changes to Review section, the row mark and the entry and unsupported review sheets, and the Changed on Two Devices section (`messages.conflict.kept.*`), as in the table.
 
 ## Layout
 
@@ -89,7 +87,8 @@ Which messages go where, by the spec's groups:
 | `sync-reconnect` | Settings ▸ Sync action row; Sync Status menu | none | When the state is Needs you, Server changed or No access |
 | `sync-status` | Entry Actions menu (iPhone, iPad); toolbar (Mac) | none | `AppModel.showsSyncStatus` |
 | `try-syncing-again` | Recovery notice | none | Journal missing and the library syncs |
-| `review-changes` | Conflict notice, Changes to Review rows, recovery notice | none | Unlocked; the record has a conflict |
+| `review-changes` | Conflict notice, Changes to Review rows | none | Unlocked; the entry or template has changes to review |
+| `open-kept-note`, `clear-kept-notes` | Changed on Two Devices rows ([screens/settings-sync](screens/settings-sync.md)) | none | Unlocked |
 | `show-connection` | Writing-paused band (Mac) | none | While connecting from Settings |
 | `show-encryption-progress` | Writing-paused band (Mac) | none | While encrypting or unfinished |
 
@@ -101,7 +100,6 @@ Keyboard: alerts follow the system (Return and Escape per button role; the Keep 
 - The `FailureMessage` and `NetworkFailureMessage` texts are `messages.failure.*` in the catalog; the library problem screen's text is `library.problem.*`; `SyncHealth.localDataUnavailable` is `messages.sync.localDataUnavailable`. The views and the model still hold them as literals.
 - `messages.sync.localDataUnreadable` now reads as the code does: "My Journal can’t read your journals on this device. Nothing has been removed. To keep a copy, choose Export Archive in Settings ▸ Backup." (the same text as `FailureMessage.damagedReading`, `messages.failure.damagedReading`).
 - `messages.error.newerVersion` and `messages.library.cannotOpen` are no longer shown at launch; the library problem screen replaces them.
-- The deletion conflict alert is `messages.deleteConflict.*`. **Screenshots pending:** none for this page (messages are captured on the pages of the screens that show them).
 - Messages that say "this Mac" (`messages.writingPaused.*`) exist only on the Mac; `messages.encryption.background` only on iPhone and iPad.
 - The model's device wording (iPhone, iPad, Mac) comes from `DeviceUnlockMethod.deviceName`.
 
@@ -122,11 +120,11 @@ Keyboard: alerts follow the system (Return and Escape per button role; the Keep 
 
 ## Screenshots
 
-None. This page covers messages across many screens and states; the screens that show them have their own pages and screenshots: [recently-deleted](screens/recently-deleted.md), [restore-journal](screens/restore-journal.md), [move-entry](screens/move-entry.md), [change-date](screens/change-date.md) and [unavailable-content](screens/unavailable-content.md), plus the spec's [sync-status](../../screens/sync-status.md) and [conflict-review](../../screens/conflict-review.md).
+None. This page covers messages across many screens and states; the screens that show them have their own pages and screenshots: [recently-deleted](screens/recently-deleted.md), [move-entry](screens/move-entry.md), [change-date](screens/change-date.md) and [unavailable-content](screens/unavailable-content.md), plus the spec's [sync-status](../../screens/sync-status.md) and [conflict-review](../../screens/conflict-review.md).
 
 ## Source files
 
-View: `Views/RootView.swift` (generic alert, window choice, notices placement), `Views/SettingsView.swift` and `Views/SyncNowRows.swift` (footer, action), `Views/RootView+Toolbar.swift` and `Views/Mac/JournalToolbarController.swift` (Sync Status), `Views/SaveFailureNotice.swift` (save notice, Mac writing-paused band), `Views/UnlockView.swift`, `Views/LibraryProblemView.swift`, `Views/ConflictRouting.swift` and the conflict views, `Views/DeletionConflictAlert.swift`.
+View: `Views/RootView.swift` (generic alert, window choice, notices placement), `Views/SettingsView.swift` and `Views/SyncNowRows.swift` (footer, action), `Views/RootView+Toolbar.swift` and `Views/Mac/JournalToolbarController.swift` (Sync Status), `Views/SaveFailureNotice.swift` (save notice, Mac writing-paused band), `Views/UnlockView.swift`, `Views/LibraryProblemView.swift`, `Views/ConflictRouting.swift` and the entry conflict view.
 
 Model: `Model/AppModel.swift` (`error`, `syncError`, `saveFailure`), `Model/FailureMessage.swift` and `Model/NetworkFailureMessage.swift` (system errors in words), `Model/SyncHealthOperations.swift` and `Model/SyncSchedule.swift` (states, action, announcement), `Model/WindowSafety.swift` (Keep Open), `Model/LibraryProblem.swift`.
 

@@ -113,6 +113,8 @@ extension AppModel {
             try? await opened.close()
             throw error
         }
+        // Conflicts an earlier version left are settled before any synchronization can replace their other version.
+        await settleConflictsOnOpening(opened, serverConfigured: saved != nil)
         store = opened
         firstReadPending = true
         connection = saved

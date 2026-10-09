@@ -30,7 +30,7 @@ final class PasswordOnboardingTests: XCTestCase {
         XCTAssertEqual(journal.title, "Default")
         if ProcessInfo.processInfo.environment["JOURNAL_CAPTURE_DESIGN"] == "1" {
             if let preview = await NativeTestPreview.capture(
-                TemplateChooserView(journalID: journal.id).environmentObject(model), name: "Template picker",
+                TemplateChooserView(entryID: nil).environmentObject(model), name: "Template picker",
                 width: 400, height: 180)
             {
                 add(preview)
@@ -44,21 +44,14 @@ final class PasswordOnboardingTests: XCTestCase {
             }
         }
         XCTAssertTrue(model.templates.isEmpty, "A new library has no templates.")
-        try await XCTUnwrap(model.store).save(
-            JournalItem(kind: "template", title: "Standup", document: .plain("Today")))
-        try await model.refresh()
-        let template = try XCTUnwrap(model.templates.first)
         model.changeJournal(journal.id, name: "Work")
-        model.changeJournal(journal.id, template: template.id)
         await model.journalEditTask?.value
         XCTAssertEqual(model.journals.first?.title, "Work")
-        XCTAssertEqual(model.journals.first?.defaultTemplateID, template.id)
         try await model.store?.close()
         let reopened = AppModel(directory: root)
         await reopened.load()
         XCTAssertNil(reopened.error)
         XCTAssertEqual(reopened.journals.first?.title, "Work")
-        XCTAssertEqual(reopened.journals.first?.defaultTemplateID, template.id)
         let store = try XCTUnwrap(reopened.store)
         let protection = await store.protection
         XCTAssertEqual(protection, .plaintext)

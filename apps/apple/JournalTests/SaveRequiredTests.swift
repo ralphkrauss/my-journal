@@ -55,7 +55,6 @@ import XCTest
             ("Move Entry", { try await model.moveEntry(entry.id, to: other.id) }),
             ("Create a journal from a sheet", { _ = try await model.createRecoveryJournal("Recovered", entryID: nil) }),
             ("Version History", { _ = try await model.restoreHistoricalVersion(entry, to: journal.id) }),
-            ("Restore an entry", { _ = try await model.prepareEntryRestoration(entry.id, journalID: journal.id) }),
             ("Restore a journal", { _ = try await model.restoreJournal(journal.id) }),
             ("Delete Journal", { _ = try await model.prepareJournalDeletion(journal.id) }),
             ("Delete Permanently", { _ = try await model.preparePermanentDeletion(entry.id) }),
@@ -97,6 +96,12 @@ import XCTest
         XCTAssertTrue(model.showsSaveRequiredAlert)
         XCTAssertEqual(
             model.alertText, "Your changes aren’t saved yet. Choose Try Again, then repeat what you were doing.")
+
+        // Restoring an entry stops the same way and changes nothing.
+        model.dismissAlert()
+        let restored = await model.restore(fixture.entry)
+        XCTAssertFalse(restored)
+        XCTAssertTrue(model.showsSaveRequiredAlert)
 
         // The retry that runs on every edit saved the entry before the alert was read: nothing is left to say.
         model.saveFailure = false

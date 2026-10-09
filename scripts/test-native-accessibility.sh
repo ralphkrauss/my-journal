@@ -32,16 +32,13 @@ if [[ $# -eq 0 ]]; then
     -only-testing:JournalIOSUITests/JournalUITests/testPairDeviceAndDownloadEncryptedEntry \
     -only-testing:JournalIOSUITests/ConnectionSetupUITests/testSetUpEncryptedServerThenSignInOnAnotherDevice \
     -only-testing:JournalIOSUITests/ConnectionSetupUITests/testSetUpServerWithoutEncryptionThenAddAnotherDevice \
-    -only-testing:JournalIOSUITests/HistoryUITests/testRestoreHistoricalEntryAndJournalSettingsThenReopen \
+    -only-testing:JournalIOSUITests/HistoryUITests/testRestoreHistoricalEntryThenReopen \
     -only-testing:JournalIOSUITests/ArchiveUITests/testArchiveWrongKeyRetryRestoreAndReopen \
     -only-testing:JournalIOSUITests/EntryActionsUITests/testFormattingAndDateActionsPreserveWritingAcrossRelaunch \
     -only-testing:JournalIOSUITests/WritingWorkflowUITests/testDefaultTemplateWritingScopedSearchAndRelaunchPreserveContent \
     -only-testing:JournalIOSUITests/EntryConflictUITests/testReviewRemoteImageCancelThenKeepBothAcrossRelaunch \
     -only-testing:JournalIOSUITests/PermanentDeletionUITests/testCancelThenPermanentlyDeleteEntryAndRelaunch \
-    -only-testing:JournalIOSUITests/DeletionConflictUITests/testHiddenDeletionConflictKeepsCopyInChosenJournalAcrossRelaunch \
-    -only-testing:JournalIOSUITests/DeletionConflictUITests/testKeepEntryPreservesIdentityInChosenJournalAcrossRelaunch \
-    -only-testing:JournalIOSUITests/DeletionConflictUITests/testKeepJournalPreservesSettingsWithoutRevivingDeletedChildren \
-    -only-testing:JournalIOSUITests/DeletionConflictUITests/testCancelThenKeepDeletionRemovesEditedConflictAndHistoryAcrossRelaunch \
-    -only-testing:JournalIOSUITests/EntryParentRecoveryUITests/testCancelThenRestoreEntryAndJournalPreservingSiblingStatesAcrossRelaunch
+    -only-testing:JournalIOSUITests/EntryParentRecoveryUITests/testRestoreToAnotherJournalLeavesTheDeletedJournalAndSiblingStatesAcrossRelaunch \
+    -only-testing:JournalIOSUITests/KeptNotesUITests/testAnEditAgainstAPermanentDeletionIsListedAndOpensWhereItWasSaved
 fi
 scripts/test-native-pairing.sh "$@"

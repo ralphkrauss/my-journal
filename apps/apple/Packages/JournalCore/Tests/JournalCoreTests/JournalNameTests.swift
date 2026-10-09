@@ -63,44 +63,6 @@ final class JournalNameTests: XCTestCase {
         XCTAssertEqual(restored.title, "Travel 2")
         let titles = try await listedTitles(store)
         XCTAssertEqual(titles, ["Travel", "Travel 2"])
-
-        // Restoring an entry with its journal numbers the journal too, even when the name was taken after preparing.
-        try await deleted(store, restored)
-        let plan = try await store.prepareEntryRestoration(entry.id, journalID: first.id)
-        try await store.save(JournalItem(kind: "journal", title: "Travel 2"))
-        _ = try await store.restoreEntryAndJournal(plan)
-        let journal = try await store.item(first.id)
-        XCTAssertEqual(journal?.title, "Travel 2 2", "The number is added to the whole name.")
-        let entryAfter = try await store.item(entry.id)
-        XCTAssertEqual(entryAfter?.journalID, first.id, "Nothing else changes.")
-    }
-
-    func testVersionHistoryDoesntRestoreATakenName() async throws {
-        let store = try store()
-        var journal = try await store.save(JournalItem(kind: "journal", title: "Travel"))
-        try await store.keepInHistory(journal)
-        journal.title = "Trips"
-        try await store.save(journal)
-        try await store.save(JournalItem(kind: "journal", title: "Travel"))
-        let versions = try await store.history(for: journal.id)
-        let earlier = try XCTUnwrap(versions.first { $0.title == "Travel" })
-        let stored = try await store.item(journal.id)
-        let current = try XCTUnwrap(stored)
-        do {
-            _ = try await store.restoreJournalSettings(earlier, expectedJournal: current)
-            XCTFail("A taken name isn't restored.")
-        } catch JournalNameError.taken(let name) { XCTAssertEqual(name, "Travel") }
-        let unchanged = try await store.item(journal.id)
-        XCTAssertEqual(unchanged?.title, "Trips")
-
-        // A version that differs only in its default template still restores.
-        var templated = current
-        templated.defaultTemplateID = UUID()
-        try await store.keepInHistory(templated)
-        let history = try await store.history(for: journal.id)
-        let version = try XCTUnwrap(history.first { $0.defaultTemplateID != nil })
-        let restored = try await store.restoreJournalSettings(version, expectedJournal: current)
-        XCTAssertEqual(restored.defaultTemplateID, templated.defaultTemplateID)
     }
 
     func testImportedJournalsWithTakenNamesAreNumbered() async throws {
@@ -131,8 +93,10 @@ final class JournalNameTests: XCTestCase {
         XCTAssertEqual(renamed, 1)
         let titles = try await listedTitles(library)
         XCTAssertEqual(titles, ["Default", "Default 2", "default 3"], "The oldest keeps its name.")
-        let versions = try await library.journalHistoryIDs()
-        XCTAssertEqual(versions.count, 1, "The earlier name stays in Version History.")
+        let allItems = try await library.items()
+        let renamedJournal = try XCTUnwrap(allItems.first { $0.title == "default 3" })
+        let versions = try await library.history(for: renamedJournal.id)
+        XCTAssertTrue(versions.isEmpty, "1.1 writes no journal history; renaming again fixes a name")
         let again = try await library.numberDuplicateJournals()
         XCTAssertEqual(again, 0)
     }

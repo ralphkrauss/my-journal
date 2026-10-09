@@ -1,0 +1,100 @@
+{
+  "cases" : [
+    {
+      "id" : "ebb8a699-5765-86d1-8f87-9987db5ebce3",
+      "label" : "conflict-copy",
+      "message" : "conflict-copy\n3f2504e0-4f89-41d3-9a0c-0305e82c3301\nf8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc",
+      "name" : "copy-ascii",
+      "note" : "A copy of the other version (row 3).",
+      "protection" : "encrypted",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "tag" : "ebb8a699576526d10f879987db5ebce36ac507b134e0fe5d53de90e0340ae158",
+      "text" : "{\"title\":\"Morning pages\"}",
+      "textSha256" : "f8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc"
+    },
+    {
+      "id" : "a3988947-6d44-8bf8-ad05-62b126dabbdc",
+      "label" : "conflict-park",
+      "message" : "conflict-park\n3f2504e0-4f89-41d3-9a0c-0305e82c3301\nf8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc",
+      "name" : "park-same-text",
+      "note" : "A parked entry and a copy of the same version never share an identity.",
+      "protection" : "encrypted",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "tag" : "a39889476d44ebf8ad0562b126dabbdcc6b2034be4dc41f502c4db88436102a6",
+      "text" : "{\"title\":\"Morning pages\"}",
+      "textSha256" : "f8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc"
+    },
+    {
+      "id" : "81c4feb4-3d46-8c26-83bb-cd94e5af806a",
+      "label" : "conflict-copy",
+      "message" : "conflict-copy\n6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d\nf8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc",
+      "name" : "copy-other-record",
+      "note" : "Another record with the same text derives another identity.",
+      "protection" : "encrypted",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+      "tag" : "81c4feb43d464c2683bbcd94e5af806a1398f07f8e12561a92f305c1b7221e9f",
+      "text" : "{\"title\":\"Morning pages\"}",
+      "textSha256" : "f8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc"
+    },
+    {
+      "id" : "f80fefe7-ef99-8294-9d77-a469038062ed",
+      "label" : "conflict-park",
+      "message" : "conflict-park\n3f2504e0-4f89-41d3-9a0c-0305e82c3301\n6709f685ac44b8ac13658403630b845ae383ed1cfc5e2d39b2b126c0230a7438",
+      "name" : "park-unicode",
+      "note" : "The text is hashed as UTF-8, whatever it holds.",
+      "protection" : "encrypted",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "tag" : "f80fefe7ef99f2945d77a469038062ed195e82ea53b4315ad546e6fcedef5a0f",
+      "text" : "{\"title\":\"Crème brûlée, 日記 and 🌿\",\"line\":\"a\\nb\"}",
+      "textSha256" : "6709f685ac44b8ac13658403630b845ae383ed1cfc5e2d39b2b126c0230a7438"
+    },
+    {
+      "id" : "db2d536f-da6e-8cea-a3d8-fe744971fc0c",
+      "label" : "conflict-copy",
+      "message" : "conflict-copy\n3f2504e0-4f89-41d3-9a0c-0305e82c3301\n1b4d208e15d115deaf63c4ee233efd7f3ae6e5fdce74937df0fea6de4576f1c6",
+      "name" : "copy-trailing-newline",
+      "note" : "One more byte is another identity.",
+      "protection" : "encrypted",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "tag" : "db2d536fda6edcea23d8fe744971fc0c8f96cd995de29df2490d7a2a01103263",
+      "text" : "{\"title\":\"Morning pages\"}\n",
+      "textSha256" : "1b4d208e15d115deaf63c4ee233efd7f3ae6e5fdce74937df0fea6de4576f1c6"
+    },
+    {
+      "id" : "65e3ca42-da66-87b0-b8e1-414e6aa71039",
+      "label" : "conflict-copy",
+      "message" : "conflict-copy\n3f2504e0-4f89-41d3-9a0c-0305e82c3301\nf8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc",
+      "name" : "copy-plaintext-library",
+      "note" : "A library without encryption has no vault key: the derivation key is the SHA-256 of the info string.",
+      "protection" : "plaintext",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "tag" : "65e3ca42da6667b038e1414e6aa71039bddcfd5854e107f90b3d4dac58ef6e40",
+      "text" : "{\"title\":\"Morning pages\"}",
+      "textSha256" : "f8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc"
+    },
+    {
+      "id" : "f361cf31-b6da-8fce-bcbf-c266554945e8",
+      "label" : "conflict-park",
+      "message" : "conflict-park\n3f2504e0-4f89-41d3-9a0c-0305e82c3301\nf8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc",
+      "name" : "park-plaintext-library",
+      "note" : "The same for a parked entry.",
+      "protection" : "plaintext",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "tag" : "f361cf31b6da7fce3cbfc266554945e8d2f426750962d7d4e7f1f83101d2c9f3",
+      "text" : "{\"title\":\"Morning pages\"}",
+      "textSha256" : "f8dd2bb51a4bbb656d5f0450e1763f07cbb9009cfab9c20f97f168032959dfdc"
+    }
+  ],
+  "corpusVersion" : 1,
+  "derivation" : {
+    "encrypted" : {
+      "hkdfOutput" : "0409a56f15211d947e66bde5b21748ec4fec0b319434c8ba1c79e6ec30597f2a",
+      "vaultKeyFrom" : "crypto/encryption-v2.json recovery.vaultKey"
+    },
+    "plaintext" : {
+      "sha256OfInfo" : "8b44f6e7175a0edcebb7b62a28c436a23e79a76bcd795041d9b4c09d7506791c"
+    }
+  },
+  "info" : "journal:v1:conflict-copy-id",
+  "purpose" : "The identity of a parked entry or copy (protocol/conflicts.md, Identities): HKDF-SHA-256 over the vault key, HMAC-SHA-256 over the label, the record's identity and the SHA-256 of the exact text, with the version and variant bits set. See README.md in this folder."
+}

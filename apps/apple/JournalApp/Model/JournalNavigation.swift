@@ -5,7 +5,7 @@ import os
 extension AppModel {
     var lifecycle: JournalLifecycleSnapshot {
         if let cached = lists.lifecycle { return cached }
-        let snapshot = JournalLifecycleSnapshot(items: items, conflictedIDs: Set(conflicts.map(\.id)))
+        let snapshot = JournalLifecycleSnapshot(items: items, conflictedIDs: conflictedIDs)
         lists.lifecycle = snapshot
         return snapshot
     }
@@ -63,10 +63,6 @@ extension AppModel {
         case "template": return item.deletedAt != nil && !item.isPermanentlyDeleted
         default: return false
         }
-    }
-    /// The template New Entry uses in a journal. While its default template is in Recently Deleted, that's none.
-    func defaultTemplateID(of journal: JournalItem) -> UUID? {
-        journal.defaultTemplateID.flatMap { id in templates.contains { $0.id == id } ? id : nil }
     }
     var selectedJournal: JournalItem? { journals.first { $0.id == selectedJournalID } }
     /// The journal chosen in Settings. Until one is chosen, or while it isn't in use (in Recently Deleted,
@@ -294,11 +290,23 @@ extension AppModel {
         }
         return draft.kind == "template" || (draft.kind == "entry" && lifecycle.location(of: draft).isInLiveJournal)
     }
-    /// Shows the open entry where it now is; for flows that exist to show it, such as reviewing a restoration.
+    /// Shows the open entry where it now is; for flows that exist to show it, such as an entry that was restored.
     func showDraftWhereItIs() {
         guard let draft, draft.kind == "entry" else { return }
+        revealCollection(of: draft, keepingAllEntries: true)
+    }
+    /// Shows the collection an entry or template is in now: Templates, Recently Deleted, Unavailable Journals, or its
+    /// journal (All Entries stays when it is shown and `keepingAllEntries` holds).
+    func revealCollection(of item: JournalItem, keepingAllEntries: Bool) {
+        if item.kind == "template" {
+            showingAllEntries = false
+            showingUnavailable = false
+            showingTrash = item.deletedAt != nil
+            showingTemplates = item.deletedAt == nil
+            return
+        }
         showingTemplates = false
-        switch lifecycle.location(of: draft) {
+        switch lifecycle.location(of: item) {
         case .recentlyDeleted:
             showingAllEntries = false
             showingUnavailable = false
@@ -310,8 +318,26 @@ extension AppModel {
         case .journal:
             showingTrash = false
             showingUnavailable = false
-            if !showingAllEntries { selectedJournalID = draft.journalID }
+            if !(keepingAllEntries && showingAllEntries) {
+                showingAllEntries = false
+                selectedJournalID = item.journalID
+            }
         }
+    }
+    /// Opens an entry or template wherever it is now, as Changed on Two Devices does; false when it is gone or the
+    /// open entry can't be saved first.
+    /// `revealing` is for stacked navigation (iPhone), whose stack becomes the collection and the item.
+    @discardableResult func showItem(_ id: UUID, revealing: Bool = false) async -> Bool {
+        endEntryCreation()
+        guard !locked, !replacingVault, await flush() else { return false }
+        guard let item = items.first(where: { $0.id == id }), item.kind != "journal" else { return false }
+        revealCollection(of: item, keepingAllEntries: false)
+        query = ""
+        selectedID = item.id
+        draft = item
+        rememberSelection()
+        if revealing { revealsSelection = true }
+        return true
     }
     func reconcileDraftLocation() {
         if let draft, draft.kind == "journal" {

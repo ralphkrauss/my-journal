@@ -3,7 +3,7 @@ import UIKit
 import XCTest
 
 /// Actions that move the list to another collection show that collection, with its own title and actions: New Entry
-/// from Templates or Recently Deleted, Merge Into…, Delete Journal… and Restore Journal.
+/// from Templates or Recently Deleted, Delete Journal…, Restore Journal and Restore.
 final class CollectionNavigationUITests: XCTestCase {
     @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
@@ -22,7 +22,7 @@ final class CollectionNavigationUITests: XCTestCase {
         // Beside the list, an open deleted entry closes for the new one.
         if !usesStack {
             deleted.tap()
-            XCTAssertTrue(app.buttons["Restore and Move…"].firstMatch.waitToAppear(timeout: 10))
+            XCTAssertTrue(app.buttons["Restore"].firstMatch.waitToAppear(timeout: 10))
         }
         try newEntry(app, from: "Recently Deleted")
 
@@ -32,43 +32,34 @@ final class CollectionNavigationUITests: XCTestCase {
         assertEventually(empty.count, equals: 2, "Each New Entry made one entry.")
     }
 
-    /// On iPhone, Merge Into… shows the journal the entries went to, Delete Journal… returns to Journals, and Restore
-    /// Journal shows the restored journal. Each used to leave a page for a journal that wasn't shown, titled
-    /// "Untitled Journal" or "Recently Deleted", whose actions still worked.
-    @MainActor func testJournalPageFollowsMergeDeleteAndRestore() async throws {
+    /// On iPhone, Delete Journal… returns to Journals, and Restore Journal acts at once and shows the restored
+    /// journal. Each used to leave a page for a journal that wasn't shown, titled "Untitled Journal" or "Recently
+    /// Deleted", whose actions still worked.
+    @MainActor func testJournalPageFollowsDeleteAndRestore() async throws {
         try XCTSkipUnless(usesStack, "Beside the list, the sidebar's selection shows the journal.")
         let app = try await launch()
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Work", app: app)
         XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitToAppear(timeout: 10))
-        journalAction("Merge Into…", app: app)
-        let merge = app.navigationBars["Merge “Work”"]
-        XCTAssertTrue(merge.waitToAppear(timeout: 5))
-        app.buttons["Travel"].firstMatch.tap()
-        merge.buttons["Merge"].tap()
-        XCTAssertTrue(merge.waitToDisappear(timeout: 10))
-        XCTAssertTrue(app.navigationBars["Travel"].waitToAppear(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitToAppear(timeout: 5))
-        capture(app, "After Merge Into")
-
         journalAction("Delete Journal…", app: app)
-        let deletion = app.alerts["Delete “Travel”?"]
+        let deletion = app.alerts["Delete “Work”?"]
         XCTAssertTrue(deletion.waitToAppear(timeout: 5))
         deletion.buttons["Delete"].tap()
         XCTAssertTrue(app.collectionViews["Journals"].waitToAppear(timeout: 10))
         XCTAssertFalse(app.navigationBars["Untitled Journal"].exists)
-        XCTAssertFalse(app.collectionViews["Journals"].staticTexts["Travel"].exists)
+        XCTAssertFalse(app.collectionViews["Journals"].staticTexts["Work"].exists)
         capture(app, "After Delete Journal")
 
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
-        let journal = app.cells.containing(.staticText, identifier: "Travel").firstMatch
+        let journal = app.cells.containing(.staticText, identifier: "Work").firstMatch
         XCTAssertTrue(journal.waitToAppear(timeout: 10))
         journal.tap()
-        app.buttons["Restore Journal…"].tap()
+        // One button, no sheet: it acts at once.
         let restore = app.buttons["Restore Journal"]
         XCTAssertTrue(restore.waitToAppear(timeout: 5))
+        capture(app, "Deleted journal page")
         restore.tap()
-        XCTAssertTrue(app.navigationBars["Travel"].waitToAppear(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Work"].waitToAppear(timeout: 10))
         XCTAssertTrue(app.staticTexts["Work plan"].firstMatch.waitToAppear(timeout: 5))
         XCTAssertFalse(app.navigationBars["Recently Deleted"].exists)
         capture(app, "After Restore Journal")
@@ -77,25 +68,27 @@ final class CollectionNavigationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Lunch"].firstMatch.waitToAppear(timeout: 10))
     }
 
-    /// Restore and Move's title fits beside its buttons. Its confirm button had the same long label and truncated it.
-    @MainActor func testRestoreAndMoveTitleFits() async throws {
+    /// Restore names the journal the entry goes to when it can't return to its own, and opens that journal with the
+    /// entry; the deleted journal stays deleted.
+    @MainActor func testRestoreNamesTheJournalWhenTheEntrysOwnIsDeleted() async throws {
         let app = try await launch()
         defer { app.terminate() }
+        NavigationTestSupport.journalAction("Delete Journal…", journal: "Work", app: app)
+        let deletion = app.alerts["Delete “Work”?"]
+        XCTAssertTrue(deletion.waitToAppear(timeout: 5))
+        deletion.buttons["Delete"].tap()
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
-        let deleted = app.staticTexts["Lunch"].firstMatch
-        XCTAssertTrue(deleted.waitToAppear(timeout: 10))
-        deleted.tap()
-        let action = NavigationTestSupport.readingButton("Restore and Move…", app: app)
-        action.tap()
-        let bar = app.navigationBars["Restore and Move"]
-        XCTAssertTrue(bar.waitToAppear(timeout: 5))
-        let title = bar.staticTexts["Restore and Move"]
-        XCTAssertTrue(title.exists)
-        let font = UIFont.preferredFont(forTextStyle: .headline)
-        let needed = ("Restore and Move" as NSString).size(withAttributes: [.font: font]).width
-        capture(app, "Restore and Move")
-        XCTAssertGreaterThanOrEqual(title.frame.width, needed - 2, "The title isn't truncated.")
-        XCTAssertTrue(bar.buttons["Restore"].exists)
+        let entry = app.staticTexts["Work plan"].firstMatch
+        XCTAssertTrue(entry.waitToAppear(timeout: 10))
+        entry.press(forDuration: 1)
+        XCTAssertTrue(app.buttons["Restore to “Default”"].waitToAppear(timeout: 5))
+        XCTAssertFalse(app.buttons["Restore"].exists, "A plain Restore would hide where the entry goes")
+        capture(app, "Restore to the Default Journal")
+        app.buttons["Restore to “Default”"].tap()
+        XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
+        XCTAssertEqual(NavigationTestSupport.title(app).value as? String, "Work plan")
+        NavigationTestSupport.selectCollection("Recently Deleted", app: app)
+        XCTAssertTrue(app.staticTexts["Work"].firstMatch.waitToAppear(timeout: 10), "Work stays deleted")
     }
 
     // MARK: - Support

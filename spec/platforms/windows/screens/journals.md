@@ -2,7 +2,7 @@
 id: journals
 title: Journals (Windows)
 spec: screens/journals.md
-features: [journals-sidebar, new-journal, rename-journal, journal-default-template, merge-journal, delete-journal, reorder-journals, unique-journal-names, all-entries, unavailable-journals]
+features: [journals-sidebar, new-journal, rename-journal, delete-journal, reorder-journals, unique-journal-names, all-entries, unavailable-journals]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/navigationview
@@ -26,22 +26,19 @@ The pane is the `NavigationView` of the library window ([platform.md, 2.1](../pl
 | Second group (below the journals, after a `NavigationViewItemSeparator`) | `NavigationViewItem`: Templates (`library.journals.templates`, icon TwoPage E89A, no count); Recently deleted (`common.recentlyDeleted`, icon Delete E74D, no count); Unavailable journals (`common.unavailableJournals`, icon Folder E8B7 with an attention-dot `InfoBadge`), the last present only while some entry belongs to an unavailable journal or while it is shown | The pane's `MenuItems` change at run time; removing the selected row selects the remembered journal or the first one |
 | Settings row (iPad sidebar) | The built-in Settings item (gear, `library.toolbar.settings`, last item, pinned) | Opens the Settings page |
 | New journal | `AppBarButton` above the items, `library.toolbar.newJournal` | [library-window](library-window.md), command bars. Also the empty state's button |
-| Count placement | A `TextBlock` in `CaptionTextBlockStyle` with `TextFillColorSecondaryBrush`, at the trailing end of the row | A count is not a notification: `InfoBadge` is a notification affordance in Fluent 2 (Mail shows its folder counts as plain text). The only badge in the pane is the attention dot on Unavailable journals, and on a journal that needs review (D52); see D38 |
+| Count placement | A `TextBlock` in `CaptionTextBlockStyle` with `TextFillColorSecondaryBrush`, at the trailing end of the row | A count is not a notification: `InfoBadge` is a notification affordance in Fluent 2 (Mail shows its folder counts as plain text). The only badge in the pane is the attention dot on Unavailable journals; see D38 |
 | Edit mode (iPhone, iPad) | Not offered | Different by design |
 
 The selected row uses the standard selection indicator. The selected collection stays selected while a dialog is open.
 
 ### Journal context menu and Journal actions
 
-One `MenuFlyout` built from one command list, shown as the row's `ContextFlyout` (right-click, Shift+F10, the Menu key, touch long-press) and as the More button's flyout in the list header ([library-window](library-window.md)). Order and enabled rules are the spec's table:
+One `MenuFlyout` built from one command list, shown as the row's `ContextFlyout` (right-click, Shift+F10, the Menu key, touch long-press) and as the More button's flyout in the list header ([library-window](library-window.md)). The journal's actions are Rename… and Delete journal… only, with New journal… first; the spec's table gives the order and enabled rules. Windows adds Move up and Move down to the pane's menu (below). A journal has no Version history, Merge into…, Default template or Review changes item, and Rename and Delete journal are never dimmed for a conflict:
 
 | Item | Copy | Icon | Notes |
 | --- | --- | --- | --- |
 | New journal… (first, then a separator; in the pane's context menu on rows and on the empty area, and in the More menu) | `common.newJournalEllipsis` | NewFolder | |
 | Rename… | `library.journalActions.rename` | Rename (E8AC) | F2 on the focused row does the same. A `ContentDialog`: title `library.renameJournal.title`, `TextBox` (`Header` `common.name`, starts with the current name, selected), Primary `library.renameJournal.rename` (default button, disabled while blank), Close `common.cancel` |
-| Default template ▸ | `common.defaultTemplate` | none | `MenuFlyoutSubItem` of `RadioMenuFlyoutItem`s in one group: `common.blankEntry`, then each template by name; a stale choice stays visible and checked. Choosing saves at once, no message |
-| Merge into… | `library.journalActions.mergeInto` | none (no merge glyph in Segoe Fluent Icons) | [merge-journal](merge-journal.md) |
-| Version history… | `common.versionHistoryEllipsis` | History (E81C) | A page |
 | Move up, Move down | `library.journals.moveUp`, `library.journals.moveDown` | Up (E74A), Down (E74B) | The keyboard, Narrator and switch route to reordering. Not on the first and the last. Pane context menu only |
 | separator | | | |
 | Delete journal | `library.journalActions.deleteJournal` | Delete (E74D) | No ellipsis ([12.2](../platform.md#122-ellipsis)); it asks before acting |
@@ -78,10 +75,7 @@ Rename and New journal use one dialog shape: a single-line `TextBox`, `InputScop
 | `choose-collection` | A pane item; Up and Down, Home and End in the focused pane | as in commands.md | Saves the open entry first; clears the search; closes the open entry |
 | `new-journal`, `new-journal-context` | Button above the items; File menu; pane context menu (rows and empty area); the empty list's button | as in commands.md | A library is open and unlocked |
 | `journal-actions` | Journal row context menu; list header More button | as in commands.md | |
-| `rename-journal` | Context menu; Journal actions | F2 | The journal has no changes to review |
-| `journal-default-template` | Sub-menu | as in commands.md | No changes to review, and a template exists or the journal still names one that is gone |
-| `merge-journal` | Context menu; Journal actions | as in commands.md | No changes to review and another journal in use |
-| `journal-version-history` | Context menu; Journal actions | as in commands.md | Always |
+| `rename-journal` | Context menu; Journal actions | F2 | The journal is in use |
 | `delete-journal` | Context menu; Journal actions | none (no Delete key for journals) | Always |
 | `reorder-journal` | Drag; Move up, Move down | Alt+Shift+Up, Alt+Shift+Down | Not while locked or while the library is being replaced; not offered for fixed rows |
 | `journals-edit` | Not offered | | No edit mode, as on the Mac |
@@ -91,7 +85,7 @@ Rename and New journal use one dialog shape: a single-line `TextBox`, `InputScop
 
 ## Copy differences
 
-Sentence case on every label ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): "All entries", "Recently deleted", "Unavailable journals", "Default template", "Delete journal". Beyond that:
+Sentence case on every label ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): "All entries", "Recently deleted", "Unavailable journals", "Delete journal". Beyond that:
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
@@ -113,8 +107,7 @@ Sentence case on every label ([platform.md, 12](../platform.md#12-copy-casing-el
 - **Settings is the built-in Settings item** on every Windows layout, not only on iPad ([10](../platform.md#10-settings)).
 - **Journals are a `ListView`, not `NavigationViewItem`s**, because they are user data with counts and reordering ([platform.md, 2.1](../platform.md#21-controls)).
 - **Counts are plain secondary text, zero shows nothing**, as on the Mac; iPhone's `0` is not shown. Badges are for attention only.
-- **Icons.** Merge has no icon, because no suitable Segoe Fluent glyph exists ([23](../platform.md#23-icons)).
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): D38 (counts in the navigation pane), D52 (changes to review), B26 (select and choose), B30 (strings never shown).
+Recorded in [open-questions.md](../../../open-questions.md): D38 (counts in the navigation pane), B26 (select and choose), B30 (strings never shown).

@@ -1,12 +1,11 @@
 import JournalCore
 import SwiftUI
 
+/// What the open entry says when it is in Recently Deleted or Unavailable Journals, and the one Restore it offers
+/// (docs/design/1-1-library-simplifications.md, N).
 struct EntryRecoveryNotice: View {
     @EnvironmentObject var model: AppModel
     let entry: JournalItem
-    @State private var moving: JournalItem?
-    @State private var restoringParent: JournalItem?
-    @State private var reviewing: ConflictVersion?
     private var parent: JournalItem? { model.items.first { $0.id == entry.journalID && $0.kind == "journal" } }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -20,22 +19,6 @@ struct EntryRecoveryNotice: View {
                 entryNotice
             }
         }.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
-            .sheet(item: $moving) { captured in
-                MoveEntryView(entryID: captured.id, restoring: true)
-            }
-            .sheet(item: $restoringParent) { captured in
-                if let journalID = captured.journalID {
-                    JournalLifecycleView(journalID: journalID, restoringEntryID: captured.id)
-                }
-            }
-            .sheet(item: $reviewing) { JournalConflictView(conflict: $0) }
-            .onValueChange(of: model.locked) { locked in
-                if locked {
-                    moving = nil
-                    restoringParent = nil
-                    reviewing = nil
-                }
-            }
     }
     @ViewBuilder private var entryNotice: some View {
         switch model.lifecycle.location(of: entry) {
@@ -44,30 +27,28 @@ struct EntryRecoveryNotice: View {
         case .recentlyDeleted:
             Text(
                 entry.deletedWithJournal
-                    ? "This entry was deleted by an earlier version of My Journal. Choose a journal to restore this entry."
-                    : "This entry is in Recently Deleted.")
-            if entry.document.isEditable {
-                if parent?.deletedAt == nil && !entry.deletedWithJournal {
-                    recoveryButton("Restore") {
-                        Task { await model.restore(entry) }
-                    }
-                }
-                if let parent, parent.deletedAt != nil, parent.document.isEditable,
-                    !model.conflicts.contains(where: { $0.id == parent.id || $0.id == entry.id })
-                {
-                    recoveryButton("Restore…") {
-                        restoringParent = entry
-                    }
-                }
-                recoveryButton("Restore and Move…") {
-                    moving = entry
-                }
-            }
+                    ? "This entry was deleted by an earlier version of My Journal."
+                    : "This entry is in Recently Deleted."
+            )
+            if parent?.deletedAt != nil { Text("The journal is in Recently Deleted.") }
+            restoreActions
         case .unavailable(let reason):
             unavailable(reason)
-            if reason == .missing, entry.deletedWithJournal, entry.document.isEditable {
-                recoveryButton("Restore and Move…") { moving = entry }
-            }
+            if reason == .missing { restoreActions }
+        }
+    }
+    /// Restore, named by where the entry goes when that is not its own journal, or why it can't be offered.
+    @ViewBuilder private var restoreActions: some View {
+        switch model.restoreAvailability(for: entry) {
+        case .offer(let offer):
+            recoveryButton(offer.title) { Task { await model.restore(entry) } }
+        case .needsUpdate:
+            Text("Update My Journal to restore this entry.")
+            ArchiveExportControls()
+        case .createJournalFirst:
+            Text("Create a journal to restore this entry.")
+        case .unavailable:
+            EmptyView()
         }
     }
     private func recoveryButton(_ title: String, action: @escaping () -> Void) -> some View {
@@ -80,6 +61,7 @@ struct EntryRecoveryNotice: View {
         switch reason {
         case .unsupported:
             Text("Update My Journal to restore this entry.")
+            ArchiveExportControls()
         case .missing:
             if model.connection != nil {
                 Text("This journal hasn’t arrived on this device.")
@@ -87,9 +69,6 @@ struct EntryRecoveryNotice: View {
             } else {
                 Text("The journal for this entry is unavailable. Your entry is still saved.")
             }
-        case .conflict:
-            Text("This journal has changes to review.")
-            recoveryButton("Review Changes") { reviewing = model.conflicts.first { $0.id == entry.journalID } }
         }
     }
 }

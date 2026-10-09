@@ -1,6 +1,6 @@
 import XCTest
 
-/// Spec screenshots of journal management, deleted journals, images and Markdown as you type.
+/// Spec screenshots of deleted journals, images and Markdown as you type.
 final class SpecJournalCaptureTests: SpecCaptureCase {
     @MainActor func testInsertImageMenuAndImageActions() throws {
         let app = try launch()
@@ -27,13 +27,6 @@ final class SpecJournalCaptureTests: SpecCaptureCase {
         try shot(app, "markdown-as-you-type-default")
     }
 
-    @MainActor func testJournalSettingsAndHistory() throws {
-        let app = try launch()
-        NavigationTestSupport.journalAction("Version History…", journal: "Personal", app: app)
-        try require(app.navigationBars.firstMatch, app: app, timeout: 10)
-        try shot(app, "journal-history-default")
-    }
-
     @MainActor func testDeletedJournal() throws {
         let app = try launch()
         NavigationTestSupport.journalAction("Delete Journal…", journal: "Travel", app: app)
@@ -58,9 +51,7 @@ final class SpecJournalCaptureTests: SpecCaptureCase {
         let row = app.staticTexts["Travel"].firstMatch
         try require(row, app: app, timeout: 10)
         row.tap()
-        try require(app.buttons["Restore Journal…"], app: app, timeout: 10)
+        try require(app.buttons["Restore Journal"], app: app, timeout: 10)
         try shot(app, "recently-deleted-journal-page")
-        app.buttons["Restore Journal…"].tap()
-        try shot(app, "restore-journal-default")
     }
 }

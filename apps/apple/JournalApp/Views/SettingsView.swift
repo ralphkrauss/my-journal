@@ -4,6 +4,10 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     @State private var connect: ConnectionRequest?
     /// Changes when a Connect or Reconnect sheet opened from Sync closes, so Devices reads its list again.
     @State private var devicesReload = 0
@@ -191,7 +195,13 @@ struct SettingsView: View {
                 } else if let footer = model.libraryFooter {
                     Text(footer)
                 }
+                if model.heldChangesNeedUpdate {
+                    Text(
+                        "Some changes from another device need a newer version of My Journal. Update My Journal to combine them."
+                    )
+                }
             }
+            KeptNotesSection(open: openKeptNote)
             ConflictSettingsSection { reviewingConflict = $0 }
             if model.connection != nil {
                 // Absent when the server doesn't accept this device: the Server section says why.
@@ -199,6 +209,24 @@ struct SettingsView: View {
                 StopSyncingSection(activity: model.syncActivity)
             }
         }.formStyle(.grouped)
+    }
+    /// Opens the entry or template a row names, wherever it is. Settings closes first on the iPhone and iPad; on the
+    /// Mac the library window comes forward and shows it.
+    private func openKeptNote(_ row: KeptNoteRow) {
+        #if os(iOS)
+            let stacked = horizontalSizeClass == .compact || dynamicTypeSize.isAccessibilitySize
+            dismiss()
+            Task { await model.openKeptNote(row.id, revealing: stacked) }
+        #else
+            Task {
+                await model.openKeptNote(row.id)
+                if model.hasJournalWindow {
+                    model.journalWindow?.makeKeyAndOrderFront(nil)
+                } else {
+                    openWindow(id: JournalApp.windowID)
+                }
+            }
+        #endif
     }
     /// Where a server comes from, or why this Mac stopped syncing with the server it once ran
     /// (docs/design/client-only-mac-lists-markdown-2026-10-05.md §1.1–1.2).

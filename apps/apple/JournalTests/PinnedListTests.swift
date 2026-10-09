@@ -159,17 +159,18 @@ import XCTest
         model.vaultReplacement = false
     }
 
-    /// New Entry In ▸ a journal, locked before the entry was made: nothing is made, and no "no longer available"
-    /// alert waits behind the lock screen.
-    func testLockingWhileStartingAnEntryFromATemplateShowsNoAlertAfterwards() async throws {
+    /// Choosing a template after the app locked changes nothing, and no alert waits behind the lock screen.
+    func testLockingWhileChoosingATemplateShowsNoAlertAfterwards() async throws {
         let model = try await startedModel()
         model.configuration?.appLock = true
-        let journal = try XCTUnwrap(model.journals.first)
+        await model.newEntry()
+        let entry = try XCTUnwrap(model.draft)
         let template = JournalItem(kind: "template", title: "Daily", document: .plain("What went well?"))
         try await XCTUnwrap(model.store).save(template)
         try await model.refresh()
         XCTAssertTrue(model.lockImmediately())
-        await model.newEntry(fromTemplate: template.id, in: journal.id)
+        let result = await model.useTemplate(template, in: entry.id)
+        XCTAssertEqual(result, .entryClosed)
         XCTAssertNil(model.error)
     }
 

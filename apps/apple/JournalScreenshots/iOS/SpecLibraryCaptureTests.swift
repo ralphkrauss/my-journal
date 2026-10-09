@@ -44,16 +44,13 @@ final class SpecLibraryCaptureTests: SpecCaptureCase {
         try shot(app, "journals-actions-menu")
     }
 
-    @MainActor func testNewJournalAndMerge() throws {
+    @MainActor func testNewJournal() throws {
         let app = try launch()
         NavigationTestSupport.showJournals(app)
         try tapButton("New Journal", in: app)
         try require(app.alerts["New Journal"], app: app, timeout: 5)
         try shot(app, "journals-new-journal")
         app.alerts["New Journal"].buttons["Cancel"].tap()
-        NavigationTestSupport.journalAction("Merge Into…", journal: "Travel", app: app)
-        try require(app.navigationBars["Merge “Travel”"], app: app, timeout: 10)
-        try shot(app, "merge-journal-default")
     }
 
     @MainActor func testTemplates() throws {
@@ -91,10 +88,6 @@ final class SpecLibraryCaptureTests: SpecCaptureCase {
         app.staticTexts["Rainy walk"].firstMatch.tap()
         try require(app.buttons["Restore"], app: app, timeout: 10)
         try shot(app, "recently-deleted-entry")
-        app.buttons["Restore and Move…"].tap()
-        try require(app.navigationBars["Restore and Move"], app: app, timeout: 10)
-        try shot(app, "move-entry-restore-and-move")
-        try tapButton("Cancel", in: app)
         try chooseEntryAction("Delete Permanently…", in: app)
         try require(app.alerts.firstMatch, app: app, timeout: 5)
         try shot(app, "delete-and-restore-delete-permanently")

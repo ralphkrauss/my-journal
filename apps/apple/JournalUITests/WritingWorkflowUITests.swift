@@ -177,11 +177,9 @@ final class WritingWorkflowUITests: XCTestCase {
         capture(app, "Save existing prompts as a template")
         reopened.buttons["Save"].tap()
         XCTAssertTrue(reopened.waitToDisappear(timeout: 5))
-        NavigationTestSupport.journalAction("Default Template", journal: "Work", app: app)
-        app.buttons["Daily review"].tap()
-        NavigationTestSupport.finishJournalEditing(app)
-        NavigationTestSupport.selectCollection("Work", app: app)
-        capture(app, "Work uses the saved default template")
+        NavigationTestSupport.selectCollection("Templates", app: app)
+        XCTAssertTrue(app.staticTexts["Daily review"].firstMatch.waitToAppear(timeout: 5))
+        capture(app, "The saved template in Templates")
     }
 
     @MainActor private func openTemplateAlert(_ app: XCUIApplication) -> XCUIElement {

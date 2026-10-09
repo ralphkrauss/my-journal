@@ -5,11 +5,7 @@
   },
   "common.back": {
     "text": "Back",
-    "context": "Mac: returns from the password step to the first step (iPhone and iPad use the system back button). Also: Returns from the journal list to the choices."
-  },
-  "common.blankEntry": {
-    "text": "Blank Entry",
-    "context": "First item of Default Template; checked when the journal has no default template. Also: Default Template value when none is set."
+    "context": "Mac: returns from the password step to the first step (iPhone and iPad use the system back button)."
   },
   "common.cancel": {
     "text": "Cancel",
@@ -17,7 +13,7 @@
   },
   "common.chooseJournal": {
     "text": "Choose a Journal",
-    "context": "First choice and empty value of the Journal menu. Also: Heading of the journal list after Keep Entry… or Keep Entry as Copy…. Journals with changes to review aren’t listed; journals with the same name add their date, then an ID prefix."
+    "context": "First choice and empty value of the Journal menu (Version History, Restore as New Entry)."
   },
   "common.chooseMasterPassword": {
     "text": "Choose a Master Password",
@@ -54,10 +50,6 @@
   "common.create": {
     "text": "Create",
     "context": "Confirms New Journal (alert and sheet) and Choose a Master Password."
-  },
-  "common.defaultTemplate": {
-    "text": "Default Template",
-    "context": "Journal context menu and Journal Actions submenu. Also: Field label."
   },
   "common.delete": {
     "text": "Delete",
@@ -106,23 +98,19 @@
   },
   "common.journalGone": {
     "text": "That journal is no longer available. Choose another journal.",
-    "context": "Inline error (announced) when the chosen journal left; also Merge Into…. Also: Move Entry or Merge Into… when the chosen journal was deleted meanwhile (also JournalMergeError.destinationUnavailable)."
-  },
-  "common.journalNeedsReview": {
-    "text": "This journal has changes to review.",
-    "context": "Notice when the entry's journal has changes to review (with Review Changes). Also: Notice above an entry whose journal has changes to review."
+    "context": "Inline error (announced) in Move Entry when the chosen journal was deleted meanwhile."
   },
   "common.journalNotArrived": {
     "text": "This journal hasn’t arrived on this device.",
-    "context": "Notice (and Restore Journal sheet) when the journal is missing and the library syncs. Also: Notice above an entry whose journal is missing, while this device syncs."
+    "context": "Notice above an entry whose journal is missing, while this device syncs."
   },
   "common.journalUnavailableEntrySaved": {
     "text": "The journal for this entry is unavailable. Your entry is still saved.",
-    "context": "Notice when the journal is missing and the library doesn't sync. Also: Notice above an entry whose journal is missing, on a device that doesn’t sync."
+    "context": "Notice above an entry whose journal is missing, on a device that doesn’t sync."
   },
   "common.journals": {
     "text": "Journals",
-    "context": "iPhone root screen and iPad sidebar title (large); also the sidebar's accessibility label and the Journals section header. Also: Recently Deleted section header for deleted journals. Also: iPhone: title of the search results that replace the Journals list. Also: Location of a version in the Journals list. Also: Header (and accessibility label) of the journals choice."
+    "context": "iPhone root screen and iPad sidebar title (large); also the sidebar's accessibility label and the Journals section header. Also: Recently Deleted section header for deleted journals. Also: iPhone: title of the search results that replace the Journals list. Also: Header (and accessibility label) of the journals choice."
   },
   "common.lockMyJournal": {
     "text": "Lock My Journal",
@@ -134,11 +122,11 @@
   },
   "common.merge": {
     "text": "Merge",
-    "context": "Confirming button. Also: Primary button of Merge Journals; Command-Return, never Return."
+    "context": "Primary button of Merge Journals; Command-Return, never Return."
   },
   "common.merging": {
     "text": "Merging…",
-    "context": "Progress label. Also: Joining phase while this device's journals are merged and sent."
+    "context": "Joining phase while this device’s journals are merged and sent."
   },
   "common.myJournalIsLocked": {
     "text": "My Journal Is Locked",
@@ -146,7 +134,7 @@
   },
   "common.name": {
     "text": "Name",
-    "context": "Name field: the placeholder in New Journal, Rename Journal and Save as Template, the agent name field, and the field label in the journal version summary."
+    "context": "Name field: the placeholder in New Journal, Rename Journal and Save as Template, and the agent name field."
   },
   "common.never": {
     "text": "Never",
@@ -154,7 +142,7 @@
   },
   "common.newJournalEllipsis": {
     "text": "New Journal…",
-    "context": "Button under the Journal menu; opens the New Journal sheet (screens/destination-journal.md). Also: Mac sidebar context menus, Mac Journal Actions menu, empty-list action, Move Entry. Also: File menu ⌥⌘N. Also: Creates a journal to keep the entry in."
+    "context": "Button under the Journal menu; opens the New Journal sheet (screens/destination-journal.md). Also: Mac sidebar context menus, Mac Journal Actions menu, empty-list action, Move Entry. Also: File menu ⌥⌘N."
   },
   "common.ok": {
     "text": "OK",
@@ -162,7 +150,7 @@
   },
   "common.onThisDevice": {
     "text": "On This Device",
-    "context": "Location line of this device’s version. Also: Label of the row summarising this device's journals."
+    "context": "Label of the row summarising this device’s journals."
   },
   "common.openSettings": {
     "text": "Open Settings",
@@ -171,10 +159,6 @@
   "common.passwordOrRecoveryKey": {
     "text": "Password or Recovery Key",
     "context": "Field for the archive's password. Also: Lock screen field placeholder when the credential's name isn't known."
-  },
-  "common.pleaseWait": {
-    "text": "Please Wait…",
-    "context": "Restore sheet progress label. Also: Progress while the review is prepared or a choice is saved."
   },
   "common.previewUnavailable": {
     "text": "Preview isn’t available for this entry",
@@ -194,7 +178,7 @@
   },
   "common.recentlyDeleted": {
     "text": "Recently Deleted",
-    "context": "Sidebar row and collection title. Also: Location of a version in Recently Deleted."
+    "context": "Sidebar row and collection title."
   },
   "common.reconnect": {
     "text": "Reconnect…",
@@ -206,15 +190,15 @@
   },
   "common.reloadJournals": {
     "text": "Reload Journals",
-    "context": "Button after the chosen journal became unavailable during a restore. Also: Reads the conflict and journals again after the chosen journal became unavailable."
+    "context": "Button in Version History after the chosen journal became unavailable."
   },
   "common.restore": {
     "text": "Restore",
-    "context": "Restore action: the context menu and Entry Actions of an item in Recently Deleted, the leading swipe on a row that can be restored directly, the recovery notice's action (restores the entry or template where it was), and the confirming button of Restore Entry and Restore and Move."
+    "context": "Restore action: the context menu and Entry Actions of an item in Recently Deleted, the leading swipe on a row whose own journal is in use, and the recovery notice’s button; acts at once, without a sheet. When an entry cannot return to its own journal the label is library.recentlyDeleted.restoreTo."
   },
   "common.restoredAsRenamed": {
     "text": "Another journal is named “{name}”, so this one will be restored as “{newName}”.",
-    "context": "Restore sheet, when the name is taken; {newName} adds a number, such as “Work 2”. Also: Under Keep Journal when the name is taken; {newName} is the numbered name."
+    "context": "Deleted journal’s page, directly above Restore Journal, when the name is taken; {newName} adds a number, such as “Work 2”."
   },
   "common.reviewChanges": {
     "text": "Review Changes",
@@ -269,11 +253,11 @@
   },
   "common.thisDevice": {
     "text": "This Device",
-    "context": "This device’s version, in the version choice and as the shown version’s heading. Also: Secondary line under this device's name."
+    "context": "This device’s version in the entry review: the version choice and the shown version’s heading. Also: Secondary line under this device’s name in Devices."
   },
   "common.tryAgain": {
     "text": "Try Again",
-    "context": "Retries a failed action: a failed save (error alert and notice), a failed preparation (Restore Journal sheet), a sync, or a connection step."
+    "context": "Retries a failed action: a failed save (error alert and notice), a sync, or a connection step."
   },
   "common.trySyncingAgain": {
     "text": "Try Syncing Again",
@@ -281,7 +265,7 @@
   },
   "common.unavailableJournals": {
     "text": "Unavailable Journals",
-    "context": "Sidebar row and collection title, shown only while there are unavailable entries or it is shown. Also: Sidebar row and list title of the collection of entries whose journal is missing, from a newer version, or has changes to review. Shown only while such entries exist or it is open."
+    "context": "Sidebar row and list title of the collection of entries whose journal is missing or was saved by a newer version. Shown only while such entries exist or it is open."
   },
   "common.unencryptedWarning": {
     "text": "Anyone with access to your files, server, or backups can read your journals.",
@@ -289,11 +273,11 @@
   },
   "common.untitledJournal": {
     "text": "Untitled Journal",
-    "context": "Any journal whose name is blank: rows, titles, menus and alerts. Also: Name value for an unnamed journal."
+    "context": "Any journal whose name is blank: rows, titles, menus and alerts."
   },
   "common.updateToRestoreEntry": {
     "text": "Update My Journal to restore this entry.",
-    "context": "Notice for an entry whose journal was saved by a newer version. Also: Notice above an entry whose journal was saved by a newer version."
+    "context": "Notice above an entry whose journal was saved by a newer version."
   },
   "common.verify": {
     "text": "Verify",
@@ -301,11 +285,11 @@
   },
   "common.version": {
     "text": "Version",
-    "context": "Caption of the Version menu (above the chosen version's time). Also: Label of the This Device / Other Device choice."
+    "context": "Caption of the Version menu (above the chosen version’s time). Also: Label of the This Device / Other Device choice."
   },
   "common.versionHistoryEllipsis": {
     "text": "Version History…",
-    "context": "Context menu and Entry Actions (screens/version-history). Also: Journal context menu and Journal Actions (screens/journal-history)."
+    "context": "Context menu and Entry Actions of an entry or template (screens/version-history)."
   },
   "editor.announce.blockQuote": {
     "text": "Block quote",
@@ -945,13 +929,6 @@
     },
     "context": "Delete All message when items stay for mixed reasons."
   },
-  "library.deleteAll.held.review": {
-    "text": {
-      "one": "1 item has changes that need review and will stay in Recently Deleted.",
-      "other": "{count} items have changes that need review and will stay in Recently Deleted."
-    },
-    "context": "Delete All message, before the retention sentence."
-  },
   "library.deleteAll.includes": {
     "text": "Includes {list}.",
     "context": "Delete All message for mixed kinds; {list} joins the counts below with the system list format, for example “2 journals, 1 template, and 14 entries”."
@@ -969,13 +946,6 @@
       "other": "These items can’t be deleted yet."
     },
     "context": "Message of that notice for mixed reasons."
-  },
-  "library.deleteAll.nothing.review": {
-    "text": {
-      "one": "This has changes that need review before it can be deleted.",
-      "other": "These items have changes that need review before they can be deleted."
-    },
-    "context": "Message of that notice."
   },
   "library.deleteAll.nothing.title": {
     "text": {
@@ -1071,14 +1041,6 @@
     "text": "Move Entry…",
     "context": "Entry context menu and Entry Actions."
   },
-  "library.entryActions.newEntryFromTemplate": {
-    "text": "New Entry from Template",
-    "context": "Template's context menu and Entry Actions with one journal (or none, disabled)."
-  },
-  "library.entryActions.newEntryIn": {
-    "text": "New Entry In",
-    "context": "Template's context menu and Entry Actions with two or more journals: submenu of journal names."
-  },
   "library.entryActions.pin": {
     "text": "Pin Entry",
     "context": "Row context menu, Entry Actions and File menu."
@@ -1159,64 +1121,9 @@
     "text": "Delete Journal…",
     "context": "Journal context menu and Journal Actions; destructive."
   },
-  "library.journalActions.mergeInto": {
-    "text": "Merge Into…",
-    "context": "Journal context menu and Journal Actions."
-  },
   "library.journalActions.rename": {
     "text": "Rename…",
     "context": "Journal context menu and Journal Actions."
-  },
-  "library.journalHistory.cantChange": {
-    "text": "This journal can’t be changed here. You can export your journals.",
-    "context": "Shown with Export Archive… when the journal is missing or from a newer version, so its settings can't be restored."
-  },
-  "library.journalHistory.confirm.current": {
-    "text": "Current",
-    "context": "Heading of the summary of the journal's present name and default template."
-  },
-  "library.journalHistory.confirm.explanation": {
-    "text": "Restore this name and default template. Entries and Recently Deleted status stay unchanged.",
-    "context": "Secondary text above the Current and Restore summaries."
-  },
-  "library.journalHistory.confirm.nameTaken": {
-    "text": "Another journal is named “{name}”. Rename that journal first to restore this name.",
-    "context": "Shown under the summaries when another journal in use already has the earlier name; the confirming button stays disabled."
-  },
-  "library.journalHistory.confirm.restore": {
-    "text": {
-      "default": "Restore",
-      "mac": "Restore Settings"
-    },
-    "context": "Confirming button of the comparison sheet; disabled while another journal has the earlier name."
-  },
-  "library.journalHistory.confirm.restoring": {
-    "text": "Restoring Settings…",
-    "context": "Progress label while the settings are restored."
-  },
-  "library.journalHistory.confirm.title": {
-    "text": "Restore Settings",
-    "context": "Title of the comparison sheet that opens from Restore Settings…."
-  },
-  "library.journalHistory.loadingSettings": {
-    "text": "Loading Settings…",
-    "context": "Progress label while the journal's current settings and the templates are read before the comparison."
-  },
-  "library.journalHistory.restoreSettings": {
-    "text": "Restore Settings…",
-    "context": "Button under the chosen version's summary in a journal's Version History; shown only when the version can be read. Opens the Restore Settings comparison."
-  },
-  "library.journalHistory.restored": {
-    "text": "The settings were restored. Reopen your journal to see them.",
-    "context": "Shown when the settings were restored but the journal list couldn't be refreshed."
-  },
-  "library.journalHistory.templateDuplicate": {
-    "text": "{title} · {date} · {number}",
-    "context": "Name of a default template whose title another template shares, in the comparison: its title, its abbreviated date and time, and its number among them."
-  },
-  "library.journalHistory.unavailableTemplateNumbered": {
-    "text": "Unavailable Template {number}",
-    "context": "Default template that no longer exists, when the two summaries refer to more than one such template."
   },
   "library.journals.allEntries": {
     "text": "All Entries",
@@ -1309,17 +1216,13 @@
     "text": "Export Journals as Markdown…",
     "context": "File menu."
   },
-  "library.menu.file.newBlankEntry": {
-    "text": "New Blank Entry",
-    "context": "File menu ⇧⌘N."
-  },
   "library.menu.file.newEntry": {
     "text": "New Entry",
     "context": "File menu (Mac, iPad) ⌘N. Also: Action in an empty journal or All Entries list. Also: Toolbar button: Mac over the editor; iPhone and iPad in the bottom bar. Label, tooltip and accessibility label."
   },
-  "library.menu.file.newEntryFromTemplate": {
-    "text": "New Entry from Template…",
-    "context": "File menu; opens the template chooser."
+  "library.menu.file.useTemplate": {
+    "text": "Use a Template…",
+    "context": "File menu (Mac, iPad): opens the template chooser for the open entry. Dimmed unless the “use a template” link is shown (entry editable, body empty, no pictures, an editable template exists). Same wording as library.templateChooser.popoverTitle."
   },
   "library.menu.format.blockQuote": {
     "text": "Block Quote",
@@ -1485,74 +1388,6 @@
     "text": "Zoom Out",
     "context": "View menu ⌘−."
   },
-  "library.merge.agents.gainingMany": {
-    "text": "{count} agents can read {name}, so they’ll be able to read these entries.",
-    "context": "Footer when several agents gain access."
-  },
-  "library.merge.agents.gainingOne": {
-    "text": "{agent} can read {name}, so it will be able to read these entries.",
-    "context": "Footer when one agent reads the destination but not the source."
-  },
-  "library.merge.agents.losingMany": {
-    "text": "{count} agents will no longer be able to read these entries.",
-    "context": "Footer when several agents lose access."
-  },
-  "library.merge.agents.losingOne": {
-    "text": "{agent} will no longer be able to read these entries.",
-    "context": "Footer when one agent reads the source but not the destination."
-  },
-  "library.merge.agents.unknown": {
-    "text": "If an agent can read {name}, it will be able to read these entries.",
-    "context": "Footer when agent access couldn't be checked; {name} is the quoted destination."
-  },
-  "library.merge.created": {
-    "text": "Created {date}",
-    "context": "Under a journal that shares its name with another destination; {date} is its creation date (abbreviated)."
-  },
-  "library.merge.destinationGone": {
-    "text": "“{name}” is no longer available. Choose another journal.",
-    "context": "Inline error when the chosen journal left while merging. Also: Inline error when the picked journal left; the picker then switches to the Default Journal."
-  },
-  "library.merge.displayFailed": {
-    "text": "The journals were merged, but couldn’t be displayed. Reopen My Journal to try again.",
-    "context": "Inline error after a stored merge that couldn't be shown."
-  },
-  "library.merge.footer.none": {
-    "text": "“{source}” has no entries. It moves to Recently Deleted.",
-    "context": "Footer when the journal has no entries."
-  },
-  "library.merge.footer.one": {
-    "text": "The entry in “{source}” moves to {target}. “{source}” then moves to Recently Deleted.",
-    "context": "Footer with one entry."
-  },
-  "library.merge.footer.other": {
-    "text": "The {count} entries in “{source}”, including archived and recently deleted ones, move to {target}. “{source}” then moves to Recently Deleted.",
-    "context": "Footer with several entries."
-  },
-  "library.merge.footer.target": {
-    "text": "“{name}”",
-    "context": "{target} once a journal is chosen."
-  },
-  "library.merge.footer.targetNone": {
-    "text": "the journal you choose",
-    "context": "{target} before a journal is chosen."
-  },
-  "library.merge.header": {
-    "text": "Choose the journal to merge “{name}” into.",
-    "context": "Header above the list of other journals."
-  },
-  "library.merge.hint": {
-    "text": "Moves every entry, then moves this journal to Recently Deleted.",
-    "context": "Mac accessibility hint of Merge."
-  },
-  "library.merge.merged": {
-    "text": "Merged into “{name}”.",
-    "context": "VoiceOver announcement after merging."
-  },
-  "library.merge.title": {
-    "text": "Merge “{name}”",
-    "context": "Merge Into… sheet title; {name} is the journal being merged."
-  },
   "library.moveEntry.move": {
     "text": "Move",
     "context": "Confirming button."
@@ -1569,20 +1404,12 @@
     "text": "Create a journal to move this entry.",
     "context": "Under No Other Journals."
   },
-  "library.moveEntry.onlyThisEntry": {
-    "text": "Only this entry will move to the selected journal.",
-    "context": "Shown for an entry in Recently Deleted."
-  },
   "library.moveEntry.renameExplanation": {
     "text": {
       "default": "Journals with the same name can’t be chosen. To move this entry to one of them, rename it in the Journals list first.",
       "mac": "Journals with the same name can’t be chosen. To move this entry to one of them, rename it in the sidebar first."
     },
     "context": "Under the list when some journals share a name; names the place where journals are renamed."
-  },
-  "library.moveEntry.restoreTitle": {
-    "text": "Restore and Move",
-    "context": "The same sheet opened from Restore and Move…."
   },
   "library.moveEntry.sameName": {
     "text": "Same name as another journal",
@@ -1680,11 +1507,15 @@
       "one": "1 entry on this device",
       "other": "{count} entries on this device"
     },
-    "context": "Under a deleted journal's name in its row, its detail and the Restore Journal sheet: entries that return when it's restored."
+    "context": "Under a deleted journal’s name in its row and on its page: entries that return when it is restored."
   },
   "library.recentlyDeleted.restoreJournal": {
-    "text": "Restore Journal…",
-    "context": "Deleted journal's detail; opens the Restore Journal sheet."
+    "text": "Restore Journal",
+    "context": "Button on a deleted journal’s page, below the count; restores at once, without a sheet."
+  },
+  "library.recentlyDeleted.restoreTo": {
+    "text": "Restore to “{name}”",
+    "context": "Context menu, Entry Actions and recovery notice button of an entry that cannot return to its own journal. {name} is the Default Journal (common.untitledJournal when blank). The plain common.restore stays for the in-place case. Never on a swipe."
   },
   "library.recentlyDeleted.section.entries": {
     "text": "Entries",
@@ -1694,21 +1525,21 @@
     "text": "The journal was created, but couldn’t be displayed. Reopen My Journal to try again.",
     "context": "New Journal sheet (from Move Entry) after a stored journal that couldn't be shown."
   },
+  "library.recoveryNotice.createJournalFirst": {
+    "text": "Create a journal to restore this entry.",
+    "context": "Notice above a deleted entry when no journal is in use, in place of the Restore button."
+  },
   "library.recoveryNotice.entry": {
     "text": "This entry is in Recently Deleted.",
     "context": "Notice above an entry opened in Recently Deleted."
   },
+  "library.recoveryNotice.journalDeleted": {
+    "text": "The journal is in Recently Deleted.",
+    "context": "Notice line under library.recoveryNotice.entry, when the entry’s journal is in Recently Deleted."
+  },
   "library.recoveryNotice.legacy": {
-    "text": "This entry was deleted by an earlier version of My Journal. Choose a journal to restore this entry.",
+    "text": "This entry was deleted by an earlier version of My Journal.",
     "context": "Notice for an entry an earlier version deleted with its journal."
-  },
-  "library.recoveryNotice.restoreAndMove": {
-    "text": "Restore and Move…",
-    "context": "Notice action; opens Move Entry in its restoring form."
-  },
-  "library.recoveryNotice.restoreWithJournal": {
-    "text": "Restore…",
-    "context": "Notice action when the entry's journal is in Recently Deleted; opens Restore Entry."
   },
   "library.recoveryNotice.template": {
     "text": "This template is in Recently Deleted.",
@@ -1722,44 +1553,16 @@
     "text": "Rename Journal",
     "context": "Alert title with a name field."
   },
-  "library.restoreEntry.displayFailed": {
-    "text": "The entry and journal were restored, but My Journal couldn’t update the view. Reopen My Journal to continue.",
-    "context": "Restore Entry after a stored restore that couldn't be shown."
-  },
-  "library.restoreEntry.explanation": {
-    "text": "Entries deleted with this journal will return, including entries that sync later. Other entries you deleted separately will stay in Recently Deleted.",
-    "context": "Restore Entry sheet."
-  },
-  "library.restoreEntry.needsJournal": {
-    "text": "To restore this entry, its journal must also be restored.",
-    "context": "Restore Entry, under the entry's title and date."
-  },
-  "library.restoreEntry.title": {
-    "text": "Restore Entry",
-    "context": "Sheet title when restoring an entry whose journal is in Recently Deleted."
-  },
   "library.restoreJournal.explanation": {
     "text": "Entries deleted with this journal will return, including entries that sync later. Entries you deleted separately will stay in Recently Deleted.",
-    "context": "Restore Journal sheet."
+    "context": "Deleted journal’s page, below Restore Journal."
   },
   "library.restoreJournal.legacy": {
     "text": {
       "one": "1 entry from an earlier version of My Journal needs to be restored individually.",
       "other": "{count} entries from an earlier version of My Journal need to be restored individually."
     },
-    "context": "Restore sheet, when the journal has entries an earlier version deleted with it."
-  },
-  "library.restoreJournal.reviewEntry": {
-    "text": "Review Entry",
-    "context": "Restore Entry, when the journal was already restored meanwhile."
-  },
-  "library.restoreJournal.title": {
-    "text": "Restore Journal",
-    "context": "Sheet title, and its confirming button."
-  },
-  "library.restoreJournal.unavailableLocal": {
-    "text": "The journal is unavailable. Your entries are still saved.",
-    "context": "Restore sheet, when the journal is missing and the library doesn't sync."
+    "context": "Deleted journal’s page, below the explanation, when the journal has entries an earlier version deleted with it."
   },
   "library.saveTemplate.title": {
     "text": "Save as Template",
@@ -1789,16 +1592,9 @@
     "text": "{name} ({id})",
     "context": "A template whose name another template has; {id} is the first 8 characters of its identifier."
   },
-  "library.templateChooser.journal": {
-    "text": {
-      "default": "Journal",
-      "mac": "Journal:"
-    },
-    "context": "Journal picker label in File ▸ New Entry from Template… outside a journal; VoiceOver reads “Journal” on both."
-  },
-  "library.templateChooser.journalGone": {
-    "text": "This journal is no longer available. Close this and choose a journal.",
-    "context": "Inline error when the journal shown left."
+  "library.templateChooser.entryChanged": {
+    "text": "This entry changed, so the template wasn’t added.",
+    "context": "General error alert after the template chooser closes, when the open entry stopped being empty before a template was chosen. Nothing is created."
   },
   "library.templateChooser.popoverTitle": {
     "text": "Use a Template…",
@@ -1892,6 +1688,10 @@
     "text": "Pinned",
     "context": "VoiceOver announcement after Pin Entry, from any place it is offered."
   },
+  "messages.announce.restoredIn": {
+    "text": "Restored to {name}.",
+    "context": "VoiceOver announcement after Restore put an entry in a journal other than its own; {name} is the journal it went to."
+  },
   "messages.announce.unpinned": {
     "text": "Unpinned",
     "context": "VoiceOver announcement after Unpin Entry."
@@ -1900,229 +1700,9 @@
     "text": "Changes saved. The entry couldn’t be reloaded.",
     "context": "Entry review: the choice was saved but reading the result failed. Only reloading is offered; the choice is never applied twice."
   },
-  "messages.conflict.deletion.bothDeleted.entry": {
-    "text": "Both versions show this entry as deleted.",
-    "context": "Deletion review when both versions of a entry are deletions."
-  },
-  "messages.conflict.deletion.bothDeleted.journal": {
-    "text": "Both versions show this journal as deleted.",
-    "context": "Deletion review when both versions of a journal are deletions."
-  },
-  "messages.conflict.deletion.bothDeleted.template": {
-    "text": "Both versions show this template as deleted.",
-    "context": "Deletion review when both versions of a template are deletions."
-  },
-  "messages.conflict.deletion.bothDeletedExplanation": {
-    "text": "Keeping the deletion also removes any remaining earlier versions from My Journal.",
-    "context": "Under messages.conflict.deletion.bothDeleted.*."
-  },
-  "messages.conflict.deletion.confirmDeleteEdited.entry": {
-    "text": "Delete Edited Entry?",
-    "context": "Title of the destructive confirmation sheet when one version is an edited entry."
-  },
-  "messages.conflict.deletion.confirmDeleteEdited.journal": {
-    "text": "Delete Edited Journal?",
-    "context": "Title of the destructive confirmation sheet when one version is an edited journal."
-  },
-  "messages.conflict.deletion.confirmDeleteEdited.template": {
-    "text": "Delete Edited Template?",
-    "context": "Title of the destructive confirmation sheet when one version is an edited template."
-  },
-  "messages.conflict.deletion.confirmKeepDeleted.entry": {
-    "text": "Keep Entry Deleted?",
-    "context": "Title of the destructive confirmation sheet when both versions of a entry are deletions."
-  },
-  "messages.conflict.deletion.confirmKeepDeleted.journal": {
-    "text": "Keep Journal Deleted?",
-    "context": "Title of the destructive confirmation sheet when both versions of a journal are deletions."
-  },
-  "messages.conflict.deletion.confirmKeepDeleted.template": {
-    "text": "Keep Template Deleted?",
-    "context": "Title of the destructive confirmation sheet when both versions of a template are deletions."
-  },
-  "messages.conflict.deletion.confirmKeepEntry": {
-    "text": "Keep Entry",
-    "context": "Keeps the entry in the chosen journal."
-  },
-  "messages.conflict.deletion.confirmKeepEntryAsCopy": {
-    "text": "Keep Entry as Copy",
-    "context": "Keeps a copy in the chosen journal."
-  },
-  "messages.conflict.deletion.consequence.copies": {
-    "text": "Copies may remain in archives, backups, and server history.",
-    "context": "Confirmation consequence line (shared with Delete Permanently)."
-  },
-  "messages.conflict.deletion.consequence.noUndo": {
-    "text": "You can’t undo this.",
-    "context": "Confirmation consequence line (shared with Delete Permanently)."
-  },
-  "messages.conflict.deletion.consequence.sync": {
-    "text": "This deletion will sync to your other connected devices.",
-    "context": "Confirmation consequence line (shared with Delete Permanently)."
-  },
-  "messages.conflict.deletion.deletePermanently": {
-    "text": "Delete Permanently",
-    "context": "Destructive button of the confirmation."
-  },
-  "messages.conflict.deletion.deletedTitle.entry": {
-    "text": "Deleted Entry",
-    "context": "How a permanently deleted entry is named (its marker has no title): heading of the version, and its row in Settings ▸ Sync ▸ Changes to Review."
-  },
-  "messages.conflict.deletion.deletedTitle.journal": {
-    "text": "Deleted Journal",
-    "context": "How a permanently deleted journal is named (its marker has no title): heading of the version, and its row in Settings ▸ Sync ▸ Changes to Review."
-  },
-  "messages.conflict.deletion.deletedTitle.template": {
-    "text": "Deleted Template",
-    "context": "How a permanently deleted template is named (its marker has no title): heading of the version, and its row in Settings ▸ Sync ▸ Changes to Review."
-  },
-  "messages.conflict.deletion.deleting": {
-    "text": "Deleting…",
-    "context": "Progress in the confirmation."
-  },
-  "messages.conflict.deletion.deletionToKeep": {
-    "text": "Deletion to Keep",
-    "context": "Location line of the deletion in the Keep Deletion confirmation when both versions are deletions."
-  },
-  "messages.conflict.deletion.journalUnavailable": {
-    "text": "That journal is no longer available. Reload journals and choose another.",
-    "context": "The chosen journal was deleted or has changes to review."
-  },
-  "messages.conflict.deletion.keepDeletion": {
-    "text": "Keep Deletion…",
-    "context": "Destructive: opens the confirmation that deletes the edited version permanently."
-  },
-  "messages.conflict.deletion.keepDeletionExplanation.journal": {
-    "text": "Removes this edited journal’s name, template setting, and earlier versions from My Journal.",
-    "context": "Under Keep Deletion… for a journal, and in its confirmation."
-  },
-  "messages.conflict.deletion.keepDeletionExplanation.other": {
-    "text": "Removes this edited version and its earlier versions from My Journal.",
-    "context": "Under Keep Deletion… for an entry or template, and in its confirmation."
-  },
-  "messages.conflict.deletion.keepEntry": {
-    "text": "Keep Entry…",
-    "context": "Edited entry against a deletion: keep the edited entry in a journal chosen next."
-  },
-  "messages.conflict.deletion.keepEntryAsCopy": {
-    "text": "Keep Entry as Copy…",
-    "context": "Keep the edited entry as a new entry in a journal chosen next."
-  },
-  "messages.conflict.deletion.keepEntryAsCopyExplanation": {
-    "text": "Creates a new entry and keeps the original deleted. Any remaining earlier versions stay available in archive exports.",
-    "context": "Under Keep Entry as Copy…."
-  },
-  "messages.conflict.deletion.keepEntryExplanation": {
-    "text": "Keeps the edited entry. Earlier versions already deleted aren’t restored.",
-    "context": "Under Keep Entry…."
-  },
-  "messages.conflict.deletion.keepJournal": {
-    "text": "Keep Journal",
-    "context": "Edited journal against a deletion: keeps it at once."
-  },
-  "messages.conflict.deletion.keepJournalExplanation": {
-    "text": "Keeps this journal’s name and template. Deleted entries aren’t restored.",
-    "context": "Under Keep Journal."
-  },
-  "messages.conflict.deletion.keepTemplate": {
-    "text": "Keep Template",
-    "context": "Edited template against a deletion: keeps it at once."
-  },
-  "messages.conflict.deletion.keepTemplateExplanation": {
-    "text": "Keeps the edited template. Earlier versions already deleted aren’t restored.",
-    "context": "Under Keep Template."
-  },
-  "messages.conflict.deletion.receivedVersion": {
-    "text": "Received Version",
-    "context": "Location line of the received version."
-  },
-  "messages.conflict.deletion.remainingVersionsRemoved": {
-    "text": "Any remaining earlier versions will be removed from My Journal on this device.",
-    "context": "Confirmation when both versions are deletions."
-  },
-  "messages.conflict.deletion.reviewAgain": {
-    "text": "Review Again",
-    "context": "Reads the conflict again after an error."
-  },
-  "messages.conflict.deletion.savedNotDisplayed": {
-    "text": "Your choice was saved, but My Journal couldn’t update the view. Reopen My Journal to continue.",
-    "context": "The choice was saved but reading the journals again failed."
-  },
-  "messages.conflict.deletion.selectedJournal": {
-    "text": "Journal: {name}",
-    "context": "Shows the chosen journal."
-  },
-  "messages.conflict.deletion.unknownDevice": {
-    "text": "Unknown Device",
-    "context": "Device line of each version (no device name is known)."
-  },
-  "messages.conflict.deletion.updateToReview": {
-    "text": "Update My Journal to review these changes. You can export an archive to keep a copy.",
-    "context": "A version can’t be read by this version of My Journal."
-  },
   "messages.conflict.entryNotice": {
     "text": "This entry has changes from another device.",
-    "context": "Notice above an entry or template that has changes to review (above the writing on every platform). Also JournalError.conflict’s description."
-  },
-  "messages.conflict.journal.chooseOne": {
-    "text": "Choose one version of this journal. Its entries will stay in the same journal.",
-    "context": "The store refuses Keep Both for a journal. Never shown: the journal review only offers Keep Version…."
-  },
-  "messages.conflict.journal.confirmMessage": {
-    "text": "{date}. Both versions will remain in Version History.",
-    "context": "Confirmation message; {date} is the version’s modification date and time (abbreviated date, standard time)."
-  },
-  "messages.conflict.journal.confirmOtherDevice": {
-    "text": "Keep the version from Other Device?",
-    "context": "Confirmation title when Other Device is shown."
-  },
-  "messages.conflict.journal.confirmThisDevice": {
-    "text": "Keep the version from This Device?",
-    "context": "Confirmation title when This Device is shown."
-  },
-  "messages.conflict.journal.details": {
-    "text": "Details",
-    "context": "Disclosure under Other Device that shows the recorded device ID (lower-case, selectable)."
-  },
-  "messages.conflict.journal.deviceIDLabel": {
-    "text": "Recorded device ID {id}",
-    "context": "Accessibility label of the device ID."
-  },
-  "messages.conflict.journal.errorLabel": {
-    "text": "Error: {message}",
-    "context": "Accessibility label of the journal review’s error text."
-  },
-  "messages.conflict.journal.field.location": {
-    "text": "Location",
-    "context": "Field label."
-  },
-  "messages.conflict.journal.keepVersion": {
-    "text": "Keep Version…",
-    "context": "Journal review: keeps the shown version, after confirmation. There is no Keep Both for journals."
-  },
-  "messages.conflict.journal.loading": {
-    "text": "Loading Changes…",
-    "context": "Progress while Reload Changes runs."
-  },
-  "messages.conflict.journal.reload": {
-    "text": "Reload",
-    "context": "Retries reading after a saved choice."
-  },
-  "messages.conflict.journal.reloadChanges": {
-    "text": "Reload Changes",
-    "context": "Reads the conflict again after an error before a choice was saved."
-  },
-  "messages.conflict.journal.saved": {
-    "text": "Your choice was saved.",
-    "context": "Journal review after a successful choice."
-  },
-  "messages.conflict.journal.savedNotDisplayed": {
-    "text": "Your choice was saved, but the journal couldn’t be displayed.",
-    "context": "Journal review: saved, but reading the journals again failed."
-  },
-  "messages.conflict.journal.value.unavailableTemplate": {
-    "text": "Unavailable Template",
-    "context": "Default Template value when the template isn’t on this device."
+    "context": "Notice above an entry or template that has changes to review (above the writing on every platform)."
   },
   "messages.conflict.keepBoth": {
     "text": "Keep Both",
@@ -2172,13 +1752,45 @@
     "text": "Keep Version",
     "context": "Confirming button in every keep-one-version confirmation (entries and journals)."
   },
+  "messages.conflict.kept.clear": {
+    "text": "Clear List",
+    "context": "Last row of the Changed on Two Devices section; forgets the notes at once, without confirmation."
+  },
+  "messages.conflict.kept.deletedAndChanged": {
+    "text": "Deleted permanently on one device and changed on another. The changed version is saved separately.",
+    "context": "Row of Changed on Two Devices: an entry or template deleted permanently on one device and changed on another. The row opens the saved version wherever it is."
+  },
+  "messages.conflict.kept.footer": {
+    "text": "Both versions are kept. This list clears after 30 days.",
+    "context": "Footer of the Changed on Two Devices section."
+  },
+  "messages.conflict.kept.journalDeleted": {
+    "text": "Deleted permanently on one device and changed on another. It stays deleted.",
+    "context": "Row of Changed on Two Devices: a journal deleted permanently on one device and changed on another. Plain text."
+  },
+  "messages.conflict.kept.journalRenamed": {
+    "text": "Renamed on two devices. The name is now “{name}”; the other was “{otherName}”.",
+    "context": "Row of Changed on Two Devices: a journal renamed on two devices keeps the later name. Plain text; rename notes never expire."
+  },
+  "messages.conflict.kept.rowHint": {
+    "text": "Opens it.",
+    "context": "Accessibility hint of a Changed on Two Devices row that opens an entry or template."
+  },
+  "messages.conflict.kept.section": {
+    "text": "Changed on Two Devices",
+    "context": "Header of the section in Settings ▸ Sync that lists what the app settled itself after something changed on two devices, shown only when there are rows and the app is unlocked."
+  },
+  "messages.conflict.kept.updateNeeded": {
+    "text": "Some changes from another device need a newer version of My Journal. Update My Journal to combine them.",
+    "context": "Line added to the Settings ▸ Sync footer while a journal or deletion change from another device was saved by a newer version and stays held."
+  },
   "messages.conflict.locked": {
     "text": "Unlock My Journal to review changes.",
     "context": "Review sheet content when the journals locked while it was open (the sheet then closes)."
   },
   "messages.conflict.needsReview": {
     "text": "Changes need review",
-    "context": "Accessibility label of the exclamation mark on an entry row with changes to review, and visible text in a journal’s settings section."
+    "context": "Accessibility label of the exclamation mark on an entry row with changes to review."
   },
   "messages.conflict.outcome.entry.archiveIn": {
     "text": "The entry will be archived in {journal}.",
@@ -2278,11 +1890,11 @@
   },
   "messages.conflict.savingChanges": {
     "text": "Saving Changes…",
-    "context": "Progress while a choice is saved (entry and journal reviews)."
+    "context": "Progress while a choice is saved in the entry review."
   },
   "messages.conflict.settingsSection": {
     "text": "Changes to Review",
-    "context": "Header of the section in Settings ▸ Sync that lists every record with changes to review, shown only when there is one and the app is unlocked."
+    "context": "Header of the section in Settings ▸ Sync that lists every entry or template with changes to review (and every one saved by a newer version), shown only when there is one and the app is unlocked."
   },
   "messages.conflict.status.refreshFailed": {
     "text": "Changes couldn’t be updated.",
@@ -2295,10 +1907,6 @@
   "messages.conflict.updateToReview": {
     "text": "Update My Journal to review these changes.",
     "context": "Review sheet when either version has content this version can’t read (unsupported conflict)."
-  },
-  "messages.conflict.updatedReviewAgain": {
-    "text": "These changes have been updated. Review them again.",
-    "context": "Journal or deletion review: the versions changed since the review was read; the choice wasn’t applied."
   },
   "messages.conflict.updatingChanges": {
     "text": "Updating Changes…",
@@ -2455,18 +2063,6 @@
   "messages.connection.updateApp": {
     "text": "Update My Journal to connect to this server.",
     "context": "Connect to a Server: the server speaks a newer protocol, or a scanned pairing needs a newer app."
-  },
-  "messages.deleteConflict.journal": {
-    "text": "This journal has changes that need review.",
-    "context": "Message of the alert for a journal. Buttons: common.reviewChanges and common.cancel."
-  },
-  "messages.deleteConflict.record": {
-    "text": "This has changes that need review before it can be deleted.",
-    "context": "Message of the alert for an entry, template or other record in Recently Deleted. Buttons: common.reviewChanges and common.cancel."
-  },
-  "messages.deleteConflict.title": {
-    "text": "“{name}” Can’t Be Deleted",
-    "context": "Title of the alert when Delete Journal or Delete Permanently finds changes to review. {name} is the title in curly quotes, shortened in the middle with an ellipsis past 40 characters; a blank title reads common.untitledJournal, library.entryList.untitledTemplate or library.entryList.untitledEntryInAlert."
   },
   "messages.encryption.accessLost": {
     "text": "This device no longer has access to {host}. Reconnect in Settings ▸ Sync, then try again.",
@@ -2664,14 +2260,6 @@
     "text": "Update My Journal to delete this journal.",
     "context": "Delete Journal for a journal saved by a newer version."
   },
-  "messages.generic.journalNamedUnavailable": {
-    "text": "“{name}” is no longer available.",
-    "context": "New Entry In ▸ a journal from a template, when that journal left the list meanwhile."
-  },
-  "messages.generic.journalUnavailable": {
-    "text": "This journal is no longer available.",
-    "context": "As messages.generic.journalNamedUnavailable when the journal has no name to show; also JournalMergeError.sourceUnavailable in Merge Into…."
-  },
   "messages.generic.moveJournalFailed": {
     "text": "Couldn’t move the journal.",
     "context": "Reordering a journal failed, except when the library record is from a newer version, which shows messages.library.needsUpdate."
@@ -2680,29 +2268,13 @@
     "text": "Couldn’t pin the entry.",
     "context": "Pin Entry failed, except when the library record is from a newer version, which shows messages.library.needsUpdate."
   },
-  "messages.generic.templateNeedsReview": {
-    "text": "Review the changes to this template first.",
-    "context": "Starting an entry from a template that has changes to review."
-  },
-  "messages.generic.templateUnavailable": {
-    "text": "This template is no longer available.",
-    "context": "Starting an entry from a template that was deleted or is from a newer version."
-  },
   "messages.generic.unpinFailed": {
     "text": "Couldn’t unpin the entry.",
     "context": "Unpin Entry failed, except when the library record is from a newer version, which shows messages.library.needsUpdate."
   },
   "messages.history.chooseJournal": {
     "text": "Choose an available journal.",
-    "context": "HistoryRecoveryError.destinationUnavailable (Version History restore). In a deletion conflict it shows as messages.conflict.deletion.journalUnavailable."
-  },
-  "messages.history.journalChanged": {
-    "text": "This journal has changed. Review its settings again.",
-    "context": "HistoryRecoveryError.changedJournal."
-  },
-  "messages.history.settingsInUse": {
-    "text": "These settings are already in use.",
-    "context": "HistoryRecoveryError.settingsAlreadyApplied."
+    "context": "HistoryRecoveryError.destinationUnavailable (Version History restore)."
   },
   "messages.history.versionUnavailable": {
     "text": "This version is no longer available. Reload its history.",
@@ -2772,25 +2344,13 @@
     "text": "This journal has changed. Review the entries before deleting it.",
     "context": "JournalLifecycleError.changed (Delete Journal sheet and prompt: the entries changed while the alert was open; the generic alert shows this text)."
   },
-  "messages.lifecycle.changedContinue": {
-    "text": "This journal has changed. Review it again before continuing.",
-    "context": "Restore Journal sheet when the journal changed meanwhile."
-  },
   "messages.lifecycle.missingJournal": {
     "text": "This journal is unavailable.",
     "context": "JournalLifecycleError.missingJournal."
   },
-  "messages.lifecycle.needsReview": {
-    "text": "These changes need review before you can continue.",
-    "context": "JournalLifecycleError.conflict and JournalMergeError.conflict."
-  },
   "messages.lifecycle.unsupportedJournal": {
     "text": "Update My Journal to make changes to this journal.",
     "context": "JournalLifecycleError.unsupportedJournal: a journal saved by a newer version."
-  },
-  "messages.merge.newerVersion": {
-    "text": "Update My Journal to merge this journal. Some entries were saved by a newer version.",
-    "context": "JournalMergeError.newerVersion."
   },
   "messages.pairing.codeNotFound": {
     "text": "That pairing code wasn’t found. Check the code and try again.",
@@ -2904,17 +2464,9 @@
     "text": "The template was restored, but couldn’t be displayed. Reopen My Journal to try again.",
     "context": "The change was committed when restoring a template finished, but reading the journals again for display failed."
   },
-  "messages.restore.alreadyRestored": {
-    "text": "This journal has already been restored. Review the entry before continuing.",
-    "context": "EntryRestorationError.alreadyRestored."
-  },
-  "messages.restore.changed": {
-    "text": "This entry or journal has changed. Review it again before restoring.",
-    "context": "EntryRestorationError.changed."
-  },
-  "messages.restore.unavailable": {
-    "text": "This entry or journal is no longer available for restoration.",
-    "context": "EntryRestorationError.unavailable."
+  "messages.restore.destinationGone": {
+    "text": "The journal to restore into is no longer available. Nothing was restored.",
+    "context": "General error alert when neither the entry’s journal nor the Default Journal can be used at the moment Restore is chosen."
   },
   "messages.save.before.goBack": {
     "text": "Your changes aren’t saved yet. Go back to your entry, choose Try Again under Not Saved, then repeat what you were doing.",

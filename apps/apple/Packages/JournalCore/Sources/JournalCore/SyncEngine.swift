@@ -46,11 +46,15 @@ public struct SyncReport: Sendable {
     public var position: QuietPosition?
     /// The server holds waits for changes (capability `sync-wait`).
     public var waitingSupported = false
+    /// Conflicts this synchronization settled on its own (protocol/conflicts.md).
+    public var resolvedConflicts: [ResolvedConflict] = []
 }
 
 public actor SyncEngine {
     private let store: JournalStore
     private let server: any SyncServer
+    /// Conflicts settled during the synchronization that is running, for its report.
+    private var resolvedConflicts: [ResolvedConflict] = []
     /// Operations and images that failed and wait before the next attempt, so they don't hold up the rest.
     private var retries: [UUID: Retry] = [:]
     /// Operations the server didn't accept as they are, with the reason shown until their content changes.
@@ -124,12 +128,17 @@ public actor SyncEngine {
         public var waitingForWritingPause = false
         /// Images to download before others, such as those of the open entry.
         public var preferredImages: Set<UUID> = []
+        /// Records whose conflicts are not settled in this synchronization, such as the open entry while a save of it
+        /// has failed.
+        public var holdingConflicts: Set<UUID> = []
         public init(
-            retryingRefused: Bool = false, waitingForWritingPause: Bool = false, preferredImages: Set<UUID> = []
+            retryingRefused: Bool = false, waitingForWritingPause: Bool = false, preferredImages: Set<UUID> = [],
+            holdingConflicts: Set<UUID> = []
         ) {
             self.retryingRefused = retryingRefused
             self.waitingForWritingPause = waitingForWritingPause
             self.preferredImages = preferredImages
+            self.holdingConflicts = holdingConflicts
         }
     }
     /// Runs a complete synchronization. A caller arriving while another one runs waits for it and then runs its
@@ -141,7 +150,11 @@ public actor SyncEngine {
         // Throws only when cancelled before this synchronization took the gate, so it isn't released here.
         try await store.beginSynchronization()
         do {
+            // Rows an earlier version left are settled before anything is read, so a pull can't replace their other
+            // version first (protocol/conflicts.md, The pass over rows an earlier version left).
+            resolvedConflicts = try await store.resolveConflicts(at: .opening(serverConfigured: true)).resolved
             var report = try await synchronizeAgainIfServerChanged(request)
+            report.resolvedConflicts = resolvedConflicts
             report.quietMark = await store.endSynchronization()
             return report
         } catch {
@@ -258,10 +271,21 @@ public actor SyncEngine {
         let sending = await readyToSend(records, request)
         if !sending.isEmpty { try await confirmSameLog(serverID: serverID) }
         let uploads = try await uploadImages()
-        let pushed = try await push(sending, waitingFor: uploads.unavailable, serverID: serverID)
+        var pushed = try await push(sending, waitingFor: uploads.unavailable, serverID: serverID)
         received.formUnion(pushed.images)
         // Receive changes even when something couldn't be sent.
         received.formUnion(try await pull(serverID: serverID))
+        // The other version of every record is final now: settle what this version settles on its own, and send the
+        // result in this round (protocol/conflicts.md, Orchestration).
+        let settledConflicts = try await store.resolveConflicts(at: .completedPull, holding: request.holdingConflicts)
+        resolvedConflicts += settledConflicts.resolved
+        if settledConflicts.changedRecords {
+            let queued = await readyToSend(try await store.pending(), request)
+            let settled = try await push(queued, waitingFor: uploads.unavailable, serverID: serverID)
+            received.formUnion(settled.images)
+            pushed.failure = pushed.failure ?? settled.failure
+            pushed.serverError = pushed.serverError ?? settled.serverError
+        }
         received.formUnion(try await numberDuplicateJournals(serverID: serverID))
         try await downloadImages(received, preferring: request.preferredImages)
         // Everything else succeeded, so a server error on one record counts against that record.
@@ -285,11 +309,13 @@ public actor SyncEngine {
         let images = facts.imagesToUpload.subtracting(lostImages).filter { !isWaiting($0) }
         report.settled =
             !refused && records.isEmpty && images.isEmpty && report.imagesToDownload == 0 && !facts.reconciling
-            && !facts.renameOutstanding
+            && !facts.renameOutstanding && !facts.conflictAwaitingResolution
         let waiting = facts.queuedOperations.union(facts.imagesToUpload).union(missingImages)
         let soonest = waiting.compactMap { retries[$0]?.after }.filter { $0 > now() }.min()
         report.earliestRetry = soonest.map { $0.timeIntervalSince(now()) }
     }
+    /// Reads this many changes per page, for tests of page boundaries.
+    func usePageSize(_ size: Int) { pageSize = max(1, size) }
     /// Forgets the status read last, so the next synchronization reads it again; after a failed wait, a server
     /// that stopped offering a capability is noticed at once.
     public func forgetStatus() { statusRead = nil }

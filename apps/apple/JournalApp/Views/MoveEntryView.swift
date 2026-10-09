@@ -11,7 +11,6 @@ struct MoveEntryView: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) var dismiss
     let entryID: UUID
-    var restoring = false
     @State private var creatingJournal = false
     @State private var conflictToReview: UUID?
     @State private var reviewing = false
@@ -20,9 +19,8 @@ struct MoveEntryView: View {
     @State private var error: String?
     @State private var operation: Task<Void, Never>?
 
-    // Short, so the title beside it fits: "Restore and Move" in both truncated the title on iPhone.
-    private var actionTitle: String { restoring ? "Restore" : "Move" }
-    private var screenTitle: String { restoring ? "Restore and Move" : "Move Entry" }
+    private var actionTitle: String { "Move" }
+    private var screenTitle: String { "Move Entry" }
     private var destinations: [JournalItem] {
         model.journals.filter { $0.id != model.items.first(where: { $0.id == entryID })?.journalID }
     }
@@ -50,12 +48,8 @@ struct MoveEntryView: View {
         layout.interactiveDismissDisabled(busy)
             .sheet(isPresented: $creatingJournal) { RecoveryJournalView(entryID: entryID) }
             .sheet(isPresented: $reviewing) {
-                if let id = conflictToReview, let conflict = model.conflicts.first(where: { $0.id == id }) {
-                    if conflict.local.kind == "journal" {
-                        JournalConflictView(conflict: conflict)
-                    } else {
-                        ConflictReview(id: id)
-                    }
+                if let id = conflictToReview, model.conflicts.contains(where: { $0.id == id }) {
+                    ConflictReview(id: id)
                 } else {
                     Text("These changes have been resolved.").padding()
                 }
@@ -149,9 +143,6 @@ struct MoveEntryView: View {
                 }
             }
             if !destinations.isEmpty { Button("New Journal…") { creatingJournal = true }.padding().disabled(busy) }
-            if restoring || model.draft.map({ model.lifecycle.location(of: $0) == .recentlyDeleted }) == true {
-                Text("Only this entry will move to the selected journal.").foregroundStyle(.secondary).padding()
-            }
             if let error { Text(error).foregroundStyle(.red).padding().accessibilityIdentifier("Move error") }
             if conflictToReview != nil { Button("Review Changes") { reviewing = true }.padding().disabled(busy) }
             if busy { ProgressView("Moving Entry…").padding() }
@@ -164,13 +155,18 @@ struct MoveEntryView: View {
         operation = Task {
             defer { busy = false }
             do {
-                try await model.moveEntry(entryID, to: selection, restoring: restoring)
+                try await model.moveEntry(entryID, to: selection)
                 dismiss()
             } catch JournalLifecycleError.conflict(let id) {
                 try? await model.refresh()
                 guard !model.locked else { return }
-                conflictToReview = id
-                showError("These changes need review before you can continue.")
+                // An entry's changes can be reviewed; a journal's wait for a newer version of the app.
+                if model.conflicts.contains(where: { $0.id == id }) {
+                    conflictToReview = id
+                    showError("These changes need review before you can continue.")
+                } else {
+                    showError(JournalLifecycleError.unsupportedJournal.shown(.saving))
+                }
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
                 showError(error.shown(.saving))

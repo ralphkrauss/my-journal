@@ -127,54 +127,6 @@ final class HistoryRecoveryTests: XCTestCase {
         XCTAssertEqual(try PortableRecord.encode(try XCTUnwrap(remainingConflicts.first).remote), preservedSource)
     }
 
-    func testJournalSettingsRestoreIsMetadataOnlyRecoverableAndRejectsStaleConfirmation() async throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let key = try VaultCrypto.generateKey()
-        let store = try JournalStore(directory: root, key: key)
-        var journal = JournalItem(kind: "journal", title: "Current name")
-        journal.deletedAt = Date()
-        var earlier = journal
-        earlier.title = "Earlier name"
-        earlier.defaultTemplateID = UUID()  // A missing historical template reference must not be silently cleared.
-        earlier.deletedAt = nil
-        let version = try await makeHistory(store, current: journal, earlier: earlier, key: key)
-        let storedJournal = try await store.item(journal.id)
-        let expected = try XCTUnwrap(storedJournal)
-        let entry = JournalItem(kind: "entry", journalID: journal.id, title: "Kept in Recently Deleted")
-        try await store.save(entry)
-        let storedEntry = try await store.item(entry.id)
-        let beforeHistory = try await store.history(for: journal.id)
-        let beforePending = try await store.pending()
-        let restored = try await store.restoreJournalSettings(version, expectedJournal: expected)
-        XCTAssertEqual(restored.id, expected.id)
-        XCTAssertEqual(restored.title, version.title)
-        XCTAssertEqual(restored.defaultTemplateID, version.defaultTemplateID)
-        XCTAssertEqual(restored.deletedAt, expected.deletedAt)
-        XCTAssertEqual(restored.date, expected.date)
-        XCTAssertEqual(restored.document, expected.document)
-        let afterEntry = try await store.item(entry.id)
-        let afterHistory = try await store.history(for: journal.id)
-        let afterPending = try await store.pending()
-        XCTAssertEqual(afterEntry, storedEntry)
-        XCTAssertEqual(afterHistory, [expected] + beforeHistory)
-        XCTAssertEqual(afterPending.map(\.operationId), beforePending.map(\.operationId))
-        XCTAssertEqual(afterPending.map(\.payload), beforePending.map(\.payload))
-        do {
-            _ = try await store.restoreJournalSettings(version, expectedJournal: restored)
-            XCTFail("Already-applied settings must have an explicit no-write outcome.")
-        } catch HistoryRecoveryError.settingsAlreadyApplied {}
-        do {
-            _ = try await store.restoreJournalSettings(version, expectedJournal: expected)
-            XCTFail("An older confirmation must not silently replace newer settings.")
-        } catch HistoryRecoveryError.changedJournal {}
-        let unchangedHistory = try await store.history(for: journal.id)
-        XCTAssertEqual(unchangedHistory, afterHistory)
-        let reopened = try JournalStore(directory: root, key: key)
-        let reopenedJournal = try await reopened.item(journal.id)
-        XCTAssertEqual(reopenedJournal, restored)
-    }
-
     private func makeHistory(_ store: JournalStore, current: JournalItem, earlier: JournalItem, key: Data) async throws
         -> JournalItem
     {

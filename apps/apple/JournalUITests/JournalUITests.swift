@@ -77,16 +77,11 @@ final class JournalUITests: XCTestCase {
         attachScreen(app, name: "Scrolled trash retention note")
         scrollTo(app.staticTexts["Default"].firstMatch, in: trash, upwards: false)
         app.staticTexts["Default"].firstMatch.tap()
-        let restore = app.buttons["Restore Journal…"]
+        // One button on the journal's page, with no sheet: it restores at once.
+        let restore = app.buttons["Restore Journal"]
         XCTAssertTrue(restore.waitToAppear(timeout: 5))
-        restore.tap()
-        XCTAssertTrue(app.buttons["Restore Journal"].waitToAppear(timeout: 5))
-        attachScreen(app, name: "Restore journal confirmation")
-        app.buttons["Cancel"].tap()
-        XCTAssertTrue(restore.waitToAppear(timeout: 5))
-        restore.tap()
-        XCTAssertTrue(app.buttons["Restore Journal"].waitToAppear(timeout: 5))
-        tapAfterScrolling(app.buttons["Restore Journal"], in: app.scrollViews.firstMatch)
+        attachScreen(app, name: "Deleted journal page")
+        tapAfterScrolling(restore, in: app.scrollViews.firstMatch)
         app.terminate()
         app.launch()
         NavigationTestSupport.openEntry("Keep this reflection", journal: "Default", app: app)

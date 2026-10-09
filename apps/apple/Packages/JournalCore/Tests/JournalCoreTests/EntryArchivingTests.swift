@@ -66,7 +66,7 @@ final class EntryArchivingTests: XCTestCase {
         _ = try await store.restoreJournal(journal.id)
         let restored = try await store.item(entry.id)
         XCTAssertEqual(restored?.archivedAt, archived.archivedAt)
-        let recovered = try await store.restoreAndMoveEntry(entry.id, to: journal.id)
+        let recovered = try await store.restoreEntry(entry.id, fallback: nil).entry
         XCTAssertNil(recovered.archivedAt)
         let retained = try await store.item(sibling.id)
         XCTAssertEqual(retained, archivedSibling)

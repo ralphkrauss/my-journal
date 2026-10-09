@@ -2,7 +2,7 @@
 id: delete-and-restore
 title: Delete, restore and delete permanently (Apple)
 spec: flows/delete-and-restore.md
-features: [delete-entry, undo-delete, delete-journal, restore-entry, restore-and-move, restore-journal, delete-permanently, delete-all-deleted, recently-deleted]
+features: [delete-entry, undo-delete, delete-journal, restore-entry, restore-journal, delete-permanently, delete-all-deleted, recently-deleted]
 devices: [iphone, ipad, mac]
 status: verified
 sources:
@@ -10,13 +10,12 @@ sources:
   - apps/apple/JournalApp/Views/JournalDeletionPrompt.swift
   - apps/apple/JournalApp/Views/PermanentDeletionView.swift
   - apps/apple/JournalApp/Views/DeleteAllPrompt.swift
-  - apps/apple/JournalApp/Views/DeletionConflictAlert.swift
   - apps/apple/JournalApp/Views/EntryRecoveryNotice.swift
   - apps/apple/JournalApp/Views/DeletedJournalView.swift
   - apps/apple/JournalApp/Views/JournalMoreMenu.swift
   - apps/apple/JournalApp/Views/JournalSidebarView.swift
   - apps/apple/JournalApp/Model/EntryDeletionOperations.swift
-  - apps/apple/JournalApp/Model/EntryRestorationOperations.swift
+  - apps/apple/Packages/JournalCore/Sources/JournalCore/StoreRestoreEntry.swift
   - apps/apple/JournalApp/Model/PermanentDeletionOperations.swift
   - apps/apple/JournalApp/Model/JournalOperations.swift
   - apps/apple/JournalApp/Model/JournalNavigation.swift
@@ -25,6 +24,8 @@ sources:
   - docs/design/ios-delete-all-and-settings-2026-10-03.md
   - docs/design/journal-lifecycle-ui.md
   - docs/design/permanent-deletion.md
+  - docs/design/1-1-library-simplifications.md
+  - docs/design/1-1-conflicts-and-reconnect.md
   - protocol/journal-lifecycle.md
   - protocol/permanent-deletion.md
 screenshots:
@@ -34,7 +35,7 @@ screenshots:
 
 # Delete, restore and delete permanently (Apple)
 
-Maps [flows/delete-and-restore.md](../../../flows/delete-and-restore.md). The flow has no view of its own. It is a set of row actions, alerts and model operations spread over `RootView`, three prompt modifiers and the `AppModel` extensions named below. The screens it ends in are [recently-deleted](../screens/recently-deleted.md), [restore-journal](../screens/restore-journal.md) and [move-entry](../screens/move-entry.md).
+Maps [flows/delete-and-restore.md](../../../flows/delete-and-restore.md). The flow has no view of its own. It is a set of row actions, alerts and model operations spread over `RootView`, three prompt modifiers and the `AppModel` extensions named below. The screens it ends in are [recently-deleted](../screens/recently-deleted.md) and [move-entry](../screens/move-entry.md).
 
 ## Controls
 
@@ -46,15 +47,13 @@ Maps [flows/delete-and-restore.md](../../../flows/delete-and-restore.md). The fl
 
 **Delete a journal.** The action `library.journalActions.deleteJournal` is in Journal Actions (the "…" in the list toolbar on iPhone and iPad via `JournalMoreMenu`, the toolbar menu on the Mac) and in the journal's context menu in the sidebar (`JournalSidebarView`). `.journalDeletionPrompt` (`JournalDeletionPrompt.swift`) first calls `AppModel.prepareJournalDeletion`, which saves the open entry and asks the store to check the journal and its entries; then a standard `.alert`: title `library.deleteJournal.title`, message `library.deleteJournal.noEntries` or `library.deleteJournal.message`, buttons `common.delete` (destructive) and `common.cancel`. Delete hides the journal row at once (`hideInLists`) and runs `deleteJournal`; the journal's entries are marked as deleted with it. `commitJournalResolution` clears the selection when the open entry or journal was the deleted one. The spec says another journal is shown afterwards; that choice was not traced in the source for this page. A journal with changes to review gets the Review Changes alert (below) instead. There is no Undo step for it.
 
-**Restore.**
-- `common.restore` in the leading swipe, context menu, Entry Actions and recovery notice: `AppModel.restore(item)`; a template goes to `restoreTemplate` (shows the template in Templates), an entry to `moveEntry(_:to:restoring: true)` into its own journal through `JournalStore.restoreAndMoveEntry`, then the journal is shown with the entry open. No confirmation. Offered only when the entry's journal is in use and the entry was not deleted with its journal by an earlier version (`canRestoreDirectly`).
-- Entry whose journal is also deleted: `library.recoveryNotice.restoreWithJournal` opens the sheet of [restore-journal](../screens/restore-journal.md) (`JournalLifecycleView` with an entry id).
-- Entry into another journal: `library.recoveryNotice.restoreAndMove` opens [move-entry](../screens/move-entry.md) in its restoring form.
-- Journal: `library.recentlyDeleted.restoreJournal` in the deleted journal's detail opens the same sheet for a journal.
+**Restore.** One verb that acts at once; there is no sheet (`JournalLifecycleView` and `MoveEntryView(restoring:)` are gone).
+- Controls: `common.restore` or `library.recentlyDeleted.restoreTo` in the context menu, Entry Actions and recovery notice; the leading swipe only as `common.restore` and only for a template or an entry whose own journal is in use. `AppModel.restore(item)` sends a template to `restoreTemplate` (shows the template in Templates) and an entry to `JournalStore.restoreEntry(_:fallback:)` with the Default Journal as the fallback. The store decides the destination again inside its write transaction (own journal when it is in use, supported and without a held conflict; else the fallback under the same conditions; neither: `messages.restore.destinationGone`, nothing written) and returns the entry and the journal it landed in. The model opens that journal with the entry (iPhone: `revealsSelection`, so the stack becomes [journal, entry]) and, when the journal differs from the one the control named, announces `messages.announce.restoredIn` (`JournalAccessibility.announce`). No confirmation.
+- Journal: `library.recentlyDeleted.restoreJournal` in the deleted journal's page restores it at once and shows it. Failures are the general alert ([recently-deleted](../screens/recently-deleted.md)).
 
 **Delete permanently.** One item: `library.entryActions.deletePermanently` (context menu, Entry Actions, trailing swipe `common.delete`, Delete or ⌘⌫ on the Mac, deleted journal's detail) goes through `.permanentDeletionPrompt` (`PermanentDeletionView.swift`): the item is checked and the open entry saved before the alert, which is a standard `.alert` with `common.delete` (destructive) and `common.cancel`. Everything: Delete All (`DeleteAllPrompt.swift`), described in [recently-deleted](../screens/recently-deleted.md). The deletion syncs like any record; the alert text `library.deletePermanently.retention` says copies may remain elsewhere.
 
-**Refusals and failures.** A changed or already-restored item shows `messages.generic.deleteChanged`, a newer-version item `messages.generic.deleteNeedsUpdate`, in the generic alert. An item or journal with changes to review gets `DeletionConflictAlert`: a second standard alert, title `messages.deleteConflict.title` (“name” Can’t Be Deleted), message `messages.deleteConflict.journal` or `messages.deleteConflict.record`, `common.reviewChanges` and `common.cancel`; Review Changes opens `ConflictReview` as a sheet. A missing or already deleted item is ignored without a message. A stored change that cannot be shown is `messages.refresh.itemDeleted`, `messages.refresh.itemsDeleted` or `messages.refresh.journalDeletedView`.
+**Refusals and failures.** A changed or already-restored item shows `messages.generic.deleteChanged`, a newer-version item (or a journal with a held change) `messages.generic.deleteNeedsUpdate` or, for Delete Journal, `messages.generic.journalDeleteNeedsUpdate`, in the generic alert. There is no alert with Review Changes any more: an entry or template that still has changes to review ends in the same general alert as an item that changed meanwhile. A missing or already deleted item is ignored without a message. A stored change that cannot be shown is `messages.refresh.itemDeleted`, `messages.refresh.itemsDeleted` or `messages.refresh.journalRestored` or `common.entryMovedNotDisplayed` (for a restore), in the generic alert.
 
 **States.** Locked: every prompt modifier cancels its task, closes its alerts and returns swiped rows (`onValueChange(of: model.locked)`); nothing already stored is undone. Removed by a sync while open: `reconcileDraftLocation` (`JournalNavigation.swift`) closes the open entry when it no longer belongs in the list being shown, unless it has unsaved edits, which keep it open.
 
@@ -72,9 +71,7 @@ Maps [flows/delete-and-restore.md](../../../flows/delete-and-restore.md). The fl
 | `delete-entry` | Context menu, Entry Actions, trailing swipe | Mac: Delete or ⌘⌫ with the list focused | Item editable and not deleted; entries need a journal in use |
 | `undo`, `redo` | Edit menu (Mac and iPad with a keyboard); shake and gestures on iPhone | ⌘Z, ⇧⌘Z | A deletion step is registered |
 | `delete-journal` | Journal Actions, sidebar context menu | none | Always (the check may then refuse) |
-| `restore` | Leading swipe, context menu, Entry Actions, recovery notice | none | In Recently Deleted, journal in use |
-| `restore-with-journal` | Recovery notice | none | Journal deleted, editable, no review pending |
-| `restore-and-move` | Recovery notice | none | Item editable |
+| `restore` | Leading swipe (own journal only), context menu, Entry Actions, recovery notice | none | A template; or an entry that is editable, has no held conflict and has a destination |
 | `restore-journal` | Deleted journal's detail | none | Journal editable, not being replaced |
 | `delete-permanently` | Context menu, Entry Actions, trailing swipe in Recently Deleted, deleted journal's detail | Mac: Delete or ⌘⌫ with the list focused | In Recently Deleted, not being replaced |
 | `delete-all-recently-deleted` | Bar button (iPhone, iPad), bar button and File menu (Mac) | Mac: ⇧⌘⌫ | `AppModel.canDeleteAll` |
@@ -105,22 +102,22 @@ Placements not given are as in [commands.md](../commands.md). Delete and ⌘⌫ 
 
 | Device | Screenshot | State |
 | --- | --- | --- |
-| iPhone | ![Delete Permanently alert](../screenshots/iphone/delete-and-restore-delete-permanently.png) | A deleted entry (Rainy walk) open with the recovery notice (Restore, Restore and Move…); the Delete Permanently alert asks about "Rainy walk" with Cancel and Delete (red); the page behind is dimmed |
+| iPhone | ![Delete Permanently alert](../screenshots/iphone/delete-and-restore-delete-permanently.png) | A deleted entry (Rainy walk) open with the recovery notice (captured with 1.0, which also had Restore and Move…); the Delete Permanently alert asks about "Rainy walk" with Cancel and Delete (red); the page behind is dimmed |
 
-No other step of the flow has its own screenshot; the list, the journal's detail, Delete All and the two sheets are in [recently-deleted](../screens/recently-deleted.md), [restore-journal](../screens/restore-journal.md) and [move-entry](../screens/move-entry.md).
+No other step of the flow has its own screenshot; the list, the journal's detail and Delete All are in [recently-deleted](../screens/recently-deleted.md), and Move Entry in [move-entry](../screens/move-entry.md).
 
 - ![delete-and-restore-delete-permanently](../screenshots/ipad/delete-and-restore-delete-permanently.png) iPad: the Delete Permanently alert for an entry in Recently Deleted.
 
 ## Source files
 
-View: `Views/RootView.swift` (delete, swipes, menus, Delete key), `Views/JournalDeletionPrompt.swift`, `Views/PermanentDeletionView.swift`, `Views/DeleteAllPrompt.swift`, `Views/DeletionConflictAlert.swift` (the alerts), `Views/EntryRecoveryNotice.swift`, `Views/DeletedJournalView.swift` (the restore entry points), `Views/JournalMoreMenu.swift` and `Views/JournalSidebarView.swift` (Delete Journal…).
+View: `Views/RootView.swift` (delete, swipes, menus, Delete key), `Views/JournalDeletionPrompt.swift`, `Views/PermanentDeletionView.swift`, `Views/DeleteAllPrompt.swift` (the alerts), `Views/EntryRecoveryNotice.swift`, `Views/DeletedJournalView.swift` (the restore entry points), `Views/JournalMoreMenu.swift` and `Views/JournalSidebarView.swift` (Delete Journal…).
 
-Model: `Model/EntryDeletionOperations.swift` (hiding rows, deleting, Undo and Redo, template restore), `Model/EntryRestorationOperations.swift` (restore, restore with journal), `Model/PermanentDeletionOperations.swift` (checks, Delete All), `Model/JournalOperations.swift` (journal delete and restore, move), `Model/JournalNavigation.swift` (what the open entry does when it leaves).
+Model: `Model/EntryDeletionOperations.swift` (hiding rows, deleting, Undo and Redo, template restore), `Model/PermanentDeletionOperations.swift` (checks, Delete All), `Model/JournalOperations.swift` (journal delete and restore, move, `restoreEntry` calls), `Model/JournalNavigation.swift` (what the open entry does when it leaves).
 
-Core: `JournalLifecycle.swift`, `EntryRestoration.swift`, `StoreDeletion.swift`; protocol records `protocol/journal-lifecycle.md` and `protocol/permanent-deletion.md`.
+Core: `JournalLifecycle.swift`, `StoreRestoreEntry.swift`, `StoreDeletion.swift`; protocol records `protocol/journal-lifecycle.md` and `protocol/permanent-deletion.md`.
 
 Design records: `docs/design/recently-deleted-2026-09-30.md`, `docs/design/ios-delete-all-and-settings-2026-10-03.md`, `docs/design/journal-lifecycle-ui.md`, `docs/design/permanent-deletion.md`, `docs/design/owner-decisions-2026-09-25.md`.
 
 ## Open questions
 
-None for the conflict alert: it is now in the spec (`messages.deleteConflict.*`), so the earlier question about it is resolved. See [open-questions.md](../../../open-questions.md) for the rest.
+See [open-questions.md](../../../open-questions.md); D15 (restore with the journal) is resolved in 1.1 by simplification N.

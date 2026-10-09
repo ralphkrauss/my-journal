@@ -1,0 +1,525 @@
+{
+  "cases" : [
+    {
+      "expected" : {
+        "outcome" : "held",
+        "row" : 1
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "held-unknown-member",
+      "note" : "Row 1: a member this version does not know. The other version is held, nothing is made.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"futureLayout\":{\"columns\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "held",
+        "row" : 1
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"futureLayout\":{\"columns\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "held-local-unknown-member",
+      "note" : "Row 1 is symmetric: this device's version cannot be read either.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "held",
+        "row" : 1
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "held-unsupported-document",
+      "note" : "Row 1: a document version this app does not know.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":3},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : false,
+        "deletedAt" : 1790323200,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-25T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-25T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-deleted-here-untouched-there",
+      "note" : "Row 2: deleted here, untouched there. The item ends up in Recently Deleted once; this version is sent on top.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : 1790323200,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-untouched-here-deleted-there",
+      "note" : "Row 2: the other version is the record as it is (adoptsOther), and nothing is sent.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-25T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-25T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : 1790323200,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-30T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-restored-here-deleted-there",
+      "note" : "Row 2: restored on one device and deleted on the other: it stays deleted.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-25T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-25T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : 1790496000,
+        "deletedWithJournal" : true,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-live-here-legacy-deleted-there",
+      "note" : "Row 2: (deletedAt, deletedWithJournal) is one unit. An entry an earlier version deleted with its journal, against a live one, is deleted with its journal.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-27T08:00:00Z\",\"deletedWithJournal\":true,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-27T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : 1790496000,
+        "deletedWithJournal" : true,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-10-01T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-01T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-deleted-here-legacy-deleted-there",
+      "note" : "Row 2: both deleted: the pair that is deleted with its journal wins, whichever is later.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-27T08:00:00Z\",\"deletedWithJournal\":true,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-27T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : false,
+        "deletedAt" : 1790496000,
+        "deletedWithJournal" : true,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-27T08:00:00Z\",\"deletedWithJournal\":true,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-27T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-legacy-here-deleted-there",
+      "note" : "Row 2: the same, the other way round.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-10-01T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-01T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : 1790323200,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-10-01T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-10-01T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-both-deleted",
+      "note" : "Row 2: both deleted the ordinary way: the other version's pair, whatever the times.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-25T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-25T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : null,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-written-differently",
+      "note" : "Row 2 compares decoded values, never bytes: the same members in another order and with white space.",
+      "other" : "{\n  \"title\" : \"Morning pages\",\n  \"deletedWithJournal\" : false,\n  \"kind\" : \"entry\",\n  \"journalID\" : \"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\n  \"date\" : \"2026-09-20T12:00:00Z\",\n  \"id\" : \"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\n  \"modifiedAt\" : \"2026-09-20T12:30:00Z\",\n  \"document\" : {\n    \"metadata\" : {\n      \"blockIDs\" : [\n        \"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"\n      ],\n      \"imageTypes\" : {\n\n      },\n      \"segmentLengths\" : [\n        14\n      ]\n    },\n    \"version\" : 2,\n    \"markdown\" : \"Morning walk.\\n\"\n  }\n}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : null,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-28T09:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "same-modified-time-only",
+      "note" : "The modified time is informational and is not content.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-title",
+      "note" : "Row 3 (entries and templates that differ): the title.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Another title\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-date",
+      "note" : "The entry date.",
+      "other" : "{\"date\":\"2026-09-21T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-journal",
+      "note" : "The journal.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"9B8A7C6D-5E4F-4A3B-8C2D-1E0F9A8B7C6D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-archived",
+      "note" : "archivedAt.",
+      "other" : "{\"archivedAt\":\"2026-09-22T12:00:00Z\",\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-text",
+      "note" : "The text.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk, and more.\\n\",\"metadata\":{\"blockIDs\":[\"583A9739-55E3-EFD3-A86C-05921D0E76F7\"],\"imageTypes\":{},\"segmentLengths\":[24]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-block-identities-only",
+      "note" : "A version that differs only in metadata.blockIDs is different, strictly: every client agrees.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"11111111-2222-4333-8444-555555555555\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-segment-lengths-only",
+      "note" : "Only metadata.segmentLengths differs: different.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[1,13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-image-types-only",
+      "note" : "Only metadata.imageTypes differs: different.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{\"01234567-89ab-4cde-8fab-0123456789ab\":\"image/png\"},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "template",
+      "local" : "{\"date\":\"2026-02-03T04:05:06Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## What went well?\\n\",\"metadata\":{\"blockIDs\":[\"F4FCE7D0-A729-5BA0-0C20-FC90B8E13331\"],\"imageTypes\":{},\"segmentLengths\":[19]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-03T04:05:06Z\",\"title\":\"Weekly review\"}",
+      "name" : "differs-template",
+      "note" : "A template that differs is kept for review like an entry.",
+      "other" : "{\"date\":\"2026-02-03T04:05:06Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## What went well?\\n\",\"metadata\":{\"blockIDs\":[\"F4FCE7D0-A729-5BA0-0C20-FC90B8E13331\"],\"imageTypes\":{},\"segmentLengths\":[19]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-03T04:05:06Z\",\"title\":\"Weekly review, edited\"}",
+      "recordID" : "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : false,
+        "outcome" : "parked",
+        "parked" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : 1790416800,
+          "deletedWithJournal" : false,
+          "id" : "dba010cd-c4d6-8155-91c8-4bc77bf8bd47",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Words written after the deletion.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages"
+        },
+        "row" : 4
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Words written after the deletion.\\n\",\"metadata\":{\"blockIDs\":[\"7798445A-6C3F-498F-217E-23C7C3C4D2A3\"],\"imageTypes\":{},\"segmentLengths\":[34]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "entry-edited-here-deleted-for-good-there",
+      "note" : "Row 4: the marker is the record; the edited version is parked as a new entry in Recently Deleted.",
+      "other" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : true,
+        "outcome" : "parked",
+        "parked" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : 1790416800,
+          "deletedWithJournal" : false,
+          "id" : "5d7b2f6c-31eb-8e81-ab6c-dea3e4d8ab66",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Words written elsewhere.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages"
+        },
+        "row" : 4
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "name" : "entry-deleted-for-good-here-edited-there",
+      "note" : "Row 4: this device's marker stays the record (sent on top); the other version is parked.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Words written elsewhere.\\n\",\"metadata\":{\"blockIDs\":[\"80B5B77B-C73B-93B2-8566-DE9F248C16D7\"],\"imageTypes\":{},\"segmentLengths\":[25]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : false,
+        "outcome" : "parked",
+        "parked" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : 1790416800,
+          "deletedWithJournal" : false,
+          "id" : "db606107-2cc1-8583-9a1b-94032cc8ce38",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "No title here.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : ""
+        },
+        "row" : 4
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"No title here.\\n\",\"metadata\":{\"blockIDs\":[\"0C6DD578-A3B7-FAB2-8E7E-9AF4E7A205EE\"],\"imageTypes\":{},\"segmentLengths\":[15]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"\"}",
+      "name" : "untitled-entry-parked",
+      "note" : "Row 4: the title is unchanged, even when empty.",
+      "other" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : false,
+        "outcome" : "parked",
+        "parked" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : 1790416800,
+          "deletedWithJournal" : false,
+          "id" : "46ea93fe-c2e5-8a85-b087-db14fac88646",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Edited while deleted.\n",
+          "modifiedAt" : 1790157600,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages"
+        },
+        "row" : 4
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-23T10:00:00Z\",\"deletedWithJournal\":true,\"document\":{\"markdown\":\"Edited while deleted.\\n\",\"metadata\":{\"blockIDs\":[\"EC4BD6F8-599F-2D37-BA48-C61218C7D9C7\"],\"imageTypes\":{},\"segmentLengths\":[22]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-23T10:00:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "entry-in-recently-deleted-edited-there",
+      "note" : "Row 4: an edited version that was in Recently Deleted is parked deleted at the marker's time.",
+      "other" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : false,
+        "outcome" : "parked",
+        "parked" : {
+          "archivedAt" : null,
+          "date" : 1770091506,
+          "deletedAt" : 1790416800,
+          "deletedWithJournal" : false,
+          "id" : "9453fbec-cca5-8e72-aa75-98bcbb94f2ef",
+          "journalID" : null,
+          "kind" : "template",
+          "markdown" : "## Edited here\n",
+          "modifiedAt" : 1770091506,
+          "restoredFromDeletionID" : null,
+          "title" : "Weekly review"
+        },
+        "row" : 4
+      },
+      "kind" : "template",
+      "local" : "{\"date\":\"2026-02-03T04:05:06Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## Edited here\\n\",\"metadata\":{\"blockIDs\":[\"E514959C-C91C-732E-BD32-6E354F7E6278\"],\"imageTypes\":{},\"segmentLengths\":[15]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-03T04:05:06Z\",\"title\":\"Weekly review\"}",
+      "name" : "template-edited-here-deleted-for-good-there",
+      "note" : "Row 4 for a template.",
+      "other" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "recordID" : "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+      "expected" : {
+        "outcome" : "twoMarkers",
+        "row" : 5
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "name" : "two-markers",
+      "note" : "Row 5: two permanent deletions. The other device's marker is the record.",
+      "other" : "{\"date\":\"2026-09-27T11:00:00Z\",\"deletedAt\":\"2026-09-27T11:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-27T11:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-7777-4888-9999-AAAABBBBCCCC\",\"permanentlyDeletedAt\":\"2026-09-27T11:00:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "defaultTemplateID" : null,
+        "deletedAt" : null,
+        "deletedWithJournal" : false,
+        "otherName" : "Beta",
+        "outcome" : "journal",
+        "row" : 6,
+        "title" : "Alpha"
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Alpha\"}",
+      "name" : "journal-renamed-on-both",
+      "note" : "Row 6: this device's name stays and the other name is noted; the other version is kept in history.",
+      "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Beta\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    },
+    {
+      "expected" : {
+        "defaultTemplateID" : null,
+        "deletedAt" : null,
+        "deletedWithJournal" : false,
+        "otherName" : null,
+        "outcome" : "journal",
+        "row" : 6,
+        "title" : "Personal"
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Personal\"}",
+      "name" : "journal-template-only",
+      "note" : "Row 6: equal names, different default template: this device's, without a note.",
+      "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"defaultTemplateID\":\"D4C3B2A1-F6E5-4B7A-9D8C-5C4B3A2F1E0D\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Personal\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    },
+    {
+      "expected" : {
+        "adoptsOther" : true,
+        "deletedAt" : null,
+        "deletedWithJournal" : false,
+        "outcome" : "sameContent",
+        "row" : 2
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Personal\"}",
+      "name" : "journal-same-content",
+      "note" : "Row 2 for a journal: the same name and template are not a conflict.",
+      "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-02-01T00:00:00Z\",\"title\":\"Personal\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    },
+    {
+      "expected" : {
+        "defaultTemplateID" : null,
+        "deletedAt" : 1790323200,
+        "deletedWithJournal" : false,
+        "otherName" : "Beta",
+        "outcome" : "journal",
+        "row" : 6,
+        "title" : "Alpha"
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Alpha\"}",
+      "name" : "journal-renamed-here-deleted-there",
+      "note" : "Row 6: deleted wins (the deletion state is merged) and this device's name stays.",
+      "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedAt\":\"2026-09-25T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-09-25T08:00:00Z\",\"title\":\"Beta\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : false,
+        "name" : "Alpha",
+        "outcome" : "journalMarker",
+        "row" : 7
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Alpha\"}",
+      "name" : "journal-edited-here-deleted-for-good-there",
+      "note" : "Row 7: the marker is the record; no journal is made, because a copy would not carry entries.",
+      "other" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    },
+    {
+      "expected" : {
+        "markerIsLocal" : true,
+        "name" : "Beta",
+        "outcome" : "journalMarker",
+        "row" : 7
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-09-26T10:00:00Z\",\"deletedAt\":\"2026-09-26T10:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-09-26T10:00:00Z\",\"permanentDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"permanentlyDeletedAt\":\"2026-09-26T10:00:00Z\",\"title\":\"\"}",
+      "name" : "journal-deleted-for-good-here-edited-there",
+      "note" : "Row 7: the other way round.",
+      "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Beta\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    }
+  ],
+  "corpusVersion" : 1,
+  "identity" : {
+    "protection" : "encrypted",
+    "vaultKeyFrom" : "crypto/encryption-v2.json recovery.vaultKey"
+  },
+  "purpose" : "Two versions of one record as exact plaintext (local is this device's, other is the other device's) and what settling them produces (protocol/conflicts.md, The rules). Copy and parked identities use the vault key of crypto/encryption-v2.json. See README.md in this folder."
+}

@@ -6,6 +6,12 @@ revision applies; implemented.** It amends [join-with-local-journals.md](join-wi
 [move-entry.md](move-entry.md) (the same-name fallback becomes a rare case), and adds a client rule to
 [protocol/journal-lifecycle.md](../../protocol/journal-lifecycle.md).
 
+Amended 2026-10-09 by [1-1-library-simplifications.md](1-1-library-simplifications.md) (K, L): Merge Into… and journal
+Version History are removed in release 1.1. Rename replaces Merge Into… as the answer for a numbered journal (§5), and
+an automatically numbered journal's earlier name is no longer visible anywhere. The rule itself (§3, §4.1, §4.4 to
+§4.6) is unchanged. Where the Tests, Review and Implementation sections mention Merge Into… or Version History, they
+record what version 1.0 shipped.
+
 ## Owner report (2026-09-30)
 
 "on my phone it asked me to merge journals, I said yes, but now under the 'Journals' section I have 2 journals called
@@ -22,15 +28,16 @@ unique (at least visibly)."
 - **Fix:**
   1. Every local action checks the name: New Journal, Rename, the Settings name field and the recovery New Journal
      sheet show **Name Taken**. Restore, Keep Journal, archive import and joining add a number, such as
-     "Default 2", and say so first. Restoring a name from Version History is refused when the name is taken.
+     "Default 2", and say so first. (Version 1.0 also refused restoring a taken name from Version History; journal
+     Version History is gone in 1.1.)
   2. For Merge Journals, recommendation **(b)**: an agent-read journal is added separately as "Default 2", and
      the Merge step says so. **All Journals** agents no longer block combining, because they read the journal
      either way.
   3. Two devices that name journals the same while offline: after each sync, every journal except the oldest of
      that name gets a number. The rule is deterministic, nothing is lost, and an automatic rename never needs
      review.
-  4. A new **Merge Into…** journal action combines two journals. It fixes the owner's library and lets anyone
-     combine a numbered journal later, with an explicit agent sentence.
+  4. A numbered journal is renamed to a name of its own, or its entries are moved one at a time with Move Entry…
+     (§5). (Revision 2 added a Merge Into… action here; release 1.1 removes it.)
   5. Rule B: a join tried again respects what the server deleted since the earlier attempt (§4.5).
 
 ## 1. Cause (confirmed)
@@ -122,7 +129,7 @@ Apple Notes answers a taken folder name the same way.
 ### 4.2 Restore, restore with an entry, Keep Journal: numbered, said first
 
 - If a live journal already has the name, the restored journal gets the next numbered name in the same
-  transaction. It's an ordinary edit, and the earlier name stays in its Version History.
+  transaction. It's an ordinary edit. The earlier name isn't kept anywhere the person can see (1.1).
 - **Restore Journal sheet** (`JournalLifecycleView`): when the name is taken at preparation, one sentence is
   added after the restoration explanation:
   "Another journal is named “Travel”, so this one will be restored as “Travel 2”."
@@ -133,6 +140,9 @@ Apple Notes answers a taken folder name the same way.
   nothing fails. The sentence isn't shown in that rare case, because the number is visible in the sidebar.
 
 ### 4.3 Version History: restoring a taken name is refused
+
+Removed in 1.1: a journal has no Version History, so there is no earlier name to restore. A name changed by mistake is
+changed back with Rename, which refuses a taken name like any other rename (§4.1). What follows describes version 1.0.
 
 A numbered name would defeat the purpose of restoring the name, so it isn't offered.
 
@@ -162,7 +172,7 @@ A numbered name would defeat the purpose of restoring the name, so it isn't offe
 | Feasible in the current flow | **No.** Merge Journals comes *before* Sign In or pairing (join-with-local-journals.md §2.7, "Nothing that uploads is sent before Merge"). Which journals agents read is only known after the grant, because the settings are sealed with the vault key. It would need a second consent step after downloading, plus cancel and revoke handling for a grant already issued. | Yes: decided after the grant, as today | Yes |
 | Simplicity | New step, new states, new failure copy | One changed footer sentence | None |
 | Visible uniqueness | Yes | Yes ("Default 2") | Yes |
-| Combining later | n/a | **Merge Into…** (§5), with an explicit agent sentence | n/a |
+| Keeping or combining later | n/a | **Rename** the numbered journal (§5); entries move one at a time with Move Entry… | n/a |
 
 **Recommendation: (b).** It's the only option that is both feasible before consent and silent about nothing. Naming it
 "Default (iPhone)" was considered. Device names are personal and long ("Alex’s iPhone 17 Pro"). They would also
@@ -204,13 +214,15 @@ differ from every other numbering path in this design, so "Default 2" is used.
 
 "Chose that journal for an agent" names the Selected Journals case, the only one where combining would let an agent
 read more. No other copy changes: the step can't know the specifics before the grant, and after joining, the
-numbered journal in the sidebar is the result.
+numbered journal in the sidebar is the result. The person renames it ("Default 2" to a name of their own) or moves its
+entries with Move Entry…; the footer mentions neither, and the earlier name is not kept anywhere (1.1).
 
 ### 4.6 Sync: two devices, same name, offline
 
 **What the person sees:** nothing unusual. After the sync that brings the second journal, one of them is named
-"Travel 2", with all of its entries. There's no alert, because syncing stays quiet. The earlier name is in that
-journal's Version History, and **Merge Into…** combines them if wanted.
+"Travel 2", with all of its entries. There's no alert, because syncing stays quiet. The earlier name is not shown
+anywhere. The person renames the numbered journal to something meaningful ("Travel 2" to "Travel, laptop"), or moves
+its entries with Move Entry… and deletes the empty journal.
 
 **Rule (client-side; documented in protocol/journal-lifecycle.md so other clients can follow it):**
 
@@ -243,99 +255,33 @@ journal's Version History, and **Merge Into…** combines them if wanted.
 
 - **Combining same-name journals automatically:** it moves entries without consent, and it can let a
   Selected-Journals agent read another device's entries.
-- **Showing a display-only suffix** while the stored name stays the same: Rename, Version History, agents and
-  exports would all show a different name than the sidebar.
+- **Showing a display-only suffix** while the stored name stays the same: Rename, agents and exports would all show a
+  different name than the sidebar.
 - **Letting only the "later" device rename,** by comparing log cursors: it needs new stored state per journal to be
   robust. The deterministic rule plus renames stored only on acceptance gives the same result with no state.
 - **Dropping identical edits in the store** (revision 1's rule): too broad a change to conflict handling for this.
 
 **Agents:** a rename changes only the name the agent sees. What it can read doesn't change.
 
-## 5. Merge Into… (new journal action)
+## 5. Combining duplicates: Rename (amended 2026-10-09)
 
-This is needed for the owner's library now, for journals numbered by §4.5 or §4.6, and because combining two
-journals today takes many steps: rename, move each entry one by one, then delete. There's no multi-select.
+Revision 2 designed a Merge Into… journal action here, and version 1.0 shipped it. Release 1.1 removes it
+([1-1-library-simplifications.md](1-1-library-simplifications.md), L), together with journal Version History (K). The
+numbered names of §4.2 and §4.4 to §4.6 stay.
 
-### 5.1 Entry point
-
-- **Journal Actions** menu (`JournalMoreMenu`), sidebar context menu and the Mac Journal Actions toolbar item
-  (`journalActions`), placed after **Default Template**:
-  **Merge Into…**, symbol `arrow.triangle.merge`.
-- **Disabled** when the journal has a change to review (like Rename), or when no other live journal exists.
-
-### 5.2 Sheet
-
-Same structure as Move Entry. On iPhone and iPad: `NavigationStack`, inline title, **Cancel** as
-`.cancellationAction`, **Merge** as `.confirmationAction`. On the Mac: a title row, the content, a divider, then
-[Cancel] … [Merge], with Merge as `.defaultAction` and Escape to cancel. Mac size: minimum 320 × 280, ideal
-420 × 360.
-
-- **Title:** Merge “‹source›”
-- **Intro** (list header): "Choose the journal to merge “‹source›” into."
-- **List:** every other live journal, one row each: its name, and a checkmark on the selected row. Nothing is
-  selected at first.
-  - If two rows still share a name (only the rare state in §4.6, step 3), each shows a secondary line "Created
-    ‹date›".
-- **Footer** (secondary), below the list, with the number of entries:
-  - Several: "The 4 entries in “‹source›”, including archived and recently deleted ones, move to “‹destination›”.
-    “‹source›” then moves to Recently Deleted." Before a choice, "“‹destination›”" reads "the journal you choose".
-  - One: "The entry in “‹source›” moves to “‹destination›”. “‹source›” then moves to Recently Deleted."
-  - None: "“‹source›” has no entries. It moves to Recently Deleted."
-- **Agent sentences** (after the footer, once a destination is chosen and there are entries). Agents with All
-  Journals read both journals either way and are never mentioned.
-  - A Selected-Journals agent reads the destination and not the source. One: "‹agent name› can read
-    “‹destination›”, so it will be able to read these entries." Several: "‹n› agents can read “‹destination›”, so
-    they’ll be able to read these entries."
-  - A Selected-Journals agent reads the source and not the destination. One: "‹agent name› will no longer be able
-    to read these entries." Several: "‹n› agents will no longer be able to read these entries."
-  - Couldn't be checked (connected, but agents couldn't be loaded, for example offline, or an agent's settings
-    can't be read): "If an agent can read “‹destination›”, it will be able to read these entries."
-  - Agents load when the sheet opens, from the agent copies' list. The sentences update when they arrive, and Merge
-    isn't blocked while loading.
-  - With no server, or a server without agent access, there's no sentence.
-- **Merge:** enabled once a journal is chosen. There's no second confirmation: the sheet states the consequence,
-  and a second prompt would be a needless confirmation.
-
-### 5.3 Behavior
-
-`JournalStore.mergeJournal(source, into: destination)`, in its own transaction:
-
-- Every entry whose journal is the source moves to the destination, including archived entries and entries in
-  Recently Deleted. Only the journal an entry belongs to changes (and its modification time): archived entries stay
-  archived, and entries in Recently Deleted keep their `deletedAt` and `deletedWithJournal`, so they stay in
-  Recently Deleted with their deletion time. (This client never sets `deletedWithJournal`; entries an earlier client
-  marked that way stay in Recently Deleted until restored individually, as they would have.) The source then moves
-  to Recently Deleted, empty. Unlike `Store.moveEntry`, which moves only live, editable entries one at a time, this
-  covers the whole journal.
-- The source's settings (its default template) aren't copied. They stay in its Version History.
-- **Refused, with nothing changed:**
-  - when the source, the destination or any moving entry has a change to review;
-  - when the destination or the source is gone or in Recently Deleted;
-  - when either journal or any moving entry was saved by a newer version: this version can't change it without
-    losing content, so the whole merge is refused.
-- **Syncing afterwards:**
-  - Another device's offline edit to a moved entry becomes an ordinary change to review.
-  - An entry created offline in the source on another device arrives in a journal that is in Recently Deleted. The
-    existing lifecycle shows it there with its journal (join-with-local-journals.md §2.1, step 3), and it can be
-    restored or moved. Nothing is lost.
-- **After success:** the sheet closes and the destination journal is selected. VoiceOver announces "Merged into
-  “‹destination›”."
-- **Offline:** works the same way. Syncing later is quiet.
-
-### 5.4 States and copy
-
-| State | What shows |
-|---|---|
-| Merging | `ProgressView("Merging…")` below the footer. List, Cancel and Merge disabled, swipe-to-dismiss off. |
-| The current entry can't be saved first | "Save your entry before merging this journal." |
-| Changes to review | "These changes need review before you can continue." and **Review Changes**, as in Move Entry. |
-| Destination gone meanwhile | "“‹destination›” is no longer available. Choose another journal." The selection clears. |
-| Source gone or deleted meanwhile | "“‹source›” is no longer available." Merge is replaced by **Done**. |
-| An entry can't be moved by this version | "Update My Journal to merge this journal. Some entries were saved by a newer version." |
-| Saved, but the view couldn't refresh | "The journals were merged, but couldn’t be displayed. Reopen My Journal to try again." |
-| The app locks | The sheet closes. A commit already under way finishes, as in Move Entry. |
-
-Errors appear in red below the footer and are announced.
+- **Two journals with similar content are two real journals.** Two devices that each created "Travel" offline, or a
+  join that met a taken name, leave "Travel" and "Travel 2". Keeping both is harmless and nothing is lost.
+- **Rename gives the numbered journal a name of its own.** Choose Rename… in the journal's actions and type a name
+  that is free ("Travel 2" to "Travel, laptop"). A taken name is refused (§4.1). Rename is also the only way to change
+  a name that was changed by mistake: the earlier name is not offered back, and an automatically numbered journal's
+  earlier name isn't visible anywhere.
+- **To end up with one journal,** open each entry's actions, choose Move Entry… and pick the other journal, then
+  choose Delete Journal… for the empty one. This is one entry at a time: lists have no multiple selection (owner
+  decision, 2026-10-09), so a bulk move isn't planned.
+- **Agents.** A rename changes only the name an agent sees. Move Entry… changes what an agent can read as described in
+  [move-entry.md](move-entry.md).
+- **A journal merged by 1.0** is an ordinary deleted journal with no entries. It is in Recently Deleted and can be
+  restored (numbered if its name is taken) or deleted permanently.
 
 ## 6. The owner's library now
 
@@ -347,8 +293,8 @@ merge rule (§1), not a deletion that came back; see Review.
 **After this change:**
 
 - The next sync of an updated device renames the newer "Default" (by creation date) to "Default 2" (§4.6).
-- Journal Actions > **Merge Into…** > "Default" > **Merge** combines them. If an agent was given only one of the two
-  journals, the sheet says what changes for it before Merge.
+- In 1.0, Journal Actions > **Merge Into…** combined them. In 1.1, rename "Default 2", or move its entry with
+  Move Entry… and delete the empty journal (§5).
 
 **With an earlier build:** rename one "Default", move its entry with Move Entry (which doesn't offer same-name
 journals), then delete the empty journal.
@@ -374,7 +320,8 @@ journals), then delete the empty journal.
 ## 8. Tests (useful tests only)
 
 Core tests use real isolated stores and the in-memory `MergeServer`. Probes run against a disposable real server
-(`scripts/test-sync.sh`).
+(`scripts/test-sync.sh`). Rows about Merge Into… or restoring a name from Version History describe version 1.0; the
+tests of those features go with them in 1.1.
 
 | Protects | Test |
 |---|---|

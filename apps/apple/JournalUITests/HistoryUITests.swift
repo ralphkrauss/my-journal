@@ -3,7 +3,7 @@ import UIKit
 import XCTest
 
 final class HistoryUITests: XCTestCase {
-    @MainActor func testRestoreHistoricalEntryAndJournalSettingsThenReopen() async throws {
+    @MainActor func testRestoreHistoricalEntryThenReopen() async throws {
         continueAfterFailure = false
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("History-" + UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -42,12 +42,6 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(title.waitToAppear(timeout: 10))
         assertEventually(title.value as? String, equals: "Earlier reflection")
         capture(app, "Reopened historical copy")
-        try restoreJournalSettings(app)
-        app.terminate()
-        app.launch()
-        NavigationTestSupport.openEntry("Earlier reflection", journal: "All Entries", app: app)
-        XCTAssertTrue(title.waitToAppear(timeout: 10))
-        assertEventually(title.value as? String, equals: "Earlier reflection")
         app.terminate()
         let reopened = try JournalStore(directory: directory, key: fixture.key)
         let items = try await reopened.items()
@@ -63,13 +57,10 @@ final class HistoryUITests: XCTestCase {
         let source = try XCTUnwrap(items.first { $0.id == fixture.entry.id })
         XCTAssertEqual(source.title, fixture.entry.title)
         let journal = try XCTUnwrap(items.first { $0.id == fixture.journal.id })
-        XCTAssertEqual(journal.title, "Earlier Work")
-        XCTAssertEqual(journal.defaultTemplateID, fixture.missingTemplate)
+        XCTAssertEqual(journal.title, "Current Work", "A journal has no version history to restore")
         XCTAssertEqual(journal.deletedAt, fixture.journal.deletedAt)
         let history = try await reopened.history(for: fixture.entry.id)
         XCTAssertTrue(history.contains(fixture.historicalEntry))
-        let settingsHistory = try await reopened.history(for: fixture.journal.id)
-        XCTAssertTrue(settingsHistory.contains { $0.title == "Current Work" })
         try await reopened.close()
     }
 
@@ -101,27 +92,6 @@ final class HistoryUITests: XCTestCase {
         journal.tap()
     }
 
-    @MainActor private func restoreJournalSettings(_ app: XCUIApplication) throws {
-        NavigationTestSupport.journalAction("Version History…", journal: "Current Work", app: app)
-        XCTAssertTrue(app.staticTexts["Earlier Work"].waitToAppear(timeout: 10))
-        try tap(app.buttons["Restore Settings…"], scrolling: app.scrollViews.firstMatch)
-        XCTAssertTrue(app.navigationBars["Restore Settings"].waitToAppear(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Current Work"].exists)
-        XCTAssertTrue(app.staticTexts["Earlier Work"].exists)
-        capture(app, "Journal settings comparison")
-        let comparisonContent = app.scrollViews["journal-settings-comparison"]
-        try scrollTo(comparisonContent.staticTexts["Default Template, Unavailable Template"], in: comparisonContent)
-        capture(app, "Historical default template comparison")
-        app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.buttons["Restore Settings…"].waitToAppear(timeout: 5))
-        try tap(app.buttons["Restore Settings…"], scrolling: app.scrollViews.firstMatch)
-        XCTAssertTrue(app.navigationBars["Restore Settings"].waitToAppear(timeout: 5))
-        app.buttons["Restore"].tap()
-        XCTAssertTrue(app.navigationBars["Version History"].waitToDisappear(timeout: 10))
-        NavigationTestSupport.showJournals(app)
-        XCTAssertTrue(app.staticTexts["Earlier Work"].firstMatch.waitToAppear(timeout: 10))
-        capture(app, "Restored journal settings")
-    }
     @MainActor private func tap(_ element: XCUIElement, scrolling container: XCUIElement) throws {
         try scrollTo(element, in: container)
         element.tap()
@@ -149,7 +119,6 @@ final class HistoryUITests: XCTestCase {
         let journal: JournalItem
         let entry: JournalItem
         let historicalEntry: JournalItem
-        let missingTemplate: UUID
         let image: Data
         let currentVersionTime: String
         let historicalVersionTime: String
@@ -187,11 +156,6 @@ final class HistoryUITests: XCTestCase {
         // Older than the current version, though it is recorded after it.
         historicalEntry.modifiedAt = Date(timeIntervalSince1970: 1_700_000_000)
         try await retainHistory(historicalEntry, store: store, key: key)
-        var historicalJournal = journal
-        historicalJournal.title = "Earlier Work"
-        let missingTemplate = UUID()
-        historicalJournal.defaultTemplateID = missingTemplate
-        try await retainHistory(historicalJournal, store: store, key: key)
         let versions = try await store.history(for: entry.id)
         let storedHistoricalEntry = try XCTUnwrap(versions.first { $0.title == historicalEntry.title })
         let currentVersion = try XCTUnwrap(versions.first { $0.title == entry.title })
@@ -204,7 +168,7 @@ final class HistoryUITests: XCTestCase {
             to: directory.appendingPathComponent("configuration.json"))
         return Fixture(
             key: key, phrase: phrase, journal: journal, entry: entry,
-            historicalEntry: storedHistoricalEntry, missingTemplate: missingTemplate, image: image,
+            historicalEntry: storedHistoricalEntry, image: image,
             currentVersionTime: time(currentVersion), historicalVersionTime: time(storedHistoricalEntry))
     }
     @MainActor private func retainHistory(_ historical: JournalItem, store: JournalStore, key: Data) async throws {

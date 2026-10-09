@@ -12,7 +12,7 @@ sources:
 
 # Version history, entries and templates (Windows)
 
-See earlier versions of an entry or template and copy one back as a new entry or template. The current item and its history are never changed. Behaviour, states, rules and copy keys are the spec's [version-history](../../../screens/version-history.md); the journal form is [journal-history](journal-history.md).
+See earlier versions of an entry or template and copy one back as a new entry or template. The current item and its history are never changed. Behaviour, states, rules and copy keys are the spec's [version-history](../../../screens/version-history.md). Journals have no version history: a name changed by mistake is changed back with Rename ([journals](journals.md)).
 
 ## Controls
 
@@ -27,7 +27,7 @@ A **page** in the window's content area with a back button and a `BreadcrumbBar`
 | Preview | A heading with the version's title (`Subtitle` style), for entries its date (secondary), then the editor control in read-only mode, at least 220 epx tall, formatting and images as in the entry ([entry-editor](entry-editor.md)); the text is selectable and copyable | A version in a format this version cannot read shows `editor.history.updateToRestore` and a `Button` `common.exportArchive` instead (the archive export of Settings ▸ Backup with its one-time password check, [export-archive](../flows/export-archive.md)) |
 | Journal picker (entries) | A `ComboBox`, `Header` `editor.history.journalLabel`, `PlaceholderText` `common.chooseJournal`, listing every journal in use; same-named journals show as `editor.history.journalDuplicate` (name, creation date and time, number); a journal without a name is `common.untitledJournal`. Initially the entry's own journal when it is in use, otherwise none | Below it a `HyperlinkButton` `common.newJournalEllipsis`, which opens the New journal dialog over the page ([destination-journal](destination-journal.md)); creating a journal does not select it or restore anything. With no journals: `editor.history.createJournalFirst` and the same button |
 | Restore | A `Button` (accent) `editor.history.restoreAsNewEntry`, or `editor.history.restoreAsNewTemplate` for a template | Enabled as the spec's table: a readable version, for entries a journal in use, not loading, restoring or restored, unlocked. Not the default button: Enter belongs to the combo boxes |
-| Error | An Error `InfoBar` with selectable text above the buttons; the spec's recovery buttons next to it: `editor.history.reload`, `common.reloadJournals`, `common.reviewChanges` | Announced when it opens. Review changes navigates one level deeper to the review page; going back returns here, and restoring afterwards needs another explicit Restore. If it was resolved meanwhile the review shows `messages.conflict.resolved` with `common.done` |
+| Error | An Error `InfoBar` with selectable text above the buttons; the spec's recovery buttons next to it: `editor.history.reload`, `common.reloadJournals` | Announced when it opens |
 | Restored but not shown | An Informational bar `editor.history.restored` or `editor.history.restoredTemplate`; Restore is hidden | |
 | Working | The controls disabled, an indeterminate `ProgressBar` with `editor.history.loadingJournals` or `editor.history.restoring`; back disabled | |
 
@@ -40,7 +40,7 @@ The spec's table applies as written. Windows presentation of the notable rows:
 | Open entry could not be saved first | Opening: the page does not open and the alert dialog explains. Restoring: `messages.save.before.goBack` in the page's error bar; the chosen version and journal are kept |
 | Version gone | `messages.history.versionUnavailable` with Reload history |
 | Journal gone | `messages.history.chooseJournal` in the bar; the journal picker clears; also when the chosen journal disappears while the page is open |
-| Journal has changes to review | `messages.lifecycle.needsReview` with Review changes |
+| Chosen journal saved by a newer version | `messages.lifecycle.unsupportedJournal` in the page's error bar |
 | Restoring succeeded | The page goes back; the copy opens in the editor with its journal or Templates shown |
 | Locked | The lock page replaces the window: the page, previews and the work are released; a copy already committed stays |
 
@@ -59,7 +59,6 @@ The spec's table applies as written. Windows presentation of the notable rows:
 | --- | --- | --- | --- |
 | `entry-version-history` | Entry actions; the entry row's context menu | none | Always, including items in Recently deleted |
 | `new-journal` | The link under the journal picker | as in commands.md | Not while restoring or while the library is being replaced |
-| `review-changes` | The recovery button | none | The chosen journal has changes to review |
 | `export-archive` | The button under a version in a newer format | none | The version cannot be read here |
 
 Keyboard: Tab goes through the pickers, the link, Restore; Up and Down change the selection of an open combo box; Alt+Left goes back unless restoring (Esc closes an open drop-down and never leaves the page). Restore has no accelerator.
@@ -79,7 +78,6 @@ Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-voca
 
 - **A page with the versions beside the preview** where Apple has a sheet; the actions are the same.
 - **No Done button**: Back is Done, as in the Settings pages.
-- **Review changes is a deeper page**, not a nested sheet; the back stack returns to this page.
 
 ## Open questions
 

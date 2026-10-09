@@ -128,7 +128,7 @@ final class JournalLifecycleTests: XCTestCase {
         XCTAssertEqual(snapshot.location(of: legacy), .recentlyDeleted)
         let deleteAgain = try await store.prepareJournalDeletion(parent.id)
         _ = try await store.deleteJournal(deleteAgain)
-        let recovered = try await store.restoreAndMoveEntry(legacy.id, to: target.id)
+        let recovered = try await store.restoreEntry(legacy.id, fallback: target.id).entry
         let retainedParent = try await store.item(parent.id)
         XCTAssertNotNil(retainedParent?.deletedAt)
         XCTAssertFalse(recovered.deletedWithJournal)
@@ -163,15 +163,15 @@ final class JournalLifecycleTests: XCTestCase {
                 cursor: 10, recordId: journal.id, revision: 2, kind: "journal",
                 payload: encrypted.base64EncodedString(), deviceId: UUID(), modifiedAt: Date()))
         let snapshot = try await store.lifecycleSnapshot()
-        XCTAssertEqual(snapshot.location(of: entry), .unavailable(.conflict))
+        XCTAssertEqual(snapshot.location(of: entry), .unavailable(.unsupported))
         do {
             _ = try await store.prepareJournalDeletion(journal.id)
-            XCTFail("A parent conflict must be reviewed.")
-        } catch JournalLifecycleError.conflict(let id) { XCTAssertEqual(id, journal.id) }
+            XCTFail("A journal with a conflict that is still waiting must not be deleted.")
+        } catch JournalLifecycleError.unsupportedJournal {}
         do {
-            _ = try await store.restoreAndMoveEntry(entry.id, to: target.id)
-            XCTFail("Moving must not silently decide a parent conflict.")
-        } catch JournalLifecycleError.conflict(let id) { XCTAssertEqual(id, journal.id) }
+            _ = try await store.restoreEntry(entry.id, fallback: target.id)
+            XCTFail("Restoring must not silently decide a parent conflict.")
+        } catch JournalLifecycleError.unsupportedJournal {}
         let conflicts = try await store.conflicts()
         _ = try await store.resolve(XCTUnwrap(conflicts.first), choice: .local)
         _ = try await upload(store)

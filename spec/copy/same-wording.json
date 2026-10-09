@@ -188,6 +188,13 @@
   },
   {
     "keys": [
+      "library.menu.file.useTemplate",
+      "library.templateChooser.popoverTitle"
+    ],
+    "reason": "File menu item versus the Mac popover’s title and tooltip: one action, two roles."
+  },
+  {
+    "keys": [
       "library.newJournal.title",
       "library.toolbar.newJournal"
     ],

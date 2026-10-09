@@ -45,12 +45,12 @@ How the Apple apps implement the spec's [version-history](../../../screens/versi
 | Restore button | Plain `Button` titled `editor.history.restoreAsNewEntry` or `editor.history.restoreAsNewTemplate` | Disabled by `canRestore` (version readable, destination valid for entries, not loading, busy, restored, unlocked, not replacing the library). Hidden after a restore. |
 | Error text | `Text`, `.secondary`, `.textSelection(.enabled)` | |
 | Restored but not shown | `Text` `editor.history.restored` or `editor.history.restoredTemplate` | When `restoreHistoricalVersion` returns false (the list could not refresh); the sheet stays. |
-| Recovery buttons | `Button`s Reload History (`editor.history.reload`), Reload Journals (`common.reloadJournals`), Review Changes (`common.reviewChanges`) | Review Changes opens a nested sheet: `JournalConflictView` or `ConflictReview`; if the conflict is gone, "These changes have been resolved." with Done. |
+| Recovery buttons | `Button`s Reload History (`editor.history.reload`) and Reload Journals (`common.reloadJournals`) | Reload History reads the versions again; Reload Journals refreshes the journals, then asks to choose one. |
 | Progress | `ProgressView` "Loading Journals…" (`editor.history.loadingJournals`) or "Restoring Version…" (`editor.history.restoring`) | |
 
 Model: `AppModel.restoreHistoricalVersion` (`HistoryOperations.swift`) first calls `finishPendingSave()`; if that fails it throws the text of `messages.save.before.goBack`. It then calls the store's `restoreHistoryCopy`, and `commitHistoricalCopy` selects the new copy: it leaves Recently Deleted, Unavailable and the search, switches to Templates for a template or to the copy's journal, and selects it, so the sheet closes onto the new item. Core: `HistoryRecovery.swift`.
 
-States are the spec's table: loading and empty as above; load failed and version gone use `error` plus Reload History (`needsReload`); journal gone sets `error` to `messages.history.chooseJournal` when `model.journals` loses the chosen id (also while the sheet is open, via `onValueChange(of: destinationIDs)`); a journal with changes to review sets `messages.lifecycle.needsReview` and `conflictID`. Locking cancels the task, clears versions, images and the destination, closes nested sheets and dismisses.
+States are the spec's table: loading and empty as above; load failed and version gone use `error` plus Reload History (`needsReload`); journal gone sets `error` to `messages.history.chooseJournal` when `model.journals` loses the chosen id (also while the sheet is open, via `onValueChange(of: destinationIDs)`); a chosen journal that a newer version saved sets `messages.lifecycle.unsupportedJournal`. Locking cancels the task, clears versions, images and the destination, closes nested sheets and dismisses.
 
 ## Layout
 

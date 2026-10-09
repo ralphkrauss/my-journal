@@ -129,14 +129,13 @@ final class DeletionFlowTests: XCTestCase {
         XCTFail("The entry never reached \(location)")
     }
 
-    func testDeletedTemplateCanBeRestoredAndIsTheDefaultAgain() async throws {
+    func testDeletedTemplateCanBeRestored() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let store = try JournalStore(directory: root, key: try VaultCrypto.generateKey())
         let template = JournalItem(
             kind: "template", title: "Daily Reflection", document: JournalDocument(markdown: "What went well?"))
-        var journal = JournalItem(kind: "journal", title: "Personal")
-        journal.defaultTemplateID = template.id
+        let journal = JournalItem(kind: "journal", title: "Personal")
         for item in [template, journal] { try await store.save(item) }
         let model = AppModel(directory: root)
         model.store = store
@@ -151,21 +150,20 @@ final class DeletionFlowTests: XCTestCase {
         XCTAssertEqual(model.filteredDeletedTemplates.map(\.id), [template.id])
         XCTAssertTrue(model.templates.isEmpty)
         XCTAssertTrue(model.isRecentlyDeleted(deleted))
-        // Meanwhile New Entry starts blank, but the journal keeps its setting for when the template comes back.
-        XCTAssertNil(model.defaultTemplateID(of: try XCTUnwrap(model.journals.first)))
-        model.showingTemplates = false
-        await model.newEntry()
-        XCTAssertEqual(model.draft?.document, JournalDocument())
+        let offer = try XCTUnwrap(model.restoreOffer(for: deleted))
+        XCTAssertEqual(offer.title, "Restore")
+        XCTAssertTrue(offer.returnsToOwnJournal, "A template has no journal; its swipe is always offered")
         await model.restore(deleted)
         XCTAssertTrue(model.showingTemplates)
         XCTAssertEqual(model.selectedID, template.id)
         XCTAssertEqual(model.templates.map(\.id), [template.id])
         XCTAssertTrue(model.filteredDeletedTemplates.isEmpty)
-        XCTAssertEqual(model.defaultTemplateID(of: try XCTUnwrap(model.journals.first)), template.id)
         try await store.close()
     }
 
-    func testKeepingATemplateDeletedElsewhereLeavesItOpenInTemplates() async throws {
+    /// An edit of a template that another device deleted permanently is saved as a template in Recently Deleted; the
+    /// deletion stays final, and Changed on Two Devices opens the saved one.
+    func testATemplateEditedAgainstAPermanentDeletionIsKeptInRecentlyDeleted() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let key = try VaultCrypto.generateKey()
@@ -185,21 +183,18 @@ final class DeletionFlowTests: XCTestCase {
         edited.title = "Weekly Reflection, edited here"
         try await store.save(edited)
         try await store.apply([try remote(marker, revision: 2, key: key)], cursor: 2)
+        let settled = try await store.resolveConflicts(at: .local)
+        guard case .deletedAndChanged(let parkedID?) = settled.resolved.first?.result else {
+            return XCTFail("The edit is saved separately")
+        }
         let model = AppModel(directory: root)
         model.store = store
         model.loaded = true
         try await model.refresh()
-        model.showingTemplates = true
-        let opened = await model.select(template.id)
-        XCTAssertTrue(opened)
-
-        let review = try await model.prepareDeletionConflict(template.id)
-        let refreshed = try await model.resolveDeletionConflict(review, choice: .keepTemplate)
-        XCTAssertTrue(refreshed)
-        XCTAssertTrue(model.showingTemplates)
-        XCTAssertEqual(model.selectedID, template.id)
-        XCTAssertEqual(model.draft?.title, edited.title)
-        XCTAssertEqual(model.templates.map(\.id), [template.id])
+        XCTAssertTrue(model.conflicts.isEmpty, "Nothing is left to review")
+        XCTAssertEqual(model.filteredDeletedTemplates.map(\.id), [parkedID])
+        XCTAssertEqual(model.filteredDeletedTemplates.first?.title, edited.title)
+        XCTAssertFalse(model.items.contains { $0.id == template.id }, "The deletion is final")
         try await store.close()
     }
 
@@ -231,7 +226,7 @@ final class DeletionFlowTests: XCTestCase {
     func testAnEmptyNewEntryStaysWhenLeft() async throws {
         let (model, _, entries, root) = try await fixture()
         defer { try? FileManager.default.removeItem(at: root) }
-        await model.newEntry(blank: true)
+        await model.newEntry()
         let empty = try XCTUnwrap(model.draft)
         await model.select(entries[0].id)
         await model.showCollection(all: true)
@@ -260,7 +255,7 @@ final class DeletionFlowTests: XCTestCase {
         await model.showCollection(trash: true)
         XCTAssertTrue(model.canCreateEntry)
 
-        await model.newEntry(blank: true)
+        await model.newEntry()
         XCTAssertEqual(model.draft?.journalID, work.id)
         XCTAssertEqual(model.destination, .journal(work.id), "The journal the entry went to is shown")
         model.selectedJournalID = nil

@@ -109,7 +109,7 @@ Menus differ from the Mac's: no application menu (Settings and Exit move to File
 
 | Menu | Items, in order (labels are the copy keys named in [commands](commands.md)) |
 | --- | --- |
-| File | New entry, New blank entry, New entry from template…, New journal…, Pin entry / Unpin entry, —, Import archive…, Export archive…, Export journals as Markdown…, —, Delete all in Recently deleted, —, Lock My Journal, —, Settings, Exit |
+| File | New entry, Use a template…, New journal…, Pin entry / Unpin entry, —, Import archive…, Export archive…, Export journals as Markdown…, —, Delete all in Recently deleted, —, Lock My Journal, —, Settings, Exit |
 | Edit | Undo, Redo, —, Cut, Copy, Paste, Paste as plain text, Select all, —, Find, Find and replace, Find next, Find previous, —, Search entries |
 | Format | As on the Mac and iPad: Bold, Italic, Underline, Strikethrough, Inline code, —, Paragraph, Heading 1 to 6, —, Bulleted list, Numbered list, Checklist, Mark as checked / unchecked, Block quote, —, Increase indent, Decrease indent, —, Insert ▸ (Code block, Table, Horizontal rule, —, Link…, Image…), Table ▸ |
 | View | Show navigation pane / Hide navigation pane, Show editor only / Show all panes, —, Previous entry, Next entry, —, Formatting (a check mark when the formatting bar is shown), View source / View preview, —, Zoom in, Zoom out, Actual size, —, Full screen |
@@ -152,7 +152,7 @@ Sources: [Menu flyout and menu bar](https://learn.microsoft.com/en-us/windows/ap
 
 Rules:
 
-- A context-menu item has an icon when Segoe Fluent Icons has a well-known glyph for it (Pin, Calendar for Change date, Move to folder, History for Version history, Rename, Delete, Copy, Share); an item with no such glyph (Image descriptions, Default template, Merge into) has none. A `MenuFlyout` reserves the icon column once one item has an icon, so the text stays aligned. Cryptic glyphs are never invented. Separators and order follow [screens/entry-list](../../screens/entry-list.md); Delete entry is last and uses the standard destructive treatment (no special colour is required).
+- A context-menu item has an icon when Segoe Fluent Icons has a well-known glyph for it (Pin, Calendar for Change date, Move to folder, History for Version history, Rename, Delete, Copy, Share); an item with no such glyph (Image descriptions) has none. A `MenuFlyout` reserves the icon column once one item has an icon, so the text stays aligned. Cryptic glyphs are never invented. Separators and order follow [screens/entry-list](../../screens/entry-list.md); Delete entry is last and uses the standard destructive treatment (no special colour is required).
 - A context menu opened by keyboard appears at the focused row, not at the pointer.
 - Each item first saves the open writing; if that fails, nothing happens ([commands](../../commands.md#toolbars-context-menus-and-swipes)); Pin and Unpin do not wait for the save, as [flows/save-entry](../../flows/save-entry.md) says (A36).
 - Accelerators shown on context-menu items are scoped to the list with `ScopeOwner`, so Delete in the list does not fire while the editor has focus.
@@ -198,7 +198,7 @@ Windows keyboards have Ctrl, Alt, Shift and the Windows key; the Mac's Command, 
 | ⇧⌘⌫ Delete All in Recently Deleted | Ctrl+Shift+Delete | |
 | ⌘⌫ / Delete (delete in the list) | **Delete** | Shift+Delete means permanent deletion in Windows. In Recently Deleted both ask to delete permanently; elsewhere Shift+Delete is not bound, because the app has no permanent delete outside Recently Deleted. Ctrl+Backspace deletes a word in text and is not bound in lists. |
 | Rename… (no shortcut) | **F2** renames the focused journal | Microsoft: F2 renames an item. |
-| ⌥⌘N New Journal… | **Ctrl+Shift+J** | Ctrl+Shift+N is New blank entry, the "new secondary item" of Microsoft's list. |
+| ⌥⌘N New Journal… | **Ctrl+Shift+J** | Ctrl+Shift+N, the "new secondary item" of Microsoft's list, is left unused: New entry is always blank, so there is no second New entry command. |
 | ⌃⌘L Lock My Journal | **Ctrl+L** | Used by password managers; Win+L is the system lock and is untouched. |
 | ⌃⌘S Show/Hide Sidebar | Ctrl+Shift+B | No standard exists; provisional. |
 | ⇧⌘D Show Editor Only | Ctrl+Shift+D | |
@@ -218,7 +218,7 @@ Windows keyboards have Ctrl, Alt, Shift and the Windows key; the Mac's Command, 
 | ⌘K Link | Ctrl+K | |
 | ⌥⇧⌘V Paste and Match Style | Ctrl+Shift+V | The common "paste as plain text" chord. |
 | Esc closes sheets and popovers; Return is the default button | Esc cancels a dialog and closes a flyout; **Enter** is the default button except where Apple uses ⌘Return | See [8](#8-dialogs). |
-| ⌘Return (Connect, Merge journals (the connect flow's step), Add Device approve) | **Ctrl+Enter** | These steps have no default button, so Enter cannot choose them before the person has read; Ctrl+Enter is a `KeyboardAccelerator` on the page or dialog. Merge into (one journal into another) is a different command and has a normal default button. |
+| ⌘Return (Connect, Merge journals (the connect flow's step), Add Device approve) | **Ctrl+Enter** | These steps have no default button, so Enter cannot choose them before the person has read; Ctrl+Enter is a `KeyboardAccelerator` on the page or dialog. Move entry and the other short forms are different commands and have a normal default button. |
 
 ### 7.2 Additions
 
@@ -236,8 +236,8 @@ Windows keyboards have Ctrl, Alt, Shift and the Windows key; the Mac's Command, 
 | --- | --- |
 | Entries list: ↑/↓ move and open; Delete or ⌘⌫ delete | `ListView`: ↑/↓ move and open the entry (selection follows focus), Home, End, Page Up/Down; Delete deletes; Shift+Delete in Recently Deleted deletes permanently; type-ahead jumps by title |
 | Sidebar: ↑/↓ choose a collection; Esc cancels a drag | `NavigationView`: ↑/↓, Home, End; F2 renames; Esc cancels a drag |
-| Template chooser: type to filter, ↑/↓, Return creates, Esc closes (not while an input method is composing) | A flyout with a filter box and a list: type to filter, ↑/↓, Enter chooses, Esc closes unless the input method is composing |
-| Sheets: Return = default button, Esc = Cancel; Restore has no Return | `ContentDialog`: Enter = `DefaultButton` where set, Esc = the close button; Restore Journal and Restore Entry set no default button |
+| Template chooser: type to filter, ↑/↓, Return chooses, Esc closes (not while an input method is composing) | A flyout with a filter box and a list: type to filter, ↑/↓, Enter chooses, Esc closes unless the input method is composing |
+| Sheets: Return = default button, Esc = Cancel | `ContentDialog`: Enter = `DefaultButton` where set, Esc = the close button; destructive confirmations set no default button. Restore acts at once and has no sheet |
 | Lock screen: Return = Unlock with {method} | Enter on the focused Unlock button; it takes focus when the lock screen appears |
 | Create library: Return moves from Master Password to Verify, then creates | Enter in the first field moves to the second; Enter in the second field creates |
 
@@ -247,7 +247,7 @@ Sources: [Keyboard accelerators](https://learn.microsoft.com/en-us/windows/apps/
 
 | Apple | Windows | Why |
 | --- | --- | --- |
-| Alert (title, message, buttons) and sheet (a window-attached form with Cancel and a default button) | `ContentDialog` for both: a title (optional), content, and up to three buttons. Short forms (Change Date, Move Entry, Merge Into, Add Link, New Journal, Rename, Save as Template, passwords) live in the content area | `ContentDialog` is Windows' modal surface for confirmations, questions and short forms. Larger or multi-step content follows [9](#9-sheets-popovers-and-notices). |
+| Alert (title, message, buttons) and sheet (a window-attached form with Cancel and a default button) | `ContentDialog` for both: a title (optional), content, and up to three buttons. Short forms (Change Date, Move Entry, Add Link, New Journal, Rename, Save as Template, passwords) live in the content area | `ContentDialog` is Windows' modal surface for confirmations, questions and short forms. Larger or multi-step content follows [9](#9-sheets-popovers-and-notices). |
 
 ### 8.1 Rules
 
@@ -257,12 +257,11 @@ Sources: [Keyboard accelerators](https://learn.microsoft.com/en-us/windows/apps/
 
    | Apple alert or sheet | Windows buttons |
    | --- | --- |
-   | A form with Cancel and a default action (Move, Merge into, Save, Create, Change) | Primary = the action's verb, as `DefaultButton` (Enter chooses it; it takes the accent style because it is the default button). Close = Cancel (`common.cancel`; Esc chooses it) |
+   | A form with Cancel and a default action (Move, Save, Create, Change) | Primary = the action's verb, as `DefaultButton` (Enter chooses it; it takes the accent style because it is the default button). Close = Cancel (`common.cancel`; Esc chooses it) |
    | A destructive confirmation (Delete Journal, Delete Permanently, Delete All, Stop Syncing, Erase, Revoke Access). One exception: the Erase warning when journals would be lost puts Export archive… first and as the default, with Erase second ([screens/settings-erase](screens/settings-erase.md), D44) | Primary = the verb that names the action (for example `settings.sync.stopSyncing.confirm`, `settings.erase.alert.erase`). Close = `common.cancel`. **No default button, or Close as the default**, so Enter never chooses the destructive action. The title is a question (`settings.sync.stopSyncing.title`); the content explains what stays and what goes |
    | An information or error alert with OK (`common.ok`) | Close only, labelled `common.ok`. The title is left out when it would only be `common.alertTitle`, because a Windows dialog title is the main instruction, and the message alone is clearer. Different by design |
    | An alert with a retry (Try Again, Keep Open) | Primary = `common.tryAgain` (or the retry verb), Close = the dismissing choice. Nothing is lost by dismissing |
    | Steps where Return must not be enough (Connect, Merge journals (the connect flow's step), Approve a device; ⌘Return) | No default button. Ctrl+Enter is a `KeyboardAccelerator` that clicks Primary; Enter does nothing unless focus is on a button. **`PrimaryButtonStyle` is set to the accent style explicitly**: the accent treatment is otherwise a side effect of being the default button, and these would show a neutral Primary next to Cancel |
-   | Restore Journal and Restore Entry (no Return shortcut) | No default button |
 
 4. **Casing and wording.** Button labels are sentence case, except "OK", which stays "OK" ([12](#12-copy-casing-ellipses-and-vocabulary)). Buttons name the response ("Delete", "Stop syncing"), not "Yes" or "No".
 5. **Locking closes every dialog.** When the library locks, dialogs hide with no result (the Apple "every sheet and prompt closes" rule), and anything a swipe or a pending delete had removed comes back. The system's own Windows Security prompt is not a `ContentDialog` and is cancelled by the lock.
@@ -277,10 +276,10 @@ Sources: [Dialog controls](https://learn.microsoft.com/en-us/windows/apps/develo
 
 | Apple surface | Windows control | When |
 | --- | --- | --- |
-| Short sheet | `ContentDialog` ([8](#8-dialogs)) | One screen of content: a few fields, a list of choices, a confirmation, or a short flow of at most two steps (Move entry, Rename, Change date, Link, Merge into, Create library with its two steps, the erase warnings) |
+| Short sheet | `ContentDialog` ([8](#8-dialogs)) | One screen of content: a few fields, a list of choices, a confirmation, or a short flow of at most two steps (Move entry, Rename, Change date, Link, Create library with its two steps, the erase warnings) |
 | Multi-step sheet with progress or more than two steps (Connect to a Server, Turn On Encryption, Import Archive) | **A task page** in the window's content area, like the review and history pages: the back button and the step's title as the page heading (no breadcrumb, because the steps are not places), the step's content in a column of at most 640 epx, a footer row with the step's buttons (the primary action first, then Cancel, the order of [8.1](#81-rules)), and the Apple rules for Cancel (withdraws requests, gives up unused access, discards a staged copy). The modal guarantee is kept by disabling the navigation pane, the menu bar's commands and the command bars while the page runs; closing the window follows the rule in [3](#3-windows-and-instances). Esc is not Back. A step that has an unfinished typed value asks before Back by its own file's rule | A ten-step flow with progress, a back arrow in the content, changing buttons, a disabled close, a title per step and focus managed by hand is a page's job, not a dialog's: Microsoft's dialog guidance is for blocking questions and short forms, and Windows Settings uses pages for its own pairing flows. It also removes the "dialog cannot open a dialog" workaround for Add another device |
 | Add Device (the approving side) | A `ContentDialog` whose content swaps between states (showing the code, entering a code, waiting, confirming, finished). It has states rather than steps: one primary action per state, no back arrow, a title that stays `settings.addDevice.title` | The approval is one question with a code to show; it stays within the dialog guidance |
-| Large review screens (Version History with side-by-side comparison, Review Changes for entries, journals and deletions, Image Descriptions, Journal Version History, Changes to Review) | A page in the window's content area, with a `BreadcrumbBar` header and a back button; the library panes are replaced and return exactly as they were. The page saves first, as the Apple sheet does | Comparisons need the width, which a dialog does not have; Windows 11 uses pages for this kind of task |
+| Large review screens (Version History with side-by-side comparison, Review Changes for entries and templates, Image Descriptions) | A page in the window's content area, with a `BreadcrumbBar` header and a back button; the library panes are replaced and return exactly as they were. The page saves first, as the Apple sheet does | Comparisons need the width, which a dialog does not have; Windows 11 uses pages for this kind of task |
 | Popover (Formatting; Template chooser) | Formatting is not a popover on Windows: a toggleable formatting bar plus a selection mini-toolbar ([4.2](#42-command-bars), [format-sheet](screens/format-sheet.md)). The Template chooser is a `Flyout` anchored to the control that opened it; light dismiss; Esc closes; focus moves to the first control and returns on close. In the small layout the flyout fills the width | Windows' anchored transient surface for a chooser; a formatting popover is Apple's idiom, and a bar costs one click per bold, not two |
 | Menu popovers (picker menus with a chevron: journal and version pickers) | `ComboBox` or `DropDownButton` with a `MenuFlyout` | Native pickers |
 | Notices above the writing (writing paused, recovery, conflict, save failure, image import) | `InfoBar`, inline above the editor, in the Apple order | Inline, non-modal, persistent status |
@@ -292,7 +291,7 @@ Sources: [Dialog controls](https://learn.microsoft.com/en-us/windows/apps/develo
 | Notice | Severity | Closable | Action |
 | --- | --- | --- | --- |
 | Writing paused ([flows/save-failure](../../flows/save-failure.md), connecting, encrypting) | Informational | No; closes when the state ends | None. The Mac's Show Connection and Show Progress buttons are not needed because the dialog is modal over the only window |
-| Recovery notice (an entry in Recently Deleted or deleted with its journal) | Informational | No | `restore`, `restore-with-journal`, `restore-and-move`, `try-syncing-again` as `ActionButton` and a second link in the content |
+| Recovery notice (an entry in Recently Deleted or deleted with its journal) | Informational | No | `restore`, `try-syncing-again` as `ActionButton` and a second link in the content |
 | Conflict notice (changes to review) | Warning | No; closes when resolved | `review-changes` |
 | Save failure notice | Error | No; closes when the save succeeds | Try Again |
 | Image import notice (images being read) | Informational with an indeterminate `ProgressBar` in the content | No | Stop (`editor.imageImport.stop`) |
@@ -398,12 +397,12 @@ Windows menus and buttons use an ellipsis when the command opens a dialog or pag
 | `library.entryActions.deletePermanently`, `library.menu.file.deleteAll`, `library.recentlyDeleted.deleteAll` | Delete Permanently…, Delete All in Recently Deleted…, Delete All | Delete permanently, Delete all in Recently deleted, Delete all |
 | `library.journalActions.deleteJournal` | Delete Journal… | Delete journal |
 | `settings.sync.stopSyncing`, `settings.erase.button` | Stop Syncing…, Erase Journals and Settings… | Stop syncing, Erase journals and settings |
-| `settings.devices.revoke`, `library.journalHistory.restoreSettings`, `messages.syncStatus.settings` | Revoke Access…, Restore Settings…, Sync Settings… | Revoke access, Restore settings, Sync settings (each only asks for confirmation, shows a comparison or opens a settings page) |
-| `messages.conflict.journal.keepVersion`, `messages.conflict.deletion.keepDeletion`, `messages.conflict.keepThisDevice`, `messages.conflict.keepOtherDevice` | Keep Version…, Keep Deletion…, Keep Version from This Device…, Keep Version from Other Device… | Keep version, Keep deletion, Keep version from this device, Keep version from other device (each opens a confirmation) |
+| `settings.devices.revoke`, `messages.syncStatus.settings` | Revoke Access…, Sync Settings… | Revoke access, Sync settings (each only asks for confirmation or opens a settings page) |
+| `messages.conflict.keepThisDevice`, `messages.conflict.keepOtherDevice` | Keep Version from This Device…, Keep Version from Other Device… | Keep version from this device, Keep version from other device (each opens a confirmation) |
 | `common.share` | Share… | Share |
 | the Settings item | Settings… | Settings |
 
-Everything else that asks for input keeps its ellipsis: New journal…, Rename…, Merge into…, Move entry…, Change date…, Save as template…, Image descriptions…, Version history…, Import archive…, Export archive…, Export as Markdown…, Connect to a server…, Sign in…, Change password…, Turn on encryption…, Link…, Image…, New entry from template…, Keep entry…, Keep entry as copy…, Save image as…. "Syncing…" and similar progress text keep theirs.
+Everything else that asks for input keeps its ellipsis: New journal…, Rename…, Move entry…, Change date…, Save as template…, Image descriptions…, Version history…, Import archive…, Export archive…, Export as Markdown…, Connect to a server…, Sign in…, Change password…, Turn on encryption…, Link…, Image…, Use a template…, Save image as…. "Syncing…" and similar progress text keep theirs.
 
 ### 12.3 Vocabulary
 
@@ -649,7 +648,7 @@ Every symbol the Apple app uses (found with a search of `apps/apple` for symbol 
 | `lock.shield` | Encryption, Turn On Encryption | ShieldLock (F5B4) |
 | `key` | Choosing a master password | Gap: Fluent UI System Icons "key" |
 | `gearshape` | Settings; Writing and General pane | Settings (E713) |
-| `square.and.pencil` | New Entry, New Entry In, Writing pane | Add (E710) for New entry; Edit (E70F) for the General pane |
+| `square.and.pencil` | New Entry, Writing pane | Add (E710) for New entry; Edit (E70F) for the General pane |
 | `folder.badge.plus` | New Journal | NewFolder (E8F4) |
 | `book.closed` | A journal; journal labels; empty state | Library (E8F1) |
 | `tray.full` | All Entries | List (EA37) |
@@ -657,8 +656,6 @@ Every symbol the Apple app uses (found with a search of `apps/apple` for symbol 
 | `trash` | Recently Deleted; Delete; Delete Journal | Delete (E74D) |
 | `exclamationmark.folder` | Unavailable Journals | Folder (E8B7) with an attention `InfoBadge` |
 | `pencil` | Rename | Rename (E8AC) |
-| `doc.text` | Default Template | Document (E8A5) |
-| `arrow.triangle.merge` | Merge Into | Gap: Fluent UI System Icons "merge" (MergeCall EA3C is a phone icon) |
 | `clock.arrow.circlepath` | Version History | History (E81C) |
 | `folder` | Move Entry; choose a file | MoveToFolder (E8DE) for Move; OpenFile (E8E5) for choose a file |
 | `calendar` | Change Date | Calendar (E787) |
@@ -847,7 +844,7 @@ Each row is "different by design" unless a decision is pending; the reasons are 
 Everything open about the Windows mapping is in [open-questions.md](../../open-questions.md), sections B and D. Section D, D20 to D54. After the independent review ([review-2026-10-06.md](review-2026-10-06.md)) every question below has a drafted default that follows the reviewer's recommendation where the reviewer gave a reason; the owner can still change any of them.
 
 - **Platform decisions (D20 to D28):** D20 menu model, formatting bar and the chrome of the lock and first-launch pages, D21 sentence case (a `sentence` variant shared with Android) and Windows vocabulary, D22 Windows 11 as a requirement, distribution and uninstall data loss, D23 closing the window ends the app, D24 camera, photo library and Scan Code absent in version 1, D25 Windows Hello only and organization policy, D26 Settings as an in-app page with About and Erase placement, D27 shortcut set and the hidden Ctrl+S, D28 screen capture exclusion (no cover on deactivation).
-- **Needs the owner (D29 to D54, from the mapping files and the review):** D29 the archive as one file, D34 text keys the spec does not define, D35 spell check in code, D37 find and replace, D38 counts in the navigation pane, D39 Back with unsaved descriptions, D40 text without key presses, D41 Show password control, D42 App lock when Hello cannot be used, D43 device key that cannot be saved again, D44 Erase warning buttons, D45 device name, D47 where Sync status lives, D48 failed save while typing, D49 Sync page message surface, D50 side-by-side reviews, D51 update link, D52 journal review entry point, D53 the rating request, D54 a second prompt after Win+L.
+- **Needs the owner (D29 to D54, from the mapping files and the review):** D29 the archive as one file, D34 text keys the spec does not define, D35 spell check in code, D37 find and replace, D38 counts in the navigation pane, D39 Back with unsaved descriptions, D40 text without key presses, D41 Show password control, D42 App lock when Hello cannot be used, D43 device key that cannot be saved again, D44 Erase warning buttons, D45 device name, D47 where Sync status lives, D48 failed save while typing, D49 Sync page message surface, D50 side-by-side reviews, D51 update link, D52 (not applicable after 1.1), D53 the rating request, D54 a second prompt after Win+L.
 - **Technical spikes, with a decision attached:** D30 the editor control (Spike A and Spike B in parallel), D31 the undo model, D32 how Narrator reads what the editor draws (a ship gate), D36 the clipboard format.
 
 Windows copy questions are B26 to B41; the rows themselves are in [copy-proposals.md](copy-proposals.md).

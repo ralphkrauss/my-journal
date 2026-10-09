@@ -18,9 +18,8 @@ On the Mac the menus are My Journal, File, Edit, Format, View, Window, Help. iPa
 | `open-settings` | My Journal ▸ Settings… ⌘, | — | Journals screen top left (iPhone); last sidebar row (iPad) | Mac: the menu item uses the system's label. The iPad row is dimmed in journal edit mode. |
 | `lock-my-journal` | My Journal ▸ Lock My Journal ⌃⌘L (below Settings…) | — | Settings ▸ Privacy, App Lock section (button) |  |
 | `quit`, `hide`, `services` | My Journal ▸ Services, Hide ⌘H, Hide Others ⌥⌘H, Show All, Quit ⌘Q | — | — |  |
-| `new-entry` | File ▸ New Entry ⌘N | ⌘N | Bottom bar (Journals screen and every list), icon only | Reopens the Mac window if closed. The bar buttons don't need a journal; the File menu item does. |
-| `new-blank-entry` | File ▸ New Blank Entry ⇧⌘N | ⇧⌘N | — |  |
-| `new-entry-from-template` | File ▸ New Entry from Template… | — | — |  |
+| `new-entry` | File ▸ New Entry ⌘N | ⌘N | Bottom bar (Journals screen and every list), icon only | Reopens the Mac window if closed. The bar buttons don't need a journal; the File menu item does. ⇧⌘N, which was New Blank Entry in 1.0, is free. |
+| `use-a-template` | File ▸ Use a Template… (sheet, 320 points wide); the link in an empty entry (popover) | — | iPad with a keyboard: File ▸ Use a Template… (sheet; also in the ⌘-hold overlay, with New Entry and New Journal…). The link in an empty entry: popover on iPad in regular width, sheet on iPhone and in compact width | The menu item is dimmed, not hidden, unless the link is shown. The VoiceOver label of the link is `library.templateChooser.useTemplate`. Replaces File ▸ New Entry from Template… of 1.0. |
 | `new-journal` | File ▸ New Journal… ⌥⌘N | ⌥⌘N | Journals screen top right (iPhone); sidebar bar (iPad); toolbar `library.toolbar.newJournal` | On the Mac leaves Editor Only. |
 | `pin-entry` | File ▸ Pin Entry / Unpin Entry (own group after New Journal…; no shortcut) | — | Leading swipe, context menu, Entry Actions |  |
 | `import-archive` | File ▸ Import Archive… | — | Welcome screen; Settings ▸ Backup (button) |  |
@@ -59,11 +58,8 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | id | Mac placement and shortcut | iPad shortcut | iPhone and iPad placement | Notes |
 | --- | --- | --- | --- | --- |
 | `choose-collection` | sidebar row; arrow keys in the focused sidebar | — | sidebar row (iPad), Journals screen row (iPhone) |  |
-| `journal-actions` | toolbar menu over the list | — | list bar ⋯ in a journal; ⋯ on a row in edit mode | Mac: New Journal… first. |
+| `journal-actions` | toolbar menu over the list | — | list bar ⋯ in a journal; ⋯ on a row in edit mode | Mac: New Journal… first, then Rename… and Delete Journal…. iPhone and iPad: Rename… and Delete Journal…. |
 | `rename-journal` | journal row context menu; Journal Actions | — | journal context menu; Journal Actions |  |
-| `journal-default-template` | context menu; Journal Actions ▸ submenu | — | same |  |
-| `merge-journal` | context menu; Journal Actions | — | same |  |
-| `journal-version-history` | context menu; Journal Actions; deleted journal's detail | — | same |  |
 | `delete-journal` | context menu; Journal Actions | — | same |  |
 | `reorder-journal` | drag a journal row in the sidebar | — | drag the handle in edit mode; touch, hold and drag; VoiceOver `library.journals.moveUp` / `library.journals.moveDown` |  |
 | `journals-edit` | — (no edit mode on the Mac) | — | Journals screen and iPad sidebar bar |  |
@@ -71,25 +67,21 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | `entry-actions` | toolbar menu over the editor | — | editor bar ⋯ |  |
 | `find-in-entry` | Edit ▸ Find ▸ Find… ⌘F | ⌘F | Entry Actions (first) | The find bar on the Mac, the find navigator on iPhone and iPad. |
 | `pin-entry-row` | context menu; trackpad leading swipe | — | leading swipe (full swipe), context menu, Entry Actions |  |
-| `new-entry-in` | template context menu; Entry Actions | — | same |  |
-| `review-changes` | notice above an entry or template with a conflict; Settings ▸ Sync ▸ Changes to Review | same | same |  |
+| `review-changes` | notice above an entry or template with changes to review; Settings ▸ Sync ▸ Changes to Review | same | same |  |
 | `change-date` | context menu; Entry Actions | — | same |  |
 | `move-entry` | context menu; Entry Actions | — | same |  |
 | `save-as-template` | context menu; Entry Actions | — | same |  |
 | `image-descriptions` | context menu; Entry Actions | — | same |  |
 | `entry-version-history` | context menu; Entry Actions | — | same |  |
-| `restore` | context menu; Entry Actions; notice | — | leading swipe (full swipe), context menu, Entry Actions, notice |  |
-| `restore-with-journal` | recovery notice | — | recovery notice |  |
-| `restore-and-move` | recovery notice | — | recovery notice |  |
-| `restore-journal` | deleted journal's detail | — | same |  |
-| `try-syncing-again` | recovery notice; Restore sheet | — | same |  |
+| `restore` | context menu; Entry Actions; notice | — | leading swipe (full swipe, only when the entry returns to its own journal), context menu, Entry Actions, notice | The label is Restore, or Restore to “{name}” when the entry goes to the Default Journal; the cross-journal form is never on a swipe. |
+| `restore-journal` | deleted journal's detail (button below the count) | — | same | Acts at once; no sheet. |
+| `try-syncing-again` | recovery notice | — | same |  |
 | `delete-permanently` | context menu; Entry Actions; Delete or ⌘⌫ in the focused list; deleted journal's detail | — | trailing swipe (`common.delete`, removes the row first), context menu, Entry Actions, detail |  |
 | `delete-entry` | context menu; Entry Actions (destructive, last); Delete or ⌘⌫ in the focused list | — | trailing swipe (full swipe), context menu, Entry Actions (destructive, last) |  |
 | `clear-search` | under No Results | — | under No Results |  |
 | `empty-new-entry` | empty journal or All Entries | — | same |  |
 | `finish-editing` | — | — | editor navigation bar, trailing, while writing | The Done button is a checkmark. |
 | `sync-status` | toolbar (only when sync needs the person) | — | Entry Actions ▸ Sync Status |  |
-| `use-a-template` | link in an empty entry (popover) | — | link in an empty entry (popover on iPad, sheet on iPhone) | The VoiceOver label is `library.templateChooser.useTemplate`. |
 
 ## Keyboard in lists, sheets and choosers
 
@@ -98,7 +90,7 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | Mac entries list (focused) | ↑/↓ move the selection and open the entry; Delete or ⌘⌫ delete (or ask to delete permanently in Recently Deleted). |
 | Mac sidebar (focused) | ↑/↓ choose a collection. Escape cancels a journal drag. |
 | Template chooser | Typing filters; ↑/↓ move the highlight; Return creates; Escape closes (not while an input method is composing). Works on iPad with a keyboard too. |
-| Sheets (Mac) | Return = the default button (Move, Merge, Save); Escape = Cancel. The Restore Journal and Restore Entry action has no Return shortcut. |
+| Sheets (Mac) | Return = the default button (Move, Save); Escape = Cancel. |
 | Lock screen (Mac) | Return = Unlock with {method}. |
 | Create library | Return in Master Password moves to Verify; Return in Verify = Create. |
 
@@ -202,6 +194,8 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | `stop-syncing` | Settings ▸ Sync | — |  |
 | `open-setup-guide` | Settings ▸ Sync footer; Set Up Server footer | — |  |
 | `open-former-server-guide` | Settings ▸ Sync footer (Mac only) | — | Mac only (the footer of Settings ▸ Sync). |
+| `open-kept-note` | Settings ▸ Sync ▸ Changed on Two Devices: the whole row, with a disclosure indicator (iPhone, iPad); a button (Mac) | — | same | One control per row; a row with nothing to open (a journal rename) is plain text. |
+| `clear-kept-notes` | Settings ▸ Sync ▸ Changed on Two Devices: last row, Clear List | — | same | No confirmation. |
 
 ### Connect to a Server
 

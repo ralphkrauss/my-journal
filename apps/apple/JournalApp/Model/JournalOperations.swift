@@ -2,17 +2,14 @@ import Foundation
 import JournalCore
 
 extension AppModel {
-    func moveEntry(_ entryID: UUID, to journalID: UUID, restoring: Bool = false) async throws {
+    func moveEntry(_ entryID: UUID, to journalID: UUID) async throws {
         guard !locked, !replacingVault, draft?.id == entryID else { throw JournalError.locked }
         guard await finishPendingSave() else {
             throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, draft?.id == entryID, let store else { throw JournalError.locked }
-        try await commitEntryMove {
-            if restoring { return try await store.restoreAndMoveEntry(entryID, to: journalID) }
-            return try await store.moveEntry(entryID, to: journalID)
-        }
+        try await commitEntryMove { try await store.moveEntry(entryID, to: journalID) }
     }
     func commitEntryMove(_ operation: @escaping @Sendable () async throws -> JournalItem) async throws {
         let refreshed = try await commitMutation(operation) { moved in
@@ -26,15 +23,6 @@ extension AppModel {
             if let journalID = moved.journalID { self.persistSelection(journalID: journalID, entryID: moved.id) }
         }
         if !refreshed { error = "The entry was moved, but couldn’t be displayed. Reopen My Journal to try again." }
-    }
-    func resolveJournalConflict(_ conflict: ConflictVersion, choice: ConflictChoice) async throws -> Bool {
-        guard conflict.local.kind == "journal", !locked, !replacingVault else { throw JournalError.locked }
-        guard await finishPendingSave() else {
-            throw JournalError.saveRequired
-        }
-        try Task.checkCancellation()
-        guard !locked, !replacingVault, let store else { throw JournalError.locked }
-        return try await commitJournalResolution { try await store.resolve(conflict, choice: choice) }
     }
     func commitJournalResolution(_ operation: @escaping @Sendable () async throws -> JournalItem) async throws -> Bool {
         try await commitMutation(operation) { resolved in
@@ -86,30 +74,6 @@ extension AppModel {
             self.showingUnavailable = false
             self.query = ""
             self.persistSelection(journalID: journal.id, entryID: nil)
-        }
-    }
-    /// Merge Into…: moves every entry of `sourceID` into `destinationID`, then moves `sourceID` to Recently Deleted
-    /// (docs/design/journal-name-uniqueness.md §5). Returns whether the view could be refreshed.
-    func mergeJournal(_ sourceID: UUID, into destinationID: UUID) async throws -> Bool {
-        guard !locked, !replacingVault else { throw JournalError.locked }
-        guard await finishPendingSave() else {
-            throw JournalError.saveRequired
-        }
-        try Task.checkCancellation()
-        guard !locked, !replacingVault, let store else { throw JournalError.locked }
-        return try await commitMutation({ try await store.mergeJournal(sourceID, into: destinationID) }) {
-            destination in
-            // The open entry may have moved; it opens again from the merged journal.
-            if self.draft?.journalID == sourceID {
-                self.draft = nil
-                self.selectedID = nil
-            }
-            self.showingTrash = false
-            self.showingTemplates = false
-            self.showingUnavailable = false
-            self.query = ""
-            self.selectedJournalID = destination.id
-            self.persistSelection(journalID: destination.id, entryID: self.selectedID)
         }
     }
     /// Creates a journal and opens it; in the Journals list's edit mode, it's only added, and editing continues.

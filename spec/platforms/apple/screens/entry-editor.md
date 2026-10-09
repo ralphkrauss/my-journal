@@ -144,7 +144,7 @@ Image import, the picture menus and descriptions: Mac right-click menu on a pict
 | Conflict | `ConflictNotice`: a callout and a button side by side (`HStackLayout`), stacked at accessibility text sizes (`VStackLayout`); Review Changes flushes the entry, refreshes, then opens the conflict review sheet |
 | Read-only (newer format, deleted, journal unavailable) | `model.canEdit` false: text view `isEditable = false`, title static (iPhone, iPad) or disabled (Mac), controls dimmed, checkboxes disabled; the explanation is `EntryEditingNote` or `EntryRecoveryNotice` |
 | Source only | `EntryEditingNote` plus source view, see [source-view](../flows/source-view.md) |
-| Recently Deleted, journal unavailable | `EntryRecoveryNotice` with its Restore, Restore and Move… and Try Syncing Again buttons |
+| Recently Deleted, journal unavailable | `EntryRecoveryNotice` with its Restore (or Restore to “{name}”) and Try Syncing Again buttons |
 | Writing paused | `ConnectionPauseNotice` (Mac only; the notice appears after a one second delay for `connecting`) |
 | Images loading | Placeholder attachments, above |
 | Locked | `RootView` shows `UnlockView` instead of the window; `closePresentations` closes the link sheet, Formatting and the sheets the editor opened |

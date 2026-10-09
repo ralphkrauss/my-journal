@@ -19,17 +19,16 @@ struct JournalCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Entry") { inJournalWindow { Task { await model.newEntry() } } }.keyboardShortcut("n")
                 .disabled(!model.canCreateEntry)
-            Button("New Blank Entry") { inJournalWindow { Task { await model.newEntry(blank: true) } } }
-                .keyboardShortcut("n", modifiers: [.command, .shift]).disabled(!model.canCreateEntry)
-            Button("New Entry from Template…") {
+            Button("New Journal…") { inJournalWindow { model.newJournalRequested = true } }
+                .keyboardShortcut("n", modifiers: [.command, .option]).disabled(!model.isReady || model.locked)
+            // The same chooser as the link in an empty entry, so it is available exactly when that link is shown.
+            Button("Use a Template…") {
                 // The chooser appears at once, without the sheet's animation, as the formatting controls do.
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
                 inJournalWindow { withTransaction(transaction) { model.templateChooserPresented = true } }
             }
-            .disabled(!model.canCreateEntry || model.templates.isEmpty)
-            Button("New Journal…") { inJournalWindow { model.newJournalRequested = true } }
-                .keyboardShortcut("n", modifiers: [.command, .option]).disabled(!model.isReady || model.locked)
+            .disabled(!model.canUseTemplate)
             Divider()
             // Acts on the selected entry; no shortcut, as in Notes (pinned-entries.md).
             let pinnable = model.selectedPinnable

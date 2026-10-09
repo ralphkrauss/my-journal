@@ -131,8 +131,6 @@
                         journalRenameText = journal.title
                         journalToRename = journal
                     },
-                    merge: { journalToMerge = journal },
-                    history: { journalHistory = journal },
                     delete: { journalDeletionRequest = journal.id })
             }
             return actions
@@ -141,8 +139,7 @@
         /// The alerts and sheets of Journal Actions.
         var journalActionPresentation: JournalActionPresentation {
             JournalActionPresentation(
-                renaming: $journalToRename, name: $journalRenameText, deletionRequest: $journalDeletionRequest,
-                history: $journalHistory, merging: $journalToMerge)
+                renaming: $journalToRename, name: $journalRenameText, deletionRequest: $journalDeletionRequest)
         }
     }
 
@@ -167,8 +164,6 @@
         @Binding var renaming: JournalItem?
         @Binding var name: String
         @Binding var deletionRequest: UUID?
-        @Binding var history: JournalItem?
-        @Binding var merging: JournalItem?
         @State private var takenName: String?
         @State private var retrying: JournalItem?
 
@@ -199,15 +194,11 @@
                     afterAlertCloses(model) { renaming = journal }
                 }
                 .journalDeletionPrompt($deletionRequest)
-                .sheet(item: $history) { JournalHistoryView(journalID: $0.id) }
-                .sheet(item: $merging) { MergeJournalView(sourceID: $0.id) }
                 .onValueChange(of: model.locked) { locked in
                     if locked {
                         renaming = nil
                         takenName = nil
                         retrying = nil
-                        merging = nil
-                        history = nil
                     }
                 }
         }

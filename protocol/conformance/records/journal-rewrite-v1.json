@@ -1,0 +1,39 @@
+{
+  "cases" : [
+    {
+      "after" : {
+        "defaultTemplateID" : "d4c3b2a1-f6e5-4b7a-9d8c-5c4b3a2f1e0d",
+        "deletedAt" : null,
+        "title" : "Personal, renamed"
+      },
+      "before" : "{\"date\":\"2026-01-02T03:04:05Z\",\"defaultTemplateID\":\"D4C3B2A1-F6E5-4B7A-9D8C-5C4B3A2F1E0D\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Personal\"}",
+      "name" : "rename",
+      "note" : "Renaming keeps the default template that 1.0 and earlier set, which 1.1 and later neither show nor use.",
+      "operation" : "title = \"Personal, renamed\""
+    },
+    {
+      "after" : {
+        "defaultTemplateID" : "d4c3b2a1-f6e5-4b7a-9d8c-5c4b3a2f1e0d",
+        "deletedAt" : 1791546843,
+        "title" : "Personal, renamed"
+      },
+      "before" : "{\"date\":\"2026-01-02T03:04:05Z\",\"defaultTemplateID\":\"D4C3B2A1-F6E5-4B7A-9D8C-5C4B3A2F1E0D\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Personal, renamed\"}",
+      "name" : "delete",
+      "note" : "Deleting a journal sets only its deletedAt.",
+      "operation" : "deletedAt = now"
+    },
+    {
+      "after" : {
+        "defaultTemplateID" : "d4c3b2a1-f6e5-4b7a-9d8c-5c4b3a2f1e0d",
+        "deletedAt" : null,
+        "title" : "Personal, renamed"
+      },
+      "before" : "{\"date\":\"2026-01-02T03:04:05Z\",\"defaultTemplateID\":\"D4C3B2A1-F6E5-4B7A-9D8C-5C4B3A2F1E0D\",\"deletedAt\":\"2026-10-09T11:54:03Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-10-09T11:54:03Z\",\"title\":\"Personal, renamed\"}",
+      "name" : "restore",
+      "note" : "Restoring clears deletedAt and keeps everything else.",
+      "operation" : "deletedAt = null"
+    }
+  ],
+  "corpusVersion" : 1,
+  "purpose" : "A journal with a defaultTemplateID, written back after a rename, a deletion and a restoration (protocol/records.md, Writing a journal back). A client that drops the member breaks the setting of a device that still uses it. See README.md in this folder."
+}

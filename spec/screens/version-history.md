@@ -20,7 +20,7 @@ sources:
 
 See earlier versions of an entry or template and copy one back as a new entry or template. The current item and its history are never changed by this screen.
 
-Journal version history (names and default templates) is a different screen, specified with journals.
+Journals have no version history: a name changed by mistake is changed back with Rename ([screens/journals](journals.md)).
 
 ## Entry points
 
@@ -41,7 +41,7 @@ Scrolling content:
    - The restore button: `editor.history.restoreAsNewEntry` or, for templates, `editor.history.restoreAsNewTemplate`.
 4. Error text (secondary, selectable) when there is one.
 5. After restoring, if the result couldn't be shown: `editor.history.restored` or `editor.history.restoredTemplate`.
-6. Recovery buttons when needed: `editor.history.reload`, `common.reloadJournals`, `common.reviewChanges`.
+6. Recovery buttons when needed: `editor.history.reload`, `common.reloadJournals`.
 7. While working: progress indicator with `editor.history.loadingJournals` or `editor.history.restoring`.
 
 ## Actions
@@ -54,7 +54,6 @@ Scrolling content:
 | Restore as New Entry / New Template | A readable version is chosen; for entries a journal in use is chosen; not loading, restoring or restored; unlocked | First saves the open entry. Then copies the version as a **new** entry (new identity, the version's title, text, images and date, in the chosen journal) or a new template. On success the sheet closes and the copy opens in the editor (its journal or Templates is shown). |
 | Reload History | After a failed load, or when the version is no longer available | Loads the history again. |
 | Reload Journals | After the chosen journal became unavailable | Refreshes journals, then asks to choose one: `messages.history.chooseJournal`. |
-| Review Changes | The chosen journal has changes to review | Opens the journal or entry conflict review in a nested sheet; if already resolved: `messages.conflict.resolved` with `common.done`. Restoring afterwards needs another explicit Restore. |
 | Done | Not restoring | Closes; nothing changes. |
 
 ## States
@@ -70,7 +69,7 @@ Scrolling content:
 | Open entry couldn't be saved first | `messages.save.before.goBack` |
 | Version gone | `messages.history.versionUnavailable`, with Reload History |
 | Journal gone | `messages.history.chooseJournal` (also when a chosen journal disappears while the sheet is open) |
-| Journal has changes to review | `messages.lifecycle.needsReview`, with Review Changes |
+| Chosen journal saved by a newer version | `messages.lifecycle.unsupportedJournal` |
 | Restored but not shown | `editor.history.restored` / `editor.history.restoredTemplate` (Restore hidden) |
 | Locked | The sheet closes; previews are cleared; the work is cancelled. A copy already committed stays. |
 

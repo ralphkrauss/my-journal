@@ -39,7 +39,7 @@ final class PasswordCheckTests: XCTestCase {
                                 #endif
                         }), "Set New Password"
                 ),
-                (AnyView(TemplateChooserView(journalID: model.journals.first?.id)), "New Entry from Template sheet"),
+                (AnyView(TemplateChooserView(entryID: nil)), "Use a Template sheet"),
             ] {
                 if let preview = await NativeTestPreview.capture(
                     view.environmentObject(model), name: name, width: 440, height: 360)

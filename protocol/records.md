@@ -15,7 +15,7 @@ A record is one journal, entry or template, or the library record, stored and sy
 | `deletedWithJournal` | boolean | yes | Legacy: true on entries an earlier version deleted together with their journal. Writers write `false`. |
 | `journalID` | UUID | entries | The journal an entry belongs to. Absent on journals and templates. An entry whose journal is missing is shown as unavailable, never moved. |
 | `deletedAt` | timestamp | no | Set while the record is in Recently Deleted. On a journal it also hides the journal's entries ([journal lifecycle](journal-lifecycle.md)). |
-| `defaultTemplateID` | UUID | no | Journals only: the template for new entries. May refer to a template that no longer exists. |
+| `defaultTemplateID` | UUID | no | Journals only. Legacy: the template new entries started from, written by versions up to 1.0. 1.1 and later neither show nor use it, and keep it unchanged ([Writing a journal back](#writing-a-journal-back)). May refer to a template that no longer exists. |
 | `archivedAt` | timestamp | no | Entries only. Kept for compatibility ([entry archiving](entry-archiving.md)). |
 | `permanentlyDeletedAt`, `permanentDeletionID`, `restoredFromDeletionID` | timestamp, UUID, UUID | no | Permanent-deletion markers and explicit restoration ([permanent deletion](permanent-deletion.md)). |
 
@@ -51,6 +51,10 @@ A record can authenticate and still be one this client can't fully read. Such a 
 - A required field that is missing or has the wrong type, `archivedAt` on a journal or template, permanent-deletion fields that don't form a [canonical marker](permanent-deletion.md), or an `id` or `kind` that doesn't match its context: the record is kept byte for byte as an unreadable, read-only record with whatever title and dates can be read. It is never treated as a deletion marker. When it replaces a version this client could read, that version goes to Version History.
 
 A newer app reads kept records again from their stored bytes. A client must not save over a record it can't fully read; an edit made from an older copy becomes a conflict.
+
+## Writing a journal back
+
+A client that saves a journal for another reason (a rename, Delete Journal, Restore Journal, settling a conflict, an import or a merge) keeps `defaultTemplateID` unchanged, even though no screen shows it. A device that still runs version 1.0 uses the setting, and a client that drops it on Rename silently breaks that device. Archive import and merge keep remapping the member to the template's new identity ([archive.md](archive.md)). A record with any member the reader does not know is read-only and never rewritten ([Reading rules](#reading-rules)), so this rule concerns members the reader knows. [conformance/records/journal-rewrite-v1.json](conformance/records/README.md#journal-rewrite) has the cases.
 
 ## The library record
 

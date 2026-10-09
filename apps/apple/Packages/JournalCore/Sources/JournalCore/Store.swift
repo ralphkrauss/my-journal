@@ -46,7 +46,6 @@ public actor JournalStore {
     let key: Data
     public let protection: ContentProtection
     let deletionScopeID = UUID()
-    let entryRestorationScopeID = UUID()
     public let directory: URL
     /// Counts writes that came from elsewhere: synchronized records and images, and versions kept for review.
     var receivedChanges = 0
@@ -59,6 +58,8 @@ public actor JournalStore {
     /// clears it (`forgetDecodedRecords()`). The same content is in the app's memory while unlocked anyway.
     var decodedRecords: [UUID: JournalItem] = [:]
     var remembersDecodedRecords = true
+    /// The one-time pass over conflicts an earlier version left has run for this library (StoreConflictResolution.swift).
+    var openingPassComplete = false
     /// The payload each record was last saved with here, from an item that could be edited. Saving over it again
     /// needs no decoding to know that.
     var editablePayloads: [UUID: StoredVersion] = [:]
@@ -242,7 +243,7 @@ public actor JournalStore {
         }
         let version = Self.version(of: payload)
         editablePayloads[item.id] = item.isPermanentlyDeleted || item.preservedJSON != nil ? nil : version
-        lastSaves[item.id] = Date()
+        lastSaves[item.id] = clock()
         return version
     }
     public func moveEntry(_ entryID: UUID, to journalID: UUID) throws -> JournalItem {
@@ -294,9 +295,6 @@ public actor JournalStore {
         try db.read { db in
             JournalViewSnapshot(
                 items: try items(db).filter { !$0.isPermanentlyDeleted }, conflicts: try conflicts(db),
-                journalHistoryIDs: Set(
-                    try String.fetchAll(db, sql: "SELECT DISTINCT record FROM history WHERE kind='journal'").compactMap(
-                        UUID.init(uuidString:))),
                 pending: try Bool.fetchOne(
                     db,
                     sql:
@@ -416,34 +414,6 @@ public actor JournalStore {
             template.deletedAt = nil
             template.modifiedAt = Date()
             return try saveCanonical(db, item: template)
-        }
-    }
-    /// Explicitly recovers just this entry; never restores its old parent or siblings.
-    public func restoreAndMoveEntry(_ entryID: UUID, to journalID: UUID) throws -> JournalItem {
-        try Task.checkCancellation()
-        return try db.write { db in
-            guard let target = try storedItem(db, uuid: journalID), target.kind == "journal", target.deletedAt == nil
-            else { throw JournalLifecycleError.missingJournal }
-            guard target.document.isEditable else { throw JournalLifecycleError.unsupportedJournal }
-            try requireNoConflict(db, uuid: journalID)
-            guard var entry = try storedItem(db, uuid: entryID), entry.kind == "entry" else {
-                throw JournalError.invalidData
-            }
-            guard entry.document.isEditable else { throw JournalError.unsupportedFormat }
-            try requireNoConflict(db, uuid: entryID)
-            if let sourceID = entry.journalID, let source = try storedItem(db, uuid: sourceID) {
-                guard source.kind == "journal" else { throw JournalLifecycleError.missingJournal }
-                guard source.document.isEditable else { throw JournalLifecycleError.unsupportedJournal }
-                try requireNoConflict(db, uuid: sourceID)
-            } else if !entry.deletedWithJournal {
-                throw JournalLifecycleError.missingJournal
-            }
-            entry.journalID = journalID
-            entry.deletedAt = nil
-            entry.deletedWithJournal = false
-            entry.archivedAt = nil
-            entry.modifiedAt = Date()
-            return try saveCanonical(db, item: entry)
         }
     }
     func requireNoConflict(_ db: Database, uuid: UUID) throws {
@@ -780,6 +750,8 @@ public actor JournalStore {
         try saveImportedItems(importedItems)
         try importHistory(importedHistory, transfer: transfer)
         try importArrangement(arrangement, identities: transfer.recordIDs)
+        // Changes an archive carried for review are settled the way any others are.
+        try resolveConflicts(at: .local)
     }
     private func importHistory(_ importedHistory: [JournalItem], transfer: ContentImport) throws {
         try db.write { db in

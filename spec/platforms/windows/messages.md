@@ -2,7 +2,7 @@
 id: messages
 title: Messages (Windows)
 spec: messages.md
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-unsupported, conflict-kept-both, changed-on-two-devices-list, library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 status: reviewed
 ---
 
@@ -33,7 +33,7 @@ Microsoft's guidance for choosing the surface, which the rules below apply: an `
 | A sync state that stops automatic sync or needs the person (sign-in needed, not set up, restored or replaced, access removed, update needed, certificate, not a journal server, unexpected, an item refused) | Warning | A condition that will cause a problem if left; nothing is lost, since the writing is saved on this device |
 | This device's own data cannot be read (`messages.sync.localDataUnreadable`), a failed save (`messages.save.notSaved`), an error inside a dialog or page, the lock page's note (except `messages.library.deviceKeyUnavailable`, below) | Error | A problem that has happened |
 | `messages.library.deviceKeyUnavailable` on the lock page | Warning | It explains why the password is asked; nothing has failed that the person can fix by retrying |
-| Offline, can't reach, server busy, `messages.sync.waiting`, writing paused, recovery and unavailable notices | Informational | Expected or temporary; quiet by design. Recovery notices become Warning when a journal needs review |
+| Offline, can't reach, server busy, `messages.sync.waiting`, writing paused, recovery and unavailable notices | Informational | Expected or temporary; quiet by design. |
 | Changes to review (`messages.conflict.entryNotice`) | Warning | The person has a decision to make |
 | `messages.sync.pausedForSaveFailure` | Warning | Sync waits for the save; the Error is the save notice itself |
 
@@ -59,6 +59,7 @@ The announcements of the spec are raised with `AutomationPeer.RaiseNotificationE
 | The held sync message; else `messages.sync.announce.synced`; else `messages.sync.announce.failed` (after Sync now, Try again or Check again, from the Sync page or the Sync status flyout; never for automatic syncs) | ActionCompleted for synced; ActionAborted for the others | ImportantMostRecent | sync-result |
 | `messages.announce.pinned`, `messages.announce.unpinned` | ActionCompleted | MostRecent | pin |
 | `messages.announce.journalMovedAbove`, `messages.announce.journalMovedBelow` | ActionCompleted | MostRecent | journal-order |
+| `messages.announce.restoredIn` (with `{name}`; only when Restore put an entry in a journal other than its own) | ActionCompleted | MostRecent | restore |
 | `messages.encryption.announce.turningOn`, `messages.encryption.announce.updatingServer`, `messages.encryption.announce.done` | Other | ImportantAll, so "You can't stop this now" is never cut | encryption |
 | `common.saveFailed` for a failure that began while typing (the Apple alert is not shown, [save-failure](flows/save-failure.md)) | ActionAborted | ImportantMostRecent | save-failure |
 | An error in an open dialog or page | None of its own: the inline `InfoBar` opens and announces itself | | |
@@ -85,7 +86,7 @@ The messages and actions are the spec's table; this adds the Windows severity an
 
 ### Save failures
 
-The failure itself is [save-failure](flows/save-failure.md). The "save first" refusals (`messages.save.before.goBack`, and `messages.save.before.tryAgain` in the alert dialog) are errors of an action the person started, so they show where that action's errors show: inline in its dialog or page (the Export, Import and Restore dialogs show it in their own error bar), or the alert dialog when the action opens nothing (Delete journal, Review changes, and the like). `messages.save.before.goBack` stays inline in its dialog or page; the two texts have Windows wording in [Copy differences](#copy-differences).
+The failure itself is [save-failure](flows/save-failure.md). The "save first" refusals (`messages.save.before.goBack`, and `messages.save.before.tryAgain` in the alert dialog) are errors of an action the person started, so they show where that action's errors show: inline in its dialog or page (the Export and Import dialogs show it in their own error bar), or the alert dialog when the action opens nothing (Delete journal, Restore, Review changes, and the like). `messages.save.before.goBack` stays inline in its dialog or page; the two texts have Windows wording in [Copy differences](#copy-differences).
 
 ### Writing paused
 
@@ -101,7 +102,7 @@ The failure itself is [save-failure](flows/save-failure.md). The "save first" re
 | `messages.export.*`, `messages.import.*` | Inline error bar of the export dialog or the Import archive page, or of the Backup page for exports that start there ([export-archive](flows/export-archive.md), [export-markdown](flows/export-markdown.md), [import-archive](flows/import-archive.md)) |
 | `messages.image.*` | The error dialog of [insert-image](flows/insert-image.md) (the editor's image-import `InfoBar` is only the progress notice); `messages.image.descriptionsNeedSource` is inline on the Image descriptions page |
 | `messages.connection.*`, `messages.pairing.*`, `messages.password.*`, `messages.encryption.*`, `messages.server.*`, `messages.error.*` where they name a field or step | Inline next to the field when they are about one field (wrong password, setup code, address); otherwise the dialog's error bar |
-| `messages.entry.*`, `messages.restore.*`, `messages.history.*`, `messages.lifecycle.*`, `messages.merge.*`, `common.journalGone`, `messages.journal.nameTaken` | Inline in the dialog or page that raised them, with the recovery buttons the spec names; `messages.journal.nameTaken` is inline under the name field (the Apple Name Taken alert becomes the field's own error) |
+| `messages.entry.*`, `messages.history.*`, `messages.lifecycle.*`, `common.journalGone`, `messages.journal.nameTaken` | Inline in the dialog or page that raised them, with the recovery buttons the spec names; `messages.journal.nameTaken` is inline under the name field (the Apple Name Taken alert becomes the field's own error) |
 
 Messages marked unreachable or rare in the spec's notes are mapped like their group but need no design work.
 
@@ -109,7 +110,8 @@ Messages marked unreachable or rare in the spec's notes are mapped like their gr
 
 - Unavailable and read-only content and `common.myJournalIsLocked` are in [unavailable-content](screens/unavailable-content.md) and [lock-screen](screens/lock-screen.md). There is no privacy cover on Windows ([platform.md, 20](platform.md#20-screen-capture-and-window-privacy)).
 - **App Lock is paused** (Windows Hello not set up, not available or turned off by policy while App Lock is on, D42) is a Warning `InfoBar`, not closable, at the top of the library window on every page while the state lasts; it is not part of the editor's notice order. Text and rules: [flows/app-lock](flows/app-lock.md).
-- Every key of the spec's Conflicts section is mapped in [conflict-review](screens/conflict-review.md), [entry-conflict](screens/entry-conflict.md) and [resolve-conflict](flows/resolve-conflict.md).
+- Every key of the spec's Conflicts section is mapped in [conflict-review](screens/conflict-review.md), [entry-conflict](screens/entry-conflict.md), [settings-sync](screens/settings-sync.md) (the Changed on two devices group, `messages.conflict.kept.*`) and [resolve-conflict](flows/resolve-conflict.md). Settling a journal or a permanent deletion has no message at all: it is quiet and appears only in that group.
+- **Restore** (`messages.restore.destinationGone`, `common.entryMovedNotDisplayed`) and **the template chooser** (`library.templateChooser.entryChanged`) show in the alert dialog, as the spec's general error alert; the restored-elsewhere announcement is below.
 
 ### Title bar and command bar
 

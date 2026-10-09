@@ -28,21 +28,6 @@ extension AppModel {
         defer { showInLists(confirmation.plan.recordID) }
         return try await permanentlyDelete(confirmation, settle: settle)
     }
-    func prepareDeletionConflict(_ id: UUID) async throws -> DeletionConflictConfirmation {
-        let store = try await deletionStoreAfterSaving()
-        let confirmation = try await store.prepareDeletionConflict(id)
-        try Task.checkCancellation()
-        guard !locked, !replacingVault, self.store === store else { throw JournalError.locked }
-        return confirmation
-    }
-    func resolveDeletionConflict(
-        _ confirmation: DeletionConflictConfirmation, choice: DeletionConflictChoice
-    ) async throws -> Bool {
-        let store = try await deletionStoreAfterSaving()
-        return try await commitDeletionMutation {
-            try await store.resolveDeletionConflict(confirmation, choice: choice)
-        }
-    }
     private func deletionStoreAfterSaving() async throws -> JournalStore {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {

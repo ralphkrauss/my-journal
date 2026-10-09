@@ -9,7 +9,6 @@ sources:
   - apps/apple/JournalApp/Views/RecoveryJournalView.swift
   - apps/apple/JournalApp/Views/MoveEntryView.swift
   - apps/apple/JournalApp/Views/VersionHistoryView.swift
-  - apps/apple/JournalApp/Views/DeletionConflictView.swift
   - apps/apple/JournalApp/Model/JournalOperations.swift
   - docs/design/history-recovery.md
   - docs/design/move-entry.md
@@ -21,7 +20,7 @@ Implements [screens/destination-journal](../../../screens/destination-journal.md
 
 ## Controls
 
-`RecoveryJournalView(entryID:)` (the name is historical: it was built for recovering into a new journal). It is presented with `.sheet(isPresented: $creatingJournal)` by `MoveEntryView` (with the open entry's id, see [move-entry](move-entry.md)), by `VersionHistoryView` (no entry id, see [version-history](version-history.md)) and by `DeletionConflictView` (permanent-deletion conflict review). Model: `AppModel.createRecoveryJournal(_:entryID:)` in `Model/JournalOperations.swift`.
+`RecoveryJournalView(entryID:)` (the name is historical: it was built for recovering into a new journal). It is presented with `.sheet(isPresented: $creatingJournal)` by `MoveEntryView` (with the open entry's id, see [move-entry](move-entry.md)), and by `VersionHistoryView` (no entry id, see [version-history](version-history.md)). Model: `AppModel.createRecoveryJournal(_:entryID:)` in `Model/JournalOperations.swift`.
 
 A `ScrollView` over a `VStack(alignment: .leading, spacing: 16)` with 24 points of padding, so it scrolls at large text sizes:
 
@@ -42,7 +41,7 @@ Cancelling work: the sheet cancels its `operation` task when it disappears, and 
 
 ## Commands and shortcuts
 
-No command of [commands.md](../commands.md) opens this sheet: it is a New Journal… button inside Move Entry, Version History and the deletion review. Keyboard: Return in the name field creates when allowed. No `.keyboardShortcut` is set on either button; Escape closes the sheet through the system's sheet handling where the platform provides it (not verified), and not while busy.
+No command of [commands.md](../commands.md) opens this sheet: it is a New Journal… button inside Move Entry and Version History. Keyboard: Return in the name field creates when allowed. No `.keyboardShortcut` is set on either button; Escape closes the sheet through the system's sheet handling where the platform provides it (not verified), and not while busy.
 
 ## Copy differences
 
@@ -62,13 +61,13 @@ None.
 
 ## Screenshots
 
-None. The sheet appears only on top of Move Entry, Version History and the deletion review ([move-entry](move-entry.md), [version-history](version-history.md)), and no capture of it exists. The page was checked against the source only, which is why its status is draft.
+None. The sheet appears only on top of Move Entry and Version History ([move-entry](move-entry.md), [version-history](version-history.md)), and no capture of it exists. The page was checked against the source only, which is why its status is draft.
 
 ## Source files
 
 View:
 - `apps/apple/JournalApp/Views/RecoveryJournalView.swift`: the sheet.
-- `apps/apple/JournalApp/Views/MoveEntryView.swift`, `VersionHistoryView.swift`, `DeletionConflictView.swift`: where it is presented.
+- `apps/apple/JournalApp/Views/MoveEntryView.swift`, `VersionHistoryView.swift`: where it is presented.
 
 Model:
 - `apps/apple/JournalApp/Model/JournalOperations.swift`: `createRecoveryJournal`.

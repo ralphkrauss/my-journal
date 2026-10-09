@@ -25,6 +25,7 @@ Every way sync can fail ends in exactly one state with one message and at most o
 | Stop syncing | A confirmation dialog with no default button | [stop-syncing](stop-syncing.md) |
 | Sync status button | Title bar, trailing area, at every width (D47) | [sync-status](../screens/sync-status.md) |
 | Item refusals | The same bar and flyout, action Sync now | Messages in [messages](../messages.md) |
+| Changes made on two devices | Quiet, like offline: journals and permanent deletions the device settles itself appear only in the Changed on two devices group of the Sync page, never in the bar, the flyout or a notification, and never count as a problem for the rating request. A held change adds the line `messages.conflict.kept.updateNeeded` to the Sync page and nothing else. An entry or template to review is the Changes to review group | [resolve-conflict](resolve-conflict.md), [settings-sync](../screens/settings-sync.md) |
 
 ## What starts a sync
 

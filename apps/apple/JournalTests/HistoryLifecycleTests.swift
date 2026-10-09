@@ -148,58 +148,6 @@ final class HistoryLifecycleTests: XCTestCase {
         try await reopened.close()
     }
 
-    func testSettingsRecoveryRetainsUnsavedEntryAndRetriesWithoutReplacingIt() async throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let key = try VaultCrypto.generateKey()
-        let store = try JournalStore(directory: root, key: key)
-        let journal = JournalItem(kind: "journal", title: "Current Work")
-        let version = try await history(store, entry: journal, key: key)
-        let storedJournal = try await store.item(journal.id)
-        let current = try XCTUnwrap(storedJournal)
-        if let preview = await NativeTestPreview.capture(
-            JournalSettingsConfirmation(
-                comparison: JournalSettingsComparison(current: current, historical: version, templates: []),
-                busy: .constant(false), restore: {}),
-            name: "Historical journal settings native comparison")
-        {
-            add(preview)
-        }
-        let entry = JournalItem(kind: "entry", journalID: journal.id, title: "Current entry")
-        try await store.save(entry)
-        let model = AppModel(directory: root)
-        model.store = store
-        try await model.refresh()
-        model.draft = try await store.item(entry.id)
-        model.selectedID = entry.id
-        model.selectedJournalID = journal.id
-        try await store.close()
-        var unsaved = try XCTUnwrap(model.draft)
-        unsaved.title = "Keep this current edit"
-        model.updateDraft(unsaved)
-        do {
-            _ = try await model.restoreHistoricalJournalSettings(version, expectedJournal: current)
-            XCTFail("Settings restoration must not hide a failed current-entry save.")
-        } catch JournalError.saveRequired {}
-        XCTAssertTrue(model.saveFailure)
-        XCTAssertEqual(model.draft?.title, unsaved.title)
-        let reopened = try JournalStore(directory: root, key: key)
-        let unchanged = try await reopened.item(journal.id)
-        XCTAssertEqual(unchanged, current)
-        model.store = reopened
-        let refreshed = try await model.restoreHistoricalJournalSettings(version, expectedJournal: current)
-        XCTAssertTrue(refreshed)
-        XCTAssertEqual(model.draft?.id, entry.id)
-        XCTAssertEqual(model.selectedID, entry.id)
-        XCTAssertEqual(model.draft?.title, unsaved.title)
-        let savedEntry = try await reopened.item(entry.id)
-        XCTAssertEqual(savedEntry?.title, unsaved.title)
-        let restored = try await reopened.item(journal.id)
-        XCTAssertEqual(restored?.title, version.title)
-        XCTAssertEqual(restored?.document, current.document)
-        try await reopened.close()
-    }
-
     private func history(_ store: JournalStore, entry: JournalItem, key: Data) async throws -> JournalItem {
         try await store.save(entry)
         var earlier = entry

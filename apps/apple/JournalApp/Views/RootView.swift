@@ -19,8 +19,6 @@ struct RootView: View {
         @State var journalToRename: JournalItem?
         @State var journalRenameText = ""
         @State var journalDeletionRequest: UUID?
-        @State var journalHistory: JournalItem?
-        @State var journalToMerge: JournalItem?
     #else
         @State var columnVisibility = NavigationSplitViewVisibility.all
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -61,19 +59,6 @@ struct RootView: View {
     #endif
     @ScaledMetric(relativeTo: .body) private var preferredTextSize = 17.0
 
-    /// Whether a journal is on screen: in stacked navigation (iPhone, a narrow iPad window) only once its list was
-    /// opened; on the Journals screen none is, though the last one opened is still the destination.
-    private var showsJournal: Bool {
-        Self.showsJournal(destination: model.destination, stacked: usesStackedNavigation, path: navigationPath)
-    }
-    static func showsJournal(destination: JournalDestination?, stacked: Bool, path: [CompactJournalRoute]) -> Bool {
-        guard destination.map(\.isJournal) ?? false else { return false }
-        guard stacked else { return true }
-        return path.contains { route in
-            if case .collection(let shown) = route { return shown.isJournal }
-            return false
-        }
-    }
     var usesStackedNavigation: Bool {
         #if os(macOS)
             false
@@ -167,8 +152,8 @@ struct RootView: View {
         .sheet(isPresented: $editor.requestLink) { LinkEditorView().environmentObject(editor) }
         .sheet(isPresented: $creatingLibrary) { CreateJournalView() }
         .sheet(isPresented: $model.templateChooserPresented) {
-            // File ▸ New Entry from Template…: outside a journal, the sheet asks which journal.
-            TemplateChooserView(journalID: model.newEntryJournal?.id, choosesJournal: !showsJournal)
+            // File ▸ Use a Template…: the same chooser as the link in the empty entry, for the entry open now.
+            TemplateChooserView(entryID: model.draft?.id)
         }
         .background {
             if let session = imageInsertion {
@@ -540,11 +525,9 @@ struct RootView: View {
         }.contextMenu { entryActions(entry) }
             .swipeActions(edge: .trailing) { swipeActions(entry) }
             .swipeActions(edge: .leading) {
-                if model.isRecentlyDeleted(entry), canRestoreDirectly(entry) {
-                    Button("Restore", systemImage: "arrow.uturn.backward") {
-                        rowActionTask?.cancel()
-                        rowActionTask = Task { await model.restore(entry) }
-                    }.tint(.accentColor)
+                if model.isRecentlyDeleted(entry), model.restoreOffer(for: entry)?.returnsToOwnJournal == true {
+                    // Only into the entry's own journal: a full swipe never files an entry somewhere unexpected.
+                    Button("Restore", systemImage: "arrow.uturn.backward") { restore(entry) }.tint(.accentColor)
                 } else if model.canPin(entry) {
                     let pinned = model.isPinned(entry)
                     Button(pinned ? "Unpin" : "Pin", systemImage: pinned ? "pin.slash" : "pin") {
@@ -572,11 +555,6 @@ struct RootView: View {
                 .command(pinned ? "Unpin Entry" : "Pin Entry", symbol: pinned ? "pin.slash" : "pin") {
                     setPinned(!pinned, entry.id)
                 })
-        }
-        if editable, entry.kind == "template" {
-            // New Entry In ▸ the journals, in the sidebar order (template-journal-choice-2026-10-03.md).
-            actions.append(model.newEntryFromTemplateAction(entry) { startEntry(fromTemplate: entry.id, in: $0) })
-            actions.append(.separator("new entry"))
         }
         if editable, entry.kind == "entry" {
             actions.append(
@@ -609,18 +587,17 @@ struct RootView: View {
                 performRowAction(entry.id) { history = model.draft }
             })
         if model.isRecentlyDeleted(entry) {
-            if canRestoreDirectly(entry) {
-                actions.append(
-                    .command("Restore", symbol: "arrow.uturn.backward") {
-                        rowActionTask?.cancel()
-                        rowActionTask = Task { await model.restore(entry) }
-                    })
+            if let offer = model.restoreOffer(for: entry) {
+                actions.append(.command(offer.title, symbol: "arrow.uturn.backward") { restore(entry) })
             }
             actions.append(.separator("restore"))
             actions.append(
                 .command("Delete Permanently…", symbol: "trash", destructive: true) {
                     permanentDeletionRequest = .init(id: entry.id)
                 })
+        } else if entry.kind == "entry", let offer = model.restoreOffer(for: entry) {
+            // An entry deleted by itself whose journal is gone, in Unavailable Journals: never on a swipe.
+            actions.append(.command(offer.title, symbol: "arrow.uturn.backward") { restore(entry) })
         }
         if editable {
             actions.append(.separator("delete"))
@@ -654,11 +631,17 @@ struct RootView: View {
         withAnimation(reduceMotion ? nil : .default) { model.hideInLists(id) }
         permanentDeletionRequest = .init(id: id, rowRemoved: true)
     }
-    /// Restoring without further questions needs the entry's journal to be in use.
-    private func canRestoreDirectly(_ entry: JournalItem) -> Bool {
-        guard entry.document.isEditable, !entry.deletedWithJournal else { return false }
-        if entry.kind == "template" { return true }
-        return model.journals.contains { $0.id == entry.journalID }
+    /// Restores at once. On the iPhone the stack becomes the journal and the entry the restore opens.
+    private func restore(_ entry: JournalItem) {
+        rowActionTask?.cancel()
+        rowActionTask = Task {
+            let restored = await model.restore(entry)
+            #if os(iOS)
+                if restored, usesStackedNavigation, entry.kind == "entry", model.draft?.id == entry.id {
+                    model.revealsSelection = true
+                }
+            #endif
+        }
     }
     /// Moves the entry or template to Recently Deleted at once, as in Notes; Edit ▸ Undo Delete Entry (or Undo
     /// Delete Template) brings it back. Its row leaves the list in the same update, as a swipe action expects.
@@ -685,22 +668,6 @@ struct RootView: View {
     private func journalName(for entry: JournalItem) -> String {
         let title = model.journals.first { $0.id == entry.journalID }?.title ?? ""
         return title.isEmpty ? "Untitled Journal" : title
-    }
-    /// Opens the new entry in the chosen journal. Every window shares the model, so each leaves Templates.
-    private func startEntry(fromTemplate id: UUID, in journalID: UUID) {
-        rowActionTask?.cancel()
-        rowActionTask = Task {
-            let previous = model.selectedID
-            await model.newEntry(fromTemplate: id, in: journalID)
-            #if os(iOS)
-                // The iPhone's stack becomes the journal's entries and the entry, as the compose button leaves it.
-                if usesStackedNavigation, let entryID = model.selectedID, entryID != previous,
-                    model.draft?.kind == "entry"
-                {
-                    model.revealsSelection = true
-                }
-            #endif
-        }
     }
     /// Pins or unpins without changing the selection. VoiceOver focus follows the row to its new section once the list
     /// has updated, since the row's view is made again there.

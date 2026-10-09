@@ -52,7 +52,7 @@ final class TemplateDeletionTests: XCTestCase {
         try await store.close()
     }
 
-    func testDeletionFromElsewhereKeepsAnEditedTemplateUntilReviewed() async throws {
+    func testDeletionFromElsewhereParksAnEditedTemplateInRecentlyDeleted() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let key = try VaultCrypto.generateKey()
@@ -64,15 +64,19 @@ final class TemplateDeletionTests: XCTestCase {
         try await store.save(edited)
         let marker = JournalItem.permanentDeletionMarker(for: template, at: Date(timeIntervalSince1970: 1_800_000_000))
         try await store.apply([try remote(marker, revision: 2, key: key)], cursor: 2)
-        let kept = try await store.item(template.id)
-        XCTAssertEqual(kept?.title, edited.title)
-        let review = try await store.prepareDeletionConflict(template.id)
-        XCTAssertEqual(review.edited?.title, edited.title)
-        let revived = try await store.resolveDeletionConflict(review, choice: .keepTemplate)
-        XCTAssertEqual(revived.id, template.id)
-        XCTAssertEqual(revived.title, edited.title)
-        XCTAssertEqual(revived.restoredFromDeletionID, marker.permanentDeletionID)
-        XCTAssertEqual(try PortableRecord.decode(PortableRecord.encode(revived)), revived)
+        let report = try await store.resolveConflicts(at: .completedPull)
+        guard case .deletedAndChanged(let parkedID?) = try XCTUnwrap(report.resolved.first).result else {
+            return XCTFail("The edited template was not parked.")
+        }
+        let record = try await store.item(template.id)
+        XCTAssertEqual(record?.permanentDeletionID, marker.permanentDeletionID)
+        let storedParked = try await store.item(parkedID)
+        let parked = try XCTUnwrap(storedParked)
+        XCTAssertEqual(parked.title, edited.title)
+        XCTAssertEqual(parked.deletedAt, marker.permanentlyDeletedAt)
+        XCTAssertNil(parked.restoredFromDeletionID)
+        let restored = try await store.restoreTemplate(parkedID)
+        XCTAssertNil(restored.deletedAt)
         let conflicts = try await store.conflicts()
         XCTAssertTrue(conflicts.isEmpty)
         try await store.close()

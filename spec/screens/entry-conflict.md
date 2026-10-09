@@ -25,7 +25,7 @@ When this device and another device both changed the same entry or template, sho
 
 Where the review is signalled and how it is opened (the notice above the entry, the marked row, Settings ▸ Sync ▸ Changes to Review) is in [conflict-review.md](conflict-review.md) (Entry points). It also opens nested from Move Entry and Version History when a conflict blocks them. The notice's `common.reviewChanges` first saves the open writing and refreshes, then opens this sheet; the notice itself is `messages.conflict.entryNotice`.
 
-This screen covers conflicts where both versions are ordinary, readable entries or templates. Others route elsewhere ([conflict-review.md](conflict-review.md), The Review Changes sheet): a permanent deletion on either side opens the deletion review; a journal opens the journal review; a version this app can't read shows `messages.conflict.updateToReview` with the Export Archive… control. The outcomes are in [flows/resolve-conflict.md](../flows/resolve-conflict.md).
+This screen covers conflicts where both versions are ordinary, readable entries or templates that differ. A version this app can't read shows `messages.conflict.updateToReview` with the Export Archive… control instead ([conflict-review.md](conflict-review.md), The Review Changes sheet). An entry or template against a permanent deletion, and journals, are settled by the device and have no review ([flows/resolve-conflict.md](../flows/resolve-conflict.md)), which also has the outcomes.
 
 ## Content
 

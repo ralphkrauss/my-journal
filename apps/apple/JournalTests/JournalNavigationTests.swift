@@ -163,6 +163,12 @@ final class JournalNavigationTests: XCTestCase {
         XCTAssertEqual(model.selectedJournalID, missingParent)
         XCTAssertEqual(model.draft?.id, orphan.id)
         XCTAssertTrue(model.canEdit)
+        try await restoreLegacyOrphan(into: destination, model: model, store: store)
+        try await store.close()
+    }
+
+    /// An entry an earlier version deleted with a journal that is gone is restored into the Default Journal, and says so.
+    private func restoreLegacyOrphan(into destination: JournalItem, model: AppModel, store: JournalStore) async throws {
         var legacy = JournalItem(kind: "entry", journalID: UUID(), title: "Legacy orphan")
         legacy.deletedWithJournal = true
         legacy.deletedAt = Date()
@@ -170,12 +176,18 @@ final class JournalNavigationTests: XCTestCase {
         try await model.refresh()
         await model.showCollection(unavailable: true)
         await model.select(legacy.id)
-        try await model.moveEntry(legacy.id, to: destination.id, restoring: true)
+        model.chooseDefaultJournal(destination.id)
+        var announced: [String] = []
+        model.announce = { announced.append($0) }
+        let legacyOffer = try XCTUnwrap(model.restoreOffer(for: legacy))
+        XCTAssertEqual(legacyOffer.title, "Restore to “Recovered”")
+        let restoredLegacy = await model.restore(legacy)
+        XCTAssertTrue(restoredLegacy)
+        XCTAssertEqual(announced, ["Restored to Recovered."])
         XCTAssertEqual(model.draft?.id, legacy.id)
         XCTAssertFalse(model.draft?.deletedWithJournal ?? true)
         XCTAssertEqual(model.draft?.journalID, destination.id)
         XCTAssertTrue(model.canEdit)
-        try await store.close()
     }
 
     /// An entry opened in All Entries reopens after relaunch, even when it belongs to another journal.

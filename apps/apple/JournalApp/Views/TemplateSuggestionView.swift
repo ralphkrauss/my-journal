@@ -55,7 +55,7 @@ struct TemplateSuggestionView: View {
         }
 
         private func chooser(anchored: Bool) -> some View {
-            TemplateChooserView(journalID: model.newEntryJournal?.id, anchored: anchored).environmentObject(model)
+            TemplateChooserView(entryID: model.draft?.id, anchored: anchored).environmentObject(model)
         }
     }
 
@@ -104,14 +104,14 @@ struct TemplateSuggestionView: View {
 
             @objc private func choose() {
                 popover.toggle {
-                    presentation.journalID = model.newEntryJournal?.id
+                    presentation.entryID = model.draft?.id
                     draftWhenOpened = model.draft
                     if let content { return content }
                     let close: () -> Void = { [weak self] in self?.close() }
                     let host = NSHostingController(
                         rootView: AnyView(
                             TemplateChooserView(
-                                journalID: nil, anchored: true, close: close, presentation: presentation
+                                entryID: nil, anchored: true, close: close, presentation: presentation
                             )
                             .environmentObject(model)))
                     host.sceneBridgingOptions = []

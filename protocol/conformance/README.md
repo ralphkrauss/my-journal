@@ -11,11 +11,11 @@ Each folder is one contract. A file or folder name ends in the version of that c
 | Folder | Covers | Contract |
 | --- | --- | --- |
 | [crypto/](crypto/README.md) | Key derivation, recovery envelopes of formats 1 to 4, record and image sealing, password normalization, pairing grants, and what must be refused | [README.md](../README.md#encrypted-content) |
-| [records/](records/README.md) | Record JSON as plaintext: entries, journals, templates, deletion markers, legacy documents, unknown future fields; timestamps; the library record; journal ranks | [records.md](../records.md) |
+| [records/](records/README.md) | Record JSON as plaintext: entries, journals, templates, deletion markers, legacy documents, unknown future fields; timestamps; the library record; journal ranks; settling conflicts and the identity of parked entries; a journal written back | [records.md](../records.md), [conflicts.md](../conflicts.md) |
 | [markdown/](markdown/README.md) | Stored Markdown: how each supported construct reads and writes, and image references | [records.md](../records.md#markdown) |
 | [markdown-export/](markdown-export/README.md) | Export as Markdown: safe names, numbering, escapes, dates and a whole exported folder | [markdown-export.md](../markdown-export.md) |
 | [archive/](archive/README.md) | A small encrypted archive and a small one without a password (`archive/v1/`) | [archive.md](../archive.md) |
-| [sync/](sync/README.md) | A conversation with the server's sync endpoints, and short receipts | [README.md](../README.md#sync-and-conflicts) |
+| [sync/](sync/README.md) | A conversation with the server's sync endpoints, short receipts, and scripted conversations between devices that settle conflicts | [README.md](../README.md#sync-and-conflicts), [conflicts.md](../conflicts.md) |
 | [pairing/](pairing/README.md) | The invite proof, invite codes, server origins and the check code | [README.md](../README.md#pairing) |
 | [agent-copy/](agent-copy/README.md) | Agent access through the server: subkeys, item IDs, sealed items, key wraps | [agent-access-server.md](../agent-access-server.md) |
 
@@ -30,8 +30,8 @@ Current checks:
 
 | Where | Tests |
 | --- | --- |
-| Swift core (`apps/apple/Packages/JournalCore/Tests/JournalCoreTests`) | `Conformance*Tests`, `InteroperabilityTests`, `InteroperabilityV2Tests`, `SyncReceiptVectorTests`, `AgentCopyTests`, `LibrarySyncTests`, `JournalOrderTests`. `scripts/check.sh core` |
-| .NET server (`server/tests/Journal.Api.Tests`) | `*ConformanceTests`, `ProtocolVectorTests`, `AgentAccessTests`, `SyncEfficiencyTests`. `scripts/check.sh backend` |
+| Swift core (`apps/apple/Packages/JournalCore/Tests/JournalCoreTests`) | `Conformance*Tests`, `InteroperabilityTests`, `InteroperabilityV2Tests`, `SyncReceiptVectorTests`, `AgentCopyTests`, `LibrarySyncTests`, `JournalOrderTests`, `ConflictScenarioTests`. `scripts/check.sh core` |
+| .NET server (`server/tests/Journal.Api.Tests`) | `*ConformanceTests` (including `ConflictIdentityConformanceTests`), `ProtocolVectorTests`, `AgentAccessTests`, `SyncEfficiencyTests`. `scripts/check.sh backend` |
 
 Windows (C#) and Android (Kotlin) clients add their own tests against the same files.
 

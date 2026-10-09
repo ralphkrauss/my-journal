@@ -39,11 +39,11 @@ Where two files cover the same behaviour, each has one scope and links to the ot
 | A save that fails: alert, notice, Try Again, what is blocked, and writing paused while the library is replaced | `flows/save-failure.md` | `flows/save-entry.md` |
 | Sync states, their messages, automatic sync pace and what stops it | `flows/sync-recovery.md` | `flows/reconnect-to-server.md` |
 | Reconnect…, step by step | `flows/reconnect-to-server.md` | `flows/sync-recovery.md` |
-| Where changes to review are signalled, the Changes to Review list, and the journal, deletion and unsupported review forms | `screens/conflict-review.md` | `screens/entry-conflict.md` |
+| Where changes to review are signalled, the Changes to Review list, and the unsupported review form | `screens/conflict-review.md` | `screens/entry-conflict.md` |
 | The entry and template review form | `screens/entry-conflict.md` | `screens/conflict-review.md` |
-| What each conflict choice does | `flows/resolve-conflict.md` | both screens |
+| What the device settles itself (journals, permanent deletions), the Changed on Two Devices list, and what each entry choice does | `flows/resolve-conflict.md` (the list itself: `screens/settings-sync.md`) | both screens |
 | The lock screen | `screens/lock-screen.md` | everything else |
-| Version history of entries and templates; of journals | `screens/version-history.md`; `screens/journal-history.md` | each other |
+| Version history of entries and templates (journals have none) | `screens/version-history.md` | `screens/journals.md` |
 | How a platform implements or presents a screen or flow (controls, shortcuts, wording differences, source files, screenshots) | `platforms/<platform>/` | the spec file's Platform notes |
 
 ## Writing a screen or flow file

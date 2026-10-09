@@ -69,14 +69,6 @@ extension AppModel {
     func journalNameTaken(_ name: String, excluding: UUID? = nil) -> String? {
         JournalNames.journal(named: name, in: items, excluding: excluding).map { JournalNames.displayName($0.title) }
     }
-    /// A listed journal that has the name an earlier version of a journal's settings would restore (§4.3).
-    func restoringNameTaken(_ comparison: JournalSettingsComparison) -> String? {
-        let current = comparison.current
-        guard current.deletedAt == nil,
-            JournalNames.key(current.title) != JournalNames.key(comparison.historical.title)
-        else { return nil }
-        return journalNameTaken(comparison.historical.title, excluding: current.id)
-    }
     /// The numbered name a journal in Recently Deleted comes back with when another journal has its name (§4.2).
     func restoredName(of journal: JournalItem) -> String? {
         let taken = Set(
@@ -90,17 +82,18 @@ extension AppModel {
         guard !trimmed.isEmpty else { return }
         editJournal(id) { $0.title = trimmed }
     }
-    func changeJournal(_ id: UUID, template: UUID?) {
-        editJournal(id) { $0.defaultTemplateID = template }
-    }
     private func editJournal(_ id: UUID, update: @escaping @MainActor (inout JournalItem) -> Void) {
-        guard !locked, !replacingVault, !conflicts.contains(where: { $0.id == id }) else { return }
+        guard !locked, !replacingVault else { return }
+        guard !conflictedIDs.contains(id) else {
+            // A journal's conflict waits for a newer version of the app; this one makes no change to it.
+            error = JournalLifecycleError.unsupportedJournal.shown(.saving)
+            return
+        }
         let prior = journalEditTask
         let session = vaultSessionID
         journalEditTask = Task {
             await prior?.value
-            guard !locked, !replacingVault, vaultSessionID == session,
-                !conflicts.contains(where: { $0.id == id }),
+            guard !locked, !replacingVault, vaultSessionID == session, !conflictedIDs.contains(id),
                 var latest = items.first(where: { $0.id == id && $0.deletedAt == nil })
             else { return }
             update(&latest)

@@ -53,12 +53,7 @@ struct VersionHistoryView: View {
             .onValueChange(of: destinationIDs) { ids in
                 if let destination, !ids.contains(destination) {
                     self.destination = nil
-                    if model.conflicts.contains(where: { $0.id == destination }) {
-                        conflictID = destination
-                        error = "These changes need review before you can continue."
-                    } else {
-                        error = "Choose an available journal."
-                    }
+                    error = "Choose an available journal."
                 }
             }
             .onValueChange(of: error) { message in
@@ -183,11 +178,7 @@ struct VersionHistoryView: View {
     }
     @ViewBuilder private var conflictReview: some View {
         if let conflict = model.conflicts.first(where: { $0.id == conflictID }) {
-            if conflict.local.kind == "journal" {
-                JournalConflictView(conflict: conflict)
-            } else {
-                ConflictReview(id: conflict.id)
-            }
+            ConflictReview(id: conflict.id)
         } else {
             VStack(spacing: 16) {
                 Text("These changes have been resolved.")
@@ -259,9 +250,15 @@ struct VersionHistoryView: View {
                 destination = nil
                 await reloadDestinations()
             } catch JournalLifecycleError.conflict(let id) {
-                conflictID = id
                 do { try await model.refresh() } catch {}
-                if !model.locked { error = "These changes need review before you can continue." }
+                guard !model.locked else { return }
+                // An entry's changes can be reviewed; a journal's wait for a newer version of the app.
+                if model.conflicts.contains(where: { $0.id == id }) {
+                    conflictID = id
+                    error = "These changes need review before you can continue."
+                } else {
+                    error = JournalLifecycleError.unsupportedJournal.shown(.saving)
+                }
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
                 if case HistoryRecoveryError.unavailableVersion = error { needsReload = true }

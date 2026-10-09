@@ -2,7 +2,7 @@
 id: journals
 title: Journals (sidebar and Journals screen) (Apple)
 spec: screens/journals.md
-features: [journals-sidebar, new-journal, rename-journal, journal-default-template, merge-journal, delete-journal, reorder-journals, unique-journal-names, all-entries, unavailable-journals]
+features: [journals-sidebar, new-journal, rename-journal, delete-journal, reorder-journals, unique-journal-names, all-entries, unavailable-journals]
 devices: [iphone, ipad, mac]
 status: verified
 sources:
@@ -12,7 +12,6 @@ sources:
   - apps/apple/JournalApp/Views/JournalMoreMenu.swift
   - apps/apple/JournalApp/Views/JournalNameTakenAlert.swift
   - apps/apple/JournalApp/Views/JournalDeletionPrompt.swift
-  - apps/apple/JournalApp/Views/DeletionConflictAlert.swift
   - apps/apple/JournalApp/Views/MenuActions.swift
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Views/Mac/RootView+MacWindow.swift
@@ -43,7 +42,7 @@ screenshots:
 
 # Journals (Apple)
 
-Implements [screens/journals](../../../screens/journals.md): the list that chooses what the entry list shows, and where journals are created, renamed, merged, deleted and reordered. It is the Mac and iPad sidebar and the iPhone root page. The window around it is [library-window](library-window.md).
+Implements [screens/journals](../../../screens/journals.md): the list that chooses what the entry list shows, and where journals are created, renamed, deleted and reordered. It is the Mac and iPad sidebar and the iPhone root page. The window around it is [library-window](library-window.md).
 
 ## Controls
 
@@ -72,12 +71,9 @@ The list has `.listStyle(.sidebar)` on every device and `.accessibilityLabel("Jo
 ### Actions and their controls
 
 - **New Journal.** `RootView` owns the alert: `.alert("New Journal", isPresented: $newJournal)` with a `TextField("Name")` (`common.name`), `Cancel` and `Create` (disabled while the name is blank after trimming). The title is `library.newJournal.title`. The Mac and the File menu set `model.newJournalRequested`, which `presentRequestedNewJournal()` answers (also from `.onAppear`, because the menu may ask while no window is open); iPhone and iPad set `newJournal` directly. A taken name (`model.journalNameTaken`) shows the Name Taken alert (`library.nameTaken.title`, `library.nameTaken.message`, `common.ok`) from `journalNameTakenAlert`; its OK reopens the name alert. Both alerts are chained through `afterAlertCloses(model)`, which waits 350 ms because SwiftUI drops an alert presented while another one is still closing, and does nothing if the app locked meanwhile. When New Entry opened it with no journal, `createAfterJournal` starts the entry once the journal exists. `model.createJournal` shows the new journal unless `editingJournals`.
-- **Journal actions.** One catalog, `AppModel.journalActions(_:rename:merge:history:delete:)` in `JournalSidebarView.swift`, returns `MenuAction` values (command, submenu, separator; `MenuAction` is in `MenuActions.swift`). It is shown as SwiftUI `MenuActionsView` in context menus, in the edit-mode ⋯ `Menu`, and as an AppKit `NSMenu` in the Mac toolbar menu (`MenuActionTarget`), so the three always agree. Items: `library.journalActions.rename` (`pencil`), `common.defaultTemplate` (`doc.text`, a submenu: `common.blankEntry` then each template by `displayTitle`; the current choice shows a checkmark instead of a symbol), `library.journalActions.mergeInto` (`arrow.triangle.merge`), `common.versionHistoryEllipsis` (`clock.arrow.circlepath`), a separator, `library.journalActions.deleteJournal` (`trash`, destructive). The first three are disabled when `model.conflicts` holds the journal; Default Template also when `offersDefaultTemplateChoice` is false; Merge Into… also when no other journal is in use. The list bar's ⋯ on iPhone and iPad is a separate view, `JournalMoreMenu`, with the same items, built directly in SwiftUI. The alerts and sheets of the actions exist three times, each with its own state: `JournalSidebarView` (rows and edit mode), `JournalMoreMenu` (list bar), and `JournalActionPresentation` in `RootView+MacWindow.swift` (Mac toolbar). A port should have one.
-- **Rename.** Alert `library.renameJournal.title`, `TextField("Name")` starting with the current title, `common.cancel`, `library.renameJournal.rename` (disabled while blank). `model.changeJournal(_:name:)` trims the name and saves through a serialized task chain (`editJournal`); a taken name goes to Name Taken and back to Rename.
-- **Default Template.** `model.changeJournal(_:template:)`; no message.
-- **Merge Into…** presents `MergeJournalView` as a sheet ([merge-journal](merge-journal.md)).
-- **Version History…** presents `JournalHistoryView` as a sheet ([journal-history](journal-history.md)).
-- **Delete Journal.** `journalDeletionPrompt` (`JournalDeletionPrompt.swift`): `prepare` calls `model.prepareJournalDeletion` (saves the open entry and checks the journal) and only then shows an alert titled `library.deleteJournal.title`, message `library.deleteJournal.noEntries` or `library.deleteJournal.message`, buttons `common.delete` (`role: .destructive`) and `common.cancel`. Delete hides the row in the same update (`model.hideInLists`, animated unless Reduce Motion) and `commit` deletes; the row comes back (`showInLists`) when it is done or fails. Failures: an unsupported journal and any other error go to the general error alert; `messages.refresh.journalDeletedView` when only the display refresh failed; deleted already or missing is ignored. A journal with changes to review gets its own alert, see Open questions.
+- **Journal actions.** One catalog, `AppModel.journalActions(_:rename:delete:)` in `JournalSidebarView.swift`, returns `MenuAction` values (command, submenu, separator; `MenuAction` is in `MenuActions.swift`). It is shown as SwiftUI `MenuActionsView` in context menus, in the edit-mode ⋯ `Menu`, and as an AppKit `NSMenu` in the Mac toolbar menu (`MenuActionTarget`), so the three always agree. Items: `library.journalActions.rename` (`pencil`), a separator, `library.journalActions.deleteJournal` (`trash`, destructive); the Mac menus start with `common.newJournalEllipsis`, a separator, then these. Nothing is disabled for a conflict: a journal is never in conflict, and one whose change from another device is held is not listed at all. The list bar's ⋯ on iPhone and iPad is a separate view, `JournalMoreMenu`, with the same items, built directly in SwiftUI. The alerts and sheets of the actions exist three times, each with its own state: `JournalSidebarView` (rows and edit mode), `JournalMoreMenu` (list bar), and `JournalActionPresentation` in `RootView+MacWindow.swift` (Mac toolbar). A port should have one.
+- **Rename.** Alert `library.renameJournal.title`, `TextField("Name")` starting with the current title, `common.cancel`, `library.renameJournal.rename` (disabled while blank). `model.changeJournal(_:name:)` trims the name and saves through a serialized task chain (`editJournal`); a taken name goes to Name Taken and back to Rename. The edit rewrites only the name: the record's stored `defaultTemplateID` of earlier versions is kept unchanged (earlier devices still use it; this version ignores it).
+- **Delete Journal.** `journalDeletionPrompt` (`JournalDeletionPrompt.swift`): `prepare` calls `model.prepareJournalDeletion` (saves the open entry and checks the journal) and only then shows an alert titled `library.deleteJournal.title`, message `library.deleteJournal.noEntries` or `library.deleteJournal.message`, buttons `common.delete` (`role: .destructive`) and `common.cancel`. Delete hides the row in the same update (`model.hideInLists`, animated unless Reduce Motion) and `commit` deletes; the row comes back (`showInLists`) when it is done or fails. Failures: an unsupported journal and any other error go to the general error alert; `messages.refresh.journalDeletedView` when only the display refresh failed; deleted already or missing is ignored.
 - **Reorder.** Mac: SwiftUI `.onMove` on the Journals `ForEach`, so the system draws the drag and the insertion line. iPhone and iPad: edit mode makes the same `.onMove` show reorder handles (`.environment(\.editMode, .constant(.active))` while `model.editingJournals`; outside edit mode the environment is left alone so touch-and-hold dragging still works). `move(_:to:in:)` turns the drop position into "before this journal" among all journals, because the list shown leaves out journals being deleted; `model.moveJournal` shows the new order at once (`lists.journalOrder`), stores it, schedules a sync, calls `announceForAccessibility` with `messages.announce.journalMovedAbove` or `messages.announce.journalMovedBelow` (`moveAnnouncement`), and registers an Undo step named `library.journals.undoMove` (`LibraryUndo`). A failed store restores the previous order and sets the general error `messages.generic.moveJournalFailed`. On iOS `.accessibilityActions` adds `library.journals.moveUp` and `library.journals.moveDown` to each journal row, left out at the ends.
 
 ### Edit mode (iPhone and iPad)
@@ -99,8 +95,7 @@ The list has `.listStyle(.sidebar)` on every device and `.accessibilityLabel("Jo
 | `new-journal` | as in commands.md | as in commands.md (⌥⌘N on Mac and iPad) | Library open and unlocked; Mac also leaves Editor Only first |
 | `new-journal-context` | Mac sidebar context menu; empty entry list | | Library open and unlocked |
 | `journal-actions` | as in commands.md | | Rows as per the catalog; the list bar's ⋯ only while a journal is shown |
-| `rename-journal`, `journal-default-template`, `merge-journal` | as in commands.md | | Not while the journal has changes to review; Default Template also needs a template or a stale reference; Merge also needs another journal |
-| `journal-version-history` | as in commands.md | | Always |
+| `rename-journal` | as in commands.md | | Journal in use |
 | `delete-journal` | as in commands.md | | Always (the deletion is checked first) |
 | `reorder-journal` | as in commands.md | Escape cancels a Mac drag (system) | `canMoveJournals` |
 | `journals-edit` | iPhone top right; iPad sidebar bar | | Not locked, not replacing; hidden without journals |
@@ -128,7 +123,7 @@ None. The sidebar uses the spec's text on every device. The only platform-specif
 - **Counts of zero** show `0` on iPhone and iPad and nothing on the Mac: `Label.badge` hides 0, while the iOS rows draw their own count.
 - **New Journal… in context menus: Mac only**, because the Mac sidebar has no always-visible add button inside the list; iOS has the bar button.
 - **Selection.** The Mac and iPad keep a selected row because the list column is visible beside it; iPhone pushes a page per row and has no selection.
-- **Menu symbols.** The Mac menus show the symbols as `NSMenuItem` images; a checked Default Template choice replaces its symbol with the system checkmark on every device.
+- **Menu symbols.** The Mac menus show the symbols as `NSMenuItem` images.
 
 ## Screenshots
 
@@ -139,7 +134,7 @@ The iPhone captures are the stacked Journals page; the iPad captures show the si
 | Default | ![Journals page with All Entries, three journals, Templates and Recently Deleted](../screenshots/iphone/journals-default.png) | ![Sidebar with Journals title, Edit, counts and Settings](../screenshots/ipad/journals-default.png) |
 | Default, dark | ![dark](../screenshots/iphone/journals-default-dark.png) | ![dark](../screenshots/ipad/journals-default-dark.png) |
 | Edit mode | ![Edit mode: dimmed fixed rows, ellipsis menus and handles, blue confirm button](../screenshots/iphone/journals-edit.png) | ![Edit mode in the sidebar: checkmark in the bar, ellipsis menus and handles](../screenshots/ipad/journals-edit.png) |
-| Journal actions menu | ![Menu: Rename, Default Template, Merge Into, Version History, Delete Journal](../screenshots/iphone/journals-actions-menu.png) | ![the same menu in the sidebar](../screenshots/ipad/journals-actions-menu.png) |
+| Journal actions menu | ![Menu as captured with 1.0 (Rename, Default Template, Merge Into, Version History, Delete Journal); 1.1 has Rename and Delete Journal only](../screenshots/iphone/journals-actions-menu.png) | ![the same menu in the sidebar](../screenshots/ipad/journals-actions-menu.png) |
 | Delete confirmation | ![Alert: Delete Travel with its three entries](../screenshots/iphone/journals-delete-confirm.png) | ![alert](../screenshots/ipad/journals-delete-confirm.png) |
 | New Journal alert | ![Alert with an empty Name field and a disabled Create, keyboard open](../screenshots/iphone/journals-new-journal.png) | ![alert](../screenshots/ipad/journals-new-journal.png) |
 
@@ -154,7 +149,7 @@ View:
 - `apps/apple/JournalApp/Views/JournalSidebarView.swift`: the list, all row variants, edit mode, reordering, the journal action catalog, `JournalDestination`.
 - `apps/apple/JournalApp/Views/JournalEditButton.swift`: Edit and Done (iOS).
 - `apps/apple/JournalApp/Views/JournalMoreMenu.swift`: the list bar's Journal Actions menu (iOS).
-- `apps/apple/JournalApp/Views/JournalDeletionPrompt.swift`, `DeletionConflictAlert.swift`: the Delete Journal prompt and the review alert.
+- `apps/apple/JournalApp/Views/JournalDeletionPrompt.swift`: the Delete Journal prompt.
 - `apps/apple/JournalApp/Views/JournalNameTakenAlert.swift`: Name Taken and `afterAlertCloses`.
 - `apps/apple/JournalApp/Views/MenuActions.swift`: `MenuAction`, shown as SwiftUI or AppKit menus.
 - `apps/apple/JournalApp/Views/RootView.swift` (New Journal alert), `Views/Mac/RootView+MacWindow.swift` (Mac toolbar menu and its alerts), `Views/CompactJournalNavigation.swift` (the stacked root).
@@ -171,4 +166,4 @@ Design records: `docs/design/journal-order.md`, `docs/design/journal-name-unique
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md): (1) A44, the spec says searching ends edit mode on iPhone and iPad; in code only the stacked Journals page's search does, and the iPad list column's search does not. (2) C1, resolved in build 18: Delete Journal on a journal with changes to review shows the alert of `DeletionConflictAlert` (`messages.deleteConflict.title`, `messages.deleteConflict.journal`, Review Changes and Cancel), which the spec now describes.
+See [open-questions.md](../../../open-questions.md): (1) A44, the spec says searching ends edit mode on iPhone and iPad; in code only the stacked Journals page's search does, and the iPad list column's search does not. (2) The menu screenshots below were captured before 1.1 and still show the removed items; they are recaptured when the owner says the listing screenshots are due.

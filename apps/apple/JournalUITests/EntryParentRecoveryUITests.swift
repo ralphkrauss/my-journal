@@ -2,7 +2,9 @@ import JournalCore
 import XCTest
 
 final class EntryParentRecoveryUITests: XCTestCase {
-    @MainActor func testCancelThenRestoreEntryAndJournalPreservingSiblingStatesAcrossRelaunch() async throws {
+    /// An entry deleted with a journal that is itself deleted: with no journal in use the notice says to create one,
+    /// then Restore names it, puts the entry there, and leaves the deleted journal and its other entries as they were.
+    @MainActor func testRestoreToAnotherJournalLeavesTheDeletedJournalAndSiblingStatesAcrossRelaunch() async throws {
         continueAfterFailure = false
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("ParentRecovery-" + UUID().uuidString)
         addTeardownBlock { try FileManager.default.removeItem(at: root) }
@@ -32,34 +34,21 @@ final class EntryParentRecoveryUITests: XCTestCase {
         assertEventually(readOnlyTitle.value as? String, equals: "A workday worth remembering")
         try reveal(readOnlyTitle, app: app)
         capture(app, "Full read-only title beside preserved body")
-        let restore = app.buttons["Restore…"]
+        XCTAssertTrue(app.staticTexts["The journal is in Recently Deleted."].waitToAppear(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Create a journal to restore this entry."].waitToAppear(timeout: 10))
+        XCTAssertFalse(app.buttons["Restore"].exists, "Nothing to restore into yet")
+        capture(app, "No journal in use to restore into")
+        NavigationTestSupport.showJournals(app)
+        createJournal("Personal", app: app)
+        NavigationTestSupport.selectCollection("Recently Deleted", app: app)
+        let deletedRow = app.staticTexts["A workday worth remembering"].firstMatch
+        try reveal(deletedRow, app: app)
+        deletedRow.tap()
+        let restore = app.buttons["Restore to “Personal”"]
         XCTAssertTrue(restore.waitToAppear(timeout: 10))
         try reveal(restore, app: app)
-        capture(app, "Entry recovery requires its deleted journal")
+        capture(app, "Restore names the journal the entry goes to")
         restore.tap()
-        let commit = app.buttons["confirm-journal-lifecycle"]
-        XCTAssertTrue(commit.waitToAppear(timeout: 10))
-        capture(app, "Captured entry and journal restoration identity")
-        app.buttons["Cancel"].firstMatch.tap()
-        XCTAssertTrue(restore.waitToAppear(timeout: 10))
-        try reveal(restore, app: app)
-        restore.tap()
-        XCTAssertTrue(commit.waitToAppear(timeout: 10))
-        let parentScope = app.staticTexts["To restore this entry, its journal must also be restored."]
-        try reveal(parentScope, app: app)
-        capture(app, "Required parent restoration explanation")
-        let siblingExplanation =
-            "Entries deleted with this journal will return, including entries that sync later. Other entries you deleted separately will stay in Recently Deleted."
-        let siblingScope = app.staticTexts.matching(NSPredicate(format: "label == %@", siblingExplanation)).firstMatch
-        // At the largest text size this paragraph is taller than the screen. Verify every third in order.
-        for part in 0..<3 {
-            try reveal(siblingScope, app: app, textThird: part)
-            capture(app, "Other entries restoration scope, part \(part + 1)")
-        }
-        try reveal(commit, app: app)
-        XCTAssertEqual(commit.label, "Restore")
-        capture(app, "Explicit entry and parent restore action")
-        commit.tap()
         let title = NavigationTestSupport.title(app)
         XCTAssertTrue(title.waitToAppear(timeout: 10))
         assertEventually(title.value as? String, equals: "A workday worth remembering")
@@ -81,8 +70,10 @@ final class EntryParentRecoveryUITests: XCTestCase {
         let journal = try await store.item(fixture.journal.id)
         let archived = try await store.item(fixture.archived.id)
         let deleted = try await store.item(fixture.deleted.id)
-        XCTAssertNil(journal?.deletedAt)
+        let personal = try await store.items().first { $0.kind == "journal" && $0.title == "Personal" }
+        XCTAssertNotNil(journal?.deletedAt, "The deleted journal stays deleted")
         XCTAssertNil(restored?.deletedAt)
+        XCTAssertEqual(restored?.journalID, personal?.id)
         XCTAssertEqual(restored?.document, fixture.entry.document)
         XCTAssertEqual(archived, fixture.archived)
         XCTAssertEqual(deleted, fixture.deleted)
@@ -125,6 +116,15 @@ final class EntryParentRecoveryUITests: XCTestCase {
         return Fixture(
             archive: archive, phrase: phrase, key: key, journal: journal, entry: entry, archived: archived,
             deleted: deleted)
+    }
+
+    @MainActor private func createJournal(_ name: String, app: XCUIApplication) {
+        app.buttons["New Journal"].tap()
+        let create = app.alerts["New Journal"]
+        XCTAssertTrue(create.waitToAppear(timeout: 5))
+        create.textFields["Name"].tap()
+        create.textFields["Name"].typeText(name)
+        create.buttons["Create"].tap()
     }
 
     private enum InteractionError: Error { case unreachable }

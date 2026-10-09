@@ -17,9 +17,8 @@ Create a journal to move an entry into, or to restore a version into, without le
 
 ## Entry points
 
-- Move Entry and Restore and Move: New Journal… (`screens/move-entry.md`).
+- Move Entry: New Journal… (`screens/move-entry.md`).
 - Version History: New Journal… (`screens/version-history.md`).
-- Also used by the permanent-deletion conflict review (specified with deletion).
 
 ## Content
 

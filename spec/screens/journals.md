@@ -1,7 +1,7 @@
 ---
 id: journals
 title: Journals (sidebar and Journals screen)
-features: [journals-sidebar, new-journal, rename-journal, journal-default-template, merge-journal, delete-journal, reorder-journals, unique-journal-names, all-entries, unavailable-journals]
+features: [journals-sidebar, new-journal, rename-journal, delete-journal, reorder-journals, unique-journal-names, all-entries, unavailable-journals]
 sources:
   - apps/apple/JournalApp/Views/JournalSidebarView.swift
   - apps/apple/JournalApp/Views/CompactJournalNavigation.swift
@@ -25,7 +25,7 @@ sources:
 
 ## Purpose
 
-The place to choose what the entry list shows (All Entries, one journal, Templates, Recently Deleted, Unavailable Journals) and to manage journals: create, rename, set a default template, merge, delete and reorder.
+The place to choose what the entry list shows (All Entries, one journal, Templates, Recently Deleted, Unavailable Journals) and to manage journals: create, rename, delete and reorder.
 
 ## Entry points
 
@@ -48,7 +48,7 @@ Counts: a bare number at the trailing end; zero shows nothing on the Mac and `0`
 
 The selected collection is highlighted (Mac, iPad). On iPhone each row pushes its collection's list with a chevron.
 
-A journal is **in use** when it isn't in Recently Deleted, isn't saved by a newer version, and has no changes to review. Journals not in use don't appear here; their entries appear in Unavailable Journals.
+A journal is **in use** when it isn't in Recently Deleted and isn't saved by a newer version (a journal with a change from another device that a newer version wrote counts as saved by a newer version). Journals not in use don't appear here; their entries appear in Unavailable Journals.
 
 ## Actions
 
@@ -74,10 +74,7 @@ The same catalog everywhere: a journal row's context menu (right-click or Contro
 | Item | Copy | Symbol | Enabled when | Result |
 | --- | --- | --- | --- | --- |
 | New Journal… (Mac context menu and Mac Journal Actions only, first, then a separator) | `common.newJournalEllipsis` | folder with plus | library open and unlocked | New Journal, above |
-| Rename… | `library.journalActions.rename` | pencil | journal has no changes to review | Rename, below |
-| Default Template ▸ | `common.defaultTemplate` | document | no changes to review, and there is a template or the journal still names a template that's gone | Submenu: `common.blankEntry`, then every template by name; the current choice is checked. Choosing saves it at once, without a message. |
-| Merge Into… | `library.journalActions.mergeInto` | merge arrows | no changes to review, and another journal is in use | [screens/merge-journal](merge-journal.md) |
-| Version History… | `common.versionHistoryEllipsis` | clock | always | The journal's version history ([screens/journal-history](journal-history.md)) |
+| Rename… | `library.journalActions.rename` | pencil | journal in use | Rename, below |
 | — | | | | |
 | Delete Journal… | `library.journalActions.deleteJournal` | trash, destructive | always | Delete Journal, below |
 
@@ -87,16 +84,14 @@ On the Mac, the toolbar's Journal Actions menu holds New Journal… alone when n
 
 Alert `library.renameJournal.title` with the name field (starts with the current name), `common.cancel` and `library.renameJournal.rename` (disabled while blank). A name another journal in use has shows Name Taken, whose OK reopens Rename with the typed name. The name is saved trimmed; a change of case only is allowed. No confirmation.
 
-### Default Template (`journal-default-template`)
-
-New Entry in this journal starts from the chosen template; Blank Entry means an empty entry. While the chosen template is in Recently Deleted, the journal behaves as Blank Entry, and the choice returns if the template is restored.
+Rename is also how a numbered journal (“Work 2”, made when sync, an import or Merge Journals met a name that was taken) gets a name of its own, and the only way to change a name that was changed by mistake: the earlier name is not offered back. Two journals with similar content are both real journals; Move Entry… and Delete Journal… combine them one entry at a time.
 
 ### Delete Journal (`delete-journal`)
 
 1. The open entry is saved and the deletion is checked first.
 2. Alert `library.deleteJournal.title` (with the journal's name), message `library.deleteJournal.noEntries` or `library.deleteJournal.message` (count of its entries on this device), buttons `common.delete` (destructive) and `common.cancel`.
 3. **Delete:** the row leaves the list at once (animated unless Reduce Motion). The journal and its entries move to Recently Deleted, and another journal is shown. Nothing else is said.
-4. A journal (or one of its entries) with changes to review isn't deleted: a standard alert titled `messages.deleteConflict.title` with the journal's name, message `messages.deleteConflict.journal`, and buttons `common.reviewChanges` (opens the review) and `common.cancel`. Other failures, in the general error alert: `messages.generic.journalDeleteNeedsUpdate`, `messages.save.before.tryAgain`, `messages.lifecycle.changed`, `messages.refresh.journalDeletedView`. A journal already deleted elsewhere is ignored quietly.
+4. A journal saved by a newer version, or one with a change from another device that a newer version wrote and that stays held, isn't deleted. Failures, in the general error alert: `messages.generic.journalDeleteNeedsUpdate`, `messages.save.before.tryAgain`, `messages.lifecycle.changed`, `messages.refresh.journalDeletedView`. A journal already deleted elsewhere is ignored quietly.
 
 See [flows/delete-and-restore](../flows/delete-and-restore.md) for restoring.
 
@@ -121,7 +116,7 @@ See [flows/delete-and-restore](../flows/delete-and-restore.md) for restoring.
 
 - **No journals:** the Journals section is empty; Edit is hidden. New Entry offers New Journal first.
 - **Locked or library being replaced:** reordering, Edit and the VoiceOver move actions are unavailable; open alerts and sheets close on lock.
-- **Journal with changes to review:** not listed (it's unavailable); its entries are in Unavailable Journals.
+- **Journal saved by a newer version, or held:** not listed (it's unavailable); its entries are in Unavailable Journals. Journals never ask for a review: a rename on two devices keeps the later name and says so in Settings ▸ Sync ▸ Changed on Two Devices.
 - **Order from a newer version:** pins and order can't be read; journals are listed by name and reordering is unavailable (Settings ▸ Sync explains, screens/settings-sync).
 
 ## Rules
@@ -129,7 +124,7 @@ See [flows/delete-and-restore](../flows/delete-and-restore.md) for restoring.
 - **Order:** once any journal has been moved, journals follow the person's order on every device; new, restored-without-a-position, merged-in and imported journals go at the end; journals from older versions without a position follow the arranged ones by name. Until then journals are sorted by name.
 - **Names are unique** among journals in use, ignoring case and surrounding spaces. New Journal and Rename refuse a taken name (Name Taken). Restoring, importing, joining and syncing add a number instead (“Work 2”).
 - Names are trimmed; a blank name can't be saved.
-- The journal created with the library (“Default”) is an ordinary journal: it can be renamed, moved, merged and deleted.
+- The journal created with the library (“Default”) is an ordinary journal: it can be renamed, moved and deleted.
 
 ## Accessibility
 

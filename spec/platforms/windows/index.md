@@ -12,9 +12,9 @@ Three batches of about equal size. Batch 1 first: it fixes the shell and the edi
 
 | Batch | Pages | Covers |
 | --- | --- | --- |
-| 1. Library and editor | 24 | The window, journals, entries, search, editor, formatting, images, tables |
+| 1. Library and editor | 23 | The window, journals, entries, search, editor, formatting, images, tables |
 | 2. Settings, connections and security | 26 | Settings pages, connecting, devices, encryption, App Lock, agents, erase |
-| 3. Messages, states and flows not covered | 21 | First launch, import and export, sync states and recovery, conflicts, history, ratings, messages |
+| 3. Messages, states and flows not covered | 19 | First launch, import and export, sync states and recovery, conflicts, history, ratings, messages |
 
 ## Batch 1: library and editor
 
@@ -23,22 +23,21 @@ Sources: [screens/library-window](../../screens/library-window.md), [screens/ent
 | Spec | Kind | Mapping file | Status | Notes |
 | --- | --- | --- | --- | --- |
 | `library-window` | screen | `screens/library-window.md` | draft | The shell: `TitleBar` (Sync status, no menus on lock and first-run pages), `NavigationView` with the built-in Settings item, `ListView`, splitter; layouts at the three widths; window state; command bars. Write this first. |
-| `journals` | screen | `screens/journals.md` | draft | The journals as a `ListView` in the navigation pane, counts as plain text, journal context menu, reordering, New journal dialog. |
+| `journals` | screen | `screens/journals.md` | draft | The journals as a `ListView` in the navigation pane, counts as plain text, journal context menu (New journal…, Rename…, Delete journal), reordering, New journal dialog. |
 | `entry-list` | screen | `screens/entry-list.md` | reviewed | `ListView` with month groups, rows, pin, swipe, context menu, empty states, the list header. |
-| `templates` | screen | `screens/templates.md` | reviewed | Templates collection; context menu items. |
-| `recently-deleted` | screen | `screens/recently-deleted.md` | reviewed | Collection, deleted journal's page, recovery notice as `InfoBar`, Delete all. |
-| `unavailable-content` | screen | `screens/unavailable-content.md` | reviewed | Unavailable and read-only states; notices; no cover. |
+| `templates` | screen | `screens/templates.md` | reviewed | Templates collection; context menu items; a template is never used from this list. |
+| `recently-deleted` | screen | `screens/recently-deleted.md` | reviewed | Collection, Restore and Restore to “{name}” at once (no dialog), deleted journal's page with Restore journal, recovery notice as `InfoBar`, Delete all. |
+| `unavailable-content` | screen | `screens/unavailable-content.md` | reviewed | Unavailable and read-only states; notices with Restore to “{name}”; no cover. |
 | `search` | screen | `screens/search.md` | reviewed | `AutoSuggestBox` in the list header; prompts; No results. |
-| `template-chooser` | screen | `screens/template-chooser.md` | reviewed | Flyout with filter and list; IME composition rule. |
+| `template-chooser` | screen | `screens/template-chooser.md` | reviewed | Flyout anchored to the editor with filter and list, filling the open empty entry; File ▸ Use a template…; IME composition rule. |
 | `entry-editor` | screen | `screens/entry-editor.md` | draft | Depends on two parallel editor control spikes with written pass and fail criteria; layout, notices, blocks, Zoom, UI Automation. |
 | `format-sheet` | screen | `screens/format-sheet.md` | draft | Formatting bar and selection mini-toolbar; toggle buttons; the Format menu. |
 | `link-editor` | screen | `screens/link-editor.md` | reviewed | Link dialog. |
 | `image-description` | screen | `screens/image-description.md` | reviewed | A page with a list of pictures and text boxes. |
 | `change-date` | screen | `screens/change-date.md` | reviewed | Dialog with a `CalendarDatePicker`, date only. |
-| `move-entry` | screen | `screens/move-entry.md` | reviewed | Dialog with a list of journals. |
+| `move-entry` | screen | `screens/move-entry.md` | reviewed | Dialog with a list of journals; moving only (restoring is plain Restore). |
 | `destination-journal` | screen | `screens/destination-journal.md` | reviewed | New journal from Move entry and Version history; no dialog on a dialog. |
-| `merge-journal` | screen | `screens/merge-journal.md` | reviewed | Merge into: a dialog whose Merge button is the default (Merge journals in the connect flow is a different step with no default button). |
-| `new-entry` | flow | `flows/new-entry.md` | reviewed | New entry, New blank entry, from a template; Ctrl+N. |
+| `new-entry` | flow | `flows/new-entry.md` | reviewed | New entry, always blank; a template is used afterwards from inside the entry; Ctrl+N. |
 | `save-entry` | flow | `flows/save-entry.md` | reviewed | Save before closing, locking, moving; Ctrl+S. |
 | `editing-rules` | flow | `flows/editing-rules.md` | draft | Key by key: Windows key names, Ctrl+Backspace, IME composition. |
 | `markdown-as-you-type` | flow | `flows/markdown-as-you-type.md` | reviewed | Typing rules; Backspace undoes a shortcut. |
@@ -55,7 +54,7 @@ Sources: [screens/settings](../../screens/settings.md), [screens/lock-screen](..
 | --- | --- | --- | --- | --- |
 | `settings` | screen | `screens/settings.md` | reviewed | Settings page, home cards, About group, `BreadcrumbBar`; sets the card patterns the other settings pages reuse. |
 | `settings-general` | screen | `screens/settings-general.md` | reviewed | General page: default journal, Markdown as you type, Erase group. |
-| `settings-sync` | screen | `screens/settings-sync.md` | reviewed | Sync page: status, Sync now, Stop syncing, Changes to review, footers as descriptions. |
+| `settings-sync` | screen | `screens/settings-sync.md` | reviewed | Sync page: status, Sync now, Stop syncing, Changes to review, Changed on two devices (clickable cards, Clear list), footers as descriptions. |
 | `settings-devices` | screen | `screens/settings-devices.md` | reviewed | Devices page: list, Add device, revoke. |
 | `settings-privacy` | screen | `screens/settings-privacy.md` | draft | Privacy page: encryption, App lock expander, Lock when inactive. |
 | `settings-backup` | screen | `screens/settings-backup.md` | draft | Backup page: archive and Markdown groups; pickers. |
@@ -90,11 +89,9 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `archive-import` | screen | `screens/archive-import.md` | draft | Import task page with preview. |
 | `recovery-key` | screen | `screens/recovery-key.md` | reviewed | Probably not offered on Windows (open-questions D11). |
 | `sync-status` | screen | `screens/sync-status.md` | reviewed | Title bar button with an `InfoBadge`; a flyout with the states. |
-| `conflict-review` | screen | `screens/conflict-review.md` | reviewed | Changes to Review; page. |
+| `conflict-review` | screen | `screens/conflict-review.md` | reviewed | Changes to review list for entries, templates and unsupported ones; notice; review page; no journal or deletion review. |
 | `entry-conflict` | screen | `screens/entry-conflict.md` | reviewed | Entry and template review page. |
-| `version-history` | screen | `screens/version-history.md` | reviewed | Version history page with side-by-side comparison. |
-| `journal-history` | screen | `screens/journal-history.md` | reviewed | Journal version history page. |
-| `restore-journal` | screen | `screens/restore-journal.md` | reviewed | Restore dialogs; no default button. |
+| `version-history` | screen | `screens/version-history.md` | reviewed | Entry and template version history page with side-by-side comparison. |
 | `messages` | messages | `messages.md` | reviewed | Sync states, save failures, conflicts, unavailable content as `InfoBar`s and dialogs; severity table; announcements. |
 | `create-library` | flow | `flows/create-library.md` | reviewed | Start a Journal, encryption choices. |
 | `import-archive` | flow | `flows/import-archive.md` | draft | File activation, Open picker, preview, restore or add. |
@@ -103,10 +100,10 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | Reconnect. |
 | `stop-syncing` | flow | `flows/stop-syncing.md` | reviewed | Confirmation dialog. |
 | `sync-recovery` | flow | `flows/sync-recovery.md` | reviewed | Triggers: window activation, network change, resume; paces. |
-| `resolve-conflict` | flow | `flows/resolve-conflict.md` | reviewed | What each choice does. |
+| `resolve-conflict` | flow | `flows/resolve-conflict.md` | reviewed | Changes made on two devices: the quiet list, opening a note, the entry and template review route. |
 | `save-failure` | flow | `flows/save-failure.md` | reviewed | Keep Open dialog on close; notices. |
 | `rating-request` | flow | `flows/rating-request.md` | reviewed | `StoreContext` request and the Store-only rule. |
-| `delete-and-restore` | flow | `flows/delete-and-restore.md` | reviewed | Delete, Undo, restore, delete permanently. |
+| `delete-and-restore` | flow | `flows/delete-and-restore.md` | reviewed | Delete, Undo, Restore (one verb, at once), delete permanently. |
 
 ## Reading order for a mapping author
 

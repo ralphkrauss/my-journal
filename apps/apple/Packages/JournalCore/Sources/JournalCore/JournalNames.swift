@@ -154,7 +154,6 @@ extension JournalStore {
             var count = 0
             for renamed in try duplicateJournalRenames(db)
             where try canRenameAutomatically(db, renamed, skippingPending: false) {
-                try keepCurrentVersion(db, recordID: renamed.id)
                 var edited = renamed
                 edited.modifiedAt = Date()
                 _ = try saveCanonical(db, item: edited)
@@ -163,13 +162,6 @@ extension JournalStore {
             return count
         }
     }
-    /// Keeps the stored version in Version History before an automatic change, so the earlier name stays there.
-    private func keepCurrentVersion(_ db: Database, recordID: UUID) throws {
-        try db.execute(
-            sql: "INSERT INTO history(record,kind,payload,saved) SELECT id,kind,payload,? FROM records WHERE id=?",
-            arguments: [JournalCoding.timestamp(Date()), id(recordID)])
-    }
-
     /// An automatic rename to send after synchronizing: the change, and the payload it's based on. Nothing is saved
     /// until the server accepts it (`adoptAutomaticRename`), so a refused or unsent rename leaves nothing behind and
     /// can never become a change to review.
@@ -213,7 +205,6 @@ extension JournalStore {
                 try Bool.fetchOne(
                     db, sql: "SELECT EXISTS(SELECT 1 FROM outbox WHERE record=?)", arguments: [recordID]) == false
             else { return }
-            try keepCurrentVersion(db, recordID: receipt.recordId)
             try db.execute(
                 sql: "UPDATE records SET payload=?,revision=?,dirty=0 WHERE id=?",
                 arguments: [receipt.payload, receipt.revision, recordID])

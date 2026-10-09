@@ -8,14 +8,13 @@ extension View {
     }
 }
 
-/// The deletion is checked first (unsaved writing, changes to review), so the alert only offers what can happen.
+/// The deletion is checked first (unsaved writing, entries with changes to review), so the alert only offers what can happen.
 private struct JournalDeletionPrompt: ViewModifier {
     @EnvironmentObject var model: AppModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var request: UUID?
     @State private var plan: JournalDeletionPlan?
     @State private var operation: Task<Void, Never>?
-    @State private var conflict: DeletionConflict?
 
     func body(content: Content) -> some View {
         content
@@ -43,7 +42,6 @@ private struct JournalDeletionPrompt: ViewModifier {
                             ? "Its entry moves to Recently Deleted."
                             : "Its \(plan.entryIDs.count) entries move to Recently Deleted.")
             }
-            .deletionConflictAlert($conflict)
             .onValueChange(of: model.locked) { locked in
                 if locked {
                     operation?.cancel()
@@ -56,7 +54,7 @@ private struct JournalDeletionPrompt: ViewModifier {
             let prepared = try await model.prepareJournalDeletion(id)
             guard !Task.isCancelled, !model.locked else { return }
             plan = prepared
-        } catch { report(error, title: model.items.first { $0.id == id }?.title ?? "") }
+        } catch { report(error) }
     }
     private func commit(_ plan: JournalDeletionPlan) async {
         defer { model.showInLists(plan.journalID) }
@@ -66,15 +64,11 @@ private struct JournalDeletionPrompt: ViewModifier {
                 model.error =
                     "The journal was deleted, but My Journal couldn’t update the view. Reopen My Journal to continue."
             }
-        } catch { report(error, title: plan.title) }
+        } catch { report(error) }
     }
-    private func report(_ failure: Error, title: String) {
+    private func report(_ failure: Error) {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
         switch failure {
-        case JournalLifecycleError.conflict(let recordID):
-            conflict = DeletionConflict(
-                id: recordID, title: DeletionConflict.alertTitle(kind: "journal", title: title),
-                message: "This journal has changes that need review.")
         case JournalLifecycleError.unsupportedJournal:
             model.error = "Update My Journal to delete this journal."
         case JournalLifecycleError.alreadyDeleted, JournalLifecycleError.missingJournal:

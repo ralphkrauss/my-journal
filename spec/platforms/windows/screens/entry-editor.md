@@ -51,7 +51,7 @@ All are inline, non-modal and not closable ([9.1](../platform.md#91-notices)); e
 | --- | --- | --- | --- | --- |
 | 1 | Save failure | Error | Title `messages.save.notSaved`; while retrying `messages.save.saving` with an indeterminate `ProgressBar` in the content and the action disabled | `ActionButton` `common.tryAgain` |
 | 2 | Writing paused (library being replaced; the entry is read-only meanwhile) | Informational | `messages.writingPaused.connecting` (only after 1 s), `messages.writingPaused.connectionFailed`, `messages.writingPaused.encrypting`, `messages.writingPaused.encryptionUnfinished` | None: Show Connection and Show Progress are not offered because the flow's dialog is modal over the only window |
-| 3 | Recovery or unavailable | Informational (Warning when a journal needs review) | [recently-deleted](recently-deleted.md), [unavailable-content](unavailable-content.md) | As those files |
+| 3 | Recovery or unavailable | Informational | [recently-deleted](recently-deleted.md), [unavailable-content](unavailable-content.md) | As those files |
 | 4 | Conflict | Warning | `messages.conflict.entryNotice`; the entry stays editable | `ActionButton` `common.reviewChanges`: saves the open writing, refreshes, opens the review page ([screens/entry-conflict](../../../screens/entry-conflict.md)) |
 
 At 200% text size or more, a recovery or review bar is capped at half the pane's height and scrolls.
@@ -181,7 +181,7 @@ Sizes are relative to the body size *s* (default 16 epx). The spec's table ([How
 
 ### Empty-body placeholder and the template link
 
-When no template can be used: the control's `PlaceholderText` `editor.body.placeholder`. When one can (the item is an entry, it can be edited, an editable template exists, the body has no characters and no images, whatever the title), `PlaceholderText` is empty and an overlay `TextBlock` shows `editor.body.placeholder.templatePrefix` followed by a template icon (TwoPage E89A) and a `HyperlinkButton` `editor.body.placeholder.templateLink`, laid out exactly where typed text would begin. The text part is not hit-testable (clicks reach the body); the link opens the [template chooser](template-chooser.md) anchored to it. It disappears with the first character and returns when the body is empty again. Narrator reads the link as `library.templateChooser.useTemplate`.
+When no template can be used: the control's `PlaceholderText` `editor.body.placeholder`. When one can (the item is an entry, it can be edited, an editable template exists, the body has no characters and no images, whatever the title), `PlaceholderText` is empty and an overlay `TextBlock` shows `editor.body.placeholder.templatePrefix` followed by a template icon (TwoPage E89A) and a `HyperlinkButton` `editor.body.placeholder.templateLink`, laid out exactly where typed text would begin. The text part is not hit-testable (clicks reach the body); the link opens the [template chooser](template-chooser.md) anchored to it; File ▸ Use a template… opens it too, anchored to the writing area, and is enabled exactly when the link is shown. It disappears with the first character and returns when the body is empty again. Narrator reads the link as `library.templateChooser.useTemplate`.
 
 ### Find bar
 

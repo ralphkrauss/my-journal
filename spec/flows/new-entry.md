@@ -1,7 +1,7 @@
 ---
 id: new-entry
-title: New entry (New Entry, New Blank Entry, from a template)
-features: [new-entry, new-blank-entry, new-entry-from-template, template-suggestion, journal-default-template, default-journal]
+title: New entry (New Entry, then a template if wanted)
+features: [new-entry, template-suggestion, default-journal]
 sources:
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/JournalApp/Model/JournalNavigation.swift
@@ -13,47 +13,43 @@ sources:
   - docs/design/default-journal.md
   - docs/design/new-entry-template-suggestion.md
   - docs/design/template-journal-choice-2026-10-03.md
+  - docs/design/1-1-library-simplifications.md
 ---
 
 # New entry
 
 ## Purpose
 
-Starts writing: one New Entry command everywhere, filed in a predictable journal, optionally from a template.
+Starts writing: one New Entry command everywhere, always an empty entry, filed in a predictable journal. A template is used afterwards, from inside the empty entry.
 
 ## Entry points
 
 | Command | Where | Shortcut |
 | --- | --- | --- |
 | New Entry (`new-entry`) | Mac toolbar; iPhone and iPad bottom bars; File menu; empty list action | ⌘N |
-| New Blank Entry (`new-blank-entry`) | File menu (Mac, iPad) | ⇧⌘N |
-| New Entry from Template… (`new-entry-from-template`) | File menu (Mac, iPad) | — |
-| New Entry In ▸ / New Entry from Template | a template's context menu or Entry Actions ([screens/templates](../screens/templates.md)) | — |
-| use a template | the placeholder of an empty entry ([screens/template-chooser](../screens/template-chooser.md)) | — |
+| Use a Template (`use-a-template`), after New Entry | the placeholder of the empty entry, and File ▸ Use a Template… on a computer and a tablet with a keyboard ([screens/template-chooser](../screens/template-chooser.md)) | — |
 
 ## Steps
 
 1. **Which journal.** The journal whose entries are shown. Anywhere else (All Entries, Templates, Recently Deleted, Unavailable Journals, nothing selected, the iPhone Journals screen) the **Default Journal**: the one chosen in Settings (screens/settings-general), else the oldest journal in use (normally the one created with the library).
 2. **No journal in use:** the toolbar and bottom-bar New Entry opens New Journal ([screens/journals](../screens/journals.md)) and, once it's created, starts the entry there. File ▸ New Entry is disabled in this state.
 3. The open entry is saved first. If that fails, nothing is created and the error alert explains.
-4. **What it contains:**
-   - New Entry: the journal's Default Template's text and formatting, or an empty entry when it has none (or its template is in Recently Deleted).
-   - New Blank Entry: always empty.
-   - From a template: that template's current text.
+4. **What it contains:** nothing; the entry is empty.
 5. **Where it shows:** the list switches to the target journal (closing what was open there), unless All Entries is shown, where the list stays on All Entries with the entry's journal label. The search is cleared. The new entry is dated now, appears at the top of its month, opens, and its title gets keyboard focus. On iPhone the stack becomes [journal, entry], so Back shows where it was filed.
 6. Nothing is announced; there's no message.
+7. **To start from a template**, choose “use a template” in the empty entry (or File ▸ Use a Template…); the template fills that entry ([screens/template-chooser](../screens/template-chooser.md)).
 
 ## States
 
-- **Disabled:** while locked, while the library is being replaced, and (File ▸ New Entry, New Blank Entry, New Entry from Template…) without a journal in use. New Entry from Template… also needs a template. The iPhone and iPad button is also disabled while it's already creating.
+- **Disabled:** while locked, while the library is being replaced, and (File ▸ New Entry) without a journal in use. The iPhone and iPad button is also disabled while it's already creating.
 - **Error:** the general error alert with the error.
 - **Interrupted:** choosing another collection or entry while it's being created cancels showing it; an entry already stored stays.
 
 ## Rules
 
 - An entry is kept once created, even if left empty (owner decision, 30 September 2026); it never disappears on its own.
+- New Entry is predictable: it never depends on a template, a journal setting or what is selected in Templates. (A journal's default template, New Blank Entry and New Entry from Template… of earlier versions are gone; a stored default-template setting from an earlier version is ignored.)
 - The empty entry's placeholder offers “use a template” when templates exist; choosing one fills that entry rather than creating another.
-- New Entry with a template selected in Templates still uses the Default Journal's default template, not the selected one; New Entry In ▸ is the way to use a selected template.
 - Starting an entry ends the iPhone and iPad Journals edit mode.
 
 ## Accessibility

@@ -1,0 +1,228 @@
+{
+  "corpusVersion": 1,
+  "purpose": "Scripted conversations between devices that change the same records offline, with what every device must hold at the end (protocol/conflicts.md, Orchestration). They show that two clients interoperate, which the pure rules alone do not. The steps use only operations every client has; the server is any server that follows the sync contract. See README.md in this folder.",
+  "protection": "encrypted",
+  "vaultKeyFrom": "crypto/encryption-v2.json recovery.vaultKey",
+  "operations": {
+    "createJournal": "record, title",
+    "createEntry": "record, journal, title, text",
+    "editEntry": "record, text",
+    "renameJournal": "record, title",
+    "deleteJournal": "record: the journal and the entries in it go to Recently Deleted",
+    "deleteEntry": "record: to Recently Deleted",
+    "deleteForGood": "record: Delete Permanently (an entry or journal in Recently Deleted; a journal takes its entries with it)",
+    "sync": "device: one synchronization round: send, read every page, settle conflicts, send what that queued",
+    "settleAll": "every device synchronizes in turn, repeatedly, until nothing changes"
+  },
+  "states": {
+    "entry": "live (in a journal in use), recentlyDeleted, unavailable (its journal is gone), permanentlyDeleted",
+    "journal": "live, recentlyDeleted, permanentlyDeleted"
+  },
+  "scenarios": [
+    {
+      "name": "journal-renamed-on-two-devices-a-first",
+      "note": "Both rename offline; A reaches the server first. The name that reached the server last stays on every device; B notes the other.",
+      "devices": ["A", "B"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "work", "title": "Work"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "renameJournal", "record": "work", "title": "Alpha"},
+        {"device": "B", "do": "renameJournal", "record": "work", "title": "Beta"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 1,
+        "records": [{"record": "work", "kind": "journal", "title": "Beta", "state": "live"}],
+        "notes": {"B": ["journalRenamed"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "journal-renamed-on-two-devices-b-first",
+      "note": "The same, with B first: the other name stays.",
+      "devices": ["A", "B"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "work", "title": "Work"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "renameJournal", "record": "work", "title": "Alpha"},
+        {"device": "B", "do": "renameJournal", "record": "work", "title": "Beta"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 1,
+        "records": [{"record": "work", "kind": "journal", "title": "Alpha", "state": "live"}],
+        "notes": {"A": ["journalRenamed"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "journal-renamed-on-one-device-deleted-on-the-other",
+      "note": "Deleted wins, with the name of the device that settled it; its entries are in Recently Deleted with it. The names differ, so the device notes the other name, as it does for any journal that differs in its name.",
+      "devices": ["A", "B"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "work", "title": "Work"},
+        {"device": "A", "do": "createEntry", "record": "notes", "journal": "work", "title": "Notes", "text": "inside"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "renameJournal", "record": "work", "title": "Work, renamed"},
+        {"device": "B", "do": "deleteJournal", "record": "work"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 2,
+        "records": [
+          {"record": "work", "kind": "journal", "title": "Work, renamed", "state": "recentlyDeleted"},
+          {"record": "notes", "kind": "entry", "title": "Notes", "text": "inside", "state": "recentlyDeleted"}
+        ],
+        "notes": {"A": ["journalRenamed"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "entry-edited-on-one-device-deleted-for-good-on-the-other-a-first",
+      "note": "The deletion stays final on every device and the edit is saved separately in Recently Deleted. C only receives.",
+      "devices": ["A", "B", "C"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "draft", "journal": "home", "title": "Draft", "text": "first words"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "B", "do": "deleteForGood", "record": "draft"},
+        {"device": "A", "do": "editEntry", "record": "draft", "text": "words written on A"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 3,
+        "records": [
+          {"record": "home", "kind": "journal", "state": "live"},
+          {"record": "draft", "kind": "entry", "state": "permanentlyDeleted"},
+          {"kind": "entry", "title": "Draft", "text": "words written on A", "state": "recentlyDeleted"}
+        ],
+        "notes": {"B": ["deletedAndChanged"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "entry-edited-on-one-device-deleted-for-good-on-the-other-b-first",
+      "note": "The same with the deletion reaching the server first: the device that edited saves its own edit separately and the result is the same.",
+      "devices": ["A", "B", "C"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "draft", "journal": "home", "title": "Draft", "text": "first words"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "B", "do": "deleteForGood", "record": "draft"},
+        {"device": "A", "do": "editEntry", "record": "draft", "text": "words written on A"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 3,
+        "records": [
+          {"record": "home", "kind": "journal", "state": "live"},
+          {"record": "draft", "kind": "entry", "state": "permanentlyDeleted"},
+          {"kind": "entry", "title": "Draft", "text": "words written on A", "state": "recentlyDeleted"}
+        ],
+        "notes": {"A": ["deletedAndChanged"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "two-edits-and-a-deletion-for-good-on-three-devices",
+      "note": "Each edit is kept once, whichever device settles it, and the deletion stays final.",
+      "devices": ["A", "B", "C"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "draft", "journal": "home", "title": "Draft", "text": "first words"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "B", "do": "deleteForGood", "record": "draft"},
+        {"device": "A", "do": "editEntry", "record": "draft", "text": "words from A"},
+        {"device": "C", "do": "editEntry", "record": "draft", "text": "words from C"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 4,
+        "records": [
+          {"record": "draft", "kind": "entry", "state": "permanentlyDeleted"},
+          {"kind": "entry", "title": "Draft", "text": "words from A", "state": "recentlyDeleted"},
+          {"kind": "entry", "title": "Draft", "text": "words from C", "state": "recentlyDeleted"}
+        ],
+        "notes": {"B": ["deletedAndChanged"], "C": ["deletedAndChanged"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "edit-against-a-deletion-for-good-across-a-page-boundary",
+      "note": "One change per page: settling waits for the last page, so the other version is final.",
+      "devices": ["A", "B"],
+      "pageSize": 1,
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "draft", "journal": "home", "title": "Draft", "text": "first words"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "B", "do": "deleteForGood", "record": "draft"},
+        {"device": "A", "do": "editEntry", "record": "draft", "text": "words written on A"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 3,
+        "records": [
+          {"record": "draft", "kind": "entry", "state": "permanentlyDeleted"},
+          {"kind": "entry", "title": "Draft", "text": "words written on A", "state": "recentlyDeleted"}
+        ],
+        "notes": {"A": ["deletedAndChanged"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "journal-deleted-for-good-while-an-entry-in-it-is-edited",
+      "note": "The journal and its entry are deleted for good on B; A renamed the journal and edited the entry. No journal is made; the edit is saved separately and is unavailable until it is restored into another journal.",
+      "devices": ["A", "B"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "work", "title": "Work"},
+        {"device": "A", "do": "createEntry", "record": "notes", "journal": "work", "title": "Notes", "text": "first words"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "B", "do": "deleteForGood", "record": "work"},
+        {"device": "A", "do": "renameJournal", "record": "work", "title": "Work, renamed"},
+        {"device": "A", "do": "editEntry", "record": "notes", "text": "words written on A"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 3,
+        "records": [
+          {"record": "work", "kind": "journal", "state": "permanentlyDeleted"},
+          {"record": "notes", "kind": "entry", "state": "permanentlyDeleted"},
+          {"kind": "entry", "title": "Notes", "text": "words written on A", "state": "unavailable"}
+        ],
+        "notes": {"A": ["deletedAndChanged", "journalDeleted"]},
+        "reviewRows": 0
+      }
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 A designed set of App Store screenshots for iPhone, iPad and Mac, and an App Preview storyboard for later. Each screenshot is a composed frame: a real capture of the app with seeded sample content, placed in a device frame or as a floating window, on a background that echoes the app icon, with a short headline and a quiet sub-line. Everything here is specified so that another agent can seed the app, capture it and compose the frames with Python and Pillow at the exact App Store sizes.
 
+**Release 1.1 (2026-10-09):** File > New Entry from Template…, New Blank Entry and a journal's default template are gone; the template sheet is File > Use a Template…, opened from an empty entry. Frames and captures made before 1.1 that show the earlier command (Mac 5, the storyboard's template step) are recaptured with the listing screenshots when the owner says they are ready.
+
 **Status (2026-10-06):** a new set for build 17 was captured on 2026-10-06 and is waiting for review: seven frames per platform in `artifacts/app-store-screenshots/build-17/` (not in the repository), described in [Build 17 set](#build-17-set). The set in [screenshots/](screenshots/), made on 2026-09-28, stays in place until the new one has been reviewed. The visual style, sizes, positions, fonts and icon are the same as in the 2026-09-28 set; the screens, the sample content, the captions and the upload order changed.
 
 ## Apple's requirements
@@ -77,7 +79,7 @@ Captured on 2026-10-06 from the build 17 tree (commit 1367a1b plus the harness c
 | 3 (`06`) | Dark, "Porto, day two" | Dark, three columns, "Porto, day two" | Dark Mac, iPad and iPhone on "Porto, day two" |
 | 4 | `02`: Settings > Privacy, Require Face ID on | `02`: the same over the three columns | `04-mac`: dark main window, the agent's page (Writing Assistant reading Personal and Work, Travel off, the read-only note) and the answer card |
 | 5 | `04`: Personal with "Books for the autumn" pinned, search field shown, keyboard hidden | `04`: Version History of "Bread, attempt four" over the Pinned list | `02`: Settings > Privacy, Require Touch ID on, Lock when inactive: For 30 minutes |
-| 6 (`05`) | Journals list: All Entries, Personal, Work, Travel, Templates | Work with "Offsite ideas" pinned and its table | Work with "Offsite ideas" and New Entry from Template… listing the five seeded templates |
+| 6 (`05`) | Journals list: All Entries, Personal, Work, Travel, Templates | Work with "Offsite ideas" pinned and its table | Work with "Offsite ideas" and File > Use a Template… listing the five seeded templates, opened in a new empty entry |
 | 7 (`07`) | Settings > Backup: Archive and Markdown | The same over the three columns | Main window and Settings > Backup |
 
 No frame shows a loopback address, Use This Mac or a server running on the Mac. The only address shown is `https://journal.example.net` (Mac 3, and the spare `04-settings-agents-dark`).
@@ -228,7 +230,7 @@ Common setup for all captures: English (U.S.), region United States, 12-hour tim
 | 2 | Composite: main window + Settings > Privacy | App Lock on: Require Touch ID (Require Login Password on a Mac without Touch ID), Lock when inactive: For 30 minutes, Lock My Journal. | `02-settings-privacy-light` |
 | 3 | Composite: main window + Settings > Sync + iPhone | Settings > Sync connected to the frame 4 server under its public address `https://journal.example.net`: the address, Last Synced, Sync Now and Stop Syncing… ([How Mac frame 3 shows a public address](#how-mac-frame-3-shows-a-public-address)). The iPhone shows the Personal list with the Pinned section. | `03-settings-sync-light`, iPhone `03-personal-list-light` |
 | 4 | Composite, dark: main window + the agent's page in Agent Access + callout card | Agent Access on a disposable server set up as "MacBook Pro": the page of "Writing Assistant", allowed to read Personal and Work and used once. | `04-main-dark`, `04-agent-detail-dark`, `04-settings-agents-dark` (spare) |
-| 5 | Composite: main window with Work > "Offsite ideas" + New Entry from Template… sheet | The sheet lists the five seeded templates. | `05-main-light`, `05-sheet-light` |
+| 5 | Composite: main window with an empty entry in Work + File > Use a Template… sheet | The sheet lists the five seeded templates. The entry is empty, so "use a template" shows. | `05-main-light`, `05-sheet-light` |
 | 6 | Composite, dark: Mac, iPad and iPhone | All on Travel > "Porto, day two". | `06-main-dark`, iPad and iPhone `06-dark` |
 | 7 | Composite: main window + Settings > Backup | As Mac 2, with the Backup pane. | `07-settings-backup-light` |
 
@@ -243,7 +245,7 @@ Synthetic and written for this set. It must not contain real people's data, test
 - Encrypted library. Use a generated test master password stored only in the seeding script's local, untracked configuration (never commit it, never type it into the chat).
 - Journals, in this order: **Personal**, **Work**, **Travel**. The order isn't alphabetical, which shows that journals keep the order you choose; the seed sets it explicitly.
 - Pinned: "Books for the autumn" in Personal and "Offsite ideas" in Work.
-- Default templates: Personal → Daily Reflection; Work → Workday Log; Travel → none.
+- Journals have no default templates (a journal's default template is gone in 1.1); an entry is started from a template inside a new entry.
 - New libraries have no templates ([no-built-in-templates-2026-10-04.md](../design/no-built-in-templates-2026-10-04.md)). The seeded library has five of the person's own: Daily Reflection, Gratitude, Workday Log and Weekly Reflection, with the questions earlier builds included, and **Book Notes**:
 
 ```markdown
@@ -576,7 +578,7 @@ Differences from the plan above, for review:
 - **Mac 2.** Unlock with Touch ID is off: the capture Mac had no Touch ID available.
 - **Mac 3** shows Settings > Sync before a server is chosen (Use This Mac…, Connect to a Server…) rather than a running local server, with the iPhone's Personal list. Use This Mac was removed on 2026-10-05; the build 17 set shows Sync connected to a server instead.
 - **Mac 4.** The agent requests went through the app's real bridge with the connector's own client code, from inside the test rather than a separate connector process. The answer on the card was written by the AI agent that made the captures, from what those requests returned; the transcript is in `design/screenshots/raw/mac/agent-transcript.json`. Recent Activity shows the capture time.
-- **Mac 5** shows New Entry from Template… attached to the window, as macOS shows a sheet, instead of a separate front element.
+- **Mac 5** shows the template sheet (File > Use a Template…; named New Entry from Template… in versions before 1.1) attached to the window, as macOS shows a sheet, instead of a separate front element.
 
 ## App Preview storyboard (later)
 
@@ -588,7 +590,7 @@ iPhone and iPad (about 24 seconds, same seeded library):
 | --- | --- | --- |
 | 0–4 s | "Slow Sunday" in the editor. Type "- " at the start of a line; it becomes a list item. Type "Bake bread". | A calm place to write |
 | 4–8 s | Insert Image, pick `loaf.jpg`; it appears in the entry. | |
-| 8–12 s | Back to Journals, choose Work, then New Entry; Work's default template, Workday Log, fills it with its headings. | Separate journals, your own templates |
+| 8–12 s | Back to Journals, choose Work, then New Entry; choose use a template and pick Workday Log, which fills the entry with its headings. | Separate journals, your own templates |
 | 12–15 s | Search "walk"; four results. | |
 | 15–20 s | Settings > Privacy: Your Journals Are Encrypted. Lock My Journal, unlock with Face ID. | Encrypted by default |
 | 20–24 s | Settings > Devices: MacBook Pro, iPad, iPhone. End on the Personal list. | Sync through your own server |

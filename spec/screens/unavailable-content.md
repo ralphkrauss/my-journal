@@ -81,22 +81,21 @@ Nothing is written to the library in any of these states.
 | --- | --- | --- |
 | An entry or template | Opens read-only: the editor can't be edited and its actions are limited; a note under the title | `messages.error.unsupportedFormat` ("Update My Journal to edit this entry.") |
 | An entry whose Markdown can only be shown as source | Opens in source; View Preview is dimmed with a help tag | `messages.unavailable.markdownSource`, `common.previewUnavailable` |
-| A journal | Left out of the Journals list; its entries are listed in Unavailable Journals | `common.updateToRestoreEntry` on each entry |
+| A journal, or a change to it from another device that a newer version wrote and that stays held | Left out of the Journals list; its entries are listed in Unavailable Journals | `common.updateToRestoreEntry` on each entry; a held change adds `messages.conflict.kept.updateNeeded` to the Settings ▸ Sync footer |
 | A journal in Recently Deleted | Shown without Restore; Export Archive… is offered | `messages.unavailable.restoreJournalNeedsUpdate` |
 | Pins and journal order | Kept as they are; changes are refused | `messages.library.needsUpdate` in Settings ▸ Sync; pinning, unpinning and moving a journal show `messages.library.needsUpdate` in the error alert |
-| A version in a conflict | The review can't be completed | `messages.conflict.updateToReview` (see [conflict-review.md](conflict-review.md)) |
+| A version of an entry or template in a conflict | The review can't be completed | `messages.conflict.updateToReview` (see [conflict-review.md](conflict-review.md)) |
 | The server, or content arriving by sync | Sync stops | `messages.sync.appUpdateNeeded` |
 | An archive to import into a device with journals | Refused | `messages.import.archiveNeedsUpdate` |
 | Merging this device's journals while connecting | Refused | `messages.import.mergeNeedsUpdate` |
-| Operations on such content | Refused with an update message | `messages.lifecycle.unsupportedJournal`, `messages.merge.newerVersion`, `messages.generic.journalDeleteNeedsUpdate`, `messages.generic.deleteNeedsUpdate` |
+| Operations on such content | Refused with an update message | `messages.lifecycle.unsupportedJournal`, `messages.generic.journalDeleteNeedsUpdate`, `messages.generic.deleteNeedsUpdate` |
 
 ### Unavailable Journals
 
 A sidebar row `common.unavailableJournals` (symbol: a folder with an exclamation mark), after Templates and Recently Deleted. It appears only while at least one entry is unavailable, or while it is open. It lists entries whose journal:
 
 - is **missing** on this device (not synced yet, or removed by an earlier version);
-- was saved by a **newer version**;
-- has **changes to review**.
+- was saved by a **newer version**, or has a change from another device that a newer version wrote and that stays held (a journal never has changes to review of its own: the device settles them, [flows/resolve-conflict.md](../flows/resolve-conflict.md)).
 
 The list title is `common.unavailableJournals`; its search field says `common.searchUnavailableEntries`; when empty it shows `messages.unavailable.empty`. Pinned entries aren't grouped at the top here.
 
@@ -104,12 +103,12 @@ An unavailable entry opens read-only with a notice above the title, by reason:
 
 | Reason | Notice | Action |
 | --- | --- | --- |
-| Missing, while syncing with a server | `common.journalNotArrived` | `common.trySyncingAgain` (a sync that also resends refused items) |
-| Missing, without a server | `common.journalUnavailableEntrySaved` | Restore and Move… when the entry was deleted with its journal by an earlier version |
-| Newer version | `common.updateToRestoreEntry` | none |
-| Journal has changes to review | `common.journalNeedsReview` | `common.reviewChanges` (the journal's review) |
+| Missing, while syncing with a server | `common.journalNotArrived` | `common.trySyncingAgain` (a sync that also resends refused items); `library.recentlyDeleted.restoreTo` when the entry itself is deleted |
+| Missing, without a server | `common.journalUnavailableEntrySaved` | `library.recentlyDeleted.restoreTo` when the entry itself is deleted |
+| Newer version, or a held change | `common.updateToRestoreEntry` | none |
+| No journal in use at all, and the entry itself is deleted | `library.recoveryNotice.createJournalFirst` | none |
 
-When the journal arrives or its changes are reviewed, the entry returns to its journal; if it is open, the list follows it there.
+Restore to “{name}” puts the entry in the Default Journal at once; it is decided when it is chosen ([flows/delete-and-restore.md](../flows/delete-and-restore.md), Restore), because a journal that merely hasn't arrived may still come. An entry that is not itself deleted has nothing to restore. When the journal arrives or the app is updated, the entry returns to its journal; if it is open, the list follows it there.
 
 ### Privacy cover
 
@@ -127,8 +126,7 @@ While App Lock is on and the app isn't active, a plain cover in the system backg
 | Learn More | `open-library-guide` | Opens the troubleshooting guide on the web. It needs a connection; the screen's text stands on its own without one. |
 | Unlock with the credential | `unlock-with-credential` | Reads the key from the master password or recovery key, saves it to the secure store, and opens the library (missing-key lock screen). |
 | Try Syncing Again | `try-syncing-again` | Runs a sync now, also resending refused items. |
-| Restore and Move… | `restore-and-move` | Opens Move Entry to put the entry in an available journal. |
-| Review Changes | `review-changes` | Opens the journal's review. |
+| Restore, Restore to “{name}” | `restore` | Restores the entry at once ([flows/delete-and-restore.md](../flows/delete-and-restore.md), Restore). |
 | Export Archive… | `export-archive` | Exports everything, including content this version can't read, losslessly. |
 
 ## States

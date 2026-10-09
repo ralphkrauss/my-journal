@@ -8,8 +8,9 @@ import XCTest
     import UIKit
 #endif
 
-/// “Use a Template…” in an empty entry and New Entry from Template on the Templates screen
-/// (docs/design/new-entry-template-suggestion.md). A template must never replace writing.
+/// “Use a Template…” in an empty entry, from the link and from File ▸ Use a Template…
+/// (docs/design/new-entry-template-suggestion.md, docs/design/1-1-library-simplifications.md, M). A template must
+/// never replace writing, and choosing one never creates an entry.
 @MainActor
 final class TemplateSuggestionTests: XCTestCase {
     func testTheLinkShowsWithTheBodyPlaceholder() {
@@ -45,11 +46,12 @@ final class TemplateSuggestionTests: XCTestCase {
 
     func testChoosingATemplateFillsTheEmptyNewEntryInPlace() async throws {
         let (model, store) = try await startedModel()
-        await model.newEntry(blank: true)
+        await model.newEntry()
         let entry = try XCTUnwrap(model.draft)
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(template: template)
+        let result = await model.useTemplate(template, in: entry.id)
+        XCTAssertEqual(result, .filled)
         XCTAssertEqual(model.draft?.id, entry.id, "The same entry stays open")
         XCTAssertEqual(model.draft?.document.markdown, template.document.markdown)
         let stored = try await entries(in: store)
@@ -58,14 +60,15 @@ final class TemplateSuggestionTests: XCTestCase {
 
     func testATypedTitleIsKeptWhenTheBodyIsFilled() async throws {
         let (model, store) = try await startedModel()
-        await model.newEntry(blank: true)
+        await model.newEntry()
         var titled = try XCTUnwrap(model.draft)
         titled.title = "Morning"
         model.updateDraft(titled)
         _ = await model.finishPendingSave()
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(template: template)
+        let result = await model.useTemplate(template, in: titled.id)
+        XCTAssertEqual(result, .filled)
         XCTAssertEqual(model.draft?.id, titled.id)
         XCTAssertEqual(model.draft?.title, "Morning")
         XCTAssertEqual(model.draft?.document.markdown, template.document.markdown)
@@ -75,12 +78,13 @@ final class TemplateSuggestionTests: XCTestCase {
 
     func testWhitespaceIsNothingToLoseSoTheEntryIsFilledInPlace() async throws {
         let (model, store) = try await startedModel()
-        await model.newEntry(blank: true)
+        await model.newEntry()
         try await type(" \n", into: model)
         let entry = try XCTUnwrap(model.draft)
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(template: template)
+        let result = await model.useTemplate(template, in: entry.id)
+        XCTAssertEqual(result, .filled)
         XCTAssertEqual(model.draft?.id, entry.id)
         XCTAssertEqual(model.draft?.document.markdown, template.document.markdown)
         let stored = try await entries(in: store)
@@ -89,7 +93,7 @@ final class TemplateSuggestionTests: XCTestCase {
 
     func testAnEmptiedOlderEntryIsFilledInPlaceAndKeepsItsDate() async throws {
         let (model, store) = try await startedModel()
-        await model.newEntry(blank: true)
+        await model.newEntry()
         try await type("Written, then removed", into: model)
         let id = try XCTUnwrap(model.draft?.id)
         await model.select(nil)
@@ -99,7 +103,8 @@ final class TemplateSuggestionTests: XCTestCase {
         XCTAssertEqual(model.templateSuggestion(for: emptied), .useTemplate)
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(template: template)
+        let result = await model.useTemplate(template, in: id)
+        XCTAssertEqual(result, .filled)
         XCTAssertEqual(model.draft?.id, id)
         XCTAssertEqual(model.draft?.date, emptied.date)
         XCTAssertEqual(model.draft?.document.markdown, template.document.markdown)
@@ -107,78 +112,94 @@ final class TemplateSuggestionTests: XCTestCase {
         XCTAssertEqual(stored.count, 1)
     }
 
-    func testWritingBeforeTheChoiceIsKeptAndTheTemplateGoesToANewEntry() async throws {
+    /// Choosing after the entry gained text changes nothing, creates nothing, and says why in the alert.
+    func testWritingBeforeTheChoiceIsKeptAndNothingIsCreated() async throws {
         let (model, store) = try await startedModel()
-        await model.newEntry(blank: true)
+        await model.newEntry()
         var written = try XCTUnwrap(model.draft)
         written.document = .plain("Already started")
         model.updateDraft(written)
         _ = await model.finishPendingSave()
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(template: template)
+        let result = await model.useTemplate(template, in: written.id)
+        XCTAssertEqual(result, .entryChanged)
+        XCTAssertEqual(model.error, "This entry changed, so the template wasn’t added.")
         let stored = try await entries(in: store)
-        XCTAssertEqual(stored.count, 2)
-        XCTAssertEqual(stored.first { $0.id == written.id }?.document.text, "Already started")
-        XCTAssertNotEqual(model.draft?.id, written.id)
+        XCTAssertEqual(stored.map(\.id), [written.id], "No second entry")
+        XCTAssertEqual(stored.first?.document.text, "Already started")
+        XCTAssertEqual(model.draft?.id, written.id)
     }
 
-    func testAChangeSyncedBeforeTheChoiceIsLeftAloneAndTheTemplateGoesToANewEntry() async throws {
+    func testAChangeSyncedBeforeTheChoiceIsLeftAloneAndNothingIsCreated() async throws {
         let (model, store) = try await startedModel()
-        await model.newEntry(blank: true)
+        await model.newEntry()
         let entry = try XCTUnwrap(model.draft)
         // The open draft still looks untouched; only the store has the other device's text.
         try await arrive("Written on the iPhone", in: entry.id, model: model, store: store)
         let template = try XCTUnwrap(model.templates.first)
 
-        await model.newEntry(template: template)
+        let result = await model.useTemplate(template, in: entry.id)
+        XCTAssertEqual(result, .entryChanged)
+        XCTAssertEqual(model.error, "This entry changed, so the template wasn’t added.")
         let stored = try await entries(in: store)
-        XCTAssertEqual(stored.count, 2)
+        XCTAssertEqual(stored.count, 1)
         XCTAssertEqual(stored.first { $0.id == entry.id }?.document.text, "Written on the iPhone")
-        XCTAssertNotEqual(model.draft?.id, entry.id)
         let conflicts = try await store.conflicts()
         XCTAssertTrue(conflicts.isEmpty)
     }
 
-    /// From the Templates list, the entry goes to the journal chosen in New Entry In ▸, not to the Default Journal
-    /// (template-journal-choice-2026-10-03.md), with the template as it was just written, and opens there.
-    func testAnEntryStartedFromTheTemplatesScreenGoesToTheChosenJournal() async throws {
+    /// An entry that was closed meanwhile is left alone: the chooser just closes, with nothing to say.
+    func testChoosingForAnEntryThatIsNoLongerOpenChangesNothingAndSaysNothing() async throws {
         let (model, store) = try await startedModel()
-        await model.createJournal("Work")
-        let work = try XCTUnwrap(model.journals.first { $0.title == "Work" })
-        let other = try XCTUnwrap(model.journals.first { $0.id != work.id })
-        model.chooseDefaultJournal(other.id)
-        await model.showCollection(templates: true)
-        var template = try XCTUnwrap(model.templates.first)
-        await model.select(template.id)
-        template.document = .plain("Edited just now")
-        model.updateDraft(template)
-
-        await model.newEntry(fromTemplate: template.id, in: work.id)
-        XCTAssertFalse(model.showingTemplates, "Templates is left")
-        XCTAssertEqual(model.selectedJournalID, work.id, "The list shows the chosen journal")
+        await model.newEntry()
         let entry = try XCTUnwrap(model.draft)
-        XCTAssertEqual(entry.kind, "entry", "The new entry is open")
-        XCTAssertEqual(entry.journalID, work.id)
-        XCTAssertEqual(entry.document.text, "Edited just now", "The template as it was just written")
+        let template = try XCTUnwrap(model.templates.first)
+        await model.select(nil)
+
+        let result = await model.useTemplate(template, in: entry.id)
+        XCTAssertEqual(result, .entryClosed)
+        XCTAssertNil(model.error)
         let stored = try await entries(in: store)
-        XCTAssertEqual(stored.count, 1)
+        XCTAssertEqual(stored.map(\.id), [entry.id])
+        XCTAssertEqual(stored.first?.document.text, "")
     }
 
-    /// A journal that went away while choosing gets nothing, and the message names it.
-    func testAChosenJournalThatIsNoLongerInUseGetsNoEntry() async throws {
-        let (model, store) = try await startedModel()
-        await model.createJournal("Work")
-        let work = try XCTUnwrap(model.journals.first { $0.title == "Work" })
-        let plan = try await model.prepareJournalDeletion(work.id)
-        _ = try await model.deleteJournal(plan)
-        await model.showCollection(templates: true)
-        let template = try XCTUnwrap(model.templates.first)
+    /// File ▸ Use a Template… is enabled exactly when the link in the empty entry is shown.
+    func testTheMenuCommandFollowsTheLink() async throws {
+        let (model, _) = try await startedModel()
+        XCTAssertFalse(model.canUseTemplate, "No entry is open")
+        await model.newEntry()
+        XCTAssertTrue(model.canUseTemplate)
+        XCTAssertEqual(model.templateSuggestion(for: try XCTUnwrap(model.draft)), .useTemplate)
+        try await type("Started", into: model)
+        XCTAssertFalse(model.canUseTemplate)
+        XCTAssertEqual(model.templateSuggestion(for: try XCTUnwrap(model.draft)), .hidden)
+    }
 
-        await model.newEntry(fromTemplate: template.id, in: work.id)
-        XCTAssertEqual(model.error, "“Work” is no longer available.")
-        let stored = try await entries(in: store)
-        XCTAssertTrue(stored.isEmpty)
+    /// A journal written by 1.0 may name a default template. New Entry ignores it and every journal write keeps it,
+    /// so a 1.0 device on the same library still has its setting.
+    func testNewEntryIgnoresAJournalsStoredDefaultTemplateAndRenamingKeepsIt() async throws {
+        let (model, store) = try await startedModel()
+        let template = try XCTUnwrap(model.templates.first)
+        let journalID = try XCTUnwrap(model.selectedJournalID)
+        let storedJournal = try await store.item(journalID)
+        var journal = try XCTUnwrap(storedJournal)
+        journal.defaultTemplateID = template.id
+        try await store.save(journal)
+        try await model.refresh()
+
+        await model.newEntry()
+        let entry = try XCTUnwrap(model.draft)
+        XCTAssertEqual(entry.journalID, journalID)
+        XCTAssertEqual(entry.document.text, "", "The entry is empty, not the template")
+        XCTAssertTrue(model.canUseTemplate, "The template is one tap away in the entry")
+
+        model.changeJournal(journalID, name: "Renamed")
+        await model.journalEditTask?.value
+        let renamed = try await store.item(journalID)
+        XCTAssertEqual(renamed?.title, "Renamed")
+        XCTAssertEqual(renamed?.defaultTemplateID, template.id)
     }
 
     // MARK: Support
@@ -256,15 +277,5 @@ final class TemplateSuggestionTests: XCTestCase {
             cursor: revision, recordId: id, revision: revision, kind: "entry", payload: sealed.base64EncodedString(),
             deviceId: UUID(), modifiedAt: Date())
         try await store.apply([change], cursor: revision)
-    }
-
-    /// File ▸ New Entry from Template… asks for a journal unless one is on screen. In stacked navigation (an iPad in a
-    /// narrow window) the Journals screen shows none, though the last journal opened is still the destination.
-    func testTheTemplateSheetAsksForAJournalOnTheJournalsScreen() {
-        let journal = JournalDestination.journal(UUID())
-        XCTAssertTrue(RootView.showsJournal(destination: journal, stacked: false, path: []))
-        XCTAssertFalse(RootView.showsJournal(destination: journal, stacked: true, path: []), "the Journals screen")
-        XCTAssertTrue(RootView.showsJournal(destination: journal, stacked: true, path: [.collection(journal)]))
-        XCTAssertFalse(RootView.showsJournal(destination: .all, stacked: false, path: []))
     }
 }

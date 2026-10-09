@@ -154,20 +154,25 @@ extension Probe {
             throw ProbeFailure("an agent reads entries of journals it wasn't given: \(before)")
         }
 
-        _ = try await store.mergeJournal(travel.id, into: kept.id)
-        _ = try await store.mergeJournal(notes.id, into: kept.id)
+        // Combining two journals is moving their entries one at a time and deleting what is left.
+        for entry in [harbour, idea] {
+            _ = try await store.moveEntry(entry.id, to: kept.id)
+        }
+        for journal in [travel, notes] {
+            _ = try await store.deleteJournal(try await store.prepareJournalDeletion(journal.id))
+        }
         try await device.publish()
         let gained = try await readsDefault.callTool("search_entries", [:])
         let lost = try await readsNotes.callTool("search_entries", [:])
         let everything = try await allJournals.callTool("search_entries", [:])
         guard gained.contains("Boats in the harbour"), gained.contains("A reading lamp") else {
-            throw ProbeFailure("entries merged into a journal an agent reads aren't in its copy: \(gained)")
+            throw ProbeFailure("entries moved into a journal an agent reads aren't in its copy: \(gained)")
         }
         guard !lost.contains("A reading lamp") else {
-            throw ProbeFailure("entries merged out of a journal an agent reads are still in its copy: \(lost)")
+            throw ProbeFailure("entries moved out of a journal an agent reads are still in its copy: \(lost)")
         }
         guard everything.contains("Boats in the harbour"), everything.contains("A reading lamp") else {
-            throw ProbeFailure("an agent with All Journals lost merged entries: \(everything)")
+            throw ProbeFailure("an agent with All Journals lost moved entries: \(everything)")
         }
         print("PASS: merged entries enter the copy of an agent reading the destination and leave the others'")
     }

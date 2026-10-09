@@ -1,39 +1,35 @@
 import JournalCore
 import SwiftUI
 
-/// Where a reused chooser (the Mac's “Use a Template…” popover) creates the entry, and when it starts afresh.
+/// The entry a reused chooser (the Mac's “Use a Template…” popover) fills, and when it starts afresh.
 @MainActor final class TemplateChooserPresentation: ObservableObject {
-    /// The journal the new entry goes to, set each time the chooser opens.
-    var journalID: UUID?
+    /// The entry open when the chooser opened, set each time it opens.
+    var entryID: UUID?
     /// Changes after the chooser closed, so it opens next time without the previous search or highlight.
     @Published private(set) var generation = 0
     func reset() { generation += 1 }
 }
 
+/// The chooser for the “use a template” link in an empty entry and for File ▸ Use a Template…. A choice fills the
+/// entry that was open when the chooser opened; it never creates an entry.
 struct TemplateChooserView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
-    @State private var initialJournalID: UUID?
+    @State private var initialEntryID: UUID?
     let anchored: Bool
-    /// File ▸ New Entry from Template… outside a journal: the sheet asks which journal, with two or more in use
-    /// (template-journal-choice-2026-10-03.md). The "use a template" chooser never does.
-    /// Decided when the sheet opens: a failed attempt that moved the destination doesn't take the picker away.
-    @State private var choosesJournal: Bool
-    @State private var pickedJournalID: UUID?
     /// Closes an AppKit popover, which `dismiss` doesn't reach (the Mac's “Use a Template…”).
     private let closePresentation: (() -> Void)?
     @ObservedObject private var presentation: TemplateChooserPresentation
     init(
-        journalID: UUID?, anchored: Bool = false, choosesJournal: Bool = false, close: (() -> Void)? = nil,
+        entryID: UUID?, anchored: Bool = false, close: (() -> Void)? = nil,
         presentation: TemplateChooserPresentation? = nil
     ) {
-        _initialJournalID = State(initialValue: journalID)
+        _initialEntryID = State(initialValue: entryID)
         self.anchored = anchored
-        _choosesJournal = State(initialValue: choosesJournal)
         closePresentation = close
         _presentation = ObservedObject(wrappedValue: presentation ?? TemplateChooserPresentation())
     }
-    private var journalID: UUID? { presentation.journalID ?? initialJournalID }
+    private var entryID: UUID? { presentation.entryID ?? initialEntryID }
     @State private var selected: UUID?
     @State private var search = ""
     @State private var busy = false
@@ -69,15 +65,9 @@ struct TemplateChooserView: View {
             chooser
         #endif
     }
-    /// Whether the Journal row shows: chosen by the command, with two or more journals in use.
-    private var showsJournalPicker: Bool { choosesJournal && model.journals.count > 1 }
     private var chooser: some View {
         VStack(spacing: 0) {
             #if os(macOS)
-                if showsJournalPicker {
-                    journalPicker.padding(.horizontal, 12).frame(height: 40)
-                    Divider()
-                }
                 searchField.frame(height: 44).padding(.horizontal, 8)
                 Divider()
                 templateList
@@ -88,7 +78,7 @@ struct TemplateChooserView: View {
             if busy { ProgressView().padding(8) }
             #if os(macOS)
                 if !anchored {
-                    // File ▸ New Entry from Template… opens a sheet, which needs a way out; Escape works too.
+                    // File ▸ Use a Template… opens a sheet, which needs a way out; Escape works too.
                     Divider()
                     HStack {
                         Spacer()
@@ -116,11 +106,8 @@ struct TemplateChooserView: View {
             }
         }
         .interactiveDismissDisabled(busy)
-        .onAppear {
-            if pickedJournalID == nil { pickedJournalID = (model.lastOpenedJournal ?? model.defaultJournal)?.id }
-        }
         #if os(macOS)
-            .frame(width: 320, height: anchored ? 300 : (showsJournalPicker ? 393 : 352))
+            .frame(width: 320, height: anchored ? 300 : 352)
         #else
             // The popover's usual height, which shrinks rather than clipping the search field when the keyboard
             // leaves less room.
@@ -131,45 +118,11 @@ struct TemplateChooserView: View {
     private var searchField: some View {
         TemplateSearchField(text: $search, move: moveSelection, submit: create, cancel: close)
     }
-    /// Where the entry goes, before the template is chosen: like Settings ▸ Default Journal, and the Save panel's
-    /// "Where:" on the Mac.
-    private var journalPicker: some View {
-        Picker(selection: $pickedJournalID) {
-            ForEach(model.journals) { journal in
-                Text(JournalNames.displayName(journal.title)).tag(Optional(journal.id))
-            }
-            // A journal that went away stays picked until a template is chosen, so a quick Return can't misfile.
-            if let picked = pickedJournalID, !model.journals.contains(where: { $0.id == picked }) {
-                Text(missingJournalName(picked)).tag(Optional(picked))
-            }
-        } label: {
-            #if os(macOS)
-                Text("Journal:").accessibilityLabel("Journal")
-            #else
-                Text("Journal")
-            #endif
-        }
-        .pickerStyle(.menu)
-        .accessibilityIdentifier("Template journal")
-    }
-    private func missingJournalName(_ id: UUID) -> String {
-        model.items.first { $0.id == id }.map { JournalNames.displayName($0.title) } ?? "Untitled Journal"
-    }
     #if os(iOS)
         /// The search field stays above the list as it scrolls, like a search bar in a navigation bar. Dragging the
         /// list down into the keyboard hides it, to see more templates.
         @ViewBuilder private func pinningSearchField(to results: some View) -> some View {
-            let field = VStack(spacing: 4) {
-                if showsJournalPicker {
-                    LabeledContent {
-                        journalPicker.labelsHidden()
-                    } label: {
-                        Text("Journal")
-                    }
-                    .padding(.horizontal, 12).frame(minHeight: 44)
-                }
-                searchField
-            }.padding(.horizontal, 8)
+            let field = searchField.padding(.horizontal, 8)
             let list = results.scrollDismissesKeyboard(.interactively)
             if #available(iOS 26.0, *) {
                 list.safeAreaBar(edge: .top) { field }
@@ -240,37 +193,18 @@ struct TemplateChooserView: View {
     }
     private func create() {
         guard !busy, filtered.contains(where: { $0.id == selected }) else { return }
-        var chosen: JournalItem?
-        if showsJournalPicker {
-            guard let picked = model.journals.first(where: { $0.id == pickedJournalID }) else {
-                error =
-                    "“\(pickedJournalID.map(missingJournalName) ?? "Untitled Journal")” is no longer available. Choose another journal."
-                pickedJournalID = model.defaultJournal?.id
-                return
-            }
-            chosen = picked
-        } else {
-            guard journalID == model.newEntryJournal?.id, model.journals.contains(where: { $0.id == journalID }) else {
-                error = "This journal is no longer available. Close this and choose a journal."
-                return
-            }
-        }
         guard let template = model.templates.first(where: { $0.id == selected }) else {
             error = "This template is no longer available. Choose another template."
             return
         }
         busy = true
         Task {
-            // Fills the open untouched entry only when it's in the picked journal.
-            await model.newEntry(template: template, in: chosen)
-            if let failure = model.error {
-                busy = false
-                error = failure
-            } else {
-                // Still busy as it closes: the search field, enabled again, brought its keyboard back, and the sheet
-                // rose with it for a moment before closing.
-                finish()
-            }
+            // Fills the entry that was open only while it is still empty. One that changed says so in the alert, and
+            // one that was closed is left; either way the chooser has nothing more to offer.
+            _ = await model.useTemplate(template, in: entryID)
+            // Still busy as it closes: the search field, enabled again, brought its keyboard back, and the sheet
+            // rose with it for a moment before closing.
+            finish()
         }
     }
 }

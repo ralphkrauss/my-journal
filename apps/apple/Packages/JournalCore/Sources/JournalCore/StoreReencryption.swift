@@ -237,7 +237,7 @@ final class Reencryption {
             case .restart: try restart(db)
             case .reconcile: try reconcile(db)
             }
-            try sealLibraryChanges(db)
+            try sealLocalSettings(db)
             try db.execute(
                 sql: "UPDATE settings SET value = ? WHERE key = 'content-protection'",
                 arguments: [ContentProtection.encrypted.rawValue])
@@ -302,23 +302,30 @@ final class Reencryption {
         try db.execute(sql: "UPDATE attachments SET uploaded = 2 WHERE uploaded = 1")
     }
 
-    /// Seals the library record's unsent changes (`library-changes`), which are a setting rather than a record. A value
-    /// that can't be read was of no use to this library either and is left out.
-    private func sealLibraryChanges(_ db: Database) throws {
-        guard
-            let stored = try Data.fetchOne(
-                db, sql: "SELECT value FROM settings WHERE key = ?", arguments: [LibraryChanges.setting])
+    /// Seals the settings that are stored under the library key rather than as records: the library record's unsent
+    /// changes (`library-changes`) and the notes about changes settled on two devices (`kept-notes`). A value that
+    /// can't be read was of no use to this library either and is left out.
+    private func sealLocalSettings(_ db: Database) throws {
+        try sealSetting(db, name: LibraryChanges.setting, context: LibraryChanges.context) {
+            (try? JournalCoding.decoder().decode(LibraryChanges.self, from: $0)) != nil
+        }
+        try sealSetting(db, name: KeptNotesState.setting, context: KeptNotesState.context) {
+            (try? JournalCoding.decoder().decode(KeptNotesState.self, from: $0)) != nil
+        }
+    }
+    private func sealSetting(_ db: Database, name: String, context: String, isReadable: (Data) -> Bool) throws {
+        guard let stored = try Data.fetchOne(db, sql: "SELECT value FROM settings WHERE key = ?", arguments: [name])
         else { return }
         guard let text = String(data: stored, encoding: .utf8), let readable = Data(base64Encoded: text),
-            (try? JournalCoding.decoder().decode(LibraryChanges.self, from: readable)) != nil
+            isReadable(readable)
         else {
-            try db.execute(sql: "DELETE FROM settings WHERE key = ?", arguments: [LibraryChanges.setting])
+            try db.execute(sql: "DELETE FROM settings WHERE key = ?", arguments: [name])
             return
         }
-        let sealed = try VaultCrypto.seal(readable, key: key, context: LibraryChanges.context)
+        let sealed = try VaultCrypto.seal(readable, key: key, context: context)
         try db.execute(
             sql: "UPDATE settings SET value = ? WHERE key = ?",
-            arguments: [Data(sealed.base64EncodedString().utf8), LibraryChanges.setting])
+            arguments: [Data(sealed.base64EncodedString().utf8), name])
     }
 
     /// Seals every image file in place, then closes the copy's database.

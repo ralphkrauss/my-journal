@@ -189,13 +189,25 @@ final class AppModel: ObservableObject {
     let imageLoader = DocumentImageLoader()
     var imageData: [UUID: Data] { imageLoader.images }
     private var imageSubscription: AnyCancellable?
-    @Published var journalHistoryIDs: Set<UUID> = []
+    /// The changes the person can still review: entries and templates changed on two devices, and those a newer
+    /// version of the app must open. Journal and deletion conflicts have no review; this version settles them itself
+    /// (ConflictNotes.swift).
     @Published var conflicts: [ConflictVersion] = [] {
         didSet {
             lists.invalidate()
             if !conflicts.isEmpty { reviewRequests.noteProblem() }
         }
     }
+    /// Every record that has a conflict, reviewable or not; the lifecycle of journals and entries follows it.
+    var conflictedIDs: Set<UUID> = []
+    /// The conflicts that wait for a version of this app that can read them.
+    var heldConflictIDs: Set<UUID> = []
+    /// A journal or deletion conflict waits for a newer version (Settings ▸ Sync says so).
+    @Published var heldChangesNeedUpdate = false {
+        didSet { if heldChangesNeedUpdate { reviewRequests.noteProblem() } }
+    }
+    /// What this device settled by keeping both versions (Settings ▸ Sync ▸ Changed on Two Devices).
+    @Published var keptNotes: [KeptNote] = []
     @Published var pendingSync = false
     /// Pins and journal ranks (LibraryOperations.swift), and what Settings ▸ Sync says about them.
     @Published var library = LibraryArrangement.empty {
@@ -281,6 +293,10 @@ final class AppModel: ObservableObject {
     /// Replaced when the library is (connecting in ServerJoining.swift, importing, turning on encryption).
     var masterKey: Data?
     private var saveTask: Task<Void, Never>?
+    /// Settles the conflicts a library without a server holds once writing pauses (ConflictNotes.swift).
+    var localResolution: Task<Void, Never>?
+    /// Speaks a change the person may not see, such as where Restore put an entry; tests replace it.
+    var announce: @MainActor (String) -> Void = { JournalAccessibility.announce($0) }
     private var mutationTask: Task<Void, Error>?
     var journalEditTask: Task<Void, Never>?
     private var saveGeneration = 0
@@ -467,12 +483,14 @@ final class AppModel: ObservableObject {
             throw LibraryOpenHandled()
         }
         let libraryState = try? await store.librarySyncState()
+        let held = snapshot.conflicts.isEmpty ? [] : ((try? await store.heldConflictIDs()) ?? [])
+        let notes = (try? await store.keptNotes()) ?? []
         guard isCurrent() else { return }
         firstReadPending = false
         failedRetries = 0
         items = snapshot.items
-        conflicts = snapshot.conflicts
-        journalHistoryIDs = snapshot.journalHistoryIDs
+        adoptConflicts(snapshot.conflicts, held: held)
+        if notes != keptNotes { keptNotes = notes }
         pendingSync = snapshot.pending
         if library != snapshot.library { library = snapshot.library }
         if let libraryState, libraryState != librarySync { librarySync = libraryState }
@@ -590,24 +608,15 @@ final class AppModel: ObservableObject {
         reviewRequests.noteSaved(entry: item.id)
         if !pendingSync { pendingSync = true }
         syncWhenWritingPauses()
+        resolveConflictsWhenWritingPauses()
         rememberSelection()
         if generation != saveGeneration { return await flush(whileEditing: entryID, announcing: announcement) }
         return true
     }
-    /// A new entry in `chosen`, or where New Entry puts it. A template chosen for an empty entry fills that entry
-    /// instead, when `filling` allows it and the entry is in the chosen journal.
-    func newEntry(
-        template: JournalItem? = nil, blank: Bool = false, in chosen: JournalItem? = nil, filling: Bool = true
-    ) async {
-        guard !locked, !replacingVault, !Task.isCancelled else { return }
-        if let template, filling, chosen == nil || draft?.journalID == chosen?.id,
-            await fillEmptyEntry(with: template)
-        {
-            return
-        }
-        guard !locked, !replacingVault, !Task.isCancelled, let store, let journal = chosen ?? newEntryJournal else {
-            return
-        }
+    /// A new, empty entry where New Entry puts it: in the journal shown, otherwise in the Default Journal. A template
+    /// is used from inside the entry (`useTemplate`).
+    func newEntry() async {
+        guard !locked, !replacingVault, !Task.isCancelled, let store, let journal = newEntryJournal else { return }
         let creationID = UUID()
         reviewRequests.interrupt()
         var selection = selectedID
@@ -637,14 +646,12 @@ final class AppModel: ObservableObject {
             selection = nil
         }
         do {
-            let chosen = blank ? nil : (template ?? templates.first { $0.id == journal.defaultTemplateID })
-            let item = JournalItem(kind: "entry", journalID: journal.id, document: chosen?.document ?? .init())
+            let item = JournalItem(kind: "entry", journalID: journal.id)
             let stored = try await store.save(item)
             guard isCurrent(cancellable: false) else { return }
             query = ""
             try await refresh()
             guard isCurrent(cancellable: false) else { return }
-            initialInsertion = InitialEditorInsertion(item: item, fromTemplate: chosen != nil)
             titleFocus = InitialTitleFocus(itemID: item.id)
             selectedID = item.id
             draft = stored
@@ -704,15 +711,19 @@ final class AppModel: ObservableObject {
         var failure: Error?
         let request = SyncEngine.Request(
             retryingRefused: retryingRefused, waitingForWritingPause: waitingForWritingPause,
-            preferredImages: Set(draft?.document.attachmentIDs ?? []))
+            preferredImages: Set(draft?.document.attachmentIDs ?? []), holdingConflicts: conflictsToHold)
         do { report = try await syncEngine.synchronize(request) } catch { failure = error }
         // Cancelled, for example on leaving the foreground: nothing was learned about the server.
         if failure is CancellationError || (failure as? URLError)?.code == .cancelled { return false }
         syncTiming.imagesToDownload = report?.imagesToDownload ?? 0
         guard self.store === store, !locked, !replacingVault else { return failure == nil }
         do {
+            // Conflicts this synchronization settled by itself may have parked the open entry's edit elsewhere.
+            let settled = report?.resolvedConflicts ?? []
+            if !settled.isEmpty { await followParkedEntry(settled) }
             // Records may have arrived even when a later step failed. Without new ones, the list stays as it is.
-            if await store.receivedChangeCount() != refreshedChanges {
+            let received = await store.receivedChangeCount()
+            if !settled.isEmpty || received != refreshedChanges {
                 try await refresh()
             } else {
                 let pending = try await store.hasPendingChanges()
@@ -765,8 +776,10 @@ final class AppModel: ObservableObject {
         mutationTask?.cancel()
         if let agentCopies { Task { await agentCopies.stop() } }
         items = []
-        conflicts = []
-        journalHistoryIDs = []
+        adoptConflicts([], held: [])
+        keptNotes = []
+        localResolution?.cancel()
+        localResolution = nil
         imageLoader.clear()
         query = ""
         lists.clear()
@@ -877,8 +890,10 @@ extension AppModel {
         selectedID = nil
         selectedJournalID = nil
         items = []
-        conflicts = []
-        journalHistoryIDs = []
+        adoptConflicts([], held: [])
+        keptNotes = []
+        localResolution?.cancel()
+        localResolution = nil
         library = .empty
         librarySync = LibrarySyncState()
         pendingSync = false

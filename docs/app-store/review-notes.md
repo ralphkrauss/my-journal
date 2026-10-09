@@ -66,7 +66,7 @@ My Journal is a private journal for Mac, iPhone and iPad (one universal app). Th
 TRY IT WITHOUT A SERVER
 1. Choose Start a Journal > Use Encryption, enter any master password in Master Password and Verify, and choose Create.
 2. File > New Entry (Cmd-N). The Format menu and the Formatting toolbar button format text, including checklists and Increase/Decrease Indent; Format > Insert > Image… or dragging adds images. Control-click an image for Copy, Share, Save Image As… and Delete.
-3. The entry's … menu has Pin Entry, Change Date…, Move Entry…, Save as Template… and Version History…. New libraries have no templates: save one, then use File > New Entry from Template…. Drag journals in the sidebar to reorder them. Recently Deleted has Restore and Delete All….
+3. The entry's … menu has Pin Entry, Change Date…, Move Entry…, Save as Template… and Version History…. New libraries have no templates: save one, then File > New Entry (Cmd-N) and, in the empty entry, "use a template" or File > Use a Template…. Drag journals in the sidebar to reorder them. Recently Deleted has Restore and Delete All….
 4. My Journal > Settings: General (Erase Journals and Settings… at the end), Sync, Devices, Privacy (App Lock with Touch ID or the login password, and Lock when inactive), Backup (Export Archive…, Import Archive…), Agent Access.
 
 MASTER PASSWORD

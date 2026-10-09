@@ -66,6 +66,8 @@ struct SettledFacts {
     var imagesToUpload: Set<UUID>
     var reconciling: Bool
     var renameOutstanding: Bool
+    /// A conflict this version settles on its own is waiting, such as for the pause after its record was written.
+    var conflictAwaitingResolution: Bool
     var position: QuietPosition
 }
 
@@ -82,6 +84,7 @@ extension JournalStore {
         let facts = SettledFacts(
             writes: writes, queuedOperations: queued, imagesToUpload: images, reconciling: try reconciliation() != nil,
             renameOutstanding: !(try automaticRenames().isEmpty),
+            conflictAwaitingResolution: try hasConflictAwaitingResolution(),
             position: QuietPosition(cursor: position.cursor, applied: position.applied, serverID: try syncedServerID()))
         quiet.factsWrites = writes
         return facts

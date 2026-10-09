@@ -24,17 +24,14 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `entry-list` | screen | `screens/entry-list.md` | verified | Entry list (a journal, All Entries, Unavailable Journals) |
 | `format-sheet` | screen | `screens/format-sheet.md` | verified | Formatting (Format panel and popover) |
 | `image-description` | screen | `screens/image-description.md` | verified | Image Descriptions |
-| `journal-history` | screen | `screens/journal-history.md` | verified | Journal Version History |
 | `journals` | screen | `screens/journals.md` | verified | Journals (sidebar and Journals screen) |
 | `library-window` | screen | `screens/library-window.md` | verified | Library window (structure, toolbars, windows, restoration) |
 | `link-editor` | screen | `screens/link-editor.md` | draft | Add Link |
 | `lock-screen` | screen | `screens/lock-screen.md` | verified | Lock screen and privacy cover |
-| `merge-journal` | screen | `screens/merge-journal.md` | verified | Merge Into… (sheet) |
-| `move-entry` | screen | `screens/move-entry.md` | verified | Move Entry / Restore and Move |
+| `move-entry` | screen | `screens/move-entry.md` | verified | Move Entry |
 | `password-check` | screen | `screens/password-check.md` | verified | Check Your Password, and Set New Password |
 | `recently-deleted` | screen | `screens/recently-deleted.md` | verified | Recently Deleted (list, deleted journal, recovery notice, Delete All) |
 | `recovery-key` | screen | `screens/recovery-key.md` | draft | Keep Your Recovery Key (early libraries) |
-| `restore-journal` | screen | `screens/restore-journal.md` | verified | Restore Journal and Restore Entry (sheet) |
 | `scan-code` | screen | `screens/scan-code.md` | draft | Scan Code |
 | `search` | screen | `screens/search.md` | verified | Search |
 | `settings-about` | screen | `screens/settings-about.md` | verified | Settings ▸ About, and the Help menu |
@@ -74,11 +71,11 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `import-archive` | flow | `flows/import-archive.md` | draft | Import an archive (preview, restore or add) |
 | `insert-image` | flow | `flows/insert-image.md` | verified | Insert an image |
 | `markdown-as-you-type` | flow | `flows/markdown-as-you-type.md` | verified | Markdown as you type |
-| `new-entry` | flow | `flows/new-entry.md` | verified | New entry (New Entry, New Blank Entry, from a template) |
+| `new-entry` | flow | `flows/new-entry.md` | verified | New entry (New Entry, then a template if wanted) |
 | `pair-device` | flow | `flows/pair-device.md` | verified | Pair a new device (approving side, and both sides together) |
 | `rating-request` | flow | `flows/rating-request.md` | draft | Asking for a rating |
 | `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | Reconnect after the server changed (set up again, connect again, sign in again) |
-| `resolve-conflict` | flow | `flows/resolve-conflict.md` | draft | Resolve changes to review |
+| `resolve-conflict` | flow | `flows/resolve-conflict.md` | draft | Changes made on two devices |
 | `save-entry` | flow | `flows/save-entry.md` | draft | Saving an entry |
 | `save-failure` | flow | `flows/save-failure.md` | draft | Save failure and paused writing |
 | `source-view` | flow | `flows/source-view.md` | verified | View Source and View Preview |

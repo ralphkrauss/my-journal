@@ -20,9 +20,8 @@ On a computer the menus are the application menu, File, Edit, Format, View, Wind
 | `open-settings` | `library.toolbar.settings` (the system's label where the platform supplies the item) | app | always (dimmed in journal edit mode on a tablet) | Opens Settings ([screens/settings](screens/settings.md)). |
 | `lock-my-journal` | `common.lockMyJournal` | app | App Lock is on | Saves, then locks, and closes Settings ([flows/app-lock](flows/app-lock.md)). |
 | `quit`, `hide`, `services` | system | system | always | Quit waits for the open entry to be saved (Keep Open alert if it can't). |
-| `new-entry` | `library.menu.file.newEntry` | app | library open, unlocked, not being replaced, a journal in use (menu item); the buttons don't need a journal | [flows/new-entry](flows/new-entry.md). Reopens the library window if it was closed (computer). |
-| `new-blank-entry` | `library.menu.file.newBlankEntry` | app | as New Entry (menu item) | A new empty entry, ignoring the default template. |
-| `new-entry-from-template` | `library.menu.file.newEntryFromTemplate` | app | as New Entry, and a template exists | Opens the template chooser sheet at once; outside a journal with two or more journals it asks which journal ([screens/template-chooser](screens/template-chooser.md)). |
+| `new-entry` | `library.menu.file.newEntry` | app | library open, unlocked, not being replaced, a journal in use (menu item); the buttons don't need a journal | A new, empty entry in the shown journal, else the Default Journal ([flows/new-entry](flows/new-entry.md)). Reopens the library window if it was closed (computer). |
+| `use-a-template` | `library.menu.file.useTemplate` (File menu); `library.templateChooser.useTemplate` (the link, for screen readers); the link’s own text `editor.body.placeholder.templateLink` | app | the open entry can be edited, its body has no text or pictures, and an editable template exists (the menu item is dimmed, not hidden, otherwise) | Opens the template chooser for the open entry; a choice fills that entry ([screens/template-chooser](screens/template-chooser.md)). |
 | `new-journal` | `common.newJournalEllipsis` | app | library open and unlocked | New Journal alert ([screens/journals](screens/journals.md)). On a computer leaves Editor Only. |
 | `pin-entry` | `library.entryActions.pin` / `library.entryActions.unpin` | entry | the open entry can be pinned (in a journal in use, pinning available) | Pins or unpins the open entry. Undo `library.entryActions.pinUndo`; announced `messages.announce.pinned` / `messages.announce.unpinned`; failure `messages.generic.pinFailed` / `messages.generic.unpinFailed`. |
 | `import-archive` | `common.importArchive` | app | unlocked | File picker for an archive, then the import sheet ([flows/import-archive](flows/import-archive.md)). |
@@ -61,11 +60,8 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | id | Name (copy key) | Scope | Enabled when | What it does |
 | --- | --- | --- | --- | --- |
 | `choose-collection` | collection names (`library.journals.*`) | list | not in edit mode | Shows that collection's list, saving the open entry first. |
-| `journal-actions` | `library.toolbar.journalActions` | list | library open | Menu of the journal actions below. |
-| `rename-journal` | `library.journalActions.rename` | list | no changes to review | Rename Journal alert. |
-| `journal-default-template` | `common.defaultTemplate` | list | no changes to review, and a template exists or a stale choice remains | Sets the template New Entry uses in the journal. |
-| `merge-journal` | `library.journalActions.mergeInto` | list | no changes to review, another journal in use | Merge Into… sheet ([screens/merge-journal](screens/merge-journal.md)). |
-| `journal-version-history` | `common.versionHistoryEllipsis` | list | always (detail: when it has versions) | Journal Version History ([screens/journal-history](screens/journal-history.md)). |
+| `journal-actions` | `library.toolbar.journalActions` | list | library open | Menu of the journal actions below: Rename… and Delete Journal…, with New Journal… first on a computer. |
+| `rename-journal` | `library.journalActions.rename` | list | journal in use | Rename Journal alert. |
 | `delete-journal` | `library.journalActions.deleteJournal` | list | always | Delete Journal alert. |
 | `reorder-journal` | `library.journals.undoMove` (Undo name) | list | order readable, unlocked, not being replaced | Moves the journal; announced; undoable. |
 | `journals-edit` | `library.toolbar.edit` / `common.done` | list | journals in use, unlocked, not being replaced | Enters or leaves edit mode. |
@@ -73,17 +69,14 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | `entry-actions` | `library.toolbar.entryActions` | entry | an entry or template is open | Menu of the entry actions below. |
 | `find-in-entry` | `library.entryActions.findInEntry` | text | an entry is open | The system's find in the entry. |
 | `pin-entry-row` | `library.entryList.swipe.pin` / `library.entryList.swipe.unpin`; menu `library.entryActions.pin` / `.unpin` | list | entry in a journal in use, pins readable, unlocked | Pins or unpins without changing the selection. |
-| `new-entry-in` | `library.entryActions.newEntryIn` ▸ journals / `library.entryActions.newEntryFromTemplate` | list | a journal in use, no failed save, unlocked, template without changes to review | New entry from that template in the chosen journal. |
-| `review-changes` | `common.reviewChanges` | entry | unlocked (the entry has a conflict, for the notice) | Saves the open writing, then opens the conflict review for that item ([screens/conflict-review](screens/conflict-review.md), [screens/entry-conflict](screens/entry-conflict.md)). |
+| `review-changes` | `common.reviewChanges` | entry | unlocked (the entry or template has changes to review: the notice, and the rows of Settings ▸ Sync ▸ Changes to Review) | Saves the open writing, then opens the review of that entry or template ([screens/conflict-review](screens/conflict-review.md), [screens/entry-conflict](screens/entry-conflict.md)). |
 | `change-date` | `library.entryActions.changeDate` | entry | entry editable in a journal in use | Change Date sheet ([screens/change-date](screens/change-date.md)). |
 | `move-entry` | `library.entryActions.moveEntry` | entry | same | Move Entry sheet ([screens/move-entry](screens/move-entry.md)). |
 | `save-as-template` | `library.entryActions.saveAsTemplate` | entry | same | Save as Template alert ([screens/entry-list](screens/entry-list.md)). |
 | `image-descriptions` | `library.entryActions.imageDescriptions` | entry | the item has pictures (shown) and descriptions can be edited (enabled) | [screens/image-description](screens/image-description.md). |
 | `entry-version-history` | `common.versionHistoryEllipsis` | entry | always | [screens/version-history](screens/version-history.md). |
-| `restore` | `common.restore` (context menu, Entry Actions, leading swipe and notice) | list | in Recently Deleted, journal in use (entries) | Restores without confirmation ([flows/delete-and-restore](flows/delete-and-restore.md)). |
-| `restore-with-journal` | `library.recoveryNotice.restoreWithJournal` | list | entry's journal deleted, editable, no review pending | Restore Entry sheet. |
-| `restore-and-move` | `library.recoveryNotice.restoreAndMove` | list | item editable (an entry in Recently Deleted or deleted with its journal by an earlier version) | Move Entry in its restoring form ([screens/move-entry](screens/move-entry.md)). |
-| `restore-journal` | `library.recentlyDeleted.restoreJournal` | list | journal editable, not being replaced | Restore Journal sheet. |
+| `restore` | `common.restore` / `library.recentlyDeleted.restoreTo` (context menu, Entry Actions, notice; leading swipe only as `common.restore`) | list | an entry in Recently Deleted or Unavailable Journals that is editable and has no held conflict, and a destination exists: its own journal in use, else the Default Journal; a template in Recently Deleted that is editable | Restores at once, without a sheet. An entry goes back to its own journal when it is in use, else to the Default Journal, and the label names that journal ([flows/delete-and-restore](flows/delete-and-restore.md), Restore). |
+| `restore-journal` | `library.recentlyDeleted.restoreJournal` | list | journal editable, not being replaced | Restores the journal at once, without a sheet ([flows/delete-and-restore](flows/delete-and-restore.md), Restore). |
 | `try-syncing-again` | `common.trySyncingAgain` | list | journal missing, library syncs | Syncs now, retrying refused items. |
 | `delete-permanently` | `library.entryActions.deletePermanently` (context menu, Entry Actions, deleted journal's detail) | list | in Recently Deleted, not being replaced | Delete Permanently alert. |
 | `delete-entry` | `library.entryActions.deleteEntry` / `library.entryActions.deleteTemplate`; swipe `common.delete` | list | item editable and not deleted (menus: in a journal in use or a template) | Moves it to Recently Deleted at once; Undo brings it back. |
@@ -91,7 +84,6 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | `empty-new-entry` | `library.menu.file.newEntry` | list | New Entry possible | As `new-entry`. |
 | `finish-editing` | `common.done` | text | the title, body or a cell has keyboard focus | Ends typing, finishes the save and returns to reading. |
 | `sync-status` | `messages.syncStatus.title` | app | sync needs the person | screens/sync-status. |
-| `use-a-template` | `library.templateChooser.useTemplate` (screen reader); the link's own text `editor.body.placeholder.templateLink` | entry | the empty entry can be edited and a template exists | Template chooser that fills the entry. |
 
 ## Editor
 
@@ -197,6 +189,8 @@ Every command in Settings and the flows it opens. Commands that live on other su
 | `stop-syncing` | `settings.sync.stopSyncing` | Settings ▸ Sync | connected, not replacing the journals | Confirmation, then `flows/stop-syncing`. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` (both footers) | Settings ▸ Sync footer; Set Up Server footer | always | Opens the sync guide. |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Settings ▸ Sync footer (computer only) | after the former Mac server stopped | Opens the guide's section for people who used Use This Mac. |
+| `open-kept-note` | the row’s own sentence (`messages.conflict.kept.deletedAndChanged`); hint `messages.conflict.kept.rowHint` | Settings ▸ Sync ▸ Changed on Two Devices | unlocked, and the entry or template the row names still exists | Closes Settings (iPhone, iPad) and shows that entry or template where it is; brings the library window forward (Mac). A row with nothing to open is plain text and has no command. |
+| `clear-kept-notes` | `messages.conflict.kept.clear` | Settings ▸ Sync ▸ Changed on Two Devices | unlocked | Forgets every note in the list at once, without confirmation. Entries, templates and journals are untouched. |
 
 ### Connect to a Server
 

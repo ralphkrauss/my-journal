@@ -59,7 +59,7 @@ The page is the same at every window width, so no layout step applies. The minim
 | `open-settings` | The More button's flyout; Ctrl+, | as in commands.md | Enabled here; there is no navigation pane on this page. The Settings page opens in the main window and Back returns to this page |
 | `quit` | The More button's flyout; the Close button | Alt+F4 | Always |
 
-The commands that need a library (New entry, New blank entry, New entry from template…, New journal…, Export archive…, Export journals as Markdown…, Search entries, Pin entry and Lock My Journal) are not reachable on this page because the menu bar is not shown; the shortcuts do nothing. Keyboard: the first Tab stop is Start a journal and has focus when the page appears; Enter chooses the focused button; Tab goes Start, Connect, Import. A `.journalarchive` file dragged onto the window or opened from Explorer starts the import ([import-archive](../flows/import-archive.md)).
+The commands that need a library (New entry, Use a template…, New journal…, Export archive…, Export journals as Markdown…, Search entries, Pin entry and Lock My Journal) are not reachable on this page because the menu bar is not shown; the shortcuts do nothing. Keyboard: the first Tab stop is Start a journal and has focus when the page appears; Enter chooses the focused button; Tab goes Start, Connect, Import. A `.journalarchive` file dragged onto the window or opened from Explorer starts the import ([import-archive](../flows/import-archive.md)).
 
 ## Copy differences
 

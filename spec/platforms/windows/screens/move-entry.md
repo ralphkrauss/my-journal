@@ -2,7 +2,7 @@
 id: move-entry
 title: Move entry (Windows)
 spec: screens/move-entry.md
-features: [move-entry, restore-and-move]
+features: [move-entry]
 status: reviewed
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/dialogs-and-flyouts/dialogs
@@ -11,28 +11,27 @@ sources:
 
 # Move entry (Windows)
 
-Moves one entry to another journal, or restores an entry from Recently deleted into a chosen journal. Behaviour, rules and copy keys are the spec's [move-entry](../../../screens/move-entry.md).
+Moves one entry to another journal. An entry in Recently deleted cannot be moved: it is restored first ([recently-deleted](recently-deleted.md)), and Restore picks the journal itself. Behaviour, rules and copy keys are the spec's [move-entry](../../../screens/move-entry.md).
 
 ## Controls
 
-One `ContentDialog`, default width (320 to 420 epx), content scrolling. Its title is `library.moveEntry.title`, or `library.moveEntry.restoreTitle` when restoring. It has two steps: the list (below) and New journal ([destination-journal](destination-journal.md)), which replaces the content without opening a second dialog ([8.1](../platform.md#81-rules)).
+One `ContentDialog`, default width (320 to 420 epx), content scrolling. Its title is `library.moveEntry.title`. It has two steps: the list (below) and New journal ([destination-journal](destination-journal.md)), which replaces the content without opening a second dialog ([8.1](../platform.md#81-rules)).
 
 | Spec element | Control | Notes |
 | --- | --- | --- |
-| Action button | `PrimaryButton` `library.moveEntry.move`, or `common.restore` when restoring; `DefaultButton` Primary | Disabled until a choosable journal is selected, and while moving |
+| Action button | `PrimaryButton` `library.moveEntry.move`; `DefaultButton` Primary | Disabled until a choosable journal is selected, and while moving |
 | Cancel | `CloseButton` `common.cancel`; Esc | Not while moving |
 | No other journals | A centred `StackPanel`: `library.moveEntry.noOtherJournals` (`BodyStrong`), `library.moveEntry.noOtherJournals.message` (secondary), a `Button` `common.newJournalEllipsis` | |
 | List of journals | `ListView`, `SelectionMode` Single, the journals in use except the entry's current one, in the pane's order; each row the name | The selected row uses the standard selection visual; no extra checkmark. A row whose name is the same as another listed journal's (ignoring case) is disabled (`IsEnabled` false, dimmed), cannot be chosen and shows `library.moveEntry.sameName` below its name |
 | Same-name explanation | `TextBlock`, `Caption`, secondary, under the list, `library.moveEntry.renameExplanation` | Windows wording: the pane, see Copy differences |
 | New journal | A `HyperlinkButton` `common.newJournalEllipsis` below the list (when there are journals) | Switches the dialog to the New journal step |
-| Restoring note | `TextBlock`, secondary: `library.moveEntry.onlyThisEntry` when restoring or when the entry is in Recently deleted | |
-| Error | `InfoBar`, Severity Error, not closable, content the message; then a `Button` `common.reviewChanges` when a conflict blocks the move | Announced when it opens. Review changes closes the dialog and opens the review page (journal or entry); if already resolved, `messages.conflict.resolved` |
+| Error | `InfoBar`, Severity Error, not closable, content the message; then a `Button` `common.reviewChanges` when a conflict blocks the move | Announced when it opens. Review changes closes the dialog and opens the entry's review page; if already resolved, `messages.conflict.resolved` |
 | Moving | The list and buttons disabled, a `ProgressRing` beside `library.moveEntry.moving`; the dialog cannot be dismissed | |
 
 ### Action and states
 
-- **Move or Restore** saves the open entry first, then moves it (restoring it from Recently deleted when restoring). The dialog closes; the entry stays open, now shown in the destination journal's list. The entry keeps its date, text and images, and nothing else in either journal changes. Edit ▸ Undo does not undo a move.
-- **Selected journal disappears or becomes ambiguous:** the selection clears and `common.journalGone` shows. **Conflict on the entry or a journal:** `messages.lifecycle.needsReview` with Review changes. **Open entry could not be saved:** `messages.save.before.goBack`. **Moved but not shown:** the dialog closes and the general error dialog says `common.entryMovedNotDisplayed`. Other errors show the error's own text. Errors are announced.
+- **Move** saves the open entry first, then moves it. The dialog closes; the entry stays open, now shown in the destination journal's list. The entry keeps its date, text and images, and nothing else in either journal changes. Edit ▸ Undo does not undo a move.
+- **Selected journal disappears or becomes ambiguous:** the selection clears and `common.journalGone` shows. **Changes to review on the entry:** `messages.entry.moveNeedsReview` with Review changes. **The entry's journal or the destination is saved by a newer version:** `messages.lifecycle.unsupportedJournal`. **Open entry could not be saved:** `messages.save.before.goBack`. **Moved but not shown:** the dialog closes and the general error dialog says `common.entryMovedNotDisplayed`. Other errors show the error's own text. Errors are announced.
 - **Locked, or another entry opened:** the dialog closes and the move is cancelled if not committed. A lock after the commit cannot save the old journal membership back.
 
 ## Layout at each window width
@@ -48,19 +47,18 @@ One `ContentDialog`, default width (320 to 420 epx), content scrolling. Its titl
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `move-entry` | Entry row context menu; Entry actions | none | The entry is editable in a journal in use |
-| `restore-and-move` | The recovery notice's action ([recently-deleted](recently-deleted.md)) | none | The notice's rules; opens the dialog in its restoring form |
 | `new-journal` | The link under the list; the No other journals button | as in commands.md | Not while moving |
 
-- Up and Down move the selection in the list, Enter chooses Move or Restore when a choosable journal is selected, Esc cancels. Focus starts on the list (or on the New journal button when there are no other journals).
+- Up and Down move the selection in the list, Enter chooses Move when a choosable journal is selected, Esc cancels. Focus starts on the list (or on the New journal button when there are no other journals).
 
 ## Copy differences
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
 | `library.moveEntry.renameExplanation` | Default: … rename it in the Journals list first. Mac: … in the sidebar first. | … rename it in the navigation pane first. (and, at small width, "in the Journals list") | vocabulary; see B28 |
-| `library.moveEntry.noOtherJournals.message`, `library.moveEntry.onlyThisEntry` | unchanged | unchanged | none |
+| `library.moveEntry.noOtherJournals.message` | unchanged | unchanged | none |
 
-Sentence case: "Move entry", "Restore and move", "No other journals". `library.moveEntry.renameExplanation` also says "can't be chosen", which the select-for-choose proposal (B26) would change to "can't be selected".
+Sentence case: "Move entry", "No other journals". `library.moveEntry.renameExplanation` also says "can't be chosen", which the select-for-choose proposal (B26) would change to "can't be selected".
 
 ## Accessibility
 

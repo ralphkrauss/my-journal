@@ -24,14 +24,10 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | Copy key | Default text | Proposed Windows text | Category | Rule or question |
 | --- | --- | --- | --- | --- |
 | `common.journalGone` | That journal is no longer available. Choose another journal. | That journal is no longer available. Select another journal. | vocabulary | B26 |
-| `library.merge.destinationGone` | “{name}” is no longer available. Choose another journal. | “{name}” is no longer available. Select another journal. | vocabulary | B26 |
-| `library.merge.header` | Choose the journal to merge “{name}” into. | Select the journal to merge “{name}” into. | vocabulary | B26 |
 | `library.templateChooser.templateGone` | This template is no longer available. Choose another template. | This template is no longer available. Select another template. | vocabulary | B26 |
-| `library.templateChooser.journalGone` | This journal is no longer available. Close this and choose a journal. | This journal is no longer available. Close this and select a journal. | vocabulary | B26 |
 | `library.recoveryNotice.legacy` | This entry was deleted by an earlier version of My Journal. Choose a journal to restore this entry. | This entry was deleted by an earlier version of My Journal. Select a journal to restore this entry. | vocabulary | B26 |
 | `messages.image.tooLarge` | Choose an image smaller than 25 MB. | Select an image smaller than 25 MB. | vocabulary | B26 |
 | `editor.imageImport.cause.mixed` | Try again, or choose other images. | Try again, or select other images. | vocabulary | B26 |
-| `library.merge.footer.targetNone` | the journal you choose | the journal you select | vocabulary | B26 |
 | `library.entryList.empty.noTemplatesHelp` | To create a template, open an entry and choose Save as Template. | To create a template, open an entry and select Save as template. | vocabulary | B26, B27 |
 | `settings.addDevice.scanInstructions` | On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings ▸ Sync. | On your iPhone or iPad, select Connect to a server, then Scan code. If it already has journals, Connect to a server is in Settings ▸ Sync. | vocabulary | B26, B27 |
 | `settings.addDevice.codeFooter` | On the new device, choose Connect to a Server, then Add This Device. | On the new device, select Connect to a server, then Add this device. | vocabulary | B26, B27 |
@@ -89,21 +85,19 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.erase.button` | Erase Journals and Settings… | Erase journals and settings | ellipsis | 12.2 |
 | `common.share` | Share… | Share | ellipsis | 12.2; the image actions use it, the Agent access page does not |
 | `settings.devices.revoke` | Revoke Access… | Revoke access | ellipsis | 12.2 |
-| `library.journalHistory.restoreSettings` | Restore Settings… | Restore settings | ellipsis | 12.2 |
 | `messages.syncStatus.settings` | Sync Settings… | Sync settings | ellipsis | 12.2 |
-| `messages.conflict.journal.keepVersion` | Keep Version… | Keep version | ellipsis | 12.2 |
-| `messages.conflict.deletion.keepDeletion` | Keep Deletion… | Keep deletion | ellipsis | 12.2 |
 | `messages.conflict.keepThisDevice` | Keep Version from This Device… | Keep version from this device | ellipsis | 12.2 |
 | `messages.conflict.keepOtherDevice` | Keep Version from Other Device… | Keep version from other device | ellipsis | 12.2 |
-| `messages.conflict.deletion.keepEntry` | Keep Entry… | Keep entry… | casing | 12.1; the ellipsis stays (12.2) |
-| `messages.conflict.deletion.keepEntryAsCopy` | Keep Entry as Copy… | Keep entry as copy… | casing | 12.1; the ellipsis stays (12.2) |
 | `common.exportArchive` | Export Archive… | Export archive… | casing | 12.1; the ellipsis stays (12.2) |
+| `messages.conflict.kept.clear` | Clear List | Clear list | casing | 12.1 |
+| `messages.conflict.kept.section` | Changed on Two Devices | Changed on two devices | casing | 12.1 |
+| `library.recentlyDeleted.restoreJournal` | Restore Journal | Restore journal | casing | 12.1 |
+| `library.menu.file.useTemplate` | Use a Template… | Use a template… | casing | 12.1; the ellipsis stays (12.2) |
 | `editor.image.saveImageAs` | Save Image As… | Save image as… | casing | 12.1; the ellipsis stays (12.2) |
 | `common.connectToServer` | Connect to a Server… | Connect to a server… | casing | 12.1; the ellipsis stays (12.2) |
 | `common.importArchive` | Import Archive… | Import archive… | casing | 12.1; the ellipsis stays (12.2) |
 | `settings.connect.signIn.useDevice` | Use a Connected Device Instead… | Use a connected device instead… | casing | 12.1; the ellipsis stays (12.2) |
 | `settings.connect.addThisDevice.useRecoveryCode` | Use a Recovery Code Instead… | Use a recovery code instead… | casing | 12.1; the ellipsis stays (12.2) |
-| `messages.conflict.deletion.deletePermanently` | Delete Permanently | Delete permanently | casing | 12.1 |
 | `settings.archiveImport.title` | Import Archive | Import archive | casing | 12.1 |
 | `settings.archiveImport.restore` | Restore Journals | Restore journals | casing | 12.1 |
 | `settings.archiveImport.importAsNew` | Import as New Journals | Import as new journals | casing | 12.1 |
@@ -146,21 +140,12 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `library.deleteAll.changed.message` | one: It changed since you chose to delete it. It’s still in Recently Deleted. / other: They changed since you chose to delete them. They’re still in Recently Deleted. | one: It changed since you chose to delete it. It’s still in Recently deleted. / other: They changed since you chose to delete them. They’re still in Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.deleteAll.held.newerVersion` | one: 1 item was saved by a newer version and stays in Recently Deleted. Update My Journal to delete it. / other: {count} items were saved by a newer version and stay in Recently Deleted. Update My Journal to delete them. | one: 1 item was saved by a newer version and stays in Recently deleted. Update My Journal to delete it. / other: {count} items were saved by a newer version and stay in Recently deleted. Update My Journal to delete them. | label in a sentence | B27, 12.1 |
 | `library.deleteAll.held.other` | one: 1 item can’t be deleted yet and will stay in Recently Deleted. / other: {count} items can’t be deleted yet and will stay in Recently Deleted. | one: 1 item can’t be deleted yet and will stay in Recently deleted. / other: {count} items can’t be deleted yet and will stay in Recently deleted. | label in a sentence | B27, 12.1 |
-| `library.deleteAll.held.review` | one: 1 item has changes that need review and will stay in Recently Deleted. / other: {count} items have changes that need review and will stay in Recently Deleted. | one: 1 item has changes that need review and will stay in Recently deleted. / other: {count} items have changes that need review and will stay in Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.deleteJournal.message` | one: Its entry moves to Recently Deleted. / other: Its {count} entries move to Recently Deleted. | one: Its entry moves to Recently deleted. / other: Its {count} entries move to Recently deleted. | label in a sentence | B27, 12.1 |
-| `library.journalHistory.confirm.explanation` | Restore this name and default template. Entries and Recently Deleted status stay unchanged. | Restore this name and default template. Entries and Recently deleted status stay unchanged. | label in a sentence | B27, 12.1 |
-| `library.merge.footer.none` | “{source}” has no entries. It moves to Recently Deleted. | “{source}” has no entries. It moves to Recently deleted. | label in a sentence | B27, 12.1 |
-| `library.merge.footer.one` | The entry in “{source}” moves to {target}. “{source}” then moves to Recently Deleted. | The entry in “{source}” moves to {target}. “{source}” then moves to Recently deleted. | label in a sentence | B27, 12.1 |
-| `library.merge.footer.other` | The {count} entries in “{source}”, including archived and recently deleted ones, move to {target}. “{source}” then moves to Recently Deleted. | The {count} entries in “{source}”, including archived and recently deleted ones, move to {target}. “{source}” then moves to Recently deleted. | label in a sentence | B27, 12.1 |
-| `library.merge.hint` | Moves every entry, then moves this journal to Recently Deleted. | Moves every entry, then moves this journal to Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.recentlyDeleted.deleteAll.help` | Permanently delete all items in Recently Deleted | Permanently delete all items in Recently deleted | label in a sentence | B27, 12.1 |
 | `library.recoveryNotice.entry` | This entry is in Recently Deleted. | This entry is in Recently deleted. | label in a sentence | B27, 12.1 |
+| `library.recoveryNotice.journalDeleted` | The journal is in Recently Deleted. | The journal is in Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.recoveryNotice.template` | This template is in Recently Deleted. | This template is in Recently deleted. | label in a sentence | B27, 12.1 |
-| `library.restoreEntry.explanation` | Entries deleted with this journal will return, including entries that sync later. Other entries you deleted separately will stay in Recently Deleted. | Entries deleted with this journal will return, including entries that sync later. Other entries you deleted separately will stay in Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.restoreJournal.explanation` | Entries deleted with this journal will return, including entries that sync later. Entries you deleted separately will stay in Recently Deleted. | Entries deleted with this journal will return, including entries that sync later. Entries you deleted separately will stay in Recently deleted. | label in a sentence | B27, 12.1 |
-| `messages.conflict.journal.confirmMessage` | {date}. Both versions will remain in Version History. | {date}. Both versions will remain in Version history. | label in a sentence | B27, 12.1 |
-| `messages.conflict.journal.confirmOtherDevice` | Keep the version from Other Device? | Keep the version from other device? | label in a sentence | B27, 12.1 |
-| `messages.conflict.journal.confirmThisDevice` | Keep the version from This Device? | Keep the version from this device? | label in a sentence | B27, 12.1 |
 | `messages.conflict.keepBothNote.entries` | Keep Both saves the versions as separate entries. | Keep both saves the versions as separate entries. | label in a sentence | B27, 12.1 |
 | `messages.conflict.keepBothNote.templates` | Keep Both saves the versions as separate templates. | Keep both saves the versions as separate templates. | label in a sentence | B27, 12.1 |
 | `messages.conflict.keepOne.history` | The original versions will remain in Version History. | The original versions will remain in Version history. | label in a sentence | B27, 12.1 |

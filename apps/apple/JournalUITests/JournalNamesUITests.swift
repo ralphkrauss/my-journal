@@ -1,9 +1,9 @@
 import XCTest
 
-/// A taken journal name is refused with Name Taken, and Merge Into… combines two journals
+/// A taken journal name is refused with Name Taken, and Rename is how a numbered duplicate gets its own name
 /// (docs/design/journal-name-uniqueness.md §4.1 and §5).
 final class JournalNamesUITests: XCTestCase {
-    @MainActor func testNameTakenThenMergeIntoAnotherJournal() {
+    @MainActor func testNameTakenThenRenameToAFreeName() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
@@ -29,18 +29,16 @@ final class JournalNamesUITests: XCTestCase {
 
         NavigationTestSupport.showJournals(app)
         let list = app.collectionViews["Journals"]
-        list.staticTexts["Travel"].firstMatch.press(forDuration: 1)
-        app.buttons["Merge Into…"].tap()
-        let merge = app.navigationBars["Merge “Travel”"]
-        XCTAssertTrue(merge.waitToAppear(timeout: 5))
-        app.buttons["Default"].firstMatch.tap()
-        XCTAssertTrue(
-            app.staticTexts["“Travel” has no entries. It moves to Recently Deleted."].exists)
-        attach("Merge Journal", app: app)
-        merge.buttons["Merge"].tap()
-        XCTAssertTrue(merge.waitToDisappear(timeout: 5))
-        NavigationTestSupport.showJournals(app)
-        XCTAssertFalse(list.staticTexts["Travel"].exists, "The merged journal moved to Recently Deleted.")
+        NavigationTestSupport.journalAction("Rename…", journal: "Travel", app: app)
+        let rename = app.alerts["Rename Journal"]
+        XCTAssertTrue(rename.waitToAppear(timeout: 5))
+        rename.textFields["Name"].tap()
+        rename.textFields["Name"].typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 10) + "Trips")
+        attach("Rename Journal", app: app)
+        rename.buttons["Rename"].tap()
+        NavigationTestSupport.finishJournalEditing(app)
+        XCTAssertTrue(list.staticTexts["Trips"].waitToAppear(timeout: 5))
+        XCTAssertFalse(list.staticTexts["Travel"].exists, "The journal has its new name.")
         XCTAssertTrue(list.staticTexts["Default"].exists)
     }
 
@@ -67,7 +65,7 @@ final class JournalNamesUITests: XCTestCase {
 
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         app.staticTexts["Travel"].firstMatch.tap()
-        app.buttons["Restore Journal…"].tap()
+        // The page says what the name will be before the button that restores at once.
         let sentence = app.staticTexts[
             "Another journal is named “Travel”, so this one will be restored as “Travel 2”."]
         XCTAssertTrue(sentence.waitToAppear(timeout: 5))

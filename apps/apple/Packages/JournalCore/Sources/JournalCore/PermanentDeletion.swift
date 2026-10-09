@@ -32,9 +32,6 @@ public struct PermanentDeletionPlan: Sendable {
             case .journal: throw PermanentDeletionError.notDeleted
             case .unavailable(.missing): throw PermanentDeletionError.missing
             case .unavailable(.unsupported): throw PermanentDeletionError.unsupported
-            case .unavailable(.conflict):
-                guard let parentID = selected.journalID else { throw PermanentDeletionError.missing }
-                throw PermanentDeletionError.conflict(parentID)
             case .recentlyDeleted: break
             }
             affected = [selected]
@@ -48,8 +45,9 @@ public struct PermanentDeletionPlan: Sendable {
             guard item.document.isEditable, item.preservedJSON == nil else {
                 throw PermanentDeletionError.unsupported
             }
+            // A journal's conflict is settled automatically; one still there waits for a newer version of the app.
             guard !snapshot.conflictedIDs.contains(item.id) else {
-                throw PermanentDeletionError.conflict(item.id)
+                throw item.kind == "journal" ? PermanentDeletionError.unsupported : .conflict(item.id)
             }
         }
         return Self(

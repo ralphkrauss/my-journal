@@ -2,7 +2,7 @@
 id: settings-sync
 title: Settings ▸ Sync (Windows)
 spec: screens/settings-sync.md
-features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changes-to-review-list, former-mac-server-notice]
+features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changes-to-review-list, changed-on-two-devices-list, former-mac-server-notice]
 status: reviewed
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/infobar
@@ -11,7 +11,7 @@ sources:
 
 # Settings ▸ Sync (Windows)
 
-The Sync page: which server this PC syncs with, how syncing stands, the one action that fits, Stop syncing and Changes to review. Behaviour, states and copy keys are the spec's [Settings ▸ Sync](../../../screens/settings-sync.md); the shell and patterns are in [settings](settings.md#card-patterns).
+The Sync page: which server this PC syncs with, how syncing stands, the one action that fits, Stop syncing, Changes to review and Changed on two devices. Behaviour, states and copy keys are the spec's [Settings ▸ Sync](../../../screens/settings-sync.md); the shell and patterns are in [settings](settings.md#card-patterns).
 
 ## Controls
 
@@ -44,7 +44,23 @@ An [action card](settings.md#card-patterns): `Header` `settings.sync.stopSyncing
 
 ### Changes to review group (only when there are conflicts)
 
-Header `messages.conflict.settingsSection`. One `SettingsCard` per conflict: `Header` the item's title (the spec's deleted-item title for a permanent deletion), `Description` the date and time of the local version or of the deletion, trailing `Button` `common.reviewChanges` with `AutomationProperties.Name` `common.reviewChangesFor`. It opens the conflict review page ([conflict-review](conflict-review.md)), which first saves the open entry. The group never shows while the window is locked, and the review page closes when it locks.
+Header `messages.conflict.settingsSection`. One `SettingsCard` per entry or template with changes to review (including one saved by a newer version): `Header` the item's title, `Description` the date and time of the local version, trailing `Button` `common.reviewChanges` with `AutomationProperties.Name` `common.reviewChangesFor`. It opens the conflict review page ([conflict-review](conflict-review.md)), which first saves the open entry. For an item saved by a newer version the page shows the unsupported form. Journals and permanent deletions are not here ([conflict-review](conflict-review.md)). The group never shows while the window is locked, and the review page closes when it locks.
+
+### Changed on two devices group (only with rows)
+
+A group directly below Changes to review, or in its place when that group is absent; shown only when the window is unlocked and there is at least one note, and never as an empty list. Header `messages.conflict.kept.section` (sentence case, "Changed on two devices", [platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)), a sub-heading `TextBlock` of level 2 like the other groups; the group's footer `messages.conflict.kept.footer` is a secondary `TextBlock` below the last card, wrapping. One `SettingsCard` per note, newest first, at most 20 (the list, expiry and removal rules are the spec's):
+
+| Spec element | Control | Notes |
+| --- | --- | --- |
+| Row that opens something (an entry or template deleted permanently on one device and changed on another) | `SettingsCard` with `IsClickEnabled` true, so the whole card is one control, a chevron at the trailing end and the standard hover, pressed and focus visuals. `Header` the saved item's title (`library.entryList.untitledEntry` or `library.entryList.untitledTemplate` when blank), `Description` the sentence `messages.conflict.kept.deletedAndChanged` then the date and time, wrapping, no truncation | Runs `open-kept-note`: the page leaves Settings for the library, which selects the saved item wherever it is (Recently deleted, or Unavailable journals when its journal is gone). The card's Narrator name is the title, the sentence, then the date and time, with the help text `messages.conflict.kept.rowHint` ([commands.md](../commands.md)) |
+| Row with nothing to open (a journal renamed on two devices; a journal deleted permanently on one device and changed on another) | `SettingsCard` with `IsClickEnabled` false and no chevron: plain text. `Header` the journal's name (`common.untitledJournal` when blank), `Description` the sentence `messages.conflict.kept.journalRenamed` or `messages.conflict.kept.journalDeleted`, then the date and time | Not focusable on its own; Narrator reads it as one element in browse mode. No button inside it |
+| Clear list | The last item of the group: a text-style `Button` `messages.conflict.kept.clear`, left-aligned below the cards, not styled as destructive | Runs `clear-kept-notes` at once, with no dialog; the group disappears, so focus moves to the page heading. Not an accent button: nothing is asked of the person |
+
+Nothing here is an `InfoBar`, a badge or a notification; the group adds nothing to the sync status flyout ([sync-status](sync-status.md)). The group never shows while the window is locked.
+
+### Held changes
+
+While a journal or permanent-deletion change from another device is held because a newer version wrote it, one more line `messages.conflict.kept.updateNeeded` appears as a secondary `TextBlock` directly below the server card, or below the status bar's place when a bar shows, connected or not. It has no button and no bar; the "Get updates" link (D51) follows it, as for the other Update My Journal texts.
 
 ## Layout at each window width
 
@@ -63,6 +79,8 @@ Header `messages.conflict.settingsSection`. One `SettingsCard` per conflict: `He
 | `sync-reconnect` | The bar's action when the state needs it | as in commands.md | Not while a sync the person started runs |
 | `stop-syncing` | The button in the Stop syncing card | — | Not while the library is being replaced |
 | `review-changes` | Button in each conflict card | — | Always on this page |
+| `open-kept-note` | A Changed on two devices card that has something to open | — | The window is unlocked and the item still exists; a card whose item is gone is removed |
+| `clear-kept-notes` | Text button last in that group | — | The window is unlocked |
 | `open-setup-guide` | Hyperlink in the not-connected card | — | Always |
 | `open-former-server-guide` | Not offered | — | Mac-only state |
 
@@ -86,6 +104,7 @@ Sentence case applies ("Last synced", "Not on server yet", "How to set up a serv
 - The server card is read as one element: "{address}, {action}"; Last synced and Not on server yet are one element each (label and value), as the spec asks.
 - The status bar is read when it opens. The action button's name is its label; where it opens a page or dialog its `AutomationProperties.HelpText` says so only through the ellipsis, not extra text.
 - The progress bar has the name `settings.sync.syncing`. Review changes buttons name their item.
+- A Changed on two devices card that opens something is one Narrator element and one tab stop; a plain-text card is read as one element and is not a tab stop. Both wrap at every text size. Clear list is a plain button.
 - While Sync now runs the button is disabled and focus moves to the card (the server card is focusable as a group) so it is not dropped to the page; when the sync ends focus returns to the button. Stop syncing and the Connect page return focus to their opener.
 - Contrast themes: the `InfoBar` severities keep their icons; nothing relies on colour.
 

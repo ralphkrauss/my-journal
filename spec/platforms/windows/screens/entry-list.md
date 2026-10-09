@@ -19,7 +19,6 @@ The list pane of the [library window](library-window.md) for a journal, All Entr
 | Spec element | Control | Notes |
 | --- | --- | --- |
 | List header | Collection name and count, search box, New entry, Journal actions | Specified in [library-window](library-window.md), command bars |
-| Changes to review notice | A Warning `InfoBar` at the top of the list pane, below the list header and above the list, only while the shown journal has changes to review: `common.journalNeedsReview` with `ActionButton` `common.reviewChanges`, not closable; the list scrolls under it. Not shown in All Entries, Templates or Recently deleted | Because at medium and small widths the navigation pane is hidden, the attention dot on the journal's row is invisible exactly when a conflict needs attention (D52); the dot and the menu items stay ([conflict-review](conflict-review.md)). Announced when it opens |
 | The list | `ListView`, `SelectionMode` Single, `IsItemClickEnabled` false, items from a `CollectionViewSource` with `IsSourceGrouped` | Selecting an item opens it in the editor (saving the open one first). `ItemsStackPanel` with `AreStickyGroupHeadersEnabled` true. No multi-select |
 | Group header: Pinned (`library.entryList.pinned`) | The group header template, `Caption` style, secondary text | Only in a journal and in All Entries, only when something listed is pinned; no icon, no count |
 | Group header: a month | Same template; full month and year in the user's language ("October 2026"), newest first | Built with the formatter ([31](../platform.md#31-dates-time-zones-and-formats)); regenerated when the clock, zone or regional format changes and at local midnight |
@@ -89,7 +88,6 @@ The list header's contents are stated once in [library-window](library-window.md
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `entry-actions` | Row context menu; editor header More | as in commands.md | An entry is open (header) or a row is targeted |
-| `review-changes` | The changes to review notice | none | The shown journal has changes to review |
 | `pin-entry-row`, `pin-entry` | Row context menu; swipe; Entry actions; File ▸ Pin entry (open entry) | none (Ctrl+P is Print) | The entry can be pinned: listed in a journal in use, unlocked, library not being replaced; read-only entries and entries with changes to review count; templates and Recently deleted entries do not |
 | `change-date` | Context menu; Entry actions | as in commands.md | |
 | `move-entry` | Context menu; Entry actions | as in commands.md | |
@@ -128,4 +126,4 @@ Sentence case on all labels ("Pin entry", "Move entry…", "Save as template…"
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): B26 (select and choose), A36 (pinning and saving), D52 (changes to review signal).
+Recorded in [open-questions.md](../../../open-questions.md): B26 (select and choose), A36 (pinning and saving).

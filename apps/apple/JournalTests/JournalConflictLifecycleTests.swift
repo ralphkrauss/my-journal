@@ -13,7 +13,8 @@ import XCTest
 
 @MainActor
 final class JournalConflictLifecycleTests: XCTestCase {
-    func testResolutionFlushesEntryAndLockCannotUndoCommittedMetadata() async throws {
+    /// Deleting a journal saves the open entry first, and locking while the deletion commits cannot undo it.
+    func testDeletingAJournalFlushesTheEntryAndLockCannotUndoTheCommittedDeletion() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let model = AppModel(directory: root)
         defer {
@@ -23,47 +24,26 @@ final class JournalConflictLifecycleTests: XCTestCase {
             try? FileManager.default.removeItem(at: root)
         }
         await model.start()
-        let phrase = try XCTUnwrap(model.recoveryKey)
         model.confirmRecovery()
         await model.newEntry()
         let store = try XCTUnwrap(model.store)
         let journal = try XCTUnwrap(model.selectedJournal)
-        let recovery = try XCTUnwrap(model.configuration?.recovery)
-        let key = try VaultCrypto.recover(recovery, phrase: phrase).0
-        var other = journal
-        other.title = "Work Notes"
-        other.defaultTemplateID = UUID()
         var draft = try XCTUnwrap(model.draft)
         draft.title = "Final unsaved edit"
         model.updateDraft(draft)
-        let conflict = try await installConflict(other, revision: 1, store: store, key: key)
-        try await model.refresh()
-        if let preview = await NativeTestPreview.capture(
-            JournalConflictView(conflict: conflict).environmentObject(model),
-            name: "Journal metadata conflict native preview")
-        {
-            add(preview)
-        }
-        let refreshed = try await model.resolveJournalConflict(conflict, choice: .remote)
-        XCTAssertTrue(refreshed)
-        XCTAssertFalse(model.showingUnavailable)
-        XCTAssertEqual(model.selectedJournal?.title, other.title)
+        let plan = try await model.prepareJournalDeletion(journal.id)
         let saved = try await store.item(draft.id)
-        XCTAssertEqual(saved?.title, draft.title)
-        XCTAssertEqual(saved?.journalID, journal.id)
+        XCTAssertEqual(saved?.title, draft.title, "The open entry is saved before the journal is deleted")
         await model.turnOnAppLockForTesting()
-        other.title = "Shared Work"
-        other.deletedAt = Date()
-        let next = try await installConflict(other, revision: 2, store: store, key: key)
         let committed = AsyncStream<Void>.makeStream()
         let release = AsyncStream<Void>.makeStream()
-        let resolving = Task {
+        let deleting = Task {
             try await model.commitJournalResolution {
-                let resolved = try await store.resolve(next, choice: .remote)
+                let deleted = try await store.deleteJournal(plan)
                 committed.continuation.yield(())
                 committed.continuation.finish()
                 for await _ in release.stream { break }
-                return resolved
+                return deleted
             }
         }
         for await _ in committed.stream { break }
@@ -71,15 +51,14 @@ final class JournalConflictLifecycleTests: XCTestCase {
         while !model.locked { await Task.yield() }
         release.continuation.yield(())
         release.continuation.finish()
-        _ = try await resolving.value
+        _ = try await deleting.value
         await locking.value
         XCTAssertTrue(model.items.isEmpty)
         await model.unlockForTesting()
         XCTAssertNil(model.selectedJournal)
         XCTAssertNil(model.draft)
         XCTAssertFalse(model.canEdit)
-        let history = try await store.history(for: journal.id)
-        XCTAssertEqual(history.count, 4)
+        XCTAssertTrue(model.deletedJournals.contains { $0.id == journal.id })
         try await store.close()
         let reopened = AppModel(directory: root)
         await reopened.load()

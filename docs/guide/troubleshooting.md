@@ -44,13 +44,28 @@ If your library needs a password and its device key is gone (it isn’t kept in 
 
 ## An entry has changes from another device
 
-When the same entry changes on two devices before they sync, My Journal keeps both versions instead of choosing one. The entry shows “This entry has changes from another device.” and is marked in the list. Settings > Sync lists every item under **Changes to Review**.
+When the same entry or template changes on two devices before they sync, My Journal keeps both versions instead of choosing one. The entry shows “This entry has changes from another device.” and is marked in the list. Settings > Sync lists every entry and template like this under **Changes to Review**.
 
 1. Choose **Review Changes**.
 2. Switch between the versions from This Device and Other Device.
 3. Choose **Keep Both** to save them as separate entries, or **Keep One Version** to keep only one.
 
-The version you don’t keep stays in Version History. If an entry was deleted on one device and edited on another, you can keep the entry, keep it as a copy, or keep the deletion.
+The version you don’t keep stays in Version History.
+
+## Something changed on two devices
+
+My Journal settles some changes on its own, keeps both versions, and doesn’t ask or alert you. Settings > Sync lists what it settled under **Changed on Two Devices**. Choosing a row opens the item it saved.
+
+- **A journal renamed on two devices.** The journal keeps the name that reached the server last, which isn’t always the one you typed last. The row shows the name it has now and the other one. Choose **Rename…** if you prefer the other name.
+- **Deleted permanently on one device and changed on another.** The item stays deleted, and the changed version is saved as a separate entry or template in **Recently Deleted**. Choose **Restore** to bring it back. If its journal is gone too, it is in **Unavailable Journals**, and **Restore** puts it in your Default Journal. A journal deleted permanently on one device and changed on another stays deleted.
+
+The list shows the 20 most recent notes. A note disappears after 30 days, except a journal’s rename note, which stays until you choose **Clear List**. Clearing the list only forgets the notes; the entries and journals stay as they are. Entries and templates that differ on two devices still need your review, as described above.
+
+If the section **Changed on Two Devices** isn’t there, nothing has been settled.
+
+### “Update My Journal to combine them”
+
+This line appears at the bottom of Settings > Sync when a change from another device was saved by a newer version of My Journal that this version can’t read. The change is held as it is, and nothing is lost or sent. Update My Journal on this device. It then settles the change by itself, and the line goes away.
 
 ## Sync isn’t working
 
@@ -108,7 +123,7 @@ If an image is too large (over about 25 MB), entries that include it stay on thi
 
 ## What is Unavailable Journals?
 
-Unavailable Journals appears in the sidebar when some entries can’t be shown in their journal: the journal hasn’t arrived on this device yet, it has changes to review, or it was saved by a newer version of My Journal. Your entries are still saved. Select an entry there to see why, and choose **Try Syncing Again** or **Review Changes** when offered.
+Unavailable Journals appears in the sidebar when some entries can’t be shown in their journal: the journal hasn’t arrived on this device yet, or it, or a change to it from another device, was saved by a newer version of My Journal. Your entries are still saved. Select an entry there to see why, and choose **Try Syncing Again** when offered, or update My Journal. If the entry is deleted, **Restore to “Name”** puts it in your Default Journal, which the button names.
 
 ## Move to a new device
 

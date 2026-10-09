@@ -27,8 +27,8 @@ python3 -c 'import sys; s=sys.stdin.read().rstrip("\n"); print(len(s), "characte
 | Name | 30 characters | 26 characters | [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information) |
 | Subtitle | 30 characters | 28 characters | [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information) |
 | Promotional text | 170 characters | 144 characters | [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information) |
-| Description, iOS | 4000 characters | 3529 characters (3585 bytes) | same |
-| Description, macOS | 4000 characters | 3703 characters (3757 bytes) | same |
+| Description, iOS | 4000 characters | 3506 characters (3562 bytes) | same |
+| Description, macOS | 4000 characters | 3680 characters (3734 bytes) | same |
 | Keywords | 100 bytes, comma-separated, no spaces after commas, each longer than 2 characters | 97 bytes, 13 keywords; English (U.K.) set 100 bytes, 11 keywords | same; [App Store search](https://developer.apple.com/app-store/search/) |
 | What's New | Not shown for the first version | 593 characters, for TestFlight and GitHub | same |
 
@@ -102,7 +102,7 @@ WRITE
 • Headings, bold, italic, lists with indentation, checklists, quotes, code, tables and links.
 • Add several photos at once, from your library, your files or the camera. Describe them for VoiceOver, and copy, share, save or delete them.
 • Markdown shortcuts as you type, and the Markdown of any entry one tap away.
-• Create your own templates and start entries from them. Each journal can have a default template.
+• Create your own templates and start an entry from one inside a new entry.
 
 ORGANIZE
 • Keep separate journals, for example one personal and one for work, in the order you choose.
@@ -194,7 +194,7 @@ WRITE
 • Headings, bold, italic, lists with indentation, checklists, quotes, code, tables and links.
 • Drag in or insert several images at once. Describe them for VoiceOver, and copy, share, save or delete them.
 • Markdown shortcuts as you type, and the Markdown of any entry one click away.
-• Create your own templates and start entries from them. Each journal can have a default template.
+• Create your own templates and start an entry from one inside a new entry.
 • Show Editor Only hides the sidebar and list when you want to focus.
 
 ORGANIZE
@@ -223,7 +223,7 @@ Add English (U.K.) as a second localization of both platform versions. It's the 
 | --- | --- |
 | Name, Subtitle | The same as English (U.S.) |
 | Promotional text | The same as English (U.S.) (no spelling differences) |
-| Description | The U.S. descriptions with British spelling: "ORGANIZE" becomes "ORGANISE"; nothing else differs. (3529 and 3703 characters) |
+| Description | The U.S. descriptions with British spelling: "ORGANIZE" becomes "ORGANISE"; nothing else differs. (3506 and 3680 characters) |
 | Support URL, Marketing URL | The same |
 
 Keywords (English (U.K.), both platforms, 100 bytes):
@@ -258,20 +258,20 @@ The first release of My Journal for iPhone, iPad and Mac.
 
 ## Claims checked against build 16
 
-Every feature in the descriptions was checked in the code on 2026-10-05:
+Every feature in the descriptions was checked in the code on 2026-10-05. The template and sync rows were changed on 2026-10-09 for release 1.1, which removes a journal's default template; recheck them against the 1.1 code before submitting:
 
 | Claim | Where |
 | --- | --- |
 | Headings, bold, italic, lists, checklists, quotes, code, tables, links; Increase and Decrease Indent | `AppCommands.swift`, `FormattingPopover.swift` |
 | Several photos at once from Photo Library, Take Photo or Choose File…; Copy, Share…, Save to Photos, Image Descriptions…, Delete (Mac: Cut, Copy, Paste, Share, Save Image As…) | `WritingAccessory.swift`, `ImagePickerPresenter.swift`, `ImageActionsIOS.swift`, `ImageActionsMac.swift` |
 | Location removed from added photos | `ImportedImage.swift` |
-| Templates you create; a default template per journal; new libraries start without templates | `no-built-in-templates-2026-10-04.md`, journal actions "Default Template" |
+| Templates you create, used from inside a new entry (no default template per journal since 1.1); new libraries start without templates | `no-built-in-templates-2026-10-04.md`, `1-1-library-simplifications.md` (M), `TemplateChooserView.swift` |
 | Journal order, Pin Entry and the Pinned section | `journal-order.md`, `pinned-entries.md`, `JournalNavigation.swift` |
 | Search, Version History, Recently Deleted with Delete All | `RootView.swift`, `ios-delete-all-and-settings-2026-10-03.md` |
 | Encryption on by default (Use Encryption is the suggested choice on the first screen) | `CreateJournalView.swift` |
 | App Lock with Face ID, Touch ID or the passcode (no PIN); Mac locks after inactivity (30 minutes by default), on sleep and on switching users | `AppLockSettings.swift`, `InactivityLockSettings.swift` |
 | Erase Journals and Settings | `EraseSection.swift` (build 16) |
-| Sync only through the person's server, which the apps don't include (since 2026-10-05); scanning a code; conflicts kept for review; quiet sync status | `ServerClient.swift`, `SettingsView.swift`, `AddDeviceView.swift`, `client-only-mac-lists-markdown-2026-10-05.md`, `quiet-sync-and-title-alignment.md` |
+| Sync only through the person's server, which the apps don't include (since 2026-10-05); scanning a code; entries and templates that differ are kept for review, and journals and deletions that differ settle themselves, keeping both versions; quiet sync status | `ServerClient.swift`, `SettingsView.swift`, `AddDeviceView.swift`, `client-only-mac-lists-markdown-2026-10-05.md`, `quiet-sync-and-title-alignment.md` |
 | Agent access on every platform through the person's server, read-only, per journal, revocable | `ServerAgentsView.swift`, `agent-access-simplified.md` |
 | Export as Markdown, with images (build 17) | `MarkdownExportView.swift`, `JournalCore/MarkdownExport.swift`, [protocol/markdown-export.md](../../protocol/markdown-export.md) |
 | No analytics, ads or tracking | [app-privacy.md](app-privacy.md) |

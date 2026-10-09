@@ -40,8 +40,8 @@ extension Probe {
         guard try await observer.item(journalID)?.deletedAt != nil else {
             throw ProbeFailure("the other device did not receive the journal deletion")
         }
-        let restoration = try await sender.prepareEntryRestoration(entryID, journalID: journalID)
-        let restored = try await sender.restoreEntryAndJournal(restoration)
+        _ = try await sender.restoreJournal(journalID)
+        let restored = try await sender.restoreEntry(entryID, fallback: nil).entry
         try await senderSync.synchronize()
         try await senderSync.synchronize()
         try await observerSync.synchronize()
@@ -54,9 +54,9 @@ extension Probe {
             siblings.allSatisfy({ sibling in observed.contains(sibling) }), pending.isEmpty, conflicts.isEmpty
         else {
             throw ProbeFailure(
-                "restoring the entry and its journal did not converge on the other device, or siblings, queued changes or conflicts differ"
+                "restoring the journal and the entry did not converge on the other device, or siblings, queued changes or conflicts differ"
             )
         }
-        print("PASS: entry and parent recovery converges on another device while preserving siblings")
+        print("PASS: journal and entry recovery converges on another device while preserving siblings")
     }
 }

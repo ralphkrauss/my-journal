@@ -2,8 +2,7 @@ import JournalCore
 import UIKit
 import XCTest
 
-/// Pinned entries, journal order and the journal a template's entry goes to (docs/design/pinned-entries.md,
-/// journal-order.md, template-journal-choice-2026-10-03.md): one journey each.
+/// Pinned entries and journal order (docs/design/pinned-entries.md, journal-order.md): one journey each.
 final class PinnedOrderUITests: XCTestCase {
     @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
     private var phrase = ""
@@ -130,34 +129,6 @@ final class PinnedOrderUITests: XCTestCase {
         }
     }
 
-    /// A template's New Entry In ▸ lists the journals in the sidebar order, none first although Home uses the template
-    /// as its Default Template; choosing a journal files the entry there and opens it in that journal.
-    @MainActor func testANewEntryFromATemplateGoesToTheChosenJournal() async throws {
-        let app = try await launch()
-        defer { app.terminate() }
-        NavigationTestSupport.selectCollection("Templates", app: app)
-        let template = app.staticTexts["Weekly review"].firstMatch
-        XCTAssertTrue(template.waitToAppear(timeout: 10))
-        template.press(forDuration: 1.2)
-        let submenu = app.buttons["New Entry In"].firstMatch
-        XCTAssertTrue(submenu.waitToAppear(timeout: 5))
-        submenu.tap()
-        let travel = app.buttons["Travel"].firstMatch
-        XCTAssertTrue(travel.waitToAppear(timeout: 5))
-        let positions = ["Default", "Home", "Travel", "Work"].map { app.buttons[$0].firstMatch.frame.minY }
-        XCTAssertEqual(positions, positions.sorted(), "The journals in the sidebar order")
-        capture(app, "New Entry In menu")
-        travel.tap()
-        let body = app.textViews["Entry text"]
-        let filled = NSPredicate(format: "value CONTAINS %@", "What went well?")
-        XCTAssertEqual(
-            Waiting.wait(for: XCTNSPredicateExpectation(predicate: filled, object: body), timeout: 10), .completed)
-        if !isPad {
-            app.navigationBars.buttons.element(boundBy: 0).tap()
-            XCTAssertTrue(app.navigationBars["Travel"].waitToAppear(timeout: 5), "Back leads to the chosen journal")
-        }
-    }
-
     // MARK: Support
 
     @MainActor private func row(_ title: String, app: XCUIApplication) -> XCUIElement {
@@ -198,8 +169,8 @@ final class PinnedOrderUITests: XCTestCase {
         guard rows.allSatisfy({ $0.1.exists }) else { return [] }
         return rows.sorted { $0.1.frame.minY < $1.1.frame.minY }.map(\.0)
     }
-    /// Journals Default (the oldest), Home, Travel and Work; in Work "Interview notes" (older) and "Standup"; and the
-    /// template "Weekly review", Home's Default Template. The last journal opened is Default.
+    /// Journals Default (the oldest), Home, Travel and Work; in Work "Interview notes" (older) and "Standup". The last
+    /// journal opened is Default.
     @MainActor private func launch(largestText: Bool = false) async throws -> XCUIApplication {
         continueAfterFailure = false
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("PinOrder-" + UUID().uuidString)
@@ -208,14 +179,10 @@ final class PinnedOrderUITests: XCTestCase {
         phrase = try VaultCrypto.recoveryPhrase()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
         let store = try JournalStore(directory: root, key: key)
-        let template = JournalItem(
-            kind: "template", title: "Weekly review", document: JournalDocument(markdown: "What went well?"))
-        try await store.save(template)
         let start = Date().addingTimeInterval(-3_600)
         var journals: [JournalItem] = []
         for (index, name) in ["Default", "Home", "Travel", "Work"].enumerated() {
-            var journal = JournalItem(kind: "journal", title: name, date: start.addingTimeInterval(Double(index) * 60))
-            if name == "Home" { journal.defaultTemplateID = template.id }
+            let journal = JournalItem(kind: "journal", title: name, date: start.addingTimeInterval(Double(index) * 60))
             try await store.save(journal)
             journals.append(journal)
         }

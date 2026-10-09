@@ -22,10 +22,8 @@ struct JournalSidebarView: View {
     @State private var renaming: JournalItem?
     @State private var name = ""
     @State private var deletionRequest: UUID?
-    @State private var history: JournalItem?
     @State private var takenName: String?
     @State private var retrying: JournalItem?
-    @State private var merging: JournalItem?
 
     /// Edit mode on iPhone and iPad (journal-order.md); the Mac has none, journals are dragged there.
     private var editing: Bool {
@@ -98,8 +96,6 @@ struct JournalSidebarView: View {
             afterAlertCloses(model) { renaming = journal }
         }
         .journalDeletionPrompt($deletionRequest)
-        .sheet(item: $history) { JournalHistoryView(journalID: $0.id) }
-        .sheet(item: $merging) { MergeJournalView(sourceID: $0.id) }
         #if os(iOS)
             // Only while editing: outside edit mode the list keeps its own, as rows are lifted by holding them.
             .environment(\.editMode, editing ? .constant(.active) : nil)
@@ -115,8 +111,6 @@ struct JournalSidebarView: View {
                 renaming = nil
                 takenName = nil
                 retrying = nil
-                merging = nil
-                history = nil
             }
         }
         .listStyle(.sidebar)
@@ -217,8 +211,6 @@ struct JournalSidebarView: View {
                 name = journal.title
                 renaming = journal
             },
-            merge: { merging = journal },
-            history: { history = journal },
             delete: { deletionRequest = journal.id })
     }
     /// A drop at `destination` of the list shown (offsets as `onMove` gives them), as a position among all journals.
@@ -302,39 +294,12 @@ struct JournalSidebarView: View {
 }
 
 extension AppModel {
-    /// Whether a journal's Default Template offers a choice: there's a template, or the journal still refers to one
-    /// that's gone, which Blank Entry clears. Otherwise the setting is dimmed (no-built-in-templates-2026-10-04.md).
-    func offersDefaultTemplateChoice(for journal: JournalItem) -> Bool {
-        !templates.isEmpty || items.first { $0.id == journal.id }?.defaultTemplateID != nil
-    }
-
     /// A journal's actions, in its sidebar row's context menu and the Mac toolbar's Journal Actions menu.
     func journalActions(
-        _ journal: JournalItem, rename: @escaping @MainActor () -> Void, merge: @escaping @MainActor () -> Void,
-        history: @escaping @MainActor () -> Void, delete: @escaping @MainActor () -> Void
+        _ journal: JournalItem, rename: @escaping @MainActor () -> Void, delete: @escaping @MainActor () -> Void
     ) -> [MenuAction] {
-        let conflicted = conflicts.contains { $0.id == journal.id }
-        let current = defaultTemplateID(of: journal)
-        let choices =
-            [
-                MenuAction.command("Blank Entry", id: "blank", checked: current == nil) {
-                    self.changeJournal(journal.id, template: nil)
-                }
-            ]
-            + templates.map { template in
-                MenuAction.command(template.displayTitle, id: template.id.uuidString, checked: current == template.id) {
-                    self.changeJournal(journal.id, template: template.id)
-                }
-            }
-        return [
-            .command("Rename…", symbol: "pencil", enabled: !conflicted, perform: rename),
-            .submenu(
-                "Default Template", symbol: "doc.text",
-                enabled: !conflicted && offersDefaultTemplateChoice(for: journal), choices),
-            .command(
-                "Merge Into…", symbol: "arrow.triangle.merge",
-                enabled: !conflicted && journals.contains { $0.id != journal.id }, perform: merge),
-            .command("Version History…", symbol: "clock.arrow.circlepath", perform: history),
+        [
+            .command("Rename…", symbol: "pencil", perform: rename),
             .separator("delete"),
             .command("Delete Journal…", symbol: "trash", destructive: true, perform: delete),
         ]

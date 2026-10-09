@@ -1,7 +1,7 @@
 ---
 id: messages
 title: Messages
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-journal, conflict-review-deletion, conflict-review-unsupported, library-open-failure, erase-unopened-library, failure-messages, deletion-conflict-alert, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-unsupported, conflict-kept-both, changed-on-two-devices-list, library-open-failure, erase-unopened-library, failure-messages, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 sources:
   - apps/apple/Packages/JournalCore/Sources/JournalCore/SyncHealth.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/Models.swift
@@ -12,9 +12,6 @@ sources:
   - apps/apple/JournalApp/Views/SyncNowRows.swift
   - apps/apple/JournalApp/Views/ConflictRouting.swift
   - apps/apple/JournalApp/Views/EntryConflictReview.swift
-  - apps/apple/JournalApp/Views/JournalConflictView.swift
-  - apps/apple/JournalApp/Views/DeletionConflictView.swift
-  - apps/apple/JournalApp/Views/DeletionConflictAlert.swift
   - apps/apple/JournalApp/Views/LibraryProblemView.swift
   - apps/apple/JournalApp/Model/FailureMessage.swift
   - apps/apple/JournalApp/Model/NetworkFailureMessage.swift
@@ -38,7 +35,6 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | **Generic alert** | Title `common.alertTitle`, the message, `common.ok`, plus `common.tryAgain` while a save has failed | One per window. Never while locked or while the first journal is being created. Most "Couldn’t …", `messages.save.before.tryAgain`, "… couldn’t be displayed" messages and any operation error without its own place go here. |
 | **Lock screen note** | The same model error, in red, under "My Journal Is Locked" | Used instead of the generic alert while locked. Launch failures no longer use it: they show the library problem screen. |
 | **Library problem screen** | Heading, paragraphs and buttons for a library that can't be opened | Replaces the window; needs no authentication. See [screens/unavailable-content](screens/unavailable-content.md) and Library can’t be opened below. |
-| **Deletion conflict alert** | A standard alert with Review Changes and Cancel | Delete Journal and Delete Permanently on an item with changes to review. See Deletion refused below. |
 | **Sheet errors** | An operation's error inside its own sheet (Connect to a Server, Turn On Encryption, Change Password, Add Device, Move Entry, Change Date, Image Descriptions, the conflict reviews, exports) | Errors stay on the sheet that caused them, never in an alert behind it. |
 | **Notices** | Save failure, writing paused (Mac), conflict, recovery and unavailable notices in the entry | Persistent while the state lasts, with their single action. |
 | **Announcements** | VoiceOver announcements | Only for results of actions the person started, and for errors appearing in an open sheet. |
@@ -294,16 +290,6 @@ What the person is told when an operation fails and the failure has no text of i
 
 A network error is classified as sync classifies it, so one place knows what a network error means. Surfaces that already had their own mapping (archive import and export, Export as Markdown, the connection flow, the sync states) keep it and use this function only for what falls through.
 
-### Deletion refused: changes to review
-
-Delete Journal and Delete Permanently on a record that has changes to review do not show the generic alert. They show a standard alert with the buttons `common.reviewChanges` (opens the review sheet for that record) and `common.cancel`. The alert closes when the app locks.
-
-| Key | Text | When it appears | Shown in | Actions | Notes |
-| --- | --- | --- | --- | --- | --- |
-| `messages.deleteConflict.title` | “{name}” Can’t Be Deleted | The alert’s title. {name} is in curly quotes; a title longer than 40 characters is shortened in the middle with an ellipsis; a blank title reads `common.untitledJournal`, `library.entryList.untitledTemplate` or `library.entryList.untitledEntryInAlert`. | deletion conflict alert | common.reviewChanges; common.cancel |  |
-| `messages.deleteConflict.journal` | This journal has changes that need review. | Message for Delete Journal when the journal or one of its entries has changes to review. | deletion conflict alert | common.reviewChanges; common.cancel |  |
-| `messages.deleteConflict.record` | This has changes that need review before it can be deleted. | Message for Delete Permanently of an entry, template or journal in Recently Deleted that has changes to review. | deletion conflict alert | common.reviewChanges; common.cancel |  |
-
 ### Saved, but not displayed
 
 | Key | Text | When it appears | Shown in | Actions | Notes |
@@ -327,10 +313,7 @@ Delete Journal and Delete Permanently on a record that has changes to review do 
 | `messages.generic.pinFailed` | Couldn’t pin the entry. | Pin Entry failed, except when the library record is from a newer version, which shows `messages.library.needsUpdate`. | generic alert | common.ok |  |
 | `messages.generic.unpinFailed` | Couldn’t unpin the entry. | Unpin Entry failed, except when the library record is from a newer version, which shows `messages.library.needsUpdate`. | generic alert | common.ok |  |
 | `messages.generic.moveJournalFailed` | Couldn’t move the journal. | Reordering a journal failed, except when the library record is from a newer version, which shows `messages.library.needsUpdate`. | generic alert | common.ok |  |
-| `messages.generic.journalNamedUnavailable` | “{name}” is no longer available. | New Entry In ▸ a journal from a template, when that journal left the list meanwhile. | generic alert | common.ok |  |
-| `messages.generic.journalUnavailable` | This journal is no longer available. | As messages.generic.journalNamedUnavailable when the journal has no name to show; also JournalMergeError.sourceUnavailable in Merge Into…. | generic alert; Merge Into… | common.ok |  |
-| `messages.generic.templateUnavailable` | This template is no longer available. | Starting an entry from a template that was deleted or is from a newer version. | generic alert; template chooser | common.ok |  |
-| `messages.generic.templateNeedsReview` | Review the changes to this template first. | Starting an entry from a template that has changes to review. | generic alert; template chooser | common.ok |  |
+| `library.templateChooser.entryChanged` | This entry changed, so the template wasn’t added. | The template chooser closes without adding anything when the open entry stopped being empty before a template was chosen. Nothing is created. | generic alert | common.ok |  |
 | `messages.generic.journalDeleteNeedsUpdate` | Update My Journal to delete this journal. | Delete Journal for a journal saved by a newer version. | generic alert | common.ok |  |
 | `messages.generic.deleteChanged` | This has changed since you chose to delete it. Check it and try again. | Delete Permanently when the item changed or was restored meanwhile. | generic alert | common.ok |  |
 | `messages.generic.deleteNeedsUpdate` | Update My Journal to delete this. | Delete Permanently for an item saved by a newer version. | generic alert | common.ok |  |
@@ -365,24 +348,17 @@ Delete Journal and Delete Permanently on a record that has changes to review do 
 | `messages.entry.dateChanged` | This entry’s date changed. Close this sheet and try again. | EntryDateError.changed. | Change Date sheet |  |  |
 | `messages.entry.imagesChanged` | This entry has changed. Review its images again. | ImageDescriptionError.changed. | Image Descriptions sheet |  |  |
 | `messages.entry.archiveChanged` | This entry’s archive status changed. Review it before trying again. | EntryArchivingError.changed. Archiving was removed; nothing calls it. | none |  | unreachable |
-| `common.journalGone` | That journal is no longer available. Choose another journal. | Move Entry or Merge Into… when the chosen journal was deleted meanwhile (also JournalMergeError.destinationUnavailable). | Move Entry; Merge Into… |  |  |
+| `common.journalGone` | That journal is no longer available. Choose another journal. | Move Entry when the chosen journal was deleted meanwhile. | Move Entry |  |  |
 | `messages.entry.moveNeedsReview` | Review this entry’s changes before moving it. | Move Entry for an entry with changes to review. | Move Entry |  |  |
 | `messages.entry.copyLocation` | Choose a new location for the journal copy. | Restoring a journal copy without a new location (a guard). | journal restore |  | rare |
-| `messages.restore.changed` | This entry or journal has changed. Review it again before restoring. | EntryRestorationError.changed. | Restore sheet |  |  |
-| `messages.restore.unavailable` | This entry or journal is no longer available for restoration. | EntryRestorationError.unavailable. | Restore sheet |  |  |
-| `messages.restore.alreadyRestored` | This journal has already been restored. Review the entry before continuing. | EntryRestorationError.alreadyRestored. | Restore sheet |  |  |
 | `messages.history.versionUnavailable` | This version is no longer available. Reload its history. | HistoryRecoveryError.unavailableVersion. | Version History |  |  |
-| `messages.history.chooseJournal` | Choose an available journal. | HistoryRecoveryError.destinationUnavailable (Version History restore). In a deletion conflict it shows as messages.conflict.deletion.journalUnavailable. | Version History |  |  |
-| `messages.history.journalChanged` | This journal has changed. Review its settings again. | HistoryRecoveryError.changedJournal. | journal Version History |  |  |
-| `messages.history.settingsInUse` | These settings are already in use. | HistoryRecoveryError.settingsAlreadyApplied. | journal Version History |  |  |
+| `messages.history.chooseJournal` | Choose an available journal. | HistoryRecoveryError.destinationUnavailable (Version History restore). | Version History |  |  |
 | `messages.lifecycle.changed` | This journal has changed. Review the entries before deleting it. | JournalLifecycleError.changed: the entries changed while the Delete Journal alert was open. It is not a conflict, so it shows in the generic alert with OK, not in the deletion conflict alert. | generic alert; Delete Journal sheet |  |  |
-| `messages.lifecycle.changedContinue` | This journal has changed. Review it again before continuing. | Restore Journal sheet when the journal changed meanwhile. | Restore Journal sheet |  |  |
 | `messages.lifecycle.missingJournal` | This journal is unavailable. | JournalLifecycleError.missingJournal. | journal sheets |  |  |
 | `messages.lifecycle.unsupportedJournal` | Update My Journal to make changes to this journal. | JournalLifecycleError.unsupportedJournal: a journal saved by a newer version. | journal sheets |  |  |
 | `messages.lifecycle.alreadyDeleted` | This journal is already in Recently Deleted. | JournalLifecycleError.alreadyDeleted. | journal sheets |  |  |
 | `messages.lifecycle.alreadyRestored` | This journal has already been restored. | JournalLifecycleError.alreadyRestored. | journal sheets |  |  |
-| `messages.lifecycle.needsReview` | These changes need review before you can continue. | JournalLifecycleError.conflict and JournalMergeError.conflict. | journal sheets; Merge Into… | Review Changes where offered |  |
-| `messages.merge.newerVersion` | Update My Journal to merge this journal. Some entries were saved by a newer version. | JournalMergeError.newerVersion. | Merge Into… |  |  |
+| `messages.restore.destinationGone` | The journal to restore into is no longer available. Nothing was restored. | Restore of an entry when neither its own journal nor the Default Journal can be used at that moment. | generic alert | common.ok |  |
 | `messages.journal.nameTaken` | A journal named “{name}” already exists. | JournalNameError.taken, and the Name Taken alert’s announcement. | Name Taken alert; journal settings |  |  |
 
 ### Unavailable and read-only content
@@ -391,14 +367,13 @@ Delete Journal and Delete Permanently on a record that has changes to review do 
 | --- | --- | --- | --- | --- | --- |
 | `messages.unavailable.markdownSource` | This entry uses Markdown that can’t be previewed. | Under the title of an entry whose Markdown can only be shown and edited as source. | entry editor note |  |  |
 | `common.previewUnavailable` | Preview isn’t available for this entry | Help tag of the dimmed View Preview / View Source control for such an entry. | editor toolbar help |  |  |
-| `common.unavailableJournals` | Unavailable Journals | Sidebar row and list title of the collection of entries whose journal is missing, from a newer version, or has changes to review. Shown only while such entries exist or it is open. | sidebar; entries list title |  |  |
+| `common.unavailableJournals` | Unavailable Journals | Sidebar row and list title of the collection of entries whose journal is missing or was saved by a newer version. Shown only while such entries exist or it is open. | sidebar; entries list title |  |  |
 | `messages.unavailable.empty` | No Unavailable Entries | Entries list of Unavailable Journals when it is empty. | entries list |  |  |
 | `common.searchUnavailableEntries` | Search Unavailable Entries | Search field placeholder, help and label in Unavailable Journals. | search field |  |  |
 | `common.updateToRestoreEntry` | Update My Journal to restore this entry. | Notice above an entry whose journal was saved by a newer version. | entry recovery notice |  |  |
 | `common.journalNotArrived` | This journal hasn’t arrived on this device. | Notice above an entry whose journal is missing, while this device syncs. | entry recovery notice | common.trySyncingAgain |  |
 | `common.trySyncingAgain` | Try Syncing Again | Runs a sync that also resends refused items. | entry recovery notice |  |  |
-| `common.journalUnavailableEntrySaved` | The journal for this entry is unavailable. Your entry is still saved. | Notice above an entry whose journal is missing, on a device that doesn’t sync. | entry recovery notice | Restore and Move… when it was deleted with its journal |  |
-| `common.journalNeedsReview` | This journal has changes to review. | Notice above an entry whose journal has changes to review. | entry recovery notice | common.reviewChanges |  |
+| `common.journalUnavailableEntrySaved` | The journal for this entry is unavailable. Your entry is still saved. | Notice above an entry whose journal is missing, on a device that doesn’t sync. | entry recovery notice | Restore to “{name}” when the entry itself is deleted |  |
 | `messages.unavailable.restoreJournalNeedsUpdate` | Update My Journal to restore this journal. | A deleted journal saved by a newer version, in Recently Deleted. | deleted journal view | Export Archive… |  |
 
 ### Privacy cover and announcements
@@ -410,15 +385,16 @@ Delete Journal and Delete Permanently on a record that has changes to review do 
 | `messages.announce.unpinned` | Unpinned | VoiceOver announcement after Unpin Entry. | announcement |  |  |
 | `messages.announce.journalMovedAbove` | Moved above {name}. | VoiceOver announcement after reordering a journal; {name} is the journal now below it. | announcement |  |  |
 | `messages.announce.journalMovedBelow` | Moved below {name}. | As above, when the journal moved to the end; {name} is the journal now above it. | announcement |  |  |
+| `messages.announce.restoredIn` | Restored to {name}. | VoiceOver announcement after Restore put an entry in a journal other than its own; {name} is that journal. Nothing is announced when the entry went back to its own journal. | announcement |  |  |
 
 ### Conflicts
 
 | Key | Text | When it appears | Shown in | Actions | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `messages.conflict.entryNotice` | This entry has changes from another device. | Notice above an entry or template that has changes to review (above the writing on every platform). Also JournalError.conflict’s description. | entry editor notice | common.reviewChanges |  |
+| `messages.conflict.entryNotice` | This entry has changes from another device. | Notice above an entry or template that has changes to review (above the writing on every platform). | entry editor notice | common.reviewChanges |  |
 | `common.reviewChangesFor` | Review Changes for {title} | Accessibility label of each Review Changes button in Settings ▸ Sync ▸ Changes to Review. | Settings ▸ Sync |  |  |
-| `messages.conflict.needsReview` | Changes need review | Accessibility label of the exclamation mark on an entry row with changes to review, and visible text in a journal’s settings section. | entries list row; journal settings |  |  |
-| `messages.conflict.settingsSection` | Changes to Review | Header of the section in Settings ▸ Sync that lists every record with changes to review, shown only when there is one and the app is unlocked. | Settings ▸ Sync |  |  |
+| `messages.conflict.needsReview` | Changes need review | Accessibility label of the exclamation mark on an entry row with changes to review. | entries list row |  |  |
+| `messages.conflict.settingsSection` | Changes to Review | Header of the section in Settings ▸ Sync that lists every entry or template with changes to review, and every one saved by a newer version. Shown only when there is one and the app is unlocked. Journals and permanent deletions are not listed: the app settles them itself (Changed on Two Devices). | Settings ▸ Sync |  |  |
 | `messages.conflict.locked` | Unlock My Journal to review changes. | Review sheet content when the journals locked while it was open (the sheet then closes). | review sheet |  |  |
 | `messages.conflict.resolved` | These changes have been resolved. | Review sheet when the conflict no longer exists (resolved here or on another device). | review sheet | common.done |  |
 | `messages.conflict.updateToReview` | Update My Journal to review these changes. | Review sheet when either version has content this version can’t read (unsupported conflict). | review sheet | Export Archive… |  |
@@ -464,78 +440,17 @@ Delete Journal and Delete Permanently on a record that has changes to review do 
 | `messages.conflict.placement.archivedInDated` | Archived in {journal}, dated {date} | Place and date both differ. | entry review |  | legacy archive |
 | `messages.conflict.status.updated` | These changes were updated. Review both versions again. | Entry review: the other device’s version changed while the review was open, or a choice was refused because it changed. The choice is cleared and This Device is shown. | entry review status |  |  |
 | `messages.conflict.status.refreshFailed` | Changes couldn’t be updated. | Entry review: reading the changed versions again failed; previews and choices are hidden. | entry review status | common.tryAgain |  |
-| `messages.conflict.savingChanges` | Saving Changes… | Progress while a choice is saved (entry and journal reviews). | review sheet |  |  |
+| `messages.conflict.savingChanges` | Saving Changes… | Progress while a choice is saved in the entry review. | entry review |  |  |
 | `messages.conflict.updatingChanges` | Updating Changes… | Progress while the entry review reads the versions again. | entry review |  |  |
 | `messages.conflict.committedNotReloaded` | Changes saved. The entry couldn’t be reloaded. | Entry review: the choice was saved but reading the result failed. Only reloading is offered; the choice is never applied twice. | entry review | common.tryAgain, common.done |  |
-| `messages.conflict.updatedReviewAgain` | These changes have been updated. Review them again. | Journal or deletion review: the versions changed since the review was read; the choice wasn’t applied. | journal review; deletion review | messages.conflict.journal.reloadChanges (journal); messages.conflict.deletion.reviewAgain (deletion) |  |
-| `messages.conflict.journal.keepVersion` | Keep Version… | Journal review: keeps the shown version, after confirmation. There is no Keep Both for journals. | journal review |  |  |
-| `messages.conflict.journal.confirmThisDevice` | Keep the version from This Device? | Confirmation title when This Device is shown. | journal review confirmation | messages.conflict.keepVersion, common.cancel |  |
-| `messages.conflict.journal.confirmOtherDevice` | Keep the version from Other Device? | Confirmation title when Other Device is shown. | journal review confirmation | messages.conflict.keepVersion, common.cancel |  |
-| `messages.conflict.journal.confirmMessage` | {date}. Both versions will remain in Version History. | Confirmation message; {date} is the version’s modification date and time (abbreviated date, standard time). | journal review confirmation |  |  |
-| `common.name` | Name | Field label in the journal version summary. | journal review |  |  |
-| `common.defaultTemplate` | Default Template | Field label. | journal review |  |  |
-| `messages.conflict.journal.field.location` | Location | Field label. | journal review |  |  |
-| `common.journals` | Journals | Location of a version in the Journals list. | journal review |  |  |
-| `common.recentlyDeleted` | Recently Deleted | Location of a version in Recently Deleted. | journal review |  |  |
-| `common.blankEntry` | Blank Entry | Default Template value when none is set. | journal review |  |  |
-| `messages.conflict.journal.value.unavailableTemplate` | Unavailable Template | Default Template value when the template isn’t on this device. | journal review |  |  |
-| `common.untitledJournal` | Untitled Journal | Name value for an unnamed journal. | journal review |  |  |
-| `messages.conflict.journal.details` | Details | Disclosure under Other Device that shows the recorded device ID (lower-case, selectable). | journal review |  |  |
-| `messages.conflict.journal.deviceIDLabel` | Recorded device ID {id} | Accessibility label of the device ID. | journal review |  |  |
-| `messages.conflict.journal.saved` | Your choice was saved. | Journal review after a successful choice. | journal review | common.done |  |
-| `messages.conflict.journal.savedNotDisplayed` | Your choice was saved, but the journal couldn’t be displayed. | Journal review: saved, but reading the journals again failed. | journal review | messages.conflict.journal.reload |  |
-| `messages.conflict.journal.reload` | Reload | Retries reading after a saved choice. | journal review |  |  |
-| `messages.conflict.journal.reloadChanges` | Reload Changes | Reads the conflict again after an error before a choice was saved. | journal review |  |  |
-| `messages.conflict.journal.loading` | Loading Changes… | Progress while Reload Changes runs. | journal review |  |  |
-| `messages.conflict.journal.errorLabel` | Error: {message} | Accessibility label of the journal review’s error text. | journal review |  |  |
-| `messages.conflict.journal.chooseOne` | Choose one version of this journal. Its entries will stay in the same journal. | The store refuses Keep Both for a journal. Never shown: the journal review only offers Keep Version…. | none |  | unreachable |
-| `common.onThisDevice` | On This Device | Location line of this device’s version. | deletion review |  |  |
-| `messages.conflict.deletion.receivedVersion` | Received Version | Location line of the received version. | deletion review |  |  |
-| `messages.conflict.deletion.unknownDevice` | Unknown Device | Device line of each version (no device name is known). | deletion review |  |  |
-| `messages.conflict.deletion.deletionToKeep` | Deletion to Keep | Location line of the deletion in the Keep Deletion confirmation when both versions are deletions. | deletion review confirmation |  |  |
-| `messages.conflict.deletion.deletedTitle.entry` | Deleted Entry | How a permanently deleted entry is named (its marker has no title): heading of the version, and its row in Settings ▸ Sync ▸ Changes to Review. | deletion review; Settings ▸ Sync |  |  |
-| `messages.conflict.deletion.bothDeleted.entry` | Both versions show this entry as deleted. | Deletion review when both versions of a entry are deletions. | deletion review | messages.conflict.deletion.keepDeletion |  |
-| `messages.conflict.deletion.confirmKeepDeleted.entry` | Keep Entry Deleted? | Title of the destructive confirmation sheet when both versions of a entry are deletions. | deletion review confirmation | messages.conflict.deletion.deletePermanently, common.cancel |  |
-| `messages.conflict.deletion.confirmDeleteEdited.entry` | Delete Edited Entry? | Title of the destructive confirmation sheet when one version is an edited entry. | deletion review confirmation | messages.conflict.deletion.deletePermanently, common.cancel |  |
-| `messages.conflict.deletion.deletedTitle.template` | Deleted Template | How a permanently deleted template is named (its marker has no title): heading of the version, and its row in Settings ▸ Sync ▸ Changes to Review. | deletion review; Settings ▸ Sync |  |  |
-| `messages.conflict.deletion.bothDeleted.template` | Both versions show this template as deleted. | Deletion review when both versions of a template are deletions. | deletion review | messages.conflict.deletion.keepDeletion |  |
-| `messages.conflict.deletion.confirmKeepDeleted.template` | Keep Template Deleted? | Title of the destructive confirmation sheet when both versions of a template are deletions. | deletion review confirmation | messages.conflict.deletion.deletePermanently, common.cancel |  |
-| `messages.conflict.deletion.confirmDeleteEdited.template` | Delete Edited Template? | Title of the destructive confirmation sheet when one version is an edited template. | deletion review confirmation | messages.conflict.deletion.deletePermanently, common.cancel |  |
-| `messages.conflict.deletion.deletedTitle.journal` | Deleted Journal | How a permanently deleted journal is named (its marker has no title): heading of the version, and its row in Settings ▸ Sync ▸ Changes to Review. | deletion review; Settings ▸ Sync |  |  |
-| `messages.conflict.deletion.bothDeleted.journal` | Both versions show this journal as deleted. | Deletion review when both versions of a journal are deletions. | deletion review | messages.conflict.deletion.keepDeletion |  |
-| `messages.conflict.deletion.confirmKeepDeleted.journal` | Keep Journal Deleted? | Title of the destructive confirmation sheet when both versions of a journal are deletions. | deletion review confirmation | messages.conflict.deletion.deletePermanently, common.cancel |  |
-| `messages.conflict.deletion.confirmDeleteEdited.journal` | Delete Edited Journal? | Title of the destructive confirmation sheet when one version is an edited journal. | deletion review confirmation | messages.conflict.deletion.deletePermanently, common.cancel |  |
-| `messages.conflict.deletion.bothDeletedExplanation` | Keeping the deletion also removes any remaining earlier versions from My Journal. | Under messages.conflict.deletion.bothDeleted.*. | deletion review |  |  |
-| `messages.conflict.deletion.keepEntry` | Keep Entry… | Edited entry against a deletion: keep the edited entry in a journal chosen next. | deletion review |  |  |
-| `messages.conflict.deletion.keepEntryExplanation` | Keeps the edited entry. Earlier versions already deleted aren’t restored. | Under Keep Entry…. | deletion review |  |  |
-| `messages.conflict.deletion.keepEntryAsCopy` | Keep Entry as Copy… | Keep the edited entry as a new entry in a journal chosen next. | deletion review |  |  |
-| `messages.conflict.deletion.keepEntryAsCopyExplanation` | Creates a new entry and keeps the original deleted. Any remaining earlier versions stay available in archive exports. | Under Keep Entry as Copy…. | deletion review |  |  |
-| `messages.conflict.deletion.keepTemplate` | Keep Template | Edited template against a deletion: keeps it at once. | deletion review |  |  |
-| `messages.conflict.deletion.keepTemplateExplanation` | Keeps the edited template. Earlier versions already deleted aren’t restored. | Under Keep Template. | deletion review |  |  |
-| `messages.conflict.deletion.keepJournal` | Keep Journal | Edited journal against a deletion: keeps it at once. | deletion review |  |  |
-| `messages.conflict.deletion.keepJournalExplanation` | Keeps this journal’s name and template. Deleted entries aren’t restored. | Under Keep Journal. | deletion review |  |  |
-| `common.restoredAsRenamed` | Another journal is named “{name}”, so this one will be restored as “{newName}”. | Under Keep Journal when the name is taken; {newName} is the numbered name. | deletion review |  |  |
-| `messages.conflict.deletion.keepDeletion` | Keep Deletion… | Destructive: opens the confirmation that deletes the edited version permanently. | deletion review |  |  |
-| `messages.conflict.deletion.keepDeletionExplanation.journal` | Removes this edited journal’s name, template setting, and earlier versions from My Journal. | Under Keep Deletion… for a journal, and in its confirmation. | deletion review; confirmation |  |  |
-| `messages.conflict.deletion.keepDeletionExplanation.other` | Removes this edited version and its earlier versions from My Journal. | Under Keep Deletion… for an entry or template, and in its confirmation. | deletion review; confirmation |  |  |
-| `messages.conflict.deletion.remainingVersionsRemoved` | Any remaining earlier versions will be removed from My Journal on this device. | Confirmation when both versions are deletions. | deletion review confirmation |  |  |
-| `messages.conflict.deletion.consequence.sync` | This deletion will sync to your other connected devices. | Confirmation consequence line (shared with Delete Permanently). | deletion review confirmation |  | shared with permanent deletion |
-| `messages.conflict.deletion.consequence.copies` | Copies may remain in archives, backups, and server history. | Confirmation consequence line (shared with Delete Permanently). | deletion review confirmation |  | shared with permanent deletion |
-| `messages.conflict.deletion.consequence.noUndo` | You can’t undo this. | Confirmation consequence line (shared with Delete Permanently). | deletion review confirmation |  | shared with permanent deletion |
-| `messages.conflict.deletion.deletePermanently` | Delete Permanently | Destructive button of the confirmation. | deletion review confirmation |  |  |
-| `messages.conflict.deletion.deleting` | Deleting… | Progress in the confirmation. | deletion review confirmation |  |  |
-| `common.pleaseWait` | Please Wait… | Progress while the review is prepared or a choice is saved. | deletion review |  |  |
-| `common.chooseJournal` | Choose a Journal | Heading of the journal list after Keep Entry… or Keep Entry as Copy…. Journals with changes to review aren’t listed; journals with the same name add their date, then an ID prefix. | deletion review |  |  |
-| `common.newJournalEllipsis` | New Journal… | Creates a journal to keep the entry in. | deletion review |  |  |
-| `messages.conflict.deletion.selectedJournal` | Journal: {name} | Shows the chosen journal. | deletion review |  |  |
-| `messages.conflict.deletion.confirmKeepEntry` | Keep Entry | Keeps the entry in the chosen journal. | deletion review |  |  |
-| `messages.conflict.deletion.confirmKeepEntryAsCopy` | Keep Entry as Copy | Keeps a copy in the chosen journal. | deletion review |  |  |
-| `common.back` | Back | Returns from the journal list to the choices. | deletion review |  |  |
-| `messages.conflict.deletion.reviewAgain` | Review Again | Reads the conflict again after an error. | deletion review |  |  |
-| `common.reloadJournals` | Reload Journals | Reads the conflict and journals again after the chosen journal became unavailable. | deletion review |  |  |
-| `messages.conflict.deletion.journalUnavailable` | That journal is no longer available. Reload journals and choose another. | The chosen journal was deleted or has changes to review. | deletion review | common.reloadJournals |  |
-| `messages.conflict.deletion.updateToReview` | Update My Journal to review these changes. You can export an archive to keep a copy. | A version can’t be read by this version of My Journal. | deletion review | Export Archive… |  |
-| `messages.conflict.deletion.savedNotDisplayed` | Your choice was saved, but My Journal couldn’t update the view. Reopen My Journal to continue. | The choice was saved but reading the journals again failed. | deletion review | common.done |  |
+| `messages.conflict.kept.section` | Changed on Two Devices | Header of the section in Settings ▸ Sync that lists what the app settled itself: a journal renamed on two devices, and an item deleted permanently on one device and changed on another. Shown only when there are rows and the app is unlocked. Beside Changes to Review. | Settings ▸ Sync |  |  |
+| `messages.conflict.kept.footer` | Both versions are kept. This list clears after 30 days. | Footer of that section. Journal rename notes do not expire; only Clear List removes them. | Settings ▸ Sync |  |  |
+| `messages.conflict.kept.journalRenamed` | Renamed on two devices. The name is now “{name}”; the other was “{otherName}”. | Row: a journal renamed on two devices keeps the name that reached the server later (the server’s order, not the newer edit); the other name is here and in the journal’s history. Plain text. | Settings ▸ Sync ▸ Changed on Two Devices |  |  |
+| `messages.conflict.kept.deletedAndChanged` | Deleted permanently on one device and changed on another. The changed version is saved separately. | Row: the deletion stays final and the changed entry or template is saved as a new one in Recently Deleted (Unavailable Journals when its journal is gone). The row opens it wherever it is. | Settings ▸ Sync ▸ Changed on Two Devices | open-kept-note |  |
+| `messages.conflict.kept.journalDeleted` | Deleted permanently on one device and changed on another. It stays deleted. | Row: a journal deleted permanently on one device and changed on another stays deleted; no journal is created. Plain text. | Settings ▸ Sync ▸ Changed on Two Devices |  |  |
+| `messages.conflict.kept.rowHint` | Opens it. | Accessibility hint of a row that opens an item; its label is the title, the sentence, then the date and time. | Settings ▸ Sync ▸ Changed on Two Devices |  |  |
+| `messages.conflict.kept.clear` | Clear List | Last row of the section; forgets the notes at once, without confirmation. | Settings ▸ Sync ▸ Changed on Two Devices | clear-kept-notes |  |
+| `messages.conflict.kept.updateNeeded` | Some changes from another device need a newer version of My Journal. Update My Journal to combine them. | One more line in the Settings ▸ Sync footer while a journal or deletion change from another device stays held because a newer version of My Journal wrote it. No row, no alert. | Settings ▸ Sync footer |  |  |
 
 ## Accessibility announcements not tied to one screen
 
@@ -544,15 +459,16 @@ Delete Journal and Delete Permanently on a record that has changes to review do 
 | The held sync message, else `messages.sync.announce.synced`, else `messages.sync.announce.failed` | After Sync Now, Try Again or Check Again finishes, from Settings ▸ Sync or Sync Status. Never for automatic syncs. |
 | `messages.announce.pinned`, `messages.announce.unpinned` | After Pin Entry or Unpin Entry, from any place it's offered (context menu, More menu, swipe, menu bar, Undo). |
 | `messages.announce.journalMovedAbove`, `messages.announce.journalMovedBelow` | After a journal is reordered (drag, edit mode, Undo). |
+| `messages.announce.restoredIn` | After Restore put an entry in a journal other than its own (iPhone, iPad and Mac). |
 | `messages.encryption.announce.turningOn`, `messages.encryption.announce.updatingServer`, `messages.encryption.announce.done` | Turn On Encryption's progress, wherever it is showing. |
-| Errors in open sheets | Connect to a Server, Turn On Encryption, the journal and deletion reviews, and the lock screen announce their error when it appears. |
+| Errors in open sheets | Connect to a Server, Turn On Encryption, and the lock screen announce their error when it appears. |
 | Focus moves | The entry review moves VoiceOver focus to its status after reading the versions again; unlocking behind App Lock's closing panel moves focus to the journals (iPhone and iPad). |
 
 The alert and the notices are not announced separately: an alert is read by the system, and notices are read in place.
 
 ## Errors without their own text
 
-Some errors have no description of their own, so if one reached a place that shows its description, the person would see the system’s generic text, such as “The operation couldn’t be completed. (… error 1.)”, or a database error with its SQL. Since build 18 those places use the failure messages above, and the generic fallback is `messages.failure.other`. The places that took this text before were the deletion review’s fallback for `PermanentDeletionError`, keychain failures and database errors at launch and in operations, and the decoding error of a settings file at launch (now the library problem screen).
+Some errors have no description of their own, so if one reached a place that shows its description, the person would see the system’s generic text, such as “The operation couldn’t be completed. (… error 1.)”, or a database error with its SQL. Since build 18 those places use the failure messages above, and the generic fallback is `messages.failure.other`. The places that took this text before were the deletion review’s fallback for `PermanentDeletionError` (the review is gone in 1.1), keychain failures and database errors at launch and in operations, and the decoding error of a settings file at launch (now the library problem screen).
 
 Sync never shows these: it classifies every error into a state.
 

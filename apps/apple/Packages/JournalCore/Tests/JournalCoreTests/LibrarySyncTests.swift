@@ -743,7 +743,7 @@ final class LibrarySyncTests: XCTestCase {
         entry = try await stored(store, entry.id)
         entry.deletedAt = Date()
         try await store.save(entry)
-        _ = try await store.restoreAndMoveEntry(entry.id, to: journal.id)
+        _ = try await store.restoreEntry(entry.id, fallback: journal.id)
         shown = try await pinned(store)
         XCTAssertEqual(shown, [entry.id])
 
