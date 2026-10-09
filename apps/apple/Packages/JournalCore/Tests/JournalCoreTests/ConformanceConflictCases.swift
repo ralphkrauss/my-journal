@@ -101,6 +101,15 @@ enum ConformanceConflictCases {
         else { return "" }
         return String(decoding: data, as: UTF8.self)
     }
+    /// The record with the last number of `segmentLengths` written with a fraction, as another client could write it.
+    private static func integerWithAFraction(_ item: JournalItem) -> String {
+        let plaintext = text(item)
+        guard let start = plaintext.range(of: "\"segmentLengths\":["),
+            let end = plaintext.range(of: "]", range: start.upperBound..<plaintext.endIndex)
+        else { return plaintext }
+        let numbers = String(plaintext[start.upperBound..<end.lowerBound])
+        return plaintext.replacingCharacters(in: start.upperBound..<end.lowerBound, with: numbers + ".0")
+    }
     private static func withUnknownMember(_ item: JournalItem) -> String {
         guard var object = (try? JSONSerialization.jsonObject(with: PortableRecord.encode(item))) as? [String: Any]
         else { return "" }
@@ -208,6 +217,10 @@ enum ConformanceConflictCases {
         add(
             "differs-image-types-only", "Only metadata.imageTypes differs: different.", base, text(base),
             withMetadata(base, "imageTypes", [imageID: "image/png"]))
+        add(
+            "differs-integer-written-with-a-fraction",
+            "Numbers are compared by kind and value: the integer 14 and 14.0 are different, as are true and 1. Another writer's 14.0 where this version has 14 is a difference, never the same content.",
+            base, text(base), integerWithAFraction(base))
         let weekly = template()
         add(
             "differs-template", "A template that differs is kept for review like an entry.", weekly, text(weekly),
@@ -293,6 +306,16 @@ enum ConformanceConflictCases {
             "copy-untitled-first-line-cut-at-60-clusters",
             "Row 3: the first line is cut at 60 extended grapheme clusters: 59 letters and the family emoji, which is one cluster of five scalars.",
             base, text(entry(markdown: "Edited here.\n")), text(entry(title: "", markdown: longLine + "\n")))
+        add(
+            "copy-white-space-title-uses-the-first-line",
+            "Row 3: a title with only White_Space characters (spaces, a tab, a no-break space, an em space) is none: the title the lists show is used.",
+            base, text(entry(markdown: "Edited here.\n")),
+            text(entry(title: " \t\u{A0}\u{2003}", markdown: "A first line\nand a second.\n")))
+        add(
+            "copy-white-space-first-line-uses-the-catalog-name",
+            "Row 3: R has no title and its first line that is not empty has only White_Space characters (here one no-break space, which a Markdown reader keeps as the line): the catalog's name, not the next line.",
+            base, text(entry(markdown: "Edited here.\n")),
+            text(entry(title: "", markdown: "\u{A0}\nA second line.\n")))
         add(
             "copy-untitled-and-empty",
             "Row 3: R has neither a title nor text. The lists show it as a new entry, and so does the copy.", base,

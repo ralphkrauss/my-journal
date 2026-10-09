@@ -11,6 +11,10 @@ public enum ConflictResolutionPoint: Sendable, Equatable {
     /// After a local merge or import, or after a stale save when no server is configured. The caller decides when
     /// the person has paused.
     case local
+    /// Once writing pauses after a stale save, whether or not a server is configured: only the conflicts such saves
+    /// made. Their other version is one this device already holds, which no pull can change, so there is nothing to
+    /// wait for. Any other conflict waits for a completed pull.
+    case afterStaleSave
 }
 
 /// One conflict this device settled.
@@ -66,29 +70,33 @@ extension JournalStore {
         if case .opening(let serverConfigured) = point, serverConfigured { return report }
         for recordID in try conflictedRecordIDs() {
             try Task.checkCancellation()
-            if holding.contains(recordID) || (point == .completedPull && isBeingWritten(recordID)) {
+            if point == .afterStaleSave, !(try isStaleSaveRow(recordID)) { continue }
+            if holding.contains(recordID) || (waitsForWriting(point) && isBeingWritten(recordID)) {
                 report.deferred += 1
                 continue
             }
             do {
                 switch try settleConflict(recordID) {
-                case .resolved(let resolved): report.resolved.append(resolved)
+                case .resolved(let resolved):
+                    failedConflicts.remove(recordID)
+                    report.resolved.append(resolved)
                 case .held: report.held += 1
-                case .gone: break
+                case .gone: failedConflicts.remove(recordID)
                 }
             } catch is CancellationError {
                 throw CancellationError()
             } catch {
+                failedConflicts.insert(recordID)
                 report.held += 1
             }
         }
         return report
     }
 
-    /// Whether a conflict is waiting that a later point settles on its own: not held. A row that
-    /// can't be read is held, so it is not waiting.
+    /// Whether a conflict is waiting that a later point settles on its own: not held. A row that can't be read, and one
+    /// whose last attempt failed, is held, so it is not waiting.
     func hasConflictAwaitingResolution() throws -> Bool {
-        for recordID in try conflictedRecordIDs() {
+        for recordID in try conflictedRecordIDs() where !failedConflicts.contains(recordID) {
             let waiting = try? db.read { db -> Bool in
                 guard let state = try conflictState(db, recordID: recordID) else { return false }
                 if case .held = ConflictResolution.resolve(local: state.local, other: state.other, ids: copyIdentity) {
@@ -165,18 +173,35 @@ extension JournalStore {
         ConflictCopyIdentity(vaultKey: protection == .encrypted ? key : nil)
     }
 
+    /// Whether a record being written is left to a later call at `point`. The other points have a caller that decides
+    /// when the person has paused, or no person at the keyboard.
+    private func waitsForWriting(_ point: ConflictResolutionPoint) -> Bool {
+        point == .completedPull || point == .afterStaleSave
+    }
     func isBeingWritten(_ recordID: UUID) -> Bool {
         guard let saved = lastSaves[recordID] else { return false }
         let elapsed = clock().timeIntervalSince(saved)
         return (0..<Self.writingPause).contains(elapsed)
     }
-    private func conflictedRecordIDs() throws -> [UUID] {
+    /// Whether the conflict was made by a save over a version that changed (a stale save): the other version has no
+    /// device and is at the revision this device's record has. A version from the server, from an import or from a
+    /// merge is not.
+    private func isStaleSaveRow(_ recordID: UUID) throws -> Bool {
         try db.read { db in
-            try String.fetchAll(
-                db, sql: "SELECT record FROM conflicts WHERE record<>? ORDER BY record",
-                arguments: [LibraryRecord.idText]
-            ).compactMap(UUID.init(uuidString:))
+            guard let state = try? conflictState(db, recordID: recordID) else { return false }
+            return state.otherDevice == nil && state.otherRevision == state.localRevision
         }
+    }
+    /// The records that have a conflict, without reading either version, so one that can't be opened doesn't hide the
+    /// others.
+    public func conflictedIDs() throws -> [UUID] { try conflictedRecordIDs() }
+    private func conflictedRecordIDs() throws -> [UUID] {
+        try db.read { try conflictedRecordIDs($0) }
+    }
+    func conflictedRecordIDs(_ db: Database) throws -> [UUID] {
+        try String.fetchAll(
+            db, sql: "SELECT record FROM conflicts WHERE record<>? ORDER BY record", arguments: [LibraryRecord.idText]
+        ).compactMap(UUID.init(uuidString:))
     }
 
     // MARK: The one-time pass
@@ -219,6 +244,7 @@ extension JournalStore {
                 throw CancellationError()
             } catch {
                 // A failure leaves that row for the next call; it doesn't stop the others.
+                failedConflicts.insert(recordID)
                 remaining.append(recordID)
             }
         }
@@ -230,6 +256,21 @@ extension JournalStore {
         }
         openingPassComplete = remaining.isEmpty
         return resolved
+    }
+    /// Records that the one-time pass has run when the library has no conflicts, so a conflict made later is never taken
+    /// for one an earlier version left. Called after a first read proved the library readable, because opening never
+    /// writes to a library that may be damaged. A library with conflicts is left to the pass itself.
+    public func recordOpeningPassWhenThereAreNoConflicts() throws {
+        guard !openingPassComplete else { return }
+        let complete = try db.write { db -> Bool in
+            var state = try keptNotesStore.state(db)
+            if state.passStep >= Self.passStepAllKinds { return true }
+            guard state.passRecords == nil, try conflictedRecordIDs(db).isEmpty else { return false }
+            state.passStep = Self.passStepAllKinds
+            try keptNotesStore.save(db, state)
+            return true
+        }
+        openingPassComplete = complete
     }
     /// The first version of the pass settled journals and permanent deletions (1); this one settles every kind (2).
     static let passStepAllKinds = 2
@@ -369,19 +410,22 @@ extension JournalStore {
             return settled(state, .journalDeleted)
         }
     }
-    /// A parked entry this device made and has not sent is replaced, without a further copy, by a version of the same
-    /// record that arrives first: two clients may write the same entry with different bytes. The arriving version wins
-    /// and the local one is dropped, but only while it is still what this device wrote: one the person has edited
-    /// since goes through the normal rules, which keep it. A marker is handled by parking, which drops the local entry
-    /// too, under the same condition.
+    /// A copy or parked entry this device made and has not sent is replaced, without a further copy, by a version of
+    /// the same record that arrives first: two clients may write the same entry with different bytes. The arriving
+    /// version wins and the local one is dropped, but only while it holds the content this device first wrote: one the
+    /// person has edited since, or that a later version replaced, goes through the normal rules, which keep it. A
+    /// marker is handled by parking, which drops the local entry too, under the same condition.
     private func arrivingVersionReplacesUnsentCopy(_ db: Database, state: ConflictState) throws -> Bool {
         guard state.localRevision == 0, state.otherIsFromServer, !state.other.isMarker, !state.local.isMarker,
             !state.local.isHeld, !state.other.isHeld
         else { return false }
         var notes = try keptNotesStore.state(db)
-        guard notes.isUnchangedAutomaticCopy(state.recordID, plaintext: state.local.plaintext) else { return false }
+        guard notes.isFirstWrittenCopy(state.recordID, plaintext: state.local.plaintext) else { return false }
         notes.copies.removeAll { $0.copyID == state.recordID }
         try keptNotesStore.save(db, notes)
+        // Nothing should be left to lose, but the version being dropped is kept as a backstop.
+        try keepInHistory(
+            db, recordID: state.recordID, kind: state.kind, payload: state.localPayload, saved: clock())
         try adoptOtherVersion(db, state)
         return true
     }
@@ -465,7 +509,7 @@ extension JournalStore {
         var notes = try keptNotesStore.state(db)
         let editedID = state.recordID
         if !markerIsLocal, state.localRevision == 0,
-            notes.isUnchangedAutomaticCopy(editedID, plaintext: state.local.plaintext)
+            notes.isFirstWrittenCopy(editedID, plaintext: state.local.plaintext)
         {
             notes.copies.removeAll { $0.copyID == editedID }
             try keptNotesStore.save(db, notes)
@@ -485,7 +529,7 @@ extension JournalStore {
         notes.copies = try copiesThatStillExist(db, notes.copies)
         notes.remember(
             KeptCopy(
-                copyID: parked.id, recordID: editedID, originDevice: state.otherDevice,
+                copyID: parked.id, recordID: editedID, kind: .parked, originDevice: state.otherDevice,
                 originRevision: state.otherRevision,
                 digest: KeptNotesState.digest(of: plaintext)))
         notes.add(

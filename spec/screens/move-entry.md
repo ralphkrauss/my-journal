@@ -50,7 +50,7 @@ Content:
 | No other journals | `library.moveEntry.noOtherJournals`, `library.moveEntry.noOtherJournals.message` |
 | Moving | `library.moveEntry.moving` (can't swipe to dismiss) |
 | The selected journal disappears or becomes ambiguous | `common.journalGone` (selection cleared) |
-| A change from another device on the entry, its journal or the destination journal still waits to be combined (a few seconds) | `messages.lifecycle.combining`; choose Move again in a moment |
+| A change from another device on the entry, its journal or the destination journal still waits to be combined | `messages.lifecycle.combining`; choose Move again after the next sync |
 | The entry's journal or the destination is saved by a newer version | `messages.lifecycle.unsupportedJournal` |
 | Open entry couldn't be saved | `messages.save.before.goBack` in the sheet |
 | Moved but not shown | the app's error alert with `common.entryMovedNotDisplayed` |

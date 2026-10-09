@@ -58,7 +58,7 @@ Other changes settle the same way, and Settings > Sync lists everything under **
 - **A journal renamed on two devices.** The journal keeps the name that reached the server last, which isn’t always the one you typed last. The row shows the name it has now and the other one. Choose **Rename…** if you prefer the other name.
 - **Deleted permanently on one device and changed on another.** The item stays deleted, and the changed version is saved as a separate entry or template in **Recently Deleted**. Choose **Restore** to bring it back. If its journal is gone too, it is in **Unavailable Journals**, and **Restore** puts it in your Default Journal. A journal deleted permanently on one device and changed on another stays deleted.
 
-For a few seconds after a sync that finds such a change, moving that entry, restoring an earlier version of it, or deleting it permanently says “Some changes from another device are still being combined. Try again in a moment.”
+Until the next sync finishes combining such a change, moving that entry, restoring an earlier version of it, or deleting it permanently says “Some changes from another device will finish combining when My Journal next syncs.”
 
 If version 1.0 left changes for you to review, version 1.1 settles them the first time it opens your journals, keeping both versions. A deletion you had not yet confirmed stays deleted and the edit is saved separately.
 

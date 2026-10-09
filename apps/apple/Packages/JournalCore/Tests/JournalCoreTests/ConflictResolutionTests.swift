@@ -119,6 +119,40 @@ final class ConflictResolutionTests: ConflictTestCase {
         XCTAssertTrue(adoptsOther)
     }
 
+    func testValuesOfAnotherJSONTypeOrNumberKindAreDifferentButOrderAndSpellingOfMembersAreNot() throws {
+        func same(_ first: String, _ second: String) throws -> Bool {
+            let options: JSONSerialization.ReadingOptions = [.fragmentsAllowed]
+            let one = try JSONSerialization.jsonObject(with: Data(first.utf8), options: options)
+            let other = try JSONSerialization.jsonObject(with: Data(second.utf8), options: options)
+            return ConflictResolution.sameJSON(one, other)
+        }
+        XCTAssertFalse(try same(#"{"a":true}"#, #"{"a":1}"#), "true is not 1")
+        XCTAssertFalse(try same(#"{"a":false}"#, #"{"a":0}"#), "false is not 0")
+        XCTAssertFalse(try same(#"{"a":[1]}"#, #"{"a":[1.0]}"#), "1 and 1.0 are different")
+        XCTAssertFalse(try same(#"{"a":1}"#, #"{"a":1e0}"#), "…as is a number with an exponent")
+        XCTAssertFalse(try same(#"{"a":"1"}"#, #"{"a":1}"#), "a string is not a number")
+        XCTAssertFalse(try same(#"{"a":null}"#, #"{"a":0}"#), "null is not 0")
+        XCTAssertFalse(try same(#"{"a":1}"#, #"{"a":1,"b":null}"#), "a member that is absent is not null")
+        XCTAssertTrue(try same(#"{"a":[1,2.5,true],"b":{"c":null}}"#, #"{"b":{"c":null},"a":[1,2.5,true]}"#))
+        XCTAssertFalse(try same(#"{"a":[1,2]}"#, #"{"a":[2,1]}"#), "arrays are ordered")
+        XCTAssertFalse(try same("{\"caf\u{E9}\":1}", "{\"cafe\u{301}\":1}"), "member names by code points")
+        XCTAssertFalse(try same("[\"caf\u{E9}\"]", "[\"cafe\u{301}\"]"), "strings by code points")
+    }
+
+    func testAnIntegerFieldWrittenAsANumberWithAFractionIsADifferenceOrUnreadableNeverTheSame() throws {
+        let base = entry("Notes", text: "same")
+        let plaintext = String(decoding: try PortableRecord.encode(base), as: UTF8.self)
+        let marker = "\"segmentLengths\":["
+        let start = try XCTUnwrap(plaintext.range(of: marker))
+        let end = try XCTUnwrap(plaintext.range(of: "]", range: start.upperBound..<plaintext.endIndex))
+        let length = String(plaintext[start.upperBound..<end.lowerBound])
+        let written = plaintext.replacingCharacters(in: start.upperBound..<end.lowerBound, with: length + ".0")
+        XCTAssertNotEqual(written, plaintext)
+        let other = ConflictSide(plaintext: Data(written.utf8), id: base.id, kind: "entry")
+        let outcome = ConflictResolution.resolve(local: try side(base), other: other, ids: ids)
+        if case .sameContent = outcome { XCTFail("13 and 13.0 were taken as the same content") }
+    }
+
     // MARK: Deletion state (row 2)
 
     func testDeletedOnOneDeviceAndUntouchedOnTheOtherIsNotAConflict() throws {
@@ -324,6 +358,11 @@ final class ConflictResolutionTests: ConflictTestCase {
             "Cut at 60 extended grapheme clusters, not scalars or bytes")
         item.document = .plain("")
         XCTAssertEqual(ConflictResolution.copyTitle(of: item), "New Entry (other version)")
+        item.title = " \t\u{A0}\u{2003}"
+        item.document = .plain("   \nSecond line")
+        XCTAssertEqual(
+            ConflictResolution.copyTitle(of: item), "New Entry (other version)",
+            "A title with only White_Space characters is none, and so is a first line with only White_Space characters")
         item.kind = "template"
         XCTAssertEqual(ConflictResolution.copyTitle(of: item), "Untitled Template (other version)")
     }

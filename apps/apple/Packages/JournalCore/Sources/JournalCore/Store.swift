@@ -63,6 +63,9 @@ public actor JournalStore {
     var remembersDecodedRecords = true
     /// The one-time pass over conflicts an earlier version left has run for this library (StoreConflictResolution.swift).
     var openingPassComplete = false
+    /// Conflicted records whose last attempt to settle failed. They count as held until an attempt works, so a row that
+    /// keeps failing doesn't keep a synchronization from being settled (`hasConflictAwaitingResolution`).
+    var failedConflicts: Set<UUID> = []
     /// The payload each record was last saved with here, from an item that could be edited. Saving over it again
     /// needs no decoding to know that.
     var editablePayloads: [UUID: StoredVersion] = [:]
@@ -293,7 +296,8 @@ public actor JournalStore {
     public func viewSnapshot() throws -> JournalViewSnapshot {
         try db.read { db in
             JournalViewSnapshot(
-                items: try items(db).filter { !$0.isPermanentlyDeleted }, conflicts: try conflicts(db),
+                items: try items(db).filter { !$0.isPermanentlyDeleted },
+                conflictedIDs: Set(try conflictedRecordIDs(db)),
                 pending: try Bool.fetchOne(
                     db,
                     sql:

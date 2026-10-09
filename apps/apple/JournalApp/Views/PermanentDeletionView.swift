@@ -109,7 +109,7 @@ private struct PermanentDeletionPrompt: ViewModifier {
         case PermanentDeletionError.unsupported:
             model.error = "Update My Journal to delete this."
         case PermanentDeletionError.conflict:
-            model.error = "Some changes from another device are still being combined. Try again in a moment."
+            model.error = "Some changes from another device will finish combining when My Journal next syncs."
         default:
             model.report(failure, .saving)
         }

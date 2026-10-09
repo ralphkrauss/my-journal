@@ -2200,8 +2200,8 @@
     "context": "JournalLifecycleError.changed (Delete Journal sheet and prompt: the entries changed while the alert was open; the generic alert shows this text)."
   },
   "messages.lifecycle.combining": {
-    "text": "Some changes from another device are still being combined. Try again in a moment.",
-    "context": "JournalLifecycleError.conflict: Move Entry, restoring a Version History version and Delete Permanently on an item that has a change from another device waiting to be combined (the next sync settles it, a few seconds at most). A change that only a newer version can read shows the update messages instead. Delete All reads such an item as one that can’t be deleted yet (library.deleteAll.held.other)."
+    "text": "Some changes from another device will finish combining when My Journal next syncs.",
+    "context": "JournalLifecycleError.conflict: Move Entry, restoring a Version History version and Delete Permanently on an item that has a change from another device waiting to be combined. A change from a pull is settled at the end of the next completed sync; a change made by saving over a version that arrived is settled by this device a moment after writing pauses, with or without a connection. A change that only a newer version can read shows the update messages instead. Delete All reads such an item as one that can’t be deleted yet (library.deleteAll.held.other)."
   },
   "messages.lifecycle.missingJournal": {
     "text": "This journal is unavailable.",

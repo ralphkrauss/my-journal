@@ -7,32 +7,32 @@ import XCTest
 /// becomes a separate entry with a derived identity, and an untouched copy is replaced by a later version from the same
 /// device and by nothing else. Real isolated stores; the multi-device conversations are in ConflictScenarioTests.
 final class StoreKeepBothTests: ConflictTestCase {
-    private let phone = UUID()
-    private let mac = UUID()
+    let phone = UUID()
+    let mac = UUID()
 
     /// An entry that is synchronized and clean, like one another device can change, and the journal it is in.
-    private func synchronizedEntry(_ text: String, in store: JournalStore) async throws -> JournalItem {
+    func synchronizedEntry(_ text: String, in store: JournalStore) async throws -> JournalItem {
         let home = journal("Home")
         try await settle(home, in: store)
         let page = entry("Page", text: text, journal: home.id)
         try await settle(page, in: store)
         return try await stored(store, page.id)
     }
-    @discardableResult private func typing(_ text: String, into item: JournalItem, in store: JournalStore)
+    @discardableResult func typing(_ text: String, into item: JournalItem, in store: JournalStore)
         async throws -> JournalItem
     {
         var changed = item
         changed.document = .plain(text)
         return try await store.save(changed)
     }
-    private func version(of item: JournalItem, _ text: String) -> JournalItem {
+    func version(of item: JournalItem, _ text: String) -> JournalItem {
         var other = item
         other.document = .plain(text)
         other.storedVersion = nil
         return other
     }
     /// What the server would do with everything queued: accept it, so the records are clean.
-    private func send(from store: JournalStore) async throws {
+    func send(from store: JournalStore) async throws {
         for change in try await store.pending() {
             let receipt = RemoteChange(
                 cursor: 100, recordId: change.recordID, revision: change.baseRevision + 1, kind: change.kind,
@@ -40,12 +40,12 @@ final class StoreKeepBothTests: ConflictTestCase {
             try await store.acknowledge(change, receipt: receipt)
         }
     }
-    private func copies(of item: JournalItem, in store: JournalStore) async throws -> [JournalItem] {
+    func copies(of item: JournalItem, in store: JournalStore) async throws -> [JournalItem] {
         try await store.items().filter {
             $0.kind == item.kind && $0.id != item.id && $0.title.hasSuffix("(other version)")
         }
     }
-    private func payload(of id: UUID, in store: JournalStore) async throws -> String? {
+    func payload(of id: UUID, in store: JournalStore) async throws -> String? {
         try await store.db.read {
             try String.fetchOne(
                 $0, sql: "SELECT payload FROM records WHERE id=?", arguments: [id.uuidString.lowercased()])
@@ -188,7 +188,7 @@ final class StoreKeepBothTests: ConflictTestCase {
 
     // MARK: Replacing an earlier copy
 
-    private func madeCopy(
+    func madeCopy(
         of page: JournalItem, text: String, revision: Int64, device: UUID, in store: JournalStore
     ) async throws -> JournalItem {
         let current = try await stored(store, page.id)

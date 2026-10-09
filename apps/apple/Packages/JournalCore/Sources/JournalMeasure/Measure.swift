@@ -93,7 +93,7 @@ struct Measure {
         let firstStart = ProcessInfo.processInfo.systemUptime
         let snapshot = try await store.viewSnapshot()
         metrics["firstSnapshotSeconds"] = elapsed(firstStart)
-        guard snapshot.items.count == entryCount + 1, snapshot.conflicts.isEmpty, snapshot.pending else {
+        guard snapshot.items.count == entryCount + 1, snapshot.conflictedIDs.isEmpty, snapshot.pending else {
             throw MeasurementError.contentMismatch
         }
         let searchStart = ProcessInfo.processInfo.systemUptime

@@ -409,6 +409,32 @@
       "expected" : {
         "copy" : {
           "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "7481ca4c-ce69-8fc0-8d3d-e43d81a6230b",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "differs-integer-written-with-a-fraction",
+      "note" : "Numbers are compared by kind and value: the integer 14 and 14.0 are different, as are true and 1. Another writer's 14.0 where this version has 14 is a difference, never the same content.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14.0]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
           "date" : 1770091506,
           "deletedAt" : null,
           "deletedWithJournal" : false,
@@ -507,6 +533,58 @@
       "name" : "copy-untitled-first-line-cut-at-60-clusters",
       "note" : "Row 3: the first line is cut at 60 extended grapheme clusters: 59 letters and the family emoji, which is one cluster of five scalars.",
       "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa👨‍👩‍👧bbbbb\\n\",\"metadata\":{\"blockIDs\":[\"AE22E169-A546-FB43-37A8-77FCC388515E\"],\"imageTypes\":{},\"segmentLengths\":[83]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "3de03e48-38a6-8526-87c6-413ae602b7f6",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "A first line\nand a second.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "A first line (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-white-space-title-uses-the-first-line",
+      "note" : "Row 3: a title with only White_Space characters (spaces, a tab, a no-break space, an em space) is none: the title the lists show is used.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"A first line\\nand a second.\\n\",\"metadata\":{\"blockIDs\":[\"354F764A-6AA0-F6BB-6CAE-D112FFD1E22C\"],\"imageTypes\":{},\"segmentLengths\":[27]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\" \\t  \"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "c4d35a85-67ed-8603-aa39-3efe9f4b0949",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : " \nA second line.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "New Entry (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-white-space-first-line-uses-the-catalog-name",
+      "note" : "Row 3: R has no title and its first line that is not empty has only White_Space characters (here one no-break space, which a Markdown reader keeps as the line): the catalog's name, not the next line.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\" \\nA second line.\\n\",\"metadata\":{\"blockIDs\":[\"9B8E2DF4-7846-1484-7C8F-2F20F6EAFCF8\"],\"imageTypes\":{},\"segmentLengths\":[18]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"\"}",
       "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
     },
     {

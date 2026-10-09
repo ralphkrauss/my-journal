@@ -21,7 +21,7 @@ extension JournalStore {
         if let earlier = try replaceableCopy(db, notes: notes, state: state) {
             try replaceCopy(db, earlier: earlier, with: copy)
             copyID = earlier.copyID
-            notes.remember(try keptCopy(earlier.copyID, copy: copy, state: state))
+            notes.remember(try keptCopy(earlier.copyID, copy: copy, state: state, replaced: true))
         } else {
             copyID = copy.id
             try insertCopy(db, copy)
@@ -37,13 +37,17 @@ extension JournalStore {
     }
 
     /// What this device remembers about a copy: where it came from and the digest of the plaintext it wrote, so a
-    /// later conflict knows whether anyone has changed it since.
-    private func keptCopy(_ copyID: UUID, copy: JournalItem, state: ConflictState) throws -> KeptCopy {
+    /// later conflict knows whether anyone has changed it since. A replacement keeps the mark that the content this
+    /// device first wrote is gone.
+    private func keptCopy(_ copyID: UUID, copy: JournalItem, state: ConflictState, replaced: Bool = false) throws
+        -> KeptCopy
+    {
         var written = copy
         written.id = copyID
         return KeptCopy(
-            copyID: copyID, recordID: state.recordID, originDevice: state.otherDevice,
-            originRevision: state.otherRevision, digest: KeptNotesState.digest(of: try PortableRecord.encode(written)))
+            copyID: copyID, recordID: state.recordID, kind: .copy, originDevice: state.otherDevice,
+            originRevision: state.otherRevision, digest: KeptNotesState.digest(of: try PortableRecord.encode(written)),
+            replaced: replaced)
     }
 
     private func insertCopy(_ db: Database, _ copy: JournalItem) throws {
@@ -59,13 +63,15 @@ extension JournalStore {
     /// The latest earlier copy of this record that came from the same device as the later other version, which that
     /// version descends from (a higher revision). A nil or unknown device never matches: a version kept by a save on
     /// this device doesn't record which device wrote it, and two devices must not replace each other's copies. Only
-    /// the latest candidate counts, and only while nobody has touched it.
+    /// the latest candidate counts, and only while nobody has touched it. A parked entry is never replaced: it is not
+    /// a version of the record.
     private func replaceableCopy(_ db: Database, notes: KeptNotesState, state: ConflictState) throws -> KeptCopy? {
         guard state.otherIsFromServer, let origin = state.otherDevice else { return nil }
         let latest =
             notes.copies
             .filter {
-                $0.recordID == state.recordID && $0.originDevice == origin && $0.originRevision < state.otherRevision
+                $0.kind == .copy && $0.recordID == state.recordID && $0.originDevice == origin
+                    && $0.originRevision < state.otherRevision
             }
             .max { $0.originRevision < $1.originRevision }
         guard let latest, try isUntouched(db, latest) else { return nil }

@@ -117,14 +117,51 @@ public enum ConflictResolution {
         first.unicodeScalars.elementsEqual(second.unicodeScalars)
     }
     /// The `document` members of two record plaintexts as JSON values: objects unordered, arrays ordered, strings by
-    /// code points. Two devices seal the same content differently, so bytes are never compared.
+    /// code points, and numbers by kind and value. Two devices seal the same content differently, so bytes are never
+    /// compared.
     static func sameDocument(_ first: Data, _ second: Data) -> Bool {
         guard let one = document(of: first), let other = document(of: second) else { return false }
-        return one.isEqual(other)
+        return sameJSON(one, other)
     }
     private static func document(of plaintext: Data) -> NSDictionary? {
         guard let object = (try? JSONSerialization.jsonObject(with: plaintext)) as? [String: Any] else { return nil }
         return object["document"] as? NSDictionary
+    }
+    /// Whether two parsed JSON values are the same value. Foundation's own equality would equate `true` with 1 and 1
+    /// with 1.0, and compare keys and strings as canonically equivalent text in places; a false "same" would lose an
+    /// edit, so a boolean is never a number, an integer is never a number with a fraction or an exponent, and every
+    /// string and key is compared by its Unicode scalars.
+    static func sameJSON(_ first: Any, _ second: Any) -> Bool {
+        switch (first, second) {
+        case (let one as NSDictionary, let other as NSDictionary):
+            guard one.count == other.count else { return false }
+            let others = Dictionary(
+                uniqueKeysWithValues: other.map { (String(describing: $0.key).unicodeScalars.map(\.value), $0.value) })
+            return one.allSatisfy { entry in
+                guard let match = others[String(describing: entry.key).unicodeScalars.map(\.value)] else {
+                    return false
+                }
+                return sameJSON(entry.value, match)
+            }
+        case (let one as NSArray, let other as NSArray):
+            return one.count == other.count && zip(one, other).allSatisfy { sameJSON($0, $1) }
+        case (let one as NSString, let other as NSString):
+            return sameText(one as String, other as String)
+        case (let one as NSNumber, let other as NSNumber):
+            return sameNumber(one, other)
+        case (is NSNull, is NSNull):
+            return true
+        default:
+            return false
+        }
+    }
+    private static func sameNumber(_ first: NSNumber, _ second: NSNumber) -> Bool {
+        enum Kind { case boolean, integer, fractional }
+        func kind(_ number: NSNumber) -> Kind {
+            if CFGetTypeID(number) == CFBooleanGetTypeID() { return .boolean }
+            return CFNumberIsFloatType(number) ? .fractional : .integer
+        }
+        return kind(first) == kind(second) && first.isEqual(to: second)
     }
 
     // MARK: Deletion state (3.2.2)
@@ -156,9 +193,11 @@ public enum ConflictResolution {
         item.storedVersion = nil
         return item
     }
-    /// "{title} (other version)": the other version's title, or when it has none the title the lists show for it,
-    /// cut at 60 extended grapheme clusters. Always appended, never detected: a copy of a copy reads twice. Catalog
-    /// text (`messages.conflict.copyTitle`); clients never parse it.
+    /// "{title} (other version)": the other version's title, or when it is empty or only white space (Unicode
+    /// White_Space) the title the lists show for it: the first line of the text that is not empty, cut at 60 extended
+    /// grapheme clusters, or the catalog's name when that line is only white space or there is none. Always appended,
+    /// never detected: a copy of a copy reads twice. Catalog text (`messages.conflict.copyTitle`); clients never parse
+    /// it.
     public static func copyTitle(of item: JournalItem) -> String {
         let title: String
         if !item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

@@ -138,7 +138,11 @@ public actor SyncEngine {
         do {
             // Rows an earlier version left are settled before anything is read, so a pull can't replace their other
             // version first (protocol/conflicts.md, The pass over rows an earlier version left).
-            resolvedConflicts = try await store.resolveConflicts(at: .opening(serverConfigured: true)).resolved
+            resolvedConflicts =
+                try await store.resolveConflicts(
+                    at: .opening(serverConfigured: true), holding: request.holdingConflicts
+                )
+                .resolved
             var report = try await synchronizeAgainIfServerChanged(request)
             report.resolvedConflicts = resolvedConflicts
             report.quietMark = await store.endSynchronization()

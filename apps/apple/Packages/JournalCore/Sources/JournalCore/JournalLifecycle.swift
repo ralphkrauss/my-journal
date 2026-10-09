@@ -9,7 +9,7 @@ public enum JournalLifecycleError: Error, LocalizedError, Sendable {
         case .unsupportedJournal: return "Update My Journal to make changes to this journal."
         case .alreadyDeleted: return "This journal is already in Recently Deleted."
         case .alreadyRestored: return "This journal has already been restored."
-        case .conflict: return "Some changes from another device are still being combined. Try again in a moment."
+        case .conflict: return "Some changes from another device will finish combining when My Journal next syncs."
         case .destinationGone: return "The journal to restore into is no longer available. Nothing was restored."
         }
     }
@@ -86,7 +86,8 @@ public struct JournalLifecycleSnapshot: Sendable {
 
 public struct JournalViewSnapshot: Sendable {
     public let items: [JournalItem]
-    public let conflicts: [ConflictVersion]
+    /// The records that have a conflict. Their versions are not read, so one that can't be opened doesn't fail a read.
+    public let conflictedIDs: Set<UUID>
     public let pending: Bool
     /// Pins and journal ranks.
     public let library: LibraryArrangement

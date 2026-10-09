@@ -166,10 +166,12 @@ extension AppModel {
     // MARK: Settling
 
     /// Settles the conflicts left from an earlier version when a library opens. Rows made since wait for the next
-    /// completed pull, unless no server is configured.
+    /// completed pull, unless no server is configured. Opening writes nothing when there is nothing to settle, and
+    /// never touches a library that can't be read; the conflicts are listed without reading either version, so one that
+    /// can't be opened doesn't stop the others. A library with none records that the pass has run after its first read
+    /// (`recordOpeningPassAfterFirstRead`).
     func settleConflictsOnOpening(_ store: JournalStore, serverConfigured: Bool) async {
-        // Opening writes nothing when there is nothing to settle, and never touches a library that can't be read.
-        guard let waiting = try? await store.conflicts(), !waiting.isEmpty else { return }
+        guard let waiting = try? await store.conflictedIDs(), !waiting.isEmpty else { return }
         do {
             _ = try await store.resolveConflicts(at: .opening(serverConfigured: serverConfigured))
         } catch is CancellationError {
@@ -179,23 +181,35 @@ extension AppModel {
         }
     }
 
+    /// Once the first read has shown that the library can be read, a library without conflicts records that the
+    /// one-time pass over rows an earlier version left has run, so a row made later is never taken for one of them.
+    func recordOpeningPassAfterFirstRead(_ store: JournalStore) async {
+        do {
+            try await store.recordOpeningPassWhenThereAreNoConflicts()
+        } catch {
+            Logger(subsystem: "org.privatejournal", category: "conflicts").error("The opening pass was not recorded.")
+        }
+    }
+
     /// The open entry while its save has failed: a conflict of that record is not settled under the person.
     var conflictsToHold: Set<UUID> {
         guard saveFailure, let draft, draft.kind != "journal" else { return [] }
         return [draft.id]
     }
 
-    /// Without a server there is no pull to settle a conflict a stale save made, so it is settled once writing
-    /// pauses, the way the next synchronization sends it.
+    /// A conflict a stale save made is settled once writing pauses, with or without a server: its other version is
+    /// one this device already holds, so a pull that may never come (offline) has nothing to add. Any other conflict
+    /// waits for a completed pull, or, without a server, is settled the same way.
     func resolveConflictsWhenWritingPauses() {
         localResolution?.cancel()
         localResolution = nil
-        guard connection == nil, let store else { return }
+        guard let store else { return }
+        let point: ConflictResolutionPoint = connection == nil ? .local : .afterStaleSave
         localResolution = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64((SyncEngine.writingPause + 0.25) * 1_000_000_000))
             guard !Task.isCancelled, let self, self.store === store, !self.locked, !self.replacingVault else { return }
             let holding = self.conflictsToHold
-            guard let report = try? await store.resolveConflicts(at: .local, holding: holding), report.changedRecords
+            guard let report = try? await store.resolveConflicts(at: point, holding: holding), report.changedRecords
             else { return }
             await self.followResolved(report.resolved)
         }

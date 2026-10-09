@@ -83,7 +83,7 @@ Someone used Delete Permanently on one device while the item was edited (or rest
 - If its journal is live it is in Recently Deleted; if the journal was also deleted permanently or is gone it is in Unavailable Journals, where Restore puts it in the Default Journal ([flows/delete-and-restore.md](delete-and-restore.md), Restore).
 - If the item was open, the editor moves to the new entry without losing the text, the draft or the cursor, so typing continues into one entry.
 - For a journal nothing is created: a journal is a name and a deletion state, with no writing. Entries edited elsewhere in it are separate records and are saved as above.
-- An automatic copy never brings a permanent deletion back: when a copy this device made and has not sent meets a deletion, the deletion wins and the copy is dropped, because its content is in the other record.
+- An automatic copy never brings a permanent deletion back: when a copy this device made and has not sent, and that still holds the content it first wrote, meets a deletion, the deletion wins and the copy is dropped, because its content is in the other record. A copy that a later version replaced holds content that exists nowhere else, so it is saved in Recently Deleted like any edit against a deletion.
 
 ### A journal renamed on two devices
 
@@ -96,11 +96,11 @@ A version this app cannot read stays as it is. The record isn't sent, the item i
 ## When the device settles it
 
 1. The conflicts the device finds are kept in a local list, one per record (the latest other version only; earlier ones go to Version History).
-2. They are settled **at the end of every completed pull** (also when pushing another record failed), **when the library opens** for what an earlier version left and, when no server is configured, for any conflict, and **after a local merge or import**. Never while the library is being restored from the server, never for a record being written (the cursor rests in it, or a save has failed), and never for a held one. A person who types is never interrupted: nothing changes under the cursor.
+2. They are settled **at the end of every completed pull** (also when pushing another record failed), **when the library opens** for what an earlier version left and, when no server is configured, for any conflict, **after a local merge or import**, and **once writing pauses after a save over a version that arrived**, with or without a server (that conflict's other version is already on this device, so an unreachable server doesn't keep it waiting). Never while the library is being restored from the server, never for a record being written (the cursor rests in it, or a save has failed), and never for a held one. A person who types is never interrupted: nothing changes under the cursor.
 3. **One transaction per record**: the outcome, the copy or the new entry, the note and the removal of the conflict happen together or not at all; a failure leaves everything as it was and the next round repeats it. At most one settlement per record per round.
 4. After it the round sends what it queued; the person waits for nothing.
 
-While a record's conflict waits, which is a few seconds in the normal case, the record can be edited but four actions refuse with `messages.lifecycle.combining`: Move Entry, restoring a version from Version History, and Delete Permanently; Delete All leaves the item in Recently Deleted like any item that can't be deleted yet. Image descriptions and Restore are not offered for it. A conflict that only a newer version can read shows the update messages instead (`messages.lifecycle.unsupportedJournal` for Move Entry and Version History, `messages.generic.deleteNeedsUpdate` for Delete Permanently).
+While a record's conflict waits, which is a few seconds in the normal case and, for a conflict from a pull that did not finish, until the next completed sync, the record can be edited but these actions refuse with `messages.lifecycle.combining` ("Some changes from another device will finish combining when My Journal next syncs."): Move Entry, restoring a version from Version History, and Delete Permanently; Delete All leaves the item in Recently Deleted like any item that can't be deleted yet. Image descriptions and Restore are not offered for it. A conflict that only a newer version can read shows the update messages instead (`messages.lifecycle.unsupportedJournal` for Move Entry and Version History, `messages.generic.deleteNeedsUpdate` for Delete Permanently).
 
 ### What 1.0 left pending
 

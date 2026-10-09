@@ -27,6 +27,8 @@ struct NewVault: Sendable {
             let journal = JournalItem(kind: "journal", title: "Default")
             // No templates: a new library has only what the person makes (no-built-in-templates-2026-10-04.md).
             try await storage.save(journal)
+            // Nothing an earlier version left can be in a library that is just being made.
+            try await storage.recordOpeningPassWhenThereAreNoConflicts()
             return NewVault(store: storage, key: key, recovery: envelope, journalID: journal.id, folder: folder)
         } catch {
             try? await staged?.close()

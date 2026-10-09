@@ -88,6 +88,171 @@ final class ConflictConvergenceTests: ConflictTestCase {
         }
     }
 
+    /// Every title and text of the entries a device holds, to compare devices.
+    private func catalog(of device: Device) async throws -> [String] {
+        try await entries(on: device).map { "\($0.title)|\($0.document.text)" }.sorted()
+    }
+    private func quiet(_ devices: [Device], rounds: Int = 3) async throws {
+        for _ in 0..<rounds { for device in devices { try await sync(device) } }
+    }
+
+    /// A copy that someone edits on every device is itself a conflict: the copy of a copy reads twice in its title and
+    /// is bounded like any other. Three rounds, three devices, three orders. Each round's texts are checked before the
+    /// next round types over them, because typing over one's own text is an ordinary edit.
+    func testACopyEditedOnThreeDevicesThroughThreeRoundsKeepsEveryTextAndConverges() async throws {
+        let devices = [try await device("a"), try await device("b"), try await device("c")]
+        let page = try await start(devices)
+        func writeRound(_ round: Int, to record: UUID, order: [Int]) async throws {
+            var written = Set<String>()
+            for (position, device) in devices.enumerated() {
+                let text = "round \(round) \(position)"
+                try await write(text, on: device, record: record)
+                written.insert(text)
+            }
+            for position in order { try await sync(devices[position]) }
+            try await quiet(devices)
+            for device in devices {
+                let held = try await texts(on: device)
+                XCTAssertTrue(written.isSubset(of: held), "Round \(round): missing \(written.subtracting(held))")
+            }
+        }
+        try await writeRound(1, to: page.id, order: [0, 1, 2])
+        let firstCopy = try await entries(on: devices[0]).first { $0.id != page.id }
+        let copyID = try XCTUnwrap(firstCopy).id
+        try await writeRound(2, to: copyID, order: [0, 1, 2])
+        try await writeRound(3, to: copyID, order: [2, 0, 1])
+        try await writeRound(4, to: copyID, order: [1, 2, 0])
+
+        let reference = try await catalog(of: devices[0])
+        for device in devices.dropFirst() {
+            let other = try await catalog(of: device)
+            XCTAssertEqual(other, reference, "Every device holds the same entries")
+        }
+        XCTAssertLessThanOrEqual(reference.count, 3 + 3 * 2, "Two other versions of the copy per round at most")
+        XCTAssertTrue(reference.contains { $0.contains("(other version) (other version)|") }, "A copy of a copy")
+        for device in devices {
+            let queued = try await device.store.pending()
+            XCTAssertTrue(queued.isEmpty, "Nothing is left to send")
+            let rows = try await device.store.conflicts()
+            XCTAssertTrue(rows.isEmpty)
+        }
+    }
+
+    /// X replaces a copy it has not sent yet while Z edits that copy: X's push is refused, both are kept, and the
+    /// devices settle without making copies forever.
+    func testACopyAnotherDeviceEditedBeforeThePushOfItsReplacementKeepsBothAndDoesNotLoop() async throws {
+        let x = try await device("x")
+        let y = try await device("y")
+        let z = try await device("z")
+        let page = try await start([x, y, z])
+        try await write("x 1", on: x, record: page.id)
+        try await write("y 1", on: y, record: page.id)
+        try await sync(y)
+        try await sync(x)
+        try await sync(z)
+        let made = try await entries(on: x).first { $0.id != page.id }
+        let copy = try XCTUnwrap(made)
+        XCTAssertEqual(copy.document.text, "y 1")
+
+        // Z edits the copy, and Y writes again. X holds its own conflict, not yet settled.
+        try await write("z edit of the copy", on: z, record: copy.id)
+        let zChange = try await z.store.pending().first { $0.recordID == copy.id }
+        let editedByZ = try XCTUnwrap(zChange)
+        try await write("y 2", on: y, record: page.id)
+        try await sync(y)
+        try await write("x 2", on: x, record: page.id)
+        time.withLock { $0 = $0.addingTimeInterval(3) }
+        _ = try await x.engine.synchronize(SyncEngine.Request(holdingConflicts: [page.id]))
+        let rows = try await x.store.conflicts()
+        XCTAssertEqual(rows.map(\.id), [page.id], "The record waits")
+
+        // Z's edit reaches the server just before X sends its replacement of the copy.
+        let zDevice = z.id
+        let sentByZ = server
+        await server.whileSendingNext { _ = try? await sentByZ.push(editedByZ, from: zDevice, shortReceipt: false) }
+        try await sync(x)
+        let copyPushes = await server.pushes.filter { $0.recordID == copy.id && $0.baseRevision == 1 }
+        XCTAssertEqual(copyPushes.count, 2, "Z's edit and X's replacement were both sent on the same revision")
+        try await quiet([x, y, z], rounds: 4)
+
+        let reference = try await catalog(of: x)
+        for device in [y, z] {
+            let other = try await catalog(of: device)
+            XCTAssertEqual(other, reference, "Every device holds the same entries")
+        }
+        let held = try await texts(on: x)
+        for text in ["x 2", "y 2", "z edit of the copy"] {
+            XCTAssertTrue(held.contains(text), "\(text) is kept")
+        }
+        let before = reference.count
+        try await quiet([x, y, z], rounds: 3)
+        let after = try await catalog(of: x)
+        XCTAssertEqual(after.count, before, "No further copies: it does not loop")
+        for device in [x, y, z] {
+            let queued = try await device.store.pending()
+            XCTAssertTrue(queued.isEmpty)
+            let open = try await device.store.conflicts()
+            XCTAssertTrue(open.isEmpty)
+        }
+    }
+
+    // MARK: A conflict that can't be settled does not keep a synchronization from being settled
+
+    func testAConflictThatKeepsFailingToSettleDoesNotKeepASynchronizationFromBeingSettled() async throws {
+        let first = try await device("first")
+        let second = try await device("second")
+        let page = try await start([first, second])
+        try await write("first", on: first, record: page.id)
+        try await write("second", on: second, record: page.id)
+        try await sync(first)
+        // The copy can't be written on this device.
+        try await second.store.db.write { db in
+            try db.execute(
+                sql: """
+                    CREATE TRIGGER fail_copy BEFORE INSERT ON records WHEN NEW.kind='entry'
+                    BEGIN SELECT RAISE(ABORT, 'Injected failure'); END
+                    """)
+        }
+        time.withLock { $0 = $0.addingTimeInterval(3) }
+        let report = try await second.engine.synchronize()
+        let rows = try await second.store.conflicts()
+        XCTAssertEqual(rows.count, 1, "The row stays")
+        XCTAssertTrue(report.settled, "…and counts as held, so the device may wait for changes")
+
+        try await second.store.db.write { try $0.execute(sql: "DROP TRIGGER fail_copy") }
+        let retry = try await second.engine.synchronize()
+        let remaining = try await second.store.conflicts()
+        XCTAssertTrue(remaining.isEmpty, "The next completed pull settles it")
+        XCTAssertEqual(retry.resolvedConflicts.count, 1)
+    }
+
+    // MARK: Opening inside a synchronization
+
+    func testTheOpeningPassOfASynchronizationLeavesARecordTheCallerHolds() async throws {
+        let seeded = try await device("seeded")
+        let page = try await start([seeded])
+        // A library an earlier version left a conflict in: its pass has not run.
+        let store = try await openStore("holding", runPass: false)
+        let engine = SyncEngine(store: store, server: DeviceServer(server: server, device: UUID()))
+        let reader = Device(store: store, engine: engine, id: UUID())
+        try await sync(reader)
+        try await write("mine", on: reader, record: page.id)
+        // Another device's version, as the server holds it; this library has read it but not yet settled it.
+        try await write("theirs", on: seeded, record: page.id)
+        try await sync(seeded)
+        let log = await server.state.log
+        try await store.recordConflict(try XCTUnwrap(log.last))
+        try await store.forgetThatThePassRan(throughStep: 0)
+
+        time.withLock { $0 = $0.addingTimeInterval(3) }
+        _ = try await engine.synchronize(SyncEngine.Request(holdingConflicts: [page.id]))
+        let rows = try await store.conflicts()
+        XCTAssertEqual(rows.map(\.id), [page.id], "The open entry's conflict is not settled under the person")
+        _ = try await engine.synchronize()
+        let settled = try await store.conflicts()
+        XCTAssertTrue(settled.isEmpty, "…and is settled by the next one")
+    }
+
     // MARK: Co-editing cannot storm
 
     func testTwoDevicesTypingInOneEntryKeepAtMostOneCopyEachAndEveryTextSomewhere() async throws {

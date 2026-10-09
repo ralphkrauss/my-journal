@@ -42,7 +42,7 @@ public enum MarkdownExport {
         let snapshot = try await store.viewSnapshot()
         let items = snapshot.items
         let arrangement = snapshot.library
-        let conflicted = Set(snapshot.conflicts.map(\.id))
+        let conflicted = snapshot.conflictedIDs
         let plan = MarkdownExportPlan(
             items: items, pinned: arrangement.pinned, ranks: arrangement.ranks, timeZone: timeZone)
         let manager = FileManager.default

@@ -483,14 +483,16 @@ final class AppModel: ObservableObject {
             await failOpening(error)
             throw LibraryOpenHandled()
         }
+        // The first read worked, so the library can be read: a library without conflicts records its one-time pass.
+        if firstReadPending { await recordOpeningPassAfterFirstRead(store) }
         let libraryState = try? await store.librarySyncState()
-        let held = snapshot.conflicts.isEmpty ? [] : ((try? await store.heldConflictIDs()) ?? [])
+        let held = snapshot.conflictedIDs.isEmpty ? [] : ((try? await store.heldConflictIDs()) ?? [])
         let notes = (try? await store.keptNotes()) ?? []
         guard isCurrent() else { return }
         firstReadPending = false
         failedRetries = 0
         items = snapshot.items
-        adoptConflicts(Set(snapshot.conflicts.map(\.id)), held: held)
+        adoptConflicts(snapshot.conflictedIDs, held: held)
         if notes != keptNotes { keptNotes = notes }
         pendingSync = snapshot.pending
         if library != snapshot.library { library = snapshot.library }

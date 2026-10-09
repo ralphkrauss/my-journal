@@ -264,6 +264,50 @@ final class ConflictNotesTests: XCTestCase {
         XCTAssertTrue(model.keptNoteRows.isEmpty, "A held change is one line in Settings ▸ Sync, not a row")
     }
 
+    // MARK: When conflicts are settled
+
+    /// Reading a library with no conflicts for the first time records that the one-time pass over rows an earlier version left has run, so
+    /// a row made afterwards, such as one a crash left in the middle of a paged catch-up, is never taken for one of them.
+    func testOpeningALibraryWithoutConflictsRecordsThatThePassRan() async throws {
+        let library = try await startedLibrary()
+        try await library.model.refresh()
+        try await library.entryEditedOnTwoDevices(title: "Plans")
+        let opening = try await library.store.resolveConflicts(at: .opening(serverConfigured: true))
+        XCTAssertTrue(opening.resolved.isEmpty, "That row waits for a completed pull")
+        let rows = try await library.store.conflicts()
+        XCTAssertEqual(rows.count, 1)
+    }
+
+    /// A stale save over a version that arrived is settled once writing pauses even when a server is configured and
+    /// can't be reached, because its other version is already on this device.
+    func testAStaleSaveIsSettledOnceWritingPausesWithAServerConfigured() async throws {
+        let library = try await startedLibrary()
+        let (model, store) = (library.model, library.store)
+        model.connection = SyncConnection(address: "https://journal.example", deviceID: UUID(), token: "token")
+        let entry = JournalItem(kind: "entry", journalID: library.journal.id, title: "Plans", document: .plain("one"))
+        try await store.apply([try library.remote(entry, revision: 1, cursor: 1)], cursor: 1)
+        let stored = try await store.item(entry.id)
+        let opened = try XCTUnwrap(stored)
+        var theirs = entry
+        theirs.document = .plain("Written elsewhere")
+        try await store.apply([try library.remote(theirs, revision: 2, cursor: 2)], cursor: 2)
+        var typed = opened
+        typed.document = .plain("Typed here")
+        try await store.save(typed)
+        let waiting = try await store.conflicts()
+        XCTAssertEqual(waiting.count, 1)
+
+        model.resolveConflictsWhenWritingPauses()
+        var remaining = waiting
+        for _ in 0..<40 where !remaining.isEmpty {
+            try await Task.sleep(nanoseconds: 250_000_000)
+            remaining = try await store.conflicts()
+        }
+        XCTAssertTrue(remaining.isEmpty, "No pull is needed to settle it")
+        let texts = try await store.items().filter { $0.kind == "entry" }.map(\.document.text).sorted()
+        XCTAssertEqual(texts, ["Typed here", "Written elsewhere"])
+    }
+
     // MARK: Support
 
     @MainActor private final class Library {

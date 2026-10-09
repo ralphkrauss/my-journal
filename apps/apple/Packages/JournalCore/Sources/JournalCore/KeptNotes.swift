@@ -57,13 +57,47 @@ public struct KeptNote: Codable, Equatable, Sendable, Identifiable {
 
 /// A copy or parked entry this device made on its own, so a later conflict knows it.
 struct KeptCopy: Codable, Equatable, Sendable {
+    enum Kind: String, Codable, Sendable {
+        /// The other version of an entry or template that differed (row 3).
+        case copy
+        /// An edit saved next to a permanent deletion (row 4).
+        case parked
+        /// Written before this value was recorded: never replaced or dropped on its own.
+        case unspecified
+
+        init(from decoder: Decoder) throws {
+            let raw = try decoder.singleValueContainer().decode(String.self)
+            self = Kind(rawValue: raw) ?? .unspecified
+        }
+    }
+
     var copyID: UUID
     var recordID: UUID
+    var kind: Kind = .unspecified
     /// The device the other version came from; nil when unknown, which never matches in a replacement.
     var originDevice: UUID?
     var originRevision: Int64
-    /// Lower-case hex SHA-256 of the plaintext this device wrote for the copy.
+    /// Lower-case hex SHA-256 of the plaintext this device holds for the copy: what it wrote, or, after a replacement,
+    /// what it wrote last.
     var digest: String
+    /// A later version of the other device replaced the content this device first wrote. Such a copy holds content that
+    /// exists nowhere else, so it is never dropped for a version of its own identity that arrives; it goes through the
+    /// ordinary rules, which keep both.
+    var replaced = false
+}
+
+extension KeptCopy {
+    /// Reads a value written before `kind` and `replaced` existed, which is `unspecified` and treated as replaced.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        copyID = try values.decode(UUID.self, forKey: .copyID)
+        recordID = try values.decode(UUID.self, forKey: .recordID)
+        kind = try values.decodeIfPresent(Kind.self, forKey: .kind) ?? .unspecified
+        originDevice = try values.decodeIfPresent(UUID.self, forKey: .originDevice)
+        originRevision = try values.decode(Int64.self, forKey: .originRevision)
+        digest = try values.decode(String.self, forKey: .digest)
+        replaced = try values.decodeIfPresent(Bool.self, forKey: .replaced) ?? (kind == .unspecified)
+    }
 }
 
 /// The sealed settings key `kept-notes` (docs/design/1-1-conflicts-and-reconnect.md, 5.2). It is local: not a record,
@@ -108,10 +142,12 @@ struct KeptNotesState: Codable, Equatable, Sendable {
         if copies.count > Self.copyLimit { copies.removeFirst(copies.count - Self.copyLimit) }
     }
     func isAutomaticCopy(_ id: UUID) -> Bool { copies.contains { $0.copyID == id } }
-    /// Whether `id` is a copy this device made and `plaintext`, what it holds now, is exactly what it wrote: nobody has
-    /// edited it since, so replacing or dropping it loses nothing.
-    func isUnchangedAutomaticCopy(_ id: UUID, plaintext: Data) -> Bool {
-        guard let copy = copies.first(where: { $0.copyID == id }) else { return false }
+    /// Whether `id` is a copy this device made, no later version has replaced, and `plaintext`, what it holds now, is
+    /// exactly what it first wrote: nobody has edited it since and its content is in the other record, so dropping it
+    /// for a version of its own identity loses nothing. A replaced copy holds the replacing version's content, which
+    /// exists nowhere else.
+    func isFirstWrittenCopy(_ id: UUID, plaintext: Data) -> Bool {
+        guard let copy = copies.first(where: { $0.copyID == id }), !copy.replaced else { return false }
         return copy.digest == Self.digest(of: plaintext)
     }
     static func digest(of plaintext: Data) -> String {
