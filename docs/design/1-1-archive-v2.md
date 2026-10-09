@@ -625,3 +625,9 @@ The second review approved with changes and no Blocker. Its Material findings 1 
 | 13 | Minor: more container cases | 8.1 lists each (disk number, directory entry lengths, compressed size beyond the file, stored size mismatch, early-ending and trailing deflate, zero-length entry, bit 3 with non-zero local sizes, local ZIP64 extra, unlisted duplicate, `archive.json` overlap). |
 
 Owner list set to exactly three (section 11): the ladder with the exact strings of rung (c); unlisted files ignored; `grdb_migrations` normative with the 8.3 fixes as separate changes.
+
+## Owner decisions (2026-10-09)
+
+- **File-type ladder:** all three rungs approved as recommended, including rung (c) `org.privatejournal.archive.file` with the `journalbackup` extension if the spike needs it.
+- **Unlisted files:** ignored, as recommended.
+- **`grdb_migrations`:** normative, as recommended; the section 8.3 conformance fixes ship as separate changes.

@@ -499,3 +499,7 @@ First-review findings: all resolved in the body. New: findings 1 to 3 (Material)
 | 5 Error text | New `messages.restore.destinationGone`: "The journal to restore into is no longer available. Nothing was restored." |
 | 6 Test 1 | Adds the 1.0 default-template change against a 1.1 rename resolved automatically; the loss of the 1.0 choice is accepted and written under M's 1.0 devices. |
 | 7 Housekeeping | Key ownership above, so the checker neither warns about a still-used key nor leaves an unused one. Also: test 3 asserts the agent copy publisher's output, and the fallback guard (entry editable, no held conflict) is stated. |
+
+## Owner decisions (2026-10-09)
+
+- **Restore when the entry's journal is gone** (including permanently deleted): confirmed as recommended: Restore puts it in the Default Journal, with the destination named in the control and never on a swipe.

@@ -639,3 +639,7 @@ First-review findings: all resolved in the body. New: findings 1 to 4 (Material)
 | 13 | Reconnect copy | `messages.sync.accessRemoved` for libraries with a password; new `messages.sync.accessRemovedNoPassword` (connected device or recovery code); hint reads "Opens it." |
 | Owners | Decisions | Only "where the parked edit sits" remains (recommended: Recently Deleted). Step 2's release is decided by its gates (6.2). |
 | Lead | Key ownership; Restore | Key lists follow the library record's ownership (section 8, 6.1, 6.2); every parked-entry recovery says Restore. |
+
+## Owner decisions (2026-10-09)
+
+- **Where the parked edit sits:** confirmed as recommended: in Recently Deleted.

@@ -22,7 +22,7 @@ The owner approved all of these on 2026-10-07, to reduce complexity for people a
 | L | No journal Merge Into…. |
 | M | One way to start from a template: the per-journal default template and New Entry In go. |
 | N | Recently Deleted offers plain Restore only. |
-| O | Server cleanup: capability flags become a version, unused endpoints and LAN discovery go, one setup path. Check the MCP agent access first. |
+| O | Server cleanup: capability flags become a version, unused endpoints go, one setup path. Check the MCP agent access first. **LAN discovery stays** (owner, 2026-10-09). |
 
 Not doing: polling instead of instant sync, and dropping in-place table editing.
 
