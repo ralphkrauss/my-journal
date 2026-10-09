@@ -31,4 +31,5 @@ Not doing: polling instead of instant sync, and dropping in-place table editing.
 - **Single-file archive.** The archive becomes one file (zip-based `.journalarchive`) with a new version of [protocol/archive.md](../../protocol/archive.md) and conformance fixtures, built on the Apple side first; the Apple app keeps reading the directory format. Answers open question D29; the Windows client builds on it directly.
 - **iPhone Duo support**, with the iOS deployment target moving from 16 to 17.
 - **Conformance fixes** found by the fixtures in [protocol/conformance/](../../protocol/conformance/).
+- Owner decisions of 2026-10-09 that change behaviour ([spec/open-questions.md](../../spec/open-questions.md)): one formatting rule for all five inline styles (D5), Return in the middle of a heading makes two headings (D6), one list and order of table commands on every device (D7), and a message when Don't Allow can't reach the server (D55). Each goes through the design gate.
 - The bugs and copy fixes still open in [spec/open-questions.md](../../spec/open-questions.md) sections A and B.

@@ -500,7 +500,7 @@ Behaviour no record decides, or choices for the Windows and Android ports.
 
 **Owner decisions of 2026-10-07 for the Windows questions D20 to D54:** every reviewed recommendation is accepted, except that (1) there is no OneDrive warning before a plain Markdown export (D46, B37) and (2) tables are fully editable in place, exactly like on the Mac, a hard requirement for the editor choice (D30, D33). The accepted archive recommendation (D29, one file) still needs its protocol change in [protocol/archive.md](../protocol/archive.md), with a version bump and conformance fixtures, before Windows builds archives. The questions below keep their text as history; where one disagrees with this paragraph, this paragraph wins.
 
-**D1.** Journal deletion has no Undo, while entry and template deletion do. No record says whether that is intended.
+**D1.** Journal deletion has no Undo, while entry and template deletion do. No record says whether that is intended. **Resolved by owner decision, 2026-10-09:** keep as is. A deleted journal goes to Recently Deleted and is restored from there; it needs no Undo.
 
 Spec: [flows/delete-and-restore.md](flows/delete-and-restore.md). Code: `Model/JournalOperations.swift`.
 
@@ -508,7 +508,7 @@ Spec: [flows/delete-and-restore.md](flows/delete-and-restore.md). Code: `Model/J
 
 Spec: [flows/app-lock.md](flows/app-lock.md), [flows/export-archive.md](flows/export-archive.md). Code: `Model/DocumentTransferOperations.swift`, `Model/PasswordCheckOperations.swift`.
 
-**D3.** If the person cancels after `settings.changePassword.error.notSavedRetry`, this device keeps the old password while the server has the new one; the next unlock with the new password recovers from the server's copy. Is that enough, or should the sheet insist?
+**D3.** If the person cancels after `settings.changePassword.error.notSavedRetry`, this device keeps the old password while the server has the new one; the next unlock with the new password recovers from the server's copy. Is that enough, or should the sheet insist? **Resolved by owner decision, 2026-10-09:** keep as is. The next unlock with the new password recovers from the server's copy, so the sheet doesn't insist (simplification J reworks Change Password in 1.1).
 
 Spec: [flows/change-password.md](flows/change-password.md). Code: `Model/PasswordOperations.swift`.
 
@@ -516,15 +516,15 @@ Spec: [flows/change-password.md](flows/change-password.md). Code: `Model/Passwor
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md), [screens/entry-editor.md](screens/entry-editor.md). Code: `Editor/RichText.swift`.
 
-**D5.** Bold, Italic and Underline use a different rule for a mixed selection than Strikethrough and Inline Code (F-1 and F-3): the first turn on unless everything already has them, the others follow the first selected character. One rule would be clearer.
+**D5.** Bold, Italic and Underline use a different rule for a mixed selection than Strikethrough and Inline Code (F-1 and F-3): the first turn on unless everything already has them, the others follow the first selected character. One rule would be clearer. **Resolved by owner decision, 2026-10-09:** one rule for all five styles, the one Bold, Italic and Underline use today: a style turns on unless the whole selection already has it. Strikethrough and Inline Code change in 1.1 (design gate).
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/RichText.swift`, `Editor/FormattingState.swift`.
 
-**D6.** Return in the middle of a heading inserts a line break that carries the heading's style while typing continues as a paragraph; whether the second half ends up a heading or a paragraph depends on what is typed next (N-8). No test or record defines it.
+**D6.** Return in the middle of a heading inserts a line break that carries the heading's style while typing continues as a paragraph; whether the second half ends up a heading or a paragraph depends on what is typed next (N-8). No test or record defines it. **Resolved by owner decision, 2026-10-09:** Return in the middle of a heading splits it into two headings of the same level; Return at the end of a heading starts a paragraph. Built in 1.1 (design gate), with N-8 rewritten to match.
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/RichText.swift`.
 
-**D7.** The table structure menus differ: the Mac's cell menu lists alignment between Add and Delete, Format ▸ Table has no alignment items and orders its items differently, and iPhone and iPad group alignment in a submenu. One list for all three would be simpler.
+**D7.** The table structure menus differ: the Mac's cell menu lists alignment between Add and Delete, Format ▸ Table has no alignment items and orders its items differently, and iPhone and iPad group alignment in a submenu. One list for all three would be simpler. **Resolved by owner decision, 2026-10-09:** one list of table commands, in one order, on every device: add rows, add columns, alignment (a submenu everywhere), then delete row, delete column and delete table. Built in 1.1 (design gate).
 
 Spec: [flows/edit-table.md](flows/edit-table.md), [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/TablePresentation.swift`, `AppCommands.swift`.
 
@@ -532,23 +532,23 @@ Spec: [flows/edit-table.md](flows/edit-table.md), [flows/editing-rules.md](flows
 
 Spec: [screens/link-editor.md](screens/link-editor.md). Code: `Views/LinkEditorView.swift`.
 
-**D9.** Devices can't be renamed (the name iOS reports is often only “iPhone”), although the task brief lists rename; neither the code nor any record has it. Also, there is no way to remove this device from its own list except Stop Syncing, which Devices doesn't mention.
+**D9.** Devices can't be renamed (the name iOS reports is often only “iPhone”), although the task brief lists rename; neither the code nor any record has it. Also, there is no way to remove this device from its own list except Stop Syncing, which Devices doesn't mention. **Resolved by owner decision, 2026-10-09:** keep as is: devices aren't renamed, and this device leaves its own list only with Stop Syncing.
 
 Spec: [screens/settings-devices.md](screens/settings-devices.md), [screens/settings.md](screens/settings.md). Code: `Views/DevicesView.swift`, `Model/DeviceOperations.swift`.
 
-**D10.** Libraries from early versions encrypted with a recovery key (format 1) show “Your Journals Are Encrypted” with no Change Password, and their footer says “Keep your recovery key somewhere safe.” Should there be a way to move them to a master password?
+**D10.** Libraries from early versions encrypted with a recovery key (format 1) show “Your Journals Are Encrypted” with no Change Password, and their footer says “Keep your recovery key somewhere safe.” Should there be a way to move them to a master password? **Resolved by owner decision, 2026-10-09:** keep as is. Recovery-key libraries came only from early test builds; they keep working and get no conversion path.
 
 Spec: [screens/settings-privacy.md](screens/settings-privacy.md). Code: `Views/SettingsView.swift`, `Views/ChangePasswordView.swift`.
 
-**D11.** Windows and Android will never create libraries with a generated recovery key and can receive one only through an archive or restore, which don't show the Keep Your Recovery Key screen. Is that screen needed outside the Apple app at all?
+**D11.** Windows and Android will never create libraries with a generated recovery key and can receive one only through an archive or restore, which don't show the Keep Your Recovery Key screen. Is that screen needed outside the Apple app at all? **Resolved by owner decision, 2026-10-09:** not needed. Windows and Android don't build the Keep Your Recovery Key screen; `legacy-recovery-key` in parity.yaml is not-applicable outside Apple.
 
 Spec: [screens/recovery-key.md](screens/recovery-key.md). Code: `Views/RecoveryView.swift`.
 
-**D12.** On iPad the windows share one selection and collection (one model for the app), so two windows can't show different journals. Zoom isn't persisted either: the Mac default text size returns at each launch. No record says whether either is intended.
+**D12.** On iPad the windows share one selection and collection (one model for the app), so two windows can't show different journals. Zoom isn't persisted either: the Mac default text size returns at each launch. No record says whether either is intended. **Resolved by owner decision, 2026-10-09:** keep as is for 1.0: iPad windows share one selection, and the Mac text size returns to the default at each launch. Independent iPad windows can be proposed later as a feature.
 
 Spec: [screens/library-window.md](screens/library-window.md). Code: `Views/RootView.swift`, `Model/WindowColumns.swift`.
 
-**D13.** There is no multiple selection (no Select mode, no Shift-click or ⌘-click) in the entries list on any platform. No record asks for it.
+**D13.** There is no multiple selection (no Select mode, no Shift-click or ⌘-click) in the entries list on any platform. No record asks for it. **Resolved by owner decision, 2026-10-09:** keep as is: no multiple selection in the entries list.
 
 Spec: [screens/entry-list.md](screens/entry-list.md). Code: `Views/RootView.swift`.
 
@@ -564,7 +564,7 @@ Spec: [screens/recently-deleted.md](screens/recently-deleted.md). Code: `Views/R
 
 Spec: [flows/new-entry.md](flows/new-entry.md). Code: `Model/TemplateSuggestion.swift`, `Model/AppModel.swift`.
 
-**D17.** Nothing keeps unsaved writing when the system ends the app on iPhone or iPad after a failed save; the Mac blocks quitting instead.
+**D17.** Nothing keeps unsaved writing when the system ends the app on iPhone or iPad after a failed save; the Mac blocks quitting instead. **Resolved by owner decision, 2026-10-09:** keep as is. The save-failure alert explains the problem, and a separate draft store would be a second save path that can fail the same way.
 
 Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Model/AppModel.swift`.
 
@@ -572,7 +572,7 @@ Spec: [flows/save-failure.md](flows/save-failure.md). Code: `Model/AppModel.swif
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Views/DeletionConflictView.swift`, `Views/JournalConflictView.swift`.
 
-**D19.** Which Apple platform-specific features should Windows and Android follow? Mac-only on Apple: Show Editor Only, Previous and Next Entry, zoom commands; tablet-style three columns. Phone-only on Apple: stacked navigation, search of every journal from the Journals screen. The parity file marks them planned for both platforms, with a note, until decided.
+**D19.** Which Apple platform-specific features should Windows and Android follow? Mac-only on Apple: Show Editor Only, Previous and Next Entry, zoom commands; tablet-style three columns. Phone-only on Apple: stacked navigation, search of every journal from the Journals screen. The parity file marks them planned for both platforms, with a note, until decided. **Resolved by owner decision, 2026-10-09:** each platform uses its own native features where they apply, to give the best experience on that device; Windows and Android don't copy Apple-only features for their own sake and add their platform's native ones. The parity notes of the Apple-only features say so.
 
 Spec: [parity.yaml](parity.yaml), [screens/library-window.md](screens/library-window.md). Code: `Views/RootView.swift`, `Views/CompactJournalNavigation.swift`.
 
@@ -716,10 +716,10 @@ Spec: [platforms/windows/flows/rating-request.md](platforms/windows/flows/rating
 
 Spec: [platforms/windows/flows/app-lock.md](platforms/windows/flows/app-lock.md), [platforms/windows/platform.md](platforms/windows/platform.md) (13), [flows/app-lock.md](flows/app-lock.md). Code: `Model/AppLockOperations.swift`.
 
-**D55.** When the person chooses Don’t Allow on an agent request and the server does not answer, the request comes back on the next refresh and nothing says the decline did not arrive (the code sends it with `try?`). The spec says the page tells the agent and says nothing about this case. Recommendation: show a short message when the decline fails; the owner decides whether quiet is enough.
+**D55.** When the person chooses Don’t Allow on an agent request and the server does not answer, the request comes back on the next refresh and nothing says the decline did not arrive (the code sends it with `try?`). The spec says the page tells the agent and says nothing about this case. Recommendation: show a short message when the decline fails; the owner decides whether quiet is enough. **Resolved by owner decision, 2026-10-09:** follow the recommendation: when Don't Allow can't reach the server, the page shows a short message and the request stays, so the person can try again. Built in 1.1 (design gate, copy key in copy/en.json).
 
 Spec: [flows/allow-agent.md](flows/allow-agent.md), [screens/allow-agent.md](screens/allow-agent.md). Code: `Views/ServerAgentsView.swift:564-567`, `Model/ServerAgentsController.swift:114-117`.
 
-**D56.** The Windows mapping of the library problem screen (build 18). The spec now has a screen of its own for a library that can't be opened, with Try Again, Import Archive…, Erase Journals and Settings… and Learn More, and a lock screen group for a missing device key; the Windows page for it still maps the earlier lock-screen note. No default is proposed here: it needs a Windows design that passes the design gate, including the device name in the advice (“PC”), the update channel in `library.problem.newerVersion.message`, and Windows Hello for Erase and Import.
+**D56.** The Windows mapping of the library problem screen (build 18). The spec now has a screen of its own for a library that can't be opened, with Try Again, Import Archive…, Erase Journals and Settings… and Learn More, and a lock screen group for a missing device key; the Windows page for it still maps the earlier lock-screen note. No default is proposed here: it needs a Windows design that passes the design gate, including the device name in the advice (“PC”), the update channel in `library.problem.newerVersion.message`, and Windows Hello for Erase and Import. **Resolved by owner decision, 2026-10-09:** the Windows agent designs this screen when it builds the Windows client, from the neutral spec, through the design gate; no default is set now.
 
 Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [platforms/windows/screens/unavailable-content.md](platforms/windows/screens/unavailable-content.md). Code: `Views/LibraryProblemView.swift`, `Model/LibraryProblem.swift`.

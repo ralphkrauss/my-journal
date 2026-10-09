@@ -74,7 +74,7 @@ three-column-layout:
   apple-notes: "Mac and iPad."
   windows: planned
   android: planned
-  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+  android-notes: "Desktop-class feature on Apple platforms. Android follows its own native conventions and includes it only where Android has a native equivalent (owner decision D19, 2026-10-09)."
 
 stacked-navigation:
   title: "Journals, list and entry as stacked pages on iPhone and in compact or accessibility-size layouts"
@@ -101,7 +101,7 @@ editor-only:
   apple-notes: "Mac only."
   windows: planned
   android: planned
-  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+  android-notes: "Desktop-class feature on Apple platforms. Android follows its own native conventions and includes it only where Android has a native equivalent (owner decision D19, 2026-10-09)."
 
 previous-next-entry:
   title: "Open the item above or below in the list without showing it (⌥⌘↑, ⌥⌘↓, Mac)"
@@ -111,7 +111,7 @@ previous-next-entry:
   apple-notes: "Mac only."
   windows: planned
   android: planned
-  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+  android-notes: "Desktop-class feature on Apple platforms. Android follows its own native conventions and includes it only where Android has a native equivalent (owner decision D19, 2026-10-09)."
 
 text-size:
   title: "Zoom In, Zoom Out and Actual Size change the editor's text size"
@@ -121,7 +121,7 @@ text-size:
   apple-notes: "Mac and iPad with a keyboard (View menu); iPhone has no zoom commands."
   windows: planned
   android: planned
-  android-notes: "Desktop-class feature on Apple platforms; confirm whether Android needs it (open-questions.md, product questions)."
+  android-notes: "Desktop-class feature on Apple platforms. Android follows its own native conventions and includes it only where Android has a native equivalent (owner decision D19, 2026-10-09)."
 
 help-menu:
   title: "Help menu links to the user guide, support, privacy policy, source code and the App Store review page"
