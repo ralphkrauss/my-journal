@@ -268,13 +268,12 @@ final class MergeTests: XCTestCase {
             serverGratitude: templates[gratitudeIndex], localGratitude: localGratitude, image: image)
     }
 
-    func testMergingCombinesSameNameJournalsAndReviewsOnlyDifferentTemplates() async throws {
-        for choice in [ConflictChoice.keepBoth, .local, .remote] {
+    func testMergingCombinesSameNameJournalsAndKeepsBothOfDifferentTemplates() async throws {
+        do {
             let server = MergeServer()
             let setup = try await scenario(server)
             // An agent reads the server's "Work", so it's never combined.
-            let (staged, engine) = try await merge(
-                setup.local, into: server, readByAgents: [setup.serverWork.id])
+            let (staged, _) = try await merge(setup.local, into: server, readByAgents: [setup.serverWork.id])
             let result = try await downloaded(server).items()
 
             let defaults = live(result, "journal", "Default")
@@ -297,27 +296,15 @@ final class MergeTests: XCTestCase {
             let downloadedImage = try await downloaded(server).attachment(imageID)
             XCTAssertEqual(downloadedImage, setup.image)
 
-            // The different "Gratitude" waits for review on this device; the server keeps its version meanwhile.
+            // The different "Gratitude" is settled when the merge ends, like any version found on two devices: this
+            // device's version is the template and the server's is kept as a template of its own.
             let reviews = try await staged.conflicts()
-            let review = try XCTUnwrap(reviews.first)
-            XCTAssertEqual(review.id, setup.serverGratitude.id)
-            XCTAssertEqual(review.local.document, setup.localGratitude.document)
-            XCTAssertEqual(review.remote.document, setup.serverGratitude.document)
-            XCTAssertEqual(live(result, "template", "Gratitude").map(\.document), [setup.serverGratitude.document])
-
-            try await staged.resolve(review, choice: choice)
-            try await engine.synchronize()
-            let resolved = live(try await downloaded(server).items(), "template", "Gratitude").map(\.document)
-            switch choice {
-            case .keepBoth:
-                XCTAssertEqual(resolved.count, 2)
-                XCTAssertTrue(resolved.contains(setup.localGratitude.document))
-                XCTAssertTrue(resolved.contains(setup.serverGratitude.document))
-            case .local: XCTAssertEqual(resolved, [setup.localGratitude.document])
-            case .remote: XCTAssertEqual(resolved, [setup.serverGratitude.document])
-            }
+            XCTAssertTrue(reviews.isEmpty)
+            XCTAssertEqual(live(result, "template", "Gratitude").map(\.document), [setup.localGratitude.document])
+            XCTAssertEqual(
+                live(result, "template", "Gratitude (other version)").map(\.document), [setup.serverGratitude.document])
             let unsent = try await staged.pending()
-            XCTAssertTrue(unsent.isEmpty, "Nothing is left unsent after the review.")
+            XCTAssertTrue(unsent.isEmpty, "Nothing is left unsent.")
         }
     }
 
@@ -457,7 +444,7 @@ final class MergeTests: XCTestCase {
         }
     }
 
-    func testChangesAfterAnInterruptedAttemptAreEditsOrReviews() async throws {
+    func testChangesAfterAnInterruptedAttemptAreEditsOrKeepBothVersions() async throws {
         let server = MergeServer()
         let setup = try await scenario(server)
         try await merge(setup.local, into: server)
@@ -486,16 +473,20 @@ final class MergeTests: XCTestCase {
         XCTAssertEqual(travel.revision, 2, "Only the earlier attempt had written it: an ordinary edit.")
         let travelNow = try await downloaded(server).item(mergedTravel.id)
         XCTAssertEqual(travelNow?.document, lisbon.document)
-        let reviews = try await staged.conflicts().filter { $0.local.kind == "entry" }
-        XCTAssertEqual(reviews.map(\.id), [mergedThought.id], "Another device changed it: a review, nothing lost.")
-        XCTAssertEqual(reviews.first?.local.document, thought.document)
-        XCTAssertEqual(reviews.first?.remote.document, macThought.document)
+        let reviews = try await staged.conflicts()
+        XCTAssertTrue(reviews.isEmpty)
+        let entries = try await downloaded(server).items().filter { $0.kind == "entry" }
+        let kept = try XCTUnwrap(entries.first { $0.id == mergedThought.id })
+        XCTAssertEqual(kept.document, thought.document, "Another device changed it: this device's version stays")
+        XCTAssertEqual(
+            entries.filter { $0.title == "Local thought (other version)" }.map(\.document), [macThought.document],
+            "…and the other is kept as an entry of its own: nothing lost.")
     }
 
     /// A phone and a new phone restored from its backup hold copies of one library. Each continues the same entry,
     /// then both merge into the same server, also after another device moved the entry to Recently Deleted in
-    /// between. The second merge keeps its version for review instead of replacing the first one's as if only an
-    /// earlier attempt of its own had written it.
+    /// between. The second merge keeps both versions instead of replacing the first one's as if only an earlier
+    /// attempt of its own had written it.
     func testCopiesOfOneLibraryMergedFromTwoDevicesKeepBothVersions() async throws {
         for deletedMeanwhile in [false, true] {
             let server = MergeServer()
@@ -526,10 +517,15 @@ final class MergeTests: XCTestCase {
             }
             let (newMerged, _) = try await merge(newPhone, into: server)
             let reviews = try await newMerged.conflicts()
-            XCTAssertEqual(reviews.map(\.local.document.text), ["Continued on the new phone"], "\(deletedMeanwhile)")
-            XCTAssertEqual(reviews.map(\.remote.document.text), ["Continued on the old phone"], "\(deletedMeanwhile)")
-            let onServer = try await downloaded(server).items().filter { $0.kind == "entry" }.map(\.document.text)
-            XCTAssertEqual(onServer, ["Continued on the old phone"], "Nothing replaces it before the review")
+            XCTAssertTrue(reviews.isEmpty, "\(deletedMeanwhile)")
+            let onServer = try await downloaded(server).items().filter { $0.kind == "entry" }
+            XCTAssertEqual(
+                Set(onServer.map(\.document.text)), ["Continued on the old phone", "Continued on the new phone"],
+                "Neither replaces the other: \(deletedMeanwhile)")
+            XCTAssertEqual(onServer.count, 2, "\(deletedMeanwhile)")
+            // What the other device moved to Recently Deleted stays there, and so does this device's version of it.
+            XCTAssertEqual(
+                onServer.filter { $0.deletedAt != nil }.count, deletedMeanwhile ? 2 : 0, "\(deletedMeanwhile)")
         }
     }
 

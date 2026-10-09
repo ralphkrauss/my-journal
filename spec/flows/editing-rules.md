@@ -264,7 +264,7 @@ Only when Settings ▸ Format Markdown as You Type is on (default on), only in p
 - **X-1** A change to the open entry from sync replaces the shown text; the selection stays where it still fits. — `NativeEditor.Coordinator.render`; `EditorChangeTests.testChangeFromElsewhereReplacesTheTextAndItsUndo`.
 - **X-2** While an input method composes, a change from elsewhere waits; when the composition ends both are kept, block by block. — `ExternalEdits.rebase`; `EditorChangeTests.testChangeFromElsewhereWaitsForTheCompositionAndKeepsBothEdits`.
 - **X-3** Rebasing keeps edits to different blocks from both sides; when both changed the same block this editor's version is kept and the other remains in history. — `ExternalEdits.rebase`; `EditorChangeTests.testRebaseKeepsEditsToDifferentBlocksAndThisEditorsVersionOfTheSameBlock`.
-- **X-4** An open entry follows another device's changes; typing over a change that arrived but wasn't shown keeps both versions as a conflict for review. — `StaleDraftTests.testAnOpenEntryFollowsOtherDevicesAndTypingOverAnUnseenChangeKeepsBoth`.
+- **X-4** An open entry follows another device's changes; typing over a change that arrived but wasn't shown keeps both versions: this device’s text stays and the other device’s becomes a separate entry ([flows/resolve-conflict.md](resolve-conflict.md)). — `StaleDraftTests.testAnOpenEntryFollowsOtherDevicesAndTypingOverAnUnseenChangeKeepsBoth`.
 - **X-5** Leaving an entry that another device wrote while it was open here, without typing, never overwrites or deletes the other device's version. — `StaleDraftTests.testAnEmptyNewEntryWrittenOnAnotherDeviceIsNotOverwrittenWhenLeft`.
 
 ## V. Viewing and scrolling while writing

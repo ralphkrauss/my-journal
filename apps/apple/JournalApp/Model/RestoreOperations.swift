@@ -33,7 +33,7 @@ enum RestoreAvailability: Equatable {
     case needsUpdate
     /// No journal is in use to restore into.
     case createJournalFirst
-    /// Nothing to restore, or the entry's own changes need review first.
+    /// Nothing to restore, or the entry's own changes from another device are about to be combined.
     case unavailable
 
     var offer: RestoreOffer? {

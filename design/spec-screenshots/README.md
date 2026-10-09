@@ -27,8 +27,8 @@ Only the sample library is ever shown. Two guards keep other things out: the Con
 | Part | Files |
 | --- | --- |
 | iPhone and iPad tests | `apps/apple/JournalScreenshots/iOS/Spec*CaptureTests.swift`; `SpecCaptureCase.swift` is the base class (launching on a copy of the sample library, finding, capturing). Classes run in the order in `capture.sh`: warm-up (closes a new simulator's keyboard tips), browse, editor, library, settings, start, data, conflict, journal, sync, then dark |
-| Mac test | `apps/apple/JournalScreenshots/Mac/SpecMacCapture.swift` (the states), `SpecMacSupport.swift` (opening, arranging, capturing, sheets), `SpecMacSyncStates.swift` (server, devices in Sync, agent), `SpecMacLibraryStates.swift` (welcome, library problems, changes to review in a second window) |
-| Shared fixtures | `apps/apple/JournalScreenshots/Shared/SpecLibraryFixtures.swift`: changes to review and the damage that makes a library unopenable (the same as `JournalTests/LibraryFixture.swift`) |
+| Mac test | `apps/apple/JournalScreenshots/Mac/SpecMacCapture.swift` (the states), `SpecMacSupport.swift` (opening, arranging, capturing, sheets), `SpecMacSyncStates.swift` (server, devices in Sync, agent), `SpecMacLibraryStates.swift` (welcome, library problems, conflicts kept as two versions in a second window) |
+| Shared fixtures | `apps/apple/JournalScreenshots/Shared/SpecLibraryFixtures.swift`: conflicts to settle (kept as two, and one held) and the damage that makes a library unopenable (the same as `JournalTests/LibraryFixture.swift`) |
 | Project | `apps/apple/screenshots.yml` (the scheme and targets; generated into `JournalScreenshots.xcodeproj`, not committed) |
 | Seed | `design/app-store/seed-library.sh` and `apps/apple/Packages/JournalCore/Sources/JournalMeasure/ScreenshotLibrary.swift` |
 
@@ -37,7 +37,7 @@ The App Store captures (`design/app-store/capture-ios.sh`, `capture-mac.sh`) are
 ## How the states are reached
 
 - iPhone and iPad drive the real UI with XCUITest: taps, typing and menus, from a launch with `JOURNAL_DATA_DIR` set to a copy of the sample library. The seeded library has no device key, so each launch first types the master password. Device authentication is answered by `JOURNAL_UI_TEST_DEVICE_AUTH=success` (a debug build). The simulator's screenshots are always portrait; `process.py` turns the iPad's.
-- Library problems are crafted on copies, as `JournalTests` do: unreadable settings, a missing database, a migration from a newer version. Changes to review are recorded with the store's own calls.
+- Library problems are crafted on copies, as `JournalTests` do: unreadable settings, a missing database, a migration from a newer version. Conflicts are recorded with the store's own calls and the app settles them when it opens the library.
 - The Mac test cannot click SwiftUI controls (the app's accessibility tree is not built in its own process), so it arranges the model (`AppModel.show`, the sheet flags), runs the toolbar menus' own actions (`JournalToolbarController.configuration.entryActions()`), and posts mouse events at places that come from the captures themselves (`SpecMacSupport.tap`). A change to a Settings pane's layout can move a button: if a state fails or shows the wrong control, look at the capture and update the place. Windows are captured as the window server draws them, with their sheets drawn on top.
 - Dark appearance: `simctl ui appearance dark` for the simulators, `NSApp.appearance` on the Mac. Other states are light.
 

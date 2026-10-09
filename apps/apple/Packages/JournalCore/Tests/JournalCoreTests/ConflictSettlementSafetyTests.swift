@@ -128,11 +128,15 @@ final class ConflictSettlementSafetyTests: ConflictTestCase {
         try await store.recordConflict(try remote(theirs, revision: 1, cursor: 9))
 
         let report = try await settleAfterPause(store)
-        XCTAssertTrue(report.resolved.isEmpty, "Edits are not decided by a rule that drops them")
+        guard case .keptBoth(let copyID?) = try XCTUnwrap(report.resolved.first).result else {
+            return XCTFail("Edits are not dropped by the rule for an unsent copy: both versions are kept")
+        }
         let record = try await stored(store, parkedID)
         XCTAssertEqual(record.document.text, "words, and more typed after it was parked")
+        let other = try await stored(store, copyID)
+        XCTAssertEqual(other.document.text, "words")
         let rows = try await store.conflicts()
-        XCTAssertEqual(rows.map(\.id), [parkedID], "The two versions wait for the person")
+        XCTAssertTrue(rows.isEmpty)
     }
 
     func testAnEditedUnsentParkedEntryMeetingADeletionIsParkedAgainNotDropped() async throws {
@@ -244,7 +248,7 @@ final class ConflictSettlementSafetyTests: ConflictTestCase {
         let rest = try await store.resolveConflicts(at: .opening(serverConfigured: true))
         XCTAssertEqual(rest.resolved.map(\.recordID), [held.id])
         state = try await store.keptNotesState()
-        XCTAssertEqual(state.passStep, 1)
+        XCTAssertEqual(state.passStep, JournalStore.passStepAllKinds)
         XCTAssertNil(state.passRecords)
     }
 

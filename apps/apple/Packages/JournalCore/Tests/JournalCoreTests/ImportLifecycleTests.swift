@@ -65,7 +65,7 @@ final class ImportLifecycleTests: XCTestCase {
         let importedSummary = ArchiveSummary(snapshot: afterRestore)
         XCTAssertEqual(importedSummary.entries, 1)
         XCTAssertEqual(importedSummary.recentlyDeleted, 2)
-        XCTAssertEqual(importedSummary.unavailable, 2)
+        XCTAssertEqual(importedSummary.unavailable, 3, "…and the other version the archive carried, kept as an entry")
         let pending = try await reopened.pending()
         for original in oldOperations {
             let kept = try XCTUnwrap(pending.first { $0.operationId == original.operationId })
@@ -144,15 +144,16 @@ final class ImportLifecycleTests: XCTestCase {
         let earlier = try XCTUnwrap(history.first { $0.title == "Earlier unavailable entry" })
         let previousLocal = try XCTUnwrap(history.first { $0.title == "Unavailable entry" })
         XCTAssertEqual(previousLocal.journalID, orphan.journalID)
+        // The conflict the archive carried is settled by the import: its other version is an entry of its own.
         let conflicts = try await store.conflicts()
-        let conflict = try XCTUnwrap(conflicts.first { $0.id == orphan.id })
-        XCTAssertEqual(conflict.remote.title, "Other unavailable entry")
-        let references = Set([orphan.journalID, earlier.journalID, conflict.remote.journalID].compactMap { $0 })
+        XCTAssertTrue(conflicts.isEmpty)
+        let records = try await store.items()
+        let other = try XCTUnwrap(records.first { $0.title == "Other unavailable entry (other version)" })
+        let references = Set([orphan.journalID, earlier.journalID, other.journalID].compactMap { $0 })
         XCTAssertEqual(references.count, 3)
         XCTAssertTrue(references.isDisjoint(with: fixture.parents))
-        let records = try await store.items()
         XCTAssertTrue(references.isDisjoint(with: records.map(\.id)))
         let pending = try await store.pending()
-        XCTAssertFalse(pending.contains { $0.recordID == orphan.id })
+        XCTAssertTrue(pending.contains { $0.recordID == orphan.id }, "Settled, so it is sent")
     }
 }

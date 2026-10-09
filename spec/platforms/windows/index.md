@@ -14,7 +14,7 @@ Three batches of about equal size. Batch 1 first: it fixes the shell and the edi
 | --- | --- | --- |
 | 1. Library and editor | 23 | The window, journals, entries, search, editor, formatting, images, tables |
 | 2. Settings, connections and security | 24 | Settings pages, connecting, devices, encryption, App Lock, agents, erase |
-| 3. Messages, states and flows not covered | 19 | First launch, import and export, sync states and recovery, conflicts, history, ratings, messages |
+| 3. Messages, states and flows not covered | 18 | First launch, import and export, sync states and recovery, conflicts, history, ratings, messages |
 
 ## Batch 1: library and editor
 
@@ -54,7 +54,7 @@ Sources: [screens/settings](../../screens/settings.md), [screens/lock-screen](..
 | --- | --- | --- | --- | --- |
 | `settings` | screen | `screens/settings.md` | reviewed | Settings page, home cards, About group, `BreadcrumbBar`; sets the card patterns the other settings pages reuse. |
 | `settings-general` | screen | `screens/settings-general.md` | reviewed | General page: default journal, Markdown as you type, Erase group. |
-| `settings-sync` | screen | `screens/settings-sync.md` | reviewed | Sync page: status, Sync now, Stop syncing, Changes to review, Changed on two devices (clickable cards, Clear list), footers as descriptions. |
+| `settings-sync` | screen | `screens/settings-sync.md` | reviewed | Sync page: status, Sync now, Stop syncing, Changed on two devices (clickable cards for entries, templates and edits against deletions; Clear list), footers as descriptions. |
 | `settings-devices` | screen | `screens/settings-devices.md` | reviewed | Devices page: list, Add device, revoke. |
 | `settings-privacy` | screen | `screens/settings-privacy.md` | draft | Privacy page: encryption, App lock expander, Lock when inactive. |
 | `settings-backup` | screen | `screens/settings-backup.md` | draft | Backup page: archive and Markdown groups; pickers. |
@@ -87,10 +87,9 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `archive-import` | screen | `screens/archive-import.md` | draft | Import task page with preview. |
 | `recovery-key` | screen | `screens/recovery-key.md` | reviewed | Probably not offered on Windows (open-questions D11). |
 | `sync-status` | screen | `screens/sync-status.md` | reviewed | Title bar button with an `InfoBadge`; a flyout with the states. |
-| `conflict-review` | screen | `screens/conflict-review.md` | reviewed | Changes to review list for entries, templates and unsupported ones; notice; review page; no journal or deletion review. |
-| `entry-conflict` | screen | `screens/entry-conflict.md` | reviewed | Entry and template review page. |
+| `kept-version-notice` | screen | `screens/kept-version-notice.md` | draft | The Informational `InfoBar` above the open entry or template that was kept as two versions; no review page. |
 | `version-history` | screen | `screens/version-history.md` | reviewed | Entry and template version history page with side-by-side comparison. |
-| `messages` | messages | `messages.md` | reviewed | Sync states, save failures, conflicts, unavailable content as `InfoBar`s and dialogs; severity table; announcements. |
+| `messages` | messages | `messages.md` | reviewed | Sync states, save failures, kept versions, unavailable content as `InfoBar`s and dialogs; severity table; announcements. |
 | `create-library` | flow | `flows/create-library.md` | reviewed | Start a Journal, encryption choices. |
 | `import-archive` | flow | `flows/import-archive.md` | draft | File activation, Open picker, preview, restore or add. |
 | `export-archive` | flow | `flows/export-archive.md` | draft | Save picker, progress, password check. |
@@ -98,7 +97,7 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | Reconnect. |
 | `stop-syncing` | flow | `flows/stop-syncing.md` | reviewed | Confirmation dialog. |
 | `sync-recovery` | flow | `flows/sync-recovery.md` | reviewed | Triggers: window activation, network change, resume; paces. |
-| `resolve-conflict` | flow | `flows/resolve-conflict.md` | reviewed | Changes made on two devices: the quiet list, opening a note, the entry and template review route. |
+| `resolve-conflict` | flow | `flows/resolve-conflict.md` | draft | Changes made on two devices: nothing shows when it happens; the notice, the quiet list, opening a note, the short refusals. |
 | `save-failure` | flow | `flows/save-failure.md` | reviewed | Keep Open dialog on close; notices. |
 | `rating-request` | flow | `flows/rating-request.md` | reviewed | `StoreContext` request and the Store-only rule. |
 | `delete-and-restore` | flow | `flows/delete-and-restore.md` | reviewed | Delete, Undo, Restore (one verb, at once), delete permanently. |

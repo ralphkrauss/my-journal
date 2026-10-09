@@ -15,7 +15,7 @@ Write a short description of every image in an entry or template, so Narrator ca
 
 ## Controls
 
-A page in the window's content area, replacing the library panes and returning to them exactly as they were. Opening it first saves the open entry. Offered (enabled) only when the entry is editable, not shown as source only, and has no changes to review.
+A page in the window's content area, replacing the library panes and returning to them exactly as they were. Opening it first saves the open entry. Offered (enabled) only when the entry is editable, not shown as source only, and has no change from another device still waiting to be combined (a few seconds).
 
 | Spec element | Control | Notes |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Loading a preview: `editor.image.loading`. Image missing: `editor.imageDescripti
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `image-descriptions` | Entry actions; entry row context menu; a picture's context menu | none | The entry is editable, not source only, no changes to review; shown only when the entry has pictures |
+| `image-descriptions` | Entry actions; entry row context menu; a picture's context menu | none | The entry is editable, not source only, no change still waiting to be combined; shown only when the entry has pictures |
 
 - Enter in a description field moves to the next one (Done on the last).
 - Alt+Left, the back button and the breadcrumb go back, asking first while descriptions are unsaved; Esc does nothing on the page. Focusing a field scrolls it to the top of the page.

@@ -46,11 +46,11 @@ extension MergeTests {
             try await local.save(item)
         }
 
-        let (staged, engine) = try await merge(local, into: server)
+        let (staged, _) = try await merge(local, into: server)
         let result = try await downloaded(server).items()
         XCTAssertEqual(
             live(result, "template", "Gratitude").map(\.document), [macGratitude.document],
-            "An unedited built-in is left out even when the server's copy was edited, and isn't reviewed.")
+            "An unedited built-in is left out even when the server's copy was edited, and is not a conflict.")
         XCTAssertEqual(
             live(result, "template", "Daily Reflection").count, 1,
             "An unedited built-in whose name the server lacks is added, so nothing is lost.")
@@ -60,7 +60,8 @@ extension MergeTests {
             result.filter { $0.title == "Retro" && $0.deletedAt != nil }.count, 1,
             "A template in Recently Deleted is imported as it is, without matching.")
         func journal(_ title: String) throws -> JournalItem { try XCTUnwrap(result.first { $0.title == title }) }
-        XCTAssertEqual(try journal("Travel").defaultTemplateID, macRecipe.id, "It follows the reviewed template.")
+        XCTAssertEqual(
+            try journal("Travel").defaultTemplateID, macRecipe.id, "It follows the template that kept its identity.")
         XCTAssertEqual(
             try journal("Notes").defaultTemplateID, live(result, "template", "Daily Reflection").first?.id,
             "It follows the added built-in.")
@@ -68,20 +69,20 @@ extension MergeTests {
             live(result, "template", "Standup").first { $0.document == standup.document })
         XCTAssertEqual(try journal("Ideas").defaultTemplateID, addedStandup.id)
 
-        // The reviewed template's image is staged; keeping this device's version sends it with its image.
+        // The template that differs is settled by the merge: this device's version, with its image, stays the template
+        // and is sent with the image; the server's version is a template of its own.
         let pendingReviews = try await staged.conflicts()
-        let review = try XCTUnwrap(pendingReviews.first)
-        XCTAssertEqual(review.id, macRecipe.id)
-        let mergedImage = try XCTUnwrap(review.local.document.attachmentIDs.first)
-        try await staged.resolve(review, choice: .local)
-        try await engine.synchronize()
-        let uploaded = await server.images[mergedImage]
-        XCTAssertNotNil(uploaded)
+        XCTAssertTrue(pendingReviews.isEmpty)
         let resolved = try await downloaded(server)
         let keptRecipe = try await resolved.item(macRecipe.id)
+        let mergedImage = try XCTUnwrap(keptRecipe?.document.attachmentIDs.first)
         XCTAssertEqual(keptRecipe?.document.attachmentIDs, [mergedImage])
+        let uploaded = await server.images[mergedImage]
+        XCTAssertNotNil(uploaded)
         let keptImage = try await resolved.attachment(mergedImage)
         XCTAssertEqual(keptImage, image)
+        let serverVersion = live(try await resolved.items(), "template", "Recipe (other version)")
+        XCTAssertEqual(serverVersion.map(\.document), [macRecipe.document])
     }
 
     func testEditsAfterAnInterruptedAttemptAreOrdinaryEdits() async throws {
@@ -152,7 +153,7 @@ extension MergeTests {
         XCTAssertTrue(records.isEmpty, "Nothing was sent; the merge can be tried again.")
     }
 
-    func testATemplateThatDiffersOnlyInParagraphsIsReviewedNotSkipped() async throws {
+    func testATemplateThatDiffersOnlyInParagraphsKeepsBothVersionsAndIsNotSkipped() async throws {
         let server = MergeServer()
         let (mac, macSync) = try await otherDevice(server)
         let serverPlan = JournalItem(kind: "template", title: "Plan", document: JournalDocument(markdown: "One\nTwo"))
@@ -164,8 +165,13 @@ extension MergeTests {
 
         let (staged, _) = try await merge(local, into: server)
         let reviews = try await staged.conflicts()
-        XCTAssertEqual(reviews.map(\.id), [serverPlan.id])
-        XCTAssertEqual(reviews.first?.local.document.markdown, localPlan.document.markdown)
+        XCTAssertTrue(reviews.isEmpty)
+        let result = try await downloaded(server).items()
+        XCTAssertEqual(live(result, "template", "Plan").map(\.id), [serverPlan.id])
+        XCTAssertEqual(live(result, "template", "Plan").first?.document.markdown, localPlan.document.markdown)
+        XCTAssertEqual(
+            live(result, "template", "Plan (other version)").first?.document.markdown, serverPlan.document.markdown,
+            "Not skipped as the same: the server's version is kept")
     }
 
     func testVersionsOfWhatIsntImportedAreKept() async throws {
@@ -199,9 +205,11 @@ extension MergeTests {
             journalVersions.contains { $0.title == "Default on the iPad" },
             "A combined journal's version awaiting review is kept in the server journal's Version History.")
         let reviews = try await staged.conflicts()
-        XCTAssertEqual(
-            reviews.map(\.remote.document), [edited.document],
-            "A built-in with a change awaiting review is imported with it, not left out.")
+        XCTAssertTrue(reviews.isEmpty)
+        let templates = try await staged.items().filter { $0.kind == "template" && $0.title.hasPrefix("Gratitude") }
+        XCTAssertTrue(
+            templates.contains { $0.document == edited.document },
+            "A built-in with another version is imported with it, not left out.")
     }
 
     func testImagesOnlyLeftOutTemplatesUseAreNotUploaded() async throws {

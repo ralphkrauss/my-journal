@@ -81,12 +81,18 @@ actor MemoryServer: SyncServer {
             serverId: serverID, serverIdCursor: identityCursor)
     }
     func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) async throws -> ServerClient.PushResult {
+        try await push(pending, from: nil, shortReceipt: shortReceipt)
+    }
+    /// A push from the device `device`, whose identity the change carries as a real server records it.
+    func push(_ pending: PendingChange, from device: UUID?, shortReceipt: Bool) async throws
+        -> ServerClient.PushResult
+    {
         shortReceiptRequests.append(shortReceipt)
         if let remaining = pushesBeforeFailure {
             pushesBeforeFailure = remaining > 1 ? remaining - 1 : nil
             if remaining == 1 { throw ServerUnavailable() }
         }
-        let result = try await apply(pending)
+        let result = try await apply(pending, from: device)
         guard shortReceipt, case .accepted(let change) = result else { return result }
         return .accepted(try ServerClient.receipt(Self.shortReceipt(change), for: pending))
     }
@@ -114,7 +120,7 @@ actor MemoryServer: SyncServer {
     /// The `count`th push from now fails with a server error before anything is applied.
     func failPush(number count: Int) { pushesBeforeFailure = count }
     func holdWaits(answering answers: [WaitAnswer] = []) { waitAnswers = answers }
-    private func apply(_ pending: PendingChange) async throws -> ServerClient.PushResult {
+    private func apply(_ pending: PendingChange, from device: UUID?) async throws -> ServerClient.PushResult {
         if let action = whileSendingNext {
             whileSendingNext = nil
             await action()
@@ -137,7 +143,8 @@ actor MemoryServer: SyncServer {
         guard revision == pending.baseRevision else { return .serverBehind }
         let change = RemoteChange(
             cursor: state.nextCursor, recordId: pending.recordID, revision: revision + 1, kind: pending.kind,
-            payload: pending.payload, deviceId: UUID(), modifiedAt: Date(timeIntervalSince1970: 1_800_000_000))
+            payload: pending.payload, deviceId: device ?? UUID(),
+            modifiedAt: Date(timeIntervalSince1970: 1_800_000_000))
         state.nextCursor += 1
         state.log.append(change)
         state.records[pending.recordID] = change

@@ -100,3 +100,21 @@ class ConflictTestCase: XCTestCase {
         try await store.items().filter { $0.kind != "journal" && $0.id != id && !$0.isPermanentlyDeleted }
     }
 }
+
+/// One device's view of an in-memory server: its changes carry the device's own identity, as a real server records it,
+/// so a conflict knows which device the other version came from.
+struct DeviceServer: SyncServer {
+    let server: MemoryServer
+    let device: UUID
+
+    func status() async throws -> ServerStatus { await server.status() }
+    func changes(after cursor: Int64, limit: Int, applied: LoggedChange?) async throws -> SyncPage {
+        try await server.changes(after: cursor, limit: limit, applied: applied)
+    }
+    func push(_ pending: PendingChange, serverID: String?, shortReceipt: Bool) async throws -> ServerClient.PushResult {
+        try await server.push(pending, from: device, shortReceipt: shortReceipt)
+    }
+    func upload(_ bytes: Data, id: UUID) async throws { try await server.upload(bytes, id: id) }
+    func hasAttachment(_ id: UUID) async throws -> Bool? { await server.hasAttachment(id) }
+    func downloadAttachment(_ id: UUID) async throws -> Data { try await server.downloadAttachment(id) }
+}

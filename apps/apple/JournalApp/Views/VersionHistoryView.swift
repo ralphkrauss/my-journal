@@ -17,8 +17,6 @@ struct VersionHistoryView: View {
     @State private var needsDestinationRefresh = false
     @State private var error: String?
     @State private var creatingJournal = false
-    @State private var reviewing = false
-    @State private var conflictID: UUID?
     @State private var operation: Task<Void, Never>?
     @StateObject private var previewActions = EditorActions()
     @ScaledMetric(relativeTo: .body) private var textSize = 17.0
@@ -46,7 +44,6 @@ struct VersionHistoryView: View {
                     error = nil
                     destination = nil
                     creatingJournal = false
-                    reviewing = false
                     dismiss()
                 }
             }
@@ -60,7 +57,6 @@ struct VersionHistoryView: View {
                 if let message, !model.locked { JournalAccessibility.announce(message) }
             }
             .sheet(isPresented: $creatingJournal) { RecoveryJournalView() }
-            .sheet(isPresented: $reviewing) { conflictReview }
     }
     @ViewBuilder private var layout: some View {
         #if os(iOS)
@@ -174,17 +170,6 @@ struct VersionHistoryView: View {
                 }
             }.disabled(busy)
         }
-        if conflictID != nil { Button("Review Changes") { reviewing = true }.disabled(busy) }
-    }
-    @ViewBuilder private var conflictReview: some View {
-        if let conflict = model.conflicts.first(where: { $0.id == conflictID }) {
-            ConflictReview(id: conflict.id)
-        } else {
-            VStack(spacing: 16) {
-                Text("These changes have been resolved.")
-                Button("Done") { reviewing = false }
-            }.padding()
-        }
     }
     private func load(initial: Bool) async {
         guard !model.locked, !busy, let store = model.store else { return }
@@ -252,12 +237,12 @@ struct VersionHistoryView: View {
             } catch JournalLifecycleError.conflict(let id) {
                 do { try await model.refresh() } catch {}
                 guard !model.locked else { return }
-                // An entry's changes can be reviewed; a journal's wait for a newer version of the app.
-                if model.conflicts.contains(where: { $0.id == id }) {
-                    conflictID = id
-                    error = "These changes need review before you can continue."
-                } else {
+                // Changes from another device are combined at the next sync; what a newer version of the app must read
+                // waits for it.
+                if model.heldConflictIDs.contains(id) {
                     error = JournalLifecycleError.unsupportedJournal.shown(.saving)
+                } else {
+                    error = JournalLifecycleError.conflict(id).shown(.saving)
                 }
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }

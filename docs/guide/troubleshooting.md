@@ -42,24 +42,27 @@ With App Lock on, or when the settings can’t be read, Import and Erase ask you
 
 If your library needs a password and its device key is gone (it isn’t kept in a device backup), the lock screen asks for the master password or recovery key. Below it, **Don’t have your Master Password?** offers **Import Archive…** and **Erase Journals and Settings…**, which work as described above.
 
-## An entry has changes from another device
-
-When the same entry or template changes on two devices before they sync, My Journal keeps both versions instead of choosing one. The entry shows “This entry has changes from another device.” and is marked in the list. Settings > Sync lists every entry and template like this under **Changes to Review**.
-
-1. Choose **Review Changes**.
-2. Switch between the versions from This Device and Other Device.
-3. Choose **Keep Both** to save them as separate entries, or **Keep One Version** to keep only one.
-
-The version you don’t keep stays in Version History.
-
 ## Something changed on two devices
 
-My Journal settles some changes on its own, keeps both versions, and doesn’t ask or alert you. Settings > Sync lists what it settled under **Changed on Two Devices**. Choosing a row opens the item it saved.
+When the same entry or template changes on two devices before they sync, My Journal keeps both versions instead of choosing one, and doesn’t ask or alert you. The version from the device that synced last stays where it is. The other version is saved as a separate entry or template next to it, with “(other version)” added to its title. Nothing is lost, and nothing is overwritten.
 
+On the device that kept both, the open entry shows a notice: “This entry was also changed on another device. The other version is saved as a separate entry.” If the other version was last changed later than this one, the notice says that version is newer. The clocks of the two devices decide that wording only.
+
+1. Choose **Show Other Version** in the notice to open the other version, or **Dismiss** to close the notice.
+2. To find it later, open Settings > Sync > **Changed on Two Devices** and choose its row.
+3. Keep whichever you want. Delete the other version like any entry, or copy what you need from it into the first.
+
+Other changes settle the same way, and Settings > Sync lists everything under **Changed on Two Devices**. Choosing a row opens the item it saved.
+
+- **An entry or template changed on two devices.** Both versions are kept, as above. If the other device keeps typing, its later text replaces the saved copy as long as you haven’t changed that copy. If you moved an entry on one device and edited it on another, you get two entries, because My Journal doesn’t keep the original to compare with. If you deleted an entry on one device and edited it on another, the edited text stays in its journal and the other version is in **Recently Deleted**.
 - **A journal renamed on two devices.** The journal keeps the name that reached the server last, which isn’t always the one you typed last. The row shows the name it has now and the other one. Choose **Rename…** if you prefer the other name.
 - **Deleted permanently on one device and changed on another.** The item stays deleted, and the changed version is saved as a separate entry or template in **Recently Deleted**. Choose **Restore** to bring it back. If its journal is gone too, it is in **Unavailable Journals**, and **Restore** puts it in your Default Journal. A journal deleted permanently on one device and changed on another stays deleted.
 
-The list shows the 20 most recent notes. A note disappears after 30 days, except a journal’s rename note, which stays until you choose **Clear List**. Clearing the list only forgets the notes; the entries and journals stay as they are. Entries and templates that differ on two devices still need your review, as described above.
+For a few seconds after a sync that finds such a change, moving that entry, restoring an earlier version of it, or deleting it permanently says “Some changes from another device are still being combined. Try again in a moment.”
+
+If version 1.0 left changes for you to review, version 1.1 settles them the first time it opens your journals, keeping both versions. A deletion you had not yet confirmed stays deleted and the edit is saved separately.
+
+The list shows the 20 most recent notes. A note disappears after 30 days, except a journal’s rename note, which stays until you choose **Clear List**. Clearing the list only forgets the notes; the entries and journals stay as they are.
 
 If the section **Changed on Two Devices** isn’t there, nothing has been settled.
 

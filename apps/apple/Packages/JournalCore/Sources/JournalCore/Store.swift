@@ -38,6 +38,9 @@ public struct ConflictVersion: Sendable, Identifiable, Equatable {
     public let deviceID: UUID
     public let modifiedAt: Date
 }
+/// How `resolve` settles a conflict by choice. The app never asks a person to choose: it settles every conflict itself
+/// (`resolveConflicts(at:)`). This remains for the measurement and screenshot tools and for tests, which use it to
+/// build a record with earlier versions in its history.
 public enum ConflictChoice: Sendable { case keepBoth, local, remote }
 
 public actor JournalStore {
@@ -264,11 +267,7 @@ public actor JournalStore {
             guard entry.deletedAt == nil, !entry.deletedWithJournal, entry.document.isEditable else {
                 throw JournalError.unsupportedFormat
             }
-            if try Bool.fetchOne(
-                db, sql: "SELECT EXISTS(SELECT 1 FROM conflicts WHERE record=?)", arguments: [id(entryID)]) == true
-            {
-                throw JournalError.server("Review this entry’s changes before moving it.")
-            }
+            try requireNoConflict(db, uuid: entryID)
             guard let sourceID = entry.journalID, let source = try storedItem(db, uuid: sourceID),
                 source.kind == "journal"
             else {

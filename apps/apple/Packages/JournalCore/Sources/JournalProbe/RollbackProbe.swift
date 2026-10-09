@@ -4,7 +4,8 @@ import JournalCore
 /// End-to-end check of a server whose data folder is replaced by an older copy without a new identity, driven by
 /// scripts/test-sync.sh around a real server (protocol/README.md, capability `sync-continuity-digest`). The phone's
 /// accepted edits are lost by the copy, and the Mac's edits of the same entries then get the same positions, record
-/// and revision numbers. The phone must keep both versions for review instead of writing over the Mac's:
+/// and revision numbers. The phone must keep both versions, the Mac's as an entry of its own, instead of writing over
+/// the Mac's:
 /// - rollback-setup: both devices synchronize three entries; the script copies the server's data folder;
 /// - rollback-unsent: the phone sends an edit without reading on, then edits again; the script restores the copy;
 /// - rollback-check-unsent: the Mac edits the same entry; the phone synchronizes; the script copies the data again;
@@ -122,23 +123,35 @@ extension Probe {
         try await phone.sync.synchronize()
         try await phone.sync.synchronize()
         let reviews = try await phone.store.conflicts()
+        guard reviews.isEmpty else {
+            throw ProbeFailure("rollback probe (\(phase)): the phone left the versions for review")
+        }
+        let phoneItems = try await phone.store.items()
         for (entry, phoneText) in zip(entries, expected) {
-            let review = reviews.first { $0.id == entry }
-            guard review?.local.document.text == phoneText, review?.remote.document.text == "Mac, after the copy"
-            else { throw ProbeFailure("rollback probe (\(phase)): the phone's and the Mac's versions aren't reviewed") }
+            let record = phoneItems.first { $0.id == entry }
+            guard record?.document.text == phoneText else {
+                throw ProbeFailure("rollback probe (\(phase)): the phone's version isn't the entry")
+            }
+        }
+        let phoneCopies = phoneItems.filter { isMacCopy($0) }
+        guard phoneCopies.count == entries.count else {
+            throw ProbeFailure("rollback probe (\(phase)): the Mac's versions aren't kept as entries of their own")
         }
         try await mac.sync.synchronize()
-        for entry in entries where try await mac.store.item(entry)?.document.text != "Mac, after the copy" {
-            throw ProbeFailure("rollback probe (\(phase)): the phone wrote over the Mac's version")
+        let macItems = try await mac.store.items()
+        for (entry, phoneText) in zip(entries, expected) {
+            guard macItems.first(where: { $0.id == entry })?.document.text == phoneText else {
+                throw ProbeFailure("rollback probe (\(phase)): the version kept on the phone didn't reach the Mac")
+            }
         }
-        print("PASS: after the server lost edits it accepted (\(phase)), both versions are kept for review")
-        for review in reviews { try await phone.store.resolve(review, choice: .local) }
-        try await phone.sync.synchronize()
-        try await mac.sync.synchronize()
-        for (entry, phoneText) in zip(entries, expected)
-        where try await mac.store.item(entry)?.document.text != phoneText {
-            throw ProbeFailure("rollback probe (\(phase)): the version kept in the review didn't reach the Mac")
+        guard macItems.filter({ isMacCopy($0) }).count == entries.count else {
+            throw ProbeFailure("rollback probe (\(phase)): the Mac lost its own version")
         }
+        print("PASS: after the server lost edits it accepted (\(phase)), both versions are kept as entries")
+    }
+    private static func isMacCopy(_ item: JournalItem) -> Bool {
+        item.kind == "entry" && item.title.hasSuffix("(other version)")
+            && item.document.text == "Mac, after the copy"
     }
 }
 

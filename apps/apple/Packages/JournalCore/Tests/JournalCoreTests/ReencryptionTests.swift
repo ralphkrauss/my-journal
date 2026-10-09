@@ -220,7 +220,7 @@ final class ReencryptionTests: XCTestCase {
         return second
     }
 
-    func testAnotherDeviceRejoiningMatchesByContentAndKeepsOfflineEditsForReview() async throws {
+    func testAnotherDeviceRejoiningMatchesByContentAndKeepsOfflineEditsAlongsideTheServers() async throws {
         let first = try await plaintextLibrary()
         // The second device has the same records as synchronized from the old server, then an offline edit.
         let second = try await secondDevice(of: first)
@@ -240,10 +240,15 @@ final class ReencryptionTests: XCTestCase {
         try await SyncEngine(store: rejoined, server: server).synchronize()
 
         let items = try await rejoined.items()
-        XCTAssertEqual(items.count, secondItems.count, "Nothing was duplicated")
-        XCTAssertEqual(Set(items.map(\.id)), Set(secondItems.map(\.id)))
+        // Records with the same content were matched, not duplicated. The two that differ each keep the other version
+        // as a record of their own: the offline edit against the server's template, and the entry whose other
+        // version the library carried.
+        XCTAssertEqual(items.count, secondItems.count + 2)
+        XCTAssertTrue(Set(secondItems.map(\.id)).isSubset(of: Set(items.map(\.id))))
         let conflicts = try await rejoined.conflicts()
-        XCTAssertTrue(conflicts.contains { $0.id == template.id }, "The offline edit is kept for review")
+        XCTAssertTrue(conflicts.isEmpty, "Both versions are kept")
+        let copies = items.filter { $0.title.hasSuffix("(other version)") }.map(\.title).sorted()
+        XCTAssertEqual(copies, ["Evening (other version)", "Monday on the iPad (other version)"])
         let localTemplate = try await rejoined.item(template.id)
         XCTAssertEqual(localTemplate?.title, "Evening, edited offline")
         let uploads = await server.uploads
@@ -299,7 +304,10 @@ final class ReencryptionTests: XCTestCase {
         let report = try await sync.synchronize()
         XCTAssertNil(report.problem)
         let reviews = try await store.conflicts().map(\.id)
-        XCTAssertEqual(reviews, reviewed, "Journals with the same content aren't shown for review")
+        XCTAssertTrue(reviews.isEmpty, "Nothing waits: the row the library carried is settled")
+        // Journals with the same content are matched: the only version kept is the one the library carried.
+        let copies = try await store.items().filter { $0.title.hasSuffix("(other version)") }
+        XCTAssertEqual(copies.count, reviewed.count)
         let pending = try await store.pending()
         XCTAssertTrue(pending.isEmpty)
         let unverified = try await store.attachmentsToVerify()

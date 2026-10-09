@@ -69,7 +69,8 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | `entry-actions` | `library.toolbar.entryActions` | entry | an entry or template is open | Menu of the entry actions below. |
 | `find-in-entry` | `library.entryActions.findInEntry` | text | an entry is open | The system's find in the entry. |
 | `pin-entry-row` | `library.entryList.swipe.pin` / `library.entryList.swipe.unpin`; menu `library.entryActions.pin` / `.unpin` | list | entry in a journal in use, pins readable, unlocked | Pins or unpins without changing the selection. |
-| `review-changes` | `common.reviewChanges` | entry | unlocked (the entry or template has changes to review: the notice, and the rows of Settings ▸ Sync ▸ Changes to Review) | Saves the open writing, then opens the review of that entry or template ([screens/conflict-review](screens/conflict-review.md), [screens/entry-conflict](screens/entry-conflict.md)). |
+| `show-other-version` | `messages.conflict.kept.showOther` | entry | the notice above an entry or template that was kept as two versions; unlocked, the library not being replaced, the other version exists | Opens the other version, saved as a separate entry or template, wherever it is, and marks the notice seen ([screens/kept-version-notice](screens/kept-version-notice.md)). |
+| `dismiss-kept-notice` | `common.dismiss` | entry | the same notice; unlocked, the library not being replaced | Marks the notice seen and removes it; the row in Settings ▸ Sync stays until it expires. |
 | `change-date` | `library.entryActions.changeDate` | entry | entry editable in a journal in use | Change Date sheet ([screens/change-date](screens/change-date.md)). |
 | `move-entry` | `library.entryActions.moveEntry` | entry | same | Move Entry sheet ([screens/move-entry](screens/move-entry.md)). |
 | `save-as-template` | `library.entryActions.saveAsTemplate` | entry | same | Save as Template alert ([screens/entry-list](screens/entry-list.md)). |
@@ -163,7 +164,7 @@ Key names are the Apple keyboard's (Return, Delete, Option, Command); a platform
 
 ## Settings
 
-Every command in Settings and the flows it opens. Commands that live on other surfaces are defined once above and only placed here: `open-settings`, `lock-my-journal` (App Lock section), `import-archive`, `export-archive`, `export-markdown` (Backup), `help-guide`, `review-changes` (Changes to Review). The Settings ▸ About links have their own ids because the Help menu items (`help-privacy`, `help-support`, `help-source`, `help-rate`) are menu-bar commands with the same destinations. The commands in the tables below act in Settings or in a flow it opens (scope: Settings and its dialogs).
+Every command in Settings and the flows it opens. Commands that live on other surfaces are defined once above and only placed here: `open-settings`, `lock-my-journal` (App Lock section), `import-archive`, `export-archive`, `export-markdown` (Backup), `help-guide`. The Settings ▸ About links have their own ids because the Help menu items (`help-privacy`, `help-support`, `help-source`, `help-rate`) are menu-bar commands with the same destinations. The commands in the tables below act in Settings or in a flow it opens (scope: Settings and its dialogs).
 
 ### Settings structure
 
@@ -189,7 +190,7 @@ Every command in Settings and the flows it opens. Commands that live on other su
 | `stop-syncing` | `settings.sync.stopSyncing` | Settings ▸ Sync | connected, not replacing the journals | Confirmation, then `flows/stop-syncing`. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` (both footers) | Settings ▸ Sync footer; Set Up Server footer | always | Opens the sync guide. |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Settings ▸ Sync footer (computer only) | after the former Mac server stopped | Opens the guide's section for people who used Use This Mac. |
-| `open-kept-note` | the row’s own sentence (`messages.conflict.kept.deletedAndChanged`); hint `messages.conflict.kept.rowHint` | Settings ▸ Sync ▸ Changed on Two Devices | unlocked, and the entry or template the row names still exists | Closes Settings (iPhone, iPad) and shows that entry or template where it is; brings the library window forward (Mac). A row with nothing to open is plain text and has no command. |
+| `open-kept-note` | the row’s own sentence (`messages.conflict.kept.entry`, `messages.conflict.kept.entryNewer` or `messages.conflict.kept.deletedAndChanged`); hint `messages.conflict.kept.rowHint` | Settings ▸ Sync ▸ Changed on Two Devices | unlocked, and the entry or template the row names still exists | Closes Settings (iPhone, iPad) and shows that entry or template where it is; brings the library window forward (Mac). A row with nothing to open is plain text and has no command. |
 | `clear-kept-notes` | `messages.conflict.kept.clear` | Settings ▸ Sync ▸ Changed on Two Devices | unlocked | Forgets every note in the list at once, without confirmation. Entries, templates and journals are untouched. |
 
 ### Connect to a Server

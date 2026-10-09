@@ -33,7 +33,7 @@ The selected row uses the standard selection indicator. The selected collection 
 
 ### Journal context menu and Journal actions
 
-One `MenuFlyout` built from one command list, shown as the row's `ContextFlyout` (right-click, Shift+F10, the Menu key, touch long-press) and as the More button's flyout in the list header ([library-window](library-window.md)). The journal's actions are Rename… and Delete journal… only, with New journal… first; the spec's table gives the order and enabled rules. Windows adds Move up and Move down to the pane's menu (below). A journal has no Version history, Merge into…, Default template or Review changes item, and Rename and Delete journal are never dimmed for a conflict:
+One `MenuFlyout` built from one command list, shown as the row's `ContextFlyout` (right-click, Shift+F10, the Menu key, touch long-press) and as the More button's flyout in the list header ([library-window](library-window.md)). The journal's actions are Rename… and Delete journal… only, with New journal… first; the spec's table gives the order and enabled rules. Windows adds Move up and Move down to the pane's menu (below). A journal has no Version history, Merge into…, or Default template item, and Rename and Delete journal are never dimmed for a conflict:
 
 | Item | Copy | Icon | Notes |
 | --- | --- | --- | --- |

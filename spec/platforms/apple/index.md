@@ -16,16 +16,15 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `archive-import` | screen | `screens/archive-import.md` | draft | Import Archive (sheet) |
 | `change-date` | screen | `screens/change-date.md` | verified | Change Date (sheet) |
 | `change-password` | screen | `screens/change-password.md` | draft | Change Password |
-| `conflict-review` | screen | `screens/conflict-review.md` | draft | Review Changes (conflicts) |
 | `connect-to-server` | screen | `screens/connect-to-server.md` | draft | Connect to a Server (sheet and its steps) |
 | `destination-journal` | screen | `screens/destination-journal.md` | draft | New Journal (from Move Entry and Version History) |
 | `encrypt-journals` | screen | `screens/encrypt-journals.md` | draft | Encrypt Your Journals (form, notice, Done sheet) |
-| `entry-conflict` | screen | `screens/entry-conflict.md` | verified | Review Changes (entry or template) |
 | `entry-editor` | screen | `screens/entry-editor.md` | verified | Entry editor |
 | `entry-list` | screen | `screens/entry-list.md` | verified | Entry list (a journal, All Entries, Unavailable Journals) |
 | `format-sheet` | screen | `screens/format-sheet.md` | verified | Formatting (Format panel and popover) |
 | `image-description` | screen | `screens/image-description.md` | verified | Image Descriptions |
 | `journals` | screen | `screens/journals.md` | verified | Journals (sidebar and Journals screen) |
+| `kept-version-notice` | screen | `screens/kept-version-notice.md` | draft | Other version notice (above the open entry or template) |
 | `library-window` | screen | `screens/library-window.md` | verified | Library window (structure, toolbars, windows, restoration) |
 | `link-editor` | screen | `screens/link-editor.md` | draft | Add Link |
 | `lock-screen` | screen | `screens/lock-screen.md` | verified | Lock screen and privacy cover |

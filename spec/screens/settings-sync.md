@@ -1,12 +1,13 @@
 ---
 id: settings-sync
 title: Settings ▸ Sync
-features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changes-to-review-list, changed-on-two-devices-list, conflict-kept-both, former-mac-server-notice, devices-list, revoke-device, add-device]
+features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changed-on-two-devices-list, conflict-kept-both, former-mac-server-notice, devices-list, revoke-device, add-device]
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
   - apps/apple/JournalApp/Views/DevicesSection.swift
-  - apps/apple/JournalApp/Views/ConflictRouting.swift
+  - apps/apple/JournalApp/Views/KeptNotesSection.swift
+  - apps/apple/JournalApp/Model/ConflictNotes.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/KeptNotes.swift
   - apps/apple/JournalApp/Views/AboutLinks.swift
   - apps/apple/JournalApp/Model/SyncHealthOperations.swift
@@ -26,7 +27,7 @@ sources:
 
 ## Purpose
 
-Shows which server this device syncs with and how syncing stands, offers the one action that fits the current state, lists the devices that can sync with the server, and lets the person connect, add a device, remove a device's access, stop syncing, review changes from another device that need a decision (entries and templates), and see what the app settled itself when something changed on two devices.
+Shows which server this device syncs with and how syncing stands, offers the one action that fits the current state, lists the devices that can sync with the server, and lets the person connect, add a device, remove a device's access, stop syncing, and see what the app settled itself when something changed on two devices (both versions of an entry or template kept, a journal renamed, an edit against a permanent deletion).
 
 ## Entry points
 
@@ -79,27 +80,19 @@ Footer (only one, the first that applies):
 4. Connected and the server can't keep pinned entries and journal order:
    - this app is older than the library record on the server: `messages.library.needsUpdate`.
 
-One more line is added below whichever footer shows (or alone), connected or not, while a journal or permanent-deletion change from another device is held because a newer version of My Journal wrote it: `messages.conflict.kept.updateNeeded`. It has no row, no button and no alert.
+One more line is added below whichever footer shows (or alone), connected or not, while a change from another device (to an entry, template, journal or permanent deletion) is held because a newer version of My Journal wrote it: `messages.conflict.kept.updateNeeded`. It has no row, no button and no alert.
 
 The action is the only place that reconnects: Reconnect… is never repeated in another section of this pane.
 
-### 2. Changes to Review section (only when an entry or template needs review and My Journal is unlocked)
+### 2. Changed on Two Devices section (only with rows, and My Journal unlocked)
 
-Above Devices, because it asks for a decision. Header `messages.conflict.settingsSection`. One row per entry or template with changes to review (including one saved by a newer version, which can't be reviewed yet):
-- the item's title;
-- the date of the local version, in secondary text (date and time);
-- a button `common.reviewChanges` ("Review Changes"), accessibility label `common.reviewChangesFor` ("Review Changes for {title}"). It opens the conflict review (`screens/conflict-review`, owned by the conflicts specification) as a sheet.
-
-Journals and permanent deletions are not here: the app settles them itself and lists them in the next section ([flows/resolve-conflict](../flows/resolve-conflict.md)).
-
-### 3. Changed on Two Devices section (only with rows, and My Journal unlocked)
-
-Directly below Changes to Review, or in its place when that section is absent. It tells the person, quietly and afterwards, what the app settled when something changed on two devices. Header `messages.conflict.kept.section`, footer `messages.conflict.kept.footer`. The last row is **Clear List** (`messages.conflict.kept.clear`), a plain button that forgets every note at once, without confirmation (`clear-kept-notes`).
+Between the Server section and Devices. It tells the person, quietly and afterwards, what the app settled when something changed on two devices. Header `messages.conflict.kept.section`, footer `messages.conflict.kept.footer`. The last row is **Clear List** (`messages.conflict.kept.clear`), a plain button that forgets every note at once, without confirmation (`clear-kept-notes`).
 
 Rows are the 20 most recent notes, newest first. A note expires after 30 days; a journal rename note never expires, because it is the only trail of the name that lost, so only Clear List removes it, and when 20 are reached the oldest other note goes first. A row for an item that no longer exists is removed silently.
 
 | Case | Row |
 | --- | --- |
+| An entry or template that changed on two devices, both versions kept | Title: the other version’s current title, that is the copy’s (`library.entryList.untitledEntry` or `library.entryList.untitledTemplate` when blank), which ends “(other version)” unless it was renamed. Sentence `messages.conflict.kept.entry`, or `messages.conflict.kept.entryNewer` when the other version’s last-change time was later (device clocks; wording only). Date and time. The row opens the copy wherever it is: its journal, Templates, Recently Deleted, or Unavailable Journals. When a later version from the other device replaces an untouched copy, its row is updated, not repeated |
 | An entry or template deleted permanently on one device and changed on another | Title: the saved item's title (`library.entryList.untitledEntry` or `library.entryList.untitledTemplate` when blank). Sentence `messages.conflict.kept.deletedAndChanged`. Date and time. The row opens the saved item wherever it is: Recently Deleted, or Unavailable Journals when its journal is gone |
 | A journal renamed on two devices | Title: the journal's name (`common.untitledJournal` when blank). Sentence `messages.conflict.kept.journalRenamed` ({name} is the name it has now, {otherName} the one that lost). Date and time. Plain text |
 | A journal deleted permanently on one device and changed on another | Title: the journal's name. Sentence `messages.conflict.kept.journalDeleted`. Date and time. Plain text |
@@ -108,13 +101,13 @@ Rows are the 20 most recent notes, newest first. A note expires after 30 days; a
 
 Nothing here is an alert, a badge or a sound; it adds nothing to Sync Status and does not count as a problem for the rating request. The section is never shown while locked, and the notes are sealed with the library (a journal's name is not stored in clear text).
 
-### 4. Devices section (connected, and the server accepts this device)
+### 3. Devices section (connected, and the server accepts this device)
 
 The devices that can sync with the server, as one section with one header, `settings.sync.devices.header` ("Devices"): Add Device…, then one row per device with a trailing Revoke Access…. It is [screens/settings-devices](settings-devices.md).
 
 The section is absent, not dimmed, when the device isn't connected (the Server section offers Connect to a Server…) and when the server doesn't accept this device (a sync state that stops automatic sync: the Server section says why and offers Reconnect…).
 
-### 5. Stop Syncing section (connected only)
+### 4. Stop Syncing section (connected only)
 
 - Button `settings.sync.stopSyncing` ("Stop Syncing…"), in a section of its own, last, not styled as destructive (nothing is deleted).
 
@@ -127,8 +120,7 @@ The section is absent, not dimmed, when the device isn't connected (the Server s
 | Check Again | `sync-now` | As Sync Now | Syncs once; the state is checked again. |
 | Reconnect… | `sync-reconnect` | Not while a sync the person started runs | Opens Reconnect, which goes straight to this server's next step (`flows/reconnect-to-server`). |
 | Stop Syncing… | `stop-syncing` | Not while the journals are being replaced | Asks first (below), then `flows/stop-syncing`. |
-| Review Changes | `review-changes` | Unlocked | Opens the review for that entry or template. |
-| Open a Changed on Two Devices row | `open-kept-note` | Unlocked; the item still exists; the row has something to open | Shows the saved entry or template (see section 3). |
+| Open a Changed on Two Devices row | `open-kept-note` | Unlocked; the item still exists; the row has something to open | Shows the copy or the saved entry or template (see section 2). |
 | Clear List | `clear-kept-notes` | Unlocked | Forgets all the notes; nothing else changes. |
 | Add Device…, Revoke Access… | `add-device`, `revoke-device` | See [screens/settings-devices](settings-devices.md) | Adds a device; removes a device's access. |
 | How to Set Up a Server | `open-setup-guide` | Always | Opens the sync guide (`<repository>/blob/main/docs/guide/sync.md`) in the browser. |
@@ -150,7 +142,7 @@ A confirmation (action sheet on phone, dialog on computer), with a visible title
 - **Needs the person / server changed / no access:** footer shows the message; button Reconnect…; no Devices section; automatic sync has stopped until the person acts. After Reconnect succeeds the Devices section appears and lists the devices without reopening the pane.
 - **Update or fix needed:** footer shows the message; Check Again.
 - **Save failed:** footer `messages.sync.pausedForSaveFailure`; Sync Now disabled.
-- **Locked:** Settings shows only its locked text; the Changes to Review and Changed on Two Devices sections are never shown while locked, and an open review closes when the app locks.
+- **Locked:** Settings shows only its locked text; the Changed on Two Devices section is never shown while locked.
 - **Something held:** the footer gains `messages.conflict.kept.updateNeeded`; nothing else changes.
 - **Nothing settled:** the Changed on Two Devices section is absent, not an empty list.
 - **Former Mac server (computer only):** not connected, with the special footer and Learn More.
@@ -165,7 +157,7 @@ A confirmation (action sheet on phone, dialog on computer), with a visible title
 - **Stop Syncing** never deletes anything: the journals, unsent changes and the identity they last synced with stay, so connecting to the same server later continues by identity. The device's access on the server is given up when the server still accepts it (best effort).
 - The former-Mac-server footer appears only on a computer whose library was connected to the server earlier versions of the Mac app ran on itself; it stays until the library connects to any server.
 - Normal syncing is quiet: nothing in this pane changes while automatic sync works.
-- Settling a conflict is quiet too: a note appears in section 3 and nothing else happens. The notes are local to this device: they are not synced.
+- Settling a conflict is quiet too: a note appears in section 2 and nothing else happens. The notes are local to this device: they are not synced.
 
 ## Accessibility
 
@@ -173,7 +165,6 @@ A confirmation (action sheet on phone, dialog on computer), with a visible title
 - The action button's title says what it does; Connect to a Server… and Reconnect… end with an ellipsis because they open a sheet. Add Device… and Stop Syncing… end with one because they open a sheet or ask first.
 - The Devices header is the section's one heading, followed by Add Device… and one row per device.
 - Sync Now's result is announced (see Rules).
-- Review Changes buttons name their item.
 - A Changed on Two Devices row is one element: label (title, sentence, date and time), hint `messages.conflict.kept.rowHint` when it opens something; it wraps at every text size. Clear List is a plain button.
 
 ## Platform notes (Apple)

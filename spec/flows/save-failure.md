@@ -38,7 +38,7 @@ Writing is saved on this device after every edit, quietly. When a save fails, th
    - Unlocked: the generic alert, titled `common.alertTitle`, with `common.saveFailed` ({title} is the entry's title, else its first line, else `library.entryList.untitledEntry`), and the buttons `common.tryAgain` and `common.ok`.
    - Locked (the save after locking failed): the lock screen shows `common.saveFailedLocked`, without the entry's title.
 3. **The notice stays.** While saving has failed, the entry shows the save-failure notice: `messages.save.notSaved` in red, then `common.tryAgain`.
-   - iPhone and iPad: first in the entry's header, above the title, recovery and conflict notices. Once the alert is dismissed, the header scrolls to it without animation.
+   - iPhone and iPad: first in the entry's header, above the title, recovery and other-version notices. Once the alert is dismissed, the header scrolls to it without animation.
    - Mac: below the editor.
 4. **The person keeps writing, or tries again.**
    - Typing continues normally; the writing is kept in memory and every edit tries to save again. A failed attempt shows the alert again.

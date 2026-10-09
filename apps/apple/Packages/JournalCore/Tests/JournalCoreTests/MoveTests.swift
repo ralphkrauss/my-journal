@@ -27,8 +27,8 @@ final class MoveTests: XCTestCase {
                 kind: "entry", payload: original.payload, deviceId: UUID(), modifiedAt: Date()))
         do {
             _ = try await store.moveEntry(entry.id, to: destination.id)
-            XCTFail("An unresolved conflict must be reviewed before moving.")
-        } catch JournalError.server {}
+            XCTFail("An unsettled conflict must be settled before moving.")
+        } catch JournalLifecycleError.conflict {}
         let conflicts = try await store.conflicts()
         try await store.resolve(try XCTUnwrap(conflicts.first), choice: .local)
         let history = try await store.history(for: entry.id)

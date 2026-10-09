@@ -53,7 +53,7 @@ Title `common.recentlyDeleted`; Mac subtitle `common.itemCount` / `library.windo
 
 | Action | Where | Shown when | Result |
 | --- | --- | --- | --- |
-| Restore (`restore`) | Leading swipe (accent; only when the entry's own journal is in use, or a template), context menu and Entry Actions (uturn arrow), labelled `common.restore`; when the entry can't return to its own journal: `library.recentlyDeleted.restoreTo` (context menu, Entry Actions and the notice only, never a swipe) | the item is editable, has no held conflict, and has a destination (below) | Restores at once, without confirmation and without a sheet ([flows/delete-and-restore](../flows/delete-and-restore.md)) |
+| Restore (`restore`) | Leading swipe (accent; only when the entry's own journal is in use, or a template), context menu and Entry Actions (uturn arrow), labelled `common.restore`; when the entry can't return to its own journal: `library.recentlyDeleted.restoreTo` (context menu, Entry Actions and the notice only, never a swipe) | the item is editable, has no held conflict and none that still waits, and has a destination (below) | Restores at once, without confirmation and without a sheet ([flows/delete-and-restore](../flows/delete-and-restore.md)) |
 | Delete Permanently… (`delete-permanently`) | Context menu and Entry Actions (`library.entryActions.deletePermanently`, trash, destructive, after a separator) | always for entries and templates here | Delete Permanently alert, below |
 | Delete (trailing swipe, destructive) | `common.delete` | always | The row leaves at once; then the Delete Permanently alert. Cancel brings the row back |
 | Delete or ⌘⌫ (Mac, list focused) | | an entry or template is selected | Delete Permanently alert |
@@ -79,11 +79,11 @@ Pin, Change Date…, Move Entry…, Save as Template… and Delete Entry aren't 
 
 ### Delete Permanently (`delete-permanently`)
 
-1. The open entry is saved and the item checked first (unsaved changes, held conflicts and changes to review, newer format).
+1. The open entry is saved and the item checked first (unsaved changes, a conflict that still waits or is held, newer format).
 2. Alert, title `library.deletePermanently.title` with the item's name (`library.entryList.untitledEntryInAlert`, `library.entryList.untitledTemplate` or `common.untitledJournal` when blank); for a journal with entries `library.deletePermanently.titleWithEntries`. Message: for a journal with entries `library.deletePermanently.journalEntries`, then `library.deletePermanently.retention`. Buttons `common.delete` (destructive) and `common.cancel`.
 3. **Delete:** the row (and for a journal its entries' rows) leaves at once with the list's animation; the item is deleted from this device and the deletion syncs. An open item closes; on iPhone its page goes back at once. No message.
 4. **Cancel:** nothing changes; a row the swipe removed comes back and VoiceOver focus returns to it.
-5. An item saved by a newer version, or held, isn't deleted (`messages.generic.deleteNeedsUpdate`); an entry or template that still has changes to review isn't deleted either. There is no special alert. Failures (general error alert; a removed row comes back): `messages.generic.deleteChanged`, `messages.generic.deleteNeedsUpdate`, `messages.save.before.tryAgain`, `messages.refresh.itemDeleted`. An item already gone is ignored quietly.
+5. An item saved by a newer version, or held, isn't deleted (`messages.generic.deleteNeedsUpdate`); an entry, template or journal whose conflict still waits to be combined isn't deleted either and shows `messages.lifecycle.combining`. There is no special alert. Failures (general error alert; a removed row comes back): `messages.generic.deleteChanged`, `messages.generic.deleteNeedsUpdate`, `messages.lifecycle.combining`, `messages.save.before.tryAgain`, `messages.refresh.itemDeleted`. An item already gone is ignored quietly.
 
 ### Delete All
 
@@ -96,7 +96,7 @@ Available from the bar button (iPhone, iPad), the bar's Delete All… (Mac) and 
    - exactly one item (or one journal with its entries): the Delete Permanently alert above;
    - one kind: `library.deleteAll.title.entries`, `library.deleteAll.title.templates` or `library.deleteAll.title.journals`;
    - several kinds: `library.deleteAll.title.items`, message starting `library.deleteAll.includes` with the non-zero counts (`common.entryCount`, `common.journalCount`, `common.templateCount`, joined in the system list format);
-   - if some items stay, one sentence: `library.deleteAll.held.newerVersion` or, when the reasons are mixed or an entry or template still has changes to review, `library.deleteAll.held.other`;
+   - if some items stay, one sentence: `library.deleteAll.held.newerVersion` or, when the reasons are mixed or an item has a conflict that still waits to be combined, `library.deleteAll.held.other`;
    - always last `library.deletePermanently.retention`;
    - buttons `common.delete` (destructive) and `common.cancel`.
    Entries are counted including a deleted journal's entries, since the list shows them as rows.

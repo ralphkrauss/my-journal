@@ -31,7 +31,7 @@ Content:
 1. **No other journals**: a centred group with `library.moveEntry.noOtherJournals` (headline), `library.moveEntry.noOtherJournals.message` (secondary) and `common.newJournalEllipsis`.
 2. Otherwise a **list of journals** in use, except the entry's current journal, in the journals' order. Each row shows the journal's name and a checkmark when selected. A journal whose name is the same as another listed journal's (ignoring case) is dimmed, can't be chosen, and shows `library.moveEntry.sameName` below its name; below the list then: `library.moveEntry.renameExplanation` (variant: computer “in the sidebar”, phone and tablet “in the Journals list”).
 3. `common.newJournalEllipsis` below the list (when there are journals).
-4. Error text in red (identifier “Move error”), when there is one; then `common.reviewChanges` when a conflict on the entry blocks the move.
+4. Error text in red (identifier “Move error”), when there is one.
 5. While moving: progress indicator with `library.moveEntry.moving`.
 
 ## Actions
@@ -41,7 +41,6 @@ Content:
 | Choose a journal | Choosable, not moving | Selects it and clears the error. |
 | Move | A choosable journal is selected; not moving | Saves the open entry first, then moves it. The sheet closes; the entry stays open, now shown in the destination journal's list. |
 | New Journal… | Not moving | `screens/destination-journal.md`. |
-| Review Changes | After a conflict on the entry blocked the move | Opens the entry's review in a nested sheet; if already resolved: `messages.conflict.resolved`. |
 | Cancel, Escape | Not moving | Closes; nothing changes. |
 
 ## States
@@ -51,7 +50,7 @@ Content:
 | No other journals | `library.moveEntry.noOtherJournals`, `library.moveEntry.noOtherJournals.message` |
 | Moving | `library.moveEntry.moving` (can't swipe to dismiss) |
 | The selected journal disappears or becomes ambiguous | `common.journalGone` (selection cleared) |
-| Changes to review on the entry | `messages.entry.moveNeedsReview`, Review Changes |
+| A change from another device on the entry, its journal or the destination journal still waits to be combined (a few seconds) | `messages.lifecycle.combining`; choose Move again in a moment |
 | The entry's journal or the destination is saved by a newer version | `messages.lifecycle.unsupportedJournal` |
 | Open entry couldn't be saved | `messages.save.before.goBack` in the sheet |
 | Moved but not shown | the app's error alert with `common.entryMovedNotDisplayed` |

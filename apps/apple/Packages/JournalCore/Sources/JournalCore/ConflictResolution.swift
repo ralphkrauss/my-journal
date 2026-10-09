@@ -34,8 +34,9 @@ public struct ConflictSide: Sendable, Equatable {
 public enum ConflictOutcome: Equatable, Sendable {
     /// Row 1: a version this app can't read. Nothing is created, written or sent until it can be read.
     case held
-    /// Row 3: entries and templates whose content differs. They keep the review until conflicts step 2.
-    case review
+    /// Row 3: an entry or template whose content differs. This device's version stays the record; `copy` is the other
+    /// version as a separate entry or template, with an identity every device derives alike.
+    case keepBoth(copy: JournalItem)
     /// Row 2: the same content. `record` is L's content with the merged deletion state. With `adoptsOther` it equals R
     /// in every field but the modified time, so R's bytes become the record and nothing is sent.
     case sameContent(record: JournalItem, adoptsOther: Bool)
@@ -71,7 +72,7 @@ public enum ConflictResolution {
             if lhs.kind == "journal" { return .journalMarker(markerIsLocal: markerIsLocal, name: edited.item.title) }
             return .parked(parked: parked(edited, marker: marker, ids: ids), markerIsLocal: markerIsLocal)
         case (false, false):
-            guard lhs.kind == "journal" else { return .review }
+            guard lhs.kind == "journal" else { return .keepBoth(copy: copy(of: other, ids: ids)) }
             var record = lhs
             (record.deletedAt, record.deletedWithJournal) = deletion(of: lhs, and: rhs)
             return .journal(record: record, otherName: sameText(lhs.title, rhs.title) ? nil : rhs.title)
@@ -140,6 +141,34 @@ public enum ConflictResolution {
             if local.deletedWithJournal { return (local.deletedAt, true) }
             return (other.deletedAt, other.deletedWithJournal)
         }
+    }
+
+    // MARK: The other version as a copy (3.3)
+
+    /// The other version of an entry or template as a separate record. Everything is the other version's, so a copy in
+    /// Recently Deleted stays there; only the title says what it is. The identity is derived from the other version's
+    /// exact text, so every device that finds the conflict makes the same copy.
+    static func copy(of other: ConflictSide, ids: ConflictCopyIdentity) -> JournalItem {
+        var item = other.item
+        item.id = ids.copyID(.copy, record: other.item.id, plaintext: other.plaintext)
+        item.title = copyTitle(of: other.item)
+        item.restoredFromDeletionID = nil
+        item.storedVersion = nil
+        return item
+    }
+    /// "{title} (other version)": the other version's title, or when it has none the title the lists show for it,
+    /// cut at 60 extended grapheme clusters. Always appended, never detected: a copy of a copy reads twice. Catalog
+    /// text (`messages.conflict.copyTitle`); clients never parse it.
+    public static func copyTitle(of item: JournalItem) -> String {
+        let title: String
+        if !item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            title = item.title
+        } else if let line = item.document.firstLine, !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            title = String(line.prefix(60))
+        } else {
+            title = item.kind == "template" ? "Untitled Template" : "New Entry"
+        }
+        return "\(title) (other version)"
     }
 
     // MARK: Parking (3.4)

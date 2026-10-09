@@ -154,7 +154,7 @@ all-entries:
   android: planned
 
 unavailable-journals:
-  title: "Unavailable Journals collection for entries whose journal is missing, newer, or has changes to review"
+  title: "Unavailable Journals collection for entries whose journal is missing, saved by a newer version, or held by a change only a newer version can read"
   specs: [screens/unavailable-content.md, screens/entry-list.md, screens/journals.md, screens/recently-deleted.md]
   reference: apple
   apple: shipped
@@ -802,28 +802,36 @@ generic-error-alert:
 
 conflict-notice:
   title: "Entries and templates with changes to review are marked in the list and show a notice with Review Changes"
-  specs: [screens/conflict-review.md, flows/resolve-conflict.md, screens/entry-editor.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
 
 changes-to-review-list:
   title: "Settings ▸ Sync lists every entry and template with changes to review, and every one saved by a newer version"
-  specs: [screens/conflict-review.md, flows/resolve-conflict.md, screens/settings-sync.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
 
 conflict-review-entry:
   title: "Compare This Device and Other Device for an entry or template; Keep Both or keep one version"
-  specs: [screens/entry-conflict.md, flows/resolve-conflict.md, screens/entry-editor.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  windows-notes: "A page, not a sheet, with one version at a time at every width as in the spec; side by side is deferred (D50)."
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
 
 conflict-review-journal:
   title: "Compare and keep one version of a journal's name, default template and location"
@@ -849,11 +857,14 @@ conflict-review-deletion:
 
 conflict-review-unsupported:
   title: "Changes with content from a newer version can't be resolved; update or export an archive"
-  specs: [screens/conflict-review.md, flows/resolve-conflict.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  windows: not-applicable
+  windows-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
+  android: not-applicable
+  android-reason: "Removed in 1.1 by simplification H (entries and templates keep both versions automatically); see docs/design/1-1-conflicts-and-reconnect.md"
 
 library-open-failure:
   title: "A library that can't be opened (damaged, settings unreadable, newer version) shows its own screen with Try Again, Import Archive, Erase and a guide link, without writing anything; a missing device key keeps the lock screen"
@@ -894,16 +905,24 @@ deletion-conflict-alert:
   android-reason: "Removed in 1.1 by simplification H (journal and deletion conflicts settle themselves); see docs/design/1-1-conflicts-and-reconnect.md"
 
 conflict-kept-both:
-  title: "Journals and permanent deletions settle themselves, keeping both versions: a journal keeps the later name, a deleted item stays deleted and the changed version is saved in Recently Deleted"
+  title: "Conflicts settle themselves, keeping both versions: an entry or template that differs keeps this device's version and saves the other as a separate item titled \"(other version)\"; a journal keeps the later name; a deleted item stays deleted and the changed version is saved in Recently Deleted"
   specs: [flows/resolve-conflict.md]
   reference: apple
-  apple: partial
-  apple-notes: "Journals and permanent deletions only; entries and templates still use the review until conflicts step 2."
+  apple: shipped
   windows: planned
   android: planned
 
+kept-both-notice:
+  title: "The notice above an open entry or template that was kept as two versions, with Show Other Version and Dismiss; a held version shows one line with no buttons"
+  specs: [screens/kept-version-notice.md, screens/entry-editor.md, flows/resolve-conflict.md]
+  reference: apple
+  apple: shipped
+  windows: planned
+  windows-notes: "Mapping: an Informational bar with an action button and the close button as Dismiss; it is never a Warning."
+  android: planned
+
 changed-on-two-devices-list:
-  title: "Settings ▸ Sync lists, for 30 days, what the app settled itself, with a row that opens the saved item and Clear List"
+  title: "Settings ▸ Sync lists, for 30 days, what the app settled itself (entries and templates kept as two, journal renames, edits against permanent deletions), with a row that opens the other version or saved item and Clear List"
   specs: [screens/settings-sync.md, flows/resolve-conflict.md]
   reference: apple
   apple: shipped

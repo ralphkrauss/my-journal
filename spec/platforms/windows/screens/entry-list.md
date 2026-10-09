@@ -23,7 +23,7 @@ The list pane of the [library window](library-window.md) for a journal, All Entr
 | Group header: Pinned (`library.entryList.pinned`) | The group header template, `Caption` style, secondary text | Only in a journal and in All Entries, only when something listed is pinned; no icon, no count |
 | Group header: a month | Same template; full month and year in the user's language ("October 2026"), newest first | Built with the formatter ([31](../platform.md#31-dates-time-zones-and-formats)); regenerated when the clock, zone or regional format changes and at local midnight |
 | Row | A `Grid` data template, every row the same height (68 epx, growing with text size), 12 epx side padding | Three lines below |
-| Row line 1 | Date, day and abbreviated month ("6 Oct"), `Caption`, secondary. In All Entries, trailing: the journal name with icon Library (E8F1) (`common.untitledJournal` when blank). Far trailing: icon Error (E783) when the entry has changes to review | Icon-only parts are hidden from the tree; the row's name carries the meaning |
+| Row line 1 | Date, day and abbreviated month ("6 Oct"), `Caption`, secondary. In All Entries, trailing: the journal name with icon Library (E8F1) (`common.untitledJournal` when blank). | Icon-only parts are hidden from the tree; the row's name carries the meaning |
 | Row line 2 | Title, `BodyStrong`, one line, trimmed: the title, else the first line of text, else `library.entryList.untitledEntry` | |
 | Row line 3 | Preview, `Body`, secondary, one line, whitespace collapsed; `library.entryList.noAdditionalText` when there is none | |
 | Separators | None; the `ListViewItem` hover and selection visuals separate rows. No line under a header | Different from the Mac's lines, which exist because Mac lists have no hover state |
@@ -88,7 +88,7 @@ The list header's contents are stated once in [library-window](library-window.md
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `entry-actions` | Row context menu; editor header More | as in commands.md | An entry is open (header) or a row is targeted |
-| `pin-entry-row`, `pin-entry` | Row context menu; swipe; Entry actions; File ▸ Pin entry (open entry) | none (Ctrl+P is Print) | The entry can be pinned: listed in a journal in use, unlocked, library not being replaced; read-only entries and entries with changes to review count; templates and Recently deleted entries do not |
+| `pin-entry-row`, `pin-entry` | Row context menu; swipe; Entry actions; File ▸ Pin entry (open entry) | none (Ctrl+P is Print) | The entry can be pinned: listed in a journal in use, unlocked, library not being replaced; read-only entries count; templates and Recently deleted entries do not |
 | `change-date` | Context menu; Entry actions | as in commands.md | |
 | `move-entry` | Context menu; Entry actions | as in commands.md | |
 | `save-as-template` | Context menu; Entry actions | as in commands.md | |
@@ -111,7 +111,7 @@ Sentence case on all labels ("Pin entry", "Move entry…", "Save as template…"
 
 ## Accessibility
 
-- The `ListView` is named by the collection (its title) and reports position and size, including month groups. Group headers are headings. Each row is one element whose name is date, journal (All Entries only), title and preview; its value is `library.entryList.pinned` for a pinned row so the state is heard when the header is skipped, and `messages.conflict.needsReview` is added for a row with changes to review.
+- The `ListView` is named by the collection (its title) and reports position and size, including month groups. Group headers are headings. Each row is one element whose name is date, journal (All Entries only), title and preview; its value is `library.entryList.pinned` for a pinned row so the state is heard when the header is skipped.
 - Swipe actions are the row's accessibility actions too (custom actions `common.delete` and pin or unpin), and the context menu is reachable with the Menu key.
 - After Pin or Unpin from a row, focus follows the row to its new place. After Delete, focus goes to the entry that opened next, or to the list when none did.
 - Empty-state text is a single element (text and its button in order). "No results" is announced when a search produces it (notification event, `MostRecent`).

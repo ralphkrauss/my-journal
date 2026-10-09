@@ -1,8 +1,10 @@
 import JournalCore
 import XCTest
 
+/// A version from a newer My Journal is held: nothing is combined or sent until this version can read it, the entry
+/// and Settings ▸ Sync say so in one line, and neither version changes (docs/design/1-1-conflicts-and-reconnect.md, 3.7).
 final class UnsupportedConflictUITests: XCTestCase {
-    @MainActor func testNewerFormatConflictRemainsIntactAfterCancelAndRelaunch() async throws {
+    @MainActor func testNewerFormatConflictRemainsIntactAndSaysSoAcrossRelaunch() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
             "Unsupported-" + UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -19,21 +21,16 @@ final class UnsupportedConflictUITests: XCTestCase {
         recovery.typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
         for attempt in 0..<2 {
-            let review = app.buttons["Review Changes"].firstMatch
-            guard review.waitToAppear(timeout: 15) else { throw InteractionError.unavailable }
-            review.tap()
-            let explanation = app.staticTexts["Update My Journal to review these changes."]
-            guard explanation.waitToAppear(timeout: 10) else { throw InteractionError.unavailable }
-            assertEventually(app.buttons["Export Archive…"].isEnabled)
-            for action in ["Keep Both", "Keep One Version", "Keep Entry", "Keep Deletion", "Delete Permanently"] {
-                XCTAssertFalse(app.buttons[action].exists, "Unsupported content must not offer \(action).")
+            let notice = app.staticTexts[
+                "This entry has a version from a newer My Journal. Update My Journal to combine them."]
+            guard notice.waitToAppear(timeout: 15) else { throw InteractionError.unavailable }
+            for action in ["Show Other Version", "Dismiss", "Review Changes", "Keep Both", "Keep Entry"] {
+                XCTAssertFalse(app.buttons[action].exists, "A held version must not offer \(action).")
             }
             let screenshot = XCTAttachment(screenshot: app.screenshot())
-            screenshot.name = "Newer-format conflict preserved \(attempt)"
+            screenshot.name = "Newer-format conflict held \(attempt)"
             screenshot.lifetime = .keepAlways
             add(screenshot)
-            app.navigationBars["Review Changes"].buttons["Cancel"].tap()
-            guard explanation.waitToDisappear(timeout: 5) else { throw InteractionError.unavailable }
             app.terminate()
             try await verify(fixture, directory: directory)
             if attempt == 0 { app.launch() }

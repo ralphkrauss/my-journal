@@ -42,12 +42,12 @@ Maps [screens/move-entry.md](../../../screens/move-entry.md). One view, `MoveEnt
 2. Otherwise a `List(destinations)`, default list style. `destinations` is `AppModel.journals` (sidebar order) without the entry's current journal. Each row is a plain Button (`.buttonStyle(.plain)`, `contentShape(Rectangle())`) with the journal's name (`JournalNames.displayName`, so a blank name reads `common.untitledJournal`) and a trailing `checkmark` symbol (hidden from accessibility) on the selected row. Choosing a row sets `selection` and clears the error. A name that matches another listed journal's after case folding (`duplicateNames`) makes the row non-selectable: secondary text, disabled, with `library.moveEntry.sameName` under the name.
 3. When any row is dimmed, `library.moveEntry.renameExplanation` under the list (secondary, padded). The text is chosen at compile time: the `mac` variant ("in the sidebar") under `#if os(macOS)`, the default ("in the Journals list") on iOS.
 4. Below the list, when journals exist: a Button `common.newJournalEllipsis` (padded, default style). It opens `RecoveryJournalView(entryID:)` as a nested `.sheet` ([screens/destination-journal](../../../screens/destination-journal.md)).
-5. Error: `Text(error).foregroundStyle(.red)`, accessibility identifier "Move error"; then a Button `common.reviewChanges` when `conflictToReview` is set (an entry with changes to review); it opens a nested `.sheet` with `ConflictReview`, or, if the conflict is already gone, the text `messages.conflict.resolved`.
+5. Error: `Text(error).foregroundStyle(.red)`, accessibility identifier "Move error". There is no Review Changes button and no nested sheet any more.
 6. While moving: `ProgressView("Moving Entry…")` (`library.moveEntry.moving`).
 
 There is no empty-state beyond item 1, no loading state (journals are local) and no offline state.
 
-**Errors** (set by `showError`, which also posts an accessibility announcement): a conflict on the entry refreshes the model, remembers the record in `conflictToReview` and shows `messages.entry.moveNeedsReview`; a journal that a newer version saved (or whose change is held) shows `messages.lifecycle.unsupportedJournal`; the selected journal disappearing or becoming ambiguous clears the selection and shows `common.journalGone` (`onValueChange(of: selectableIDs)`); an unsaved open entry shows `messages.save.before.goBack`; anything else shows `error.shown(.saving)`. A move that was stored but cannot be shown is the generic alert with `common.entryMovedNotDisplayed` (set by `commitEntryMove` after the sheet's `dismiss()`).
+**Errors** (set by `showError`, which also posts an accessibility announcement): a conflict on the entry, its journal or the destination (`JournalLifecycleError.conflict`) refreshes the model and shows `messages.lifecycle.combining` when the record is not in `heldConflictIDs`, and `messages.lifecycle.unsupportedJournal` when it is; a journal that a newer version saved shows `messages.lifecycle.unsupportedJournal`; the selected journal disappearing or becoming ambiguous clears the selection and shows `common.journalGone` (`onValueChange(of: selectableIDs)`); an unsaved open entry shows `messages.save.before.goBack`; anything else shows `error.shown(.saving)`. A move that was stored but cannot be shown is the generic alert with `common.entryMovedNotDisplayed` (set by `commitEntryMove` after the sheet's `dismiss()`).
 
 **Closing without a move.** The sheet closes by itself, cancelling the task, when the app locks or when another entry becomes the open draft (`onValueChange(of: model.draft?.id)`).
 
@@ -63,7 +63,6 @@ There is no empty-state beyond item 1, no loading state (journals are local) and
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `move-entry` | Opens this sheet from Entry Actions and the row's context menu | none | An editable entry in a journal in use |
-| `review-changes` | Button in the sheet after a conflict | none | After a conflict blocked the move, not busy |
 
 Where `move-entry` appears on each device is in [commands.md](../commands.md). The "New Journal…" Button in the sheet has no command id of its own; it opens the sheet of [screens/destination-journal](../../../screens/destination-journal.md). Keyboard: on the Mac Return chooses Move (when enabled) and Escape cancels (when not busy). On iPhone and iPad the buttons carry no keyboard shortcut. Edit ▸ Undo does not undo a move.
 
@@ -76,7 +75,7 @@ Where `move-entry` appears on each device is in [commands.md](../commands.md). T
 - The selected row has `.accessibilityAddTraits(.isSelected)`; its checkmark is `accessibilityHidden(true)`, so VoiceOver reads the state once. A dimmed row is disabled (VoiceOver says dimmed) and its secondary line is read with it; the explanation follows the list.
 - Errors are announced with `UIAccessibility` (iOS) or `NSAccessibility` (Mac) announcements in `showError`. The error text carries the identifier "Move error" for UI tests.
 - Nothing moves focus after a move; the sheet closes and the entry stays open in its new journal.
-- While moving, the rows, New Journal…, Review Changes and Cancel are all disabled, and the sheet cannot be swiped away.
+- While moving, the rows, New Journal… and Cancel are all disabled, and the sheet cannot be swiped away.
 
 ## Differences between iPhone, iPad and Mac
 

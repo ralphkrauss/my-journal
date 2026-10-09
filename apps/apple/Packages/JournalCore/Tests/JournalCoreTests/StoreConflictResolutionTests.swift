@@ -4,8 +4,8 @@ import os
 
 @testable import JournalCore
 
-/// Journal and permanent-deletion conflicts settled on this device (protocol/conflicts.md, Orchestration), with real
-/// isolated stores. Entries and templates that differ still wait for the person.
+/// Conflicts settled on this device (protocol/conflicts.md, Orchestration), with real isolated stores: journals,
+/// permanent deletions and the same content. Entries and templates that differ are in StoreKeepBothTests.
 final class StoreConflictResolutionTests: ConflictTestCase {
     // MARK: Several revisions, journals
 
@@ -57,7 +57,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         var deleted = work
         deleted.deletedAt = Date(timeIntervalSince1970: 1_750_000_000)
         try await deliver(deleted, revision: 2, to: store)
-        // The entry was edited here too, so it has a conflict of its own, which still waits for the person.
+        // The entry was edited here too, so it has a conflict of its own, which is settled by its own rule.
         var edited = notes
         edited.document = .plain("edited here")
         try await store.save(edited)
@@ -66,17 +66,21 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         try await deliver(elsewhere, revision: 2, to: store)
 
         let report = try await settleAfterPause(store)
-        XCTAssertEqual(report.resolved.map(\.recordID), [work.id])
-        XCTAssertEqual(report.review, 1)
+        XCTAssertEqual(Set(report.resolved.map(\.recordID)), [work.id, notes.id])
         let journalAfter = try await stored(store, work.id)
         XCTAssertEqual(journalAfter.title, "Work, renamed")
         XCTAssertEqual(journalAfter.deletedAt, deleted.deletedAt)
         let snapshot = try await store.lifecycleSnapshot()
         XCTAssertEqual(snapshot.location(of: notes), .recentlyDeleted)
         let rows = try await store.conflicts()
-        XCTAssertEqual(rows.map(\.id), [notes.id], "The entry keeps its review, and the journal's is gone")
+        XCTAssertTrue(rows.isEmpty)
+        let entryAfter = try await stored(store, notes.id)
+        XCTAssertEqual(entryAfter.document.text, "edited here", "This device's version stays the record")
+        let copies = try await parkedItems(in: store, excluding: notes.id)
+        XCTAssertEqual(copies.map(\.document.text), ["edited elsewhere"])
+        XCTAssertEqual(snapshot.location(of: try XCTUnwrap(copies.first)), .recentlyDeleted, "In the deleted journal")
         let sent = try await store.pending()
-        XCTAssertEqual(sent.map(\.recordID), [work.id], "Nothing is sent for the entry under review")
+        XCTAssertEqual(Set(sent.map(\.recordID)), [work.id, notes.id, try XCTUnwrap(copies.first).id])
     }
 
     func testTheNameRuleNumbersAJournalThatEndsUpWithATakenNameWithoutAConflict() async throws {
@@ -507,7 +511,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
 
     // MARK: The pass over rows an earlier version left
 
-    func testTheOneTimePassSettlesEveryJournalAndDeletionRowOnceAndLeavesTheRest() async throws {
+    func testTheOneTimePassSettlesEveryKindOfRowOnce() async throws {
         let store = try await openStore("pass", runPass: false)
         let home = journal("Home")
         let renamedElsewhere = journal("Renamed")
@@ -542,7 +546,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         try await store.save(bothDeleted)
         _ = try await store.permanentlyDelete(try await store.preparePermanentDeletion(both.id))
         try await store.recordConflict(try remote(marker(for: both, at: 1_820_000_000), revision: 2))
-        // 5. An entry whose content differs: the review is left for the person.
+        // 5. An entry whose content differs: this device's version stays and the other becomes an entry of its own.
         var mine = differing
         mine.document = .plain("mine")
         try await store.save(mine)
@@ -566,14 +570,15 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         let before = try await store.conflicts().count
         XCTAssertEqual(before, 6)
         let report = try await store.resolveConflicts(at: .opening(serverConfigured: true))
-        XCTAssertEqual(report.resolved.count, 5)
+        XCTAssertEqual(report.resolved.count, 6)
         let kinds = report.resolved.map(\.result)
         XCTAssertEqual(kinds.filter { $0 == .journalKept }.count, 1)
+        XCTAssertEqual(kinds.filter { if case .keptBoth = $0 { return true } else { return false } }.count, 1)
         XCTAssertEqual(kinds.filter { $0 == .twoDeletions }.count, 1)
         XCTAssertEqual(kinds.filter { $0 == .superseded }.count, 1)
         XCTAssertEqual(report.parked.count, 2)
         let rows = try await store.conflicts()
-        XCTAssertEqual(rows.map(\.id), [differing.id], "Entries that differ keep their review until they settle too")
+        XCTAssertTrue(rows.isEmpty, "Entries that differ are settled by the same pass")
         let kept = try await stored(store, renamedElsewhere.id)
         XCTAssertEqual(kept.title, "Renamed here")
         let stalePast = try await store.history(for: stale.id)
@@ -582,7 +587,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         let deletionRecord = try await stored(store, deletedHere.id)
         XCTAssertTrue(deletionRecord.isCanonicalDeletionMarker)
         let entries = try await store.items().filter { $0.kind == "entry" && !$0.isPermanentlyDeleted }
-        XCTAssertEqual(Set(entries.map(\.document.text)), ["edited", "an edit from elsewhere", "mine"])
+        XCTAssertEqual(Set(entries.map(\.document.text)), ["edited", "an edit from elsewhere", "mine", "other"])
 
         // The pass runs once: a second opening settles nothing and parks nothing again.
         try await store.close()
@@ -590,7 +595,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         let second = try await reopened.resolveConflicts(at: .opening(serverConfigured: true))
         XCTAssertTrue(second.resolved.isEmpty)
         let parkedAgain = try await reopened.items().filter { $0.kind == "entry" && !$0.isPermanentlyDeleted }
-        XCTAssertEqual(parkedAgain.count, 3)
+        XCTAssertEqual(parkedAgain.count, 4)
         try await reopened.close()
     }
 

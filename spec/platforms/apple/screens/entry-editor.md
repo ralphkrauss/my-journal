@@ -2,7 +2,7 @@
 id: entry-editor
 title: Entry editor (Apple)
 spec: screens/entry-editor.md
-features: [entry-title, entry-body, autosave, save-failure-recovery, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, image-descriptions, image-placeholders, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, find-in-entry, text-size, spelling-and-substitutions, template-suggestion, entry-actions, change-entry-date, move-entry, pin-entry, save-as-template, delete-entry, version-history, conflict-review-entry, read-only-newer-content, source-only-entry, editor-only, writing-controls, conflict-notice, writing-paused-notice, previous-next-entry]
+features: [entry-title, entry-body, autosave, save-failure-recovery, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, image-descriptions, image-placeholders, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, find-in-entry, text-size, spelling-and-substitutions, template-suggestion, entry-actions, change-entry-date, move-entry, pin-entry, save-as-template, delete-entry, version-history, kept-both-notice, read-only-newer-content, source-only-entry, editor-only, writing-controls, writing-paused-notice, previous-next-entry]
 devices: [iphone, ipad, mac]
 status: verified
 sources:
@@ -14,7 +14,7 @@ sources:
   - apps/apple/JournalApp/Views/EntryEditingNote.swift
   - apps/apple/JournalApp/Views/EntryRecoveryNotice.swift
   - apps/apple/JournalApp/Views/SaveFailureNotice.swift
-  - apps/apple/JournalApp/Views/SettingsView.swift
+  - apps/apple/JournalApp/Views/KeptVersionNotice.swift
   - apps/apple/JournalApp/Views/ReadingBar.swift
   - apps/apple/JournalApp/Views/ImageImportNotice.swift
   - apps/apple/JournalApp/Views/TemplateSuggestionView.swift
@@ -94,7 +94,7 @@ The screen is `RootView.detailContent` (the detail column). It builds a `VStack`
 
 | Spec element | iPhone and iPad | Mac |
 | --- | --- | --- |
-| Notices above the writing | `ConflictNotice` (`messages.conflict.entryNotice`, `common.reviewChanges`; defined in `SettingsView.swift`) above the editor, outside the scrolling text so it stays in view | In order: `ConnectionPauseNotice` (writing-paused, from `RootView.detail`, wraps `EncryptionNotice` and the connection notice), `EntryRecoveryNotice` (a ViewThatFits that scrolls at accessibility sizes, at most half the height), `ConflictNotice` |
+| Notices above the writing | `KeptVersionNotice` (`Views/KeptVersionNotice.swift`; [kept-version-notice.md](kept-version-notice.md)) above the editor, outside the scrolling text so it stays in view | In order: `ConnectionPauseNotice` (writing-paused, from `RootView.detail`, wraps `EncryptionNotice` and the connection notice), `EntryRecoveryNotice` (a ViewThatFits that scrolls at accessibility sizes, at most half the height), `KeptVersionNotice` |
 | Header | `EntryHeaderView`, a SwiftUI view hosted by `UIHostingConfiguration` as a subview of the text view (`JournalWritingView`); it scrolls with the body because the text view's top `textContainerInset` is the header's height plus 8 pt | Not a header: the title and `EntryEditingNote` sit in a `VStack` above the scroll view, with 28 pt above and 12 pt below |
 | Save-failure notice | First in the header, `SaveFailureNotice`; when a failure appears, the text view scrolls to the top once (`revealSaveFailure`) so the notice is seen, until the person scrolls or types | After the editor, below the body |
 | Recovery notice | In the header, after the save-failure notice, with a `.quaternary` fill (`EntryRecoveryNotice`) | Above the title (see first row) |
@@ -141,7 +141,7 @@ Image import, the picture menus and descriptions: Mac right-click menu on a pict
 | Empty body | The placeholder rows above |
 | Reading, writing | `EditorActions.editing` (set by the title, the body or a table cell as it gains or loses focus) switches the bar, shows Done on iOS, and on every platform enables the Format menu |
 | Saving, save failed | Saving is silent. Failure: the window's error alert (`RootView`'s `model.error` alert with Try Again and OK; `common.saveFailed`) and then `SaveFailureNotice` (`messages.save.notSaved` in red, Try Again, "Saving…" progress) |
-| Conflict | `ConflictNotice`: a callout and a button side by side (`HStackLayout`), stacked at accessibility text sizes (`VStackLayout`); Review Changes flushes the entry, refreshes, then opens the conflict review sheet |
+| Other version kept | `KeptVersionNotice`: a callout above two buttons, Show Other Version and Dismiss, in a row (`HStackLayout`) and stacked at accessibility text sizes (`VStackLayout`); inserted only while neither the title nor the text has the keyboard; a held version shows the callout alone |
 | Read-only (newer format, deleted, journal unavailable) | `model.canEdit` false: text view `isEditable = false`, title static (iPhone, iPad) or disabled (Mac), controls dimmed, checkboxes disabled; the explanation is `EntryEditingNote` or `EntryRecoveryNotice` |
 | Source only | `EntryEditingNote` plus source view, see [source-view](../flows/source-view.md) |
 | Recently Deleted, journal unavailable | `EntryRecoveryNotice` with its Restore (or Restore to “{name}”) and Try Syncing Again buttons |
@@ -149,7 +149,7 @@ Image import, the picture menus and descriptions: Mac right-click menu on a pict
 | Images loading | Placeholder attachments, above |
 | Locked | `RootView` shows `UnlockView` instead of the window; `closePresentations` closes the link sheet, Formatting and the sheets the editor opened |
 
-Model: `AppModel` (selection, `draft`, `updateDraft`, autosave through `flush`, `canEdit`, `conflicts`, `saveFailure`, `textSize`) with extensions for navigation and deletion; the persistence is the store in JournalCore, reached only through `AppModel`.
+Model: `AppModel` (selection, `draft`, `updateDraft`, autosave through `flush`, `canEdit`, `conflictedIDs`, `saveFailure`, `textSize`) with extensions for navigation and deletion; the persistence is the store in JournalCore, reached only through `AppModel`.
 
 ## Layout
 
@@ -178,7 +178,7 @@ Placement and shortcuts are in [commands.md](../commands.md); this page adds wha
 | `zoom-in`, `zoom-out`, `actual-size` | View menu (Mac, and iPad with a keyboard) | ⌘+ (also ⌘=), ⌘-, ⌘0 | Actual Size when the size is not already the default |
 | `show-editor-only`, `previous-entry`, `next-entry` | View menu, Mac only; Editor Only also a toolbar button | ⇧⌘D, ⌥⌘↑, ⌥⌘↓ | The window publishes its `editorOnly` command; Previous and Next need a neighbouring listed entry |
 | `use-a-template` | The link in the empty body | None | A template can be offered (`model.templateSuggestion`) |
-| `review-changes` | `ConflictNotice` button | None | The entry has a conflict |
+| `show-other-version`, `dismiss-kept-notice` | `KeptVersionNotice` buttons | None | The entry or template was kept as two versions and the note is unseen |
 | `pin-entry`, `change-date`, `move-entry`, `save-as-template`, `image-descriptions`, `entry-version-history`, `delete-entry`, `delete-permanently`, `restore` | Entry Actions and the row context menu (one `entryActionCatalog`) | None | Per kind: see the spec's Entry Actions list |
 | `image-copy`, `image-cut`, `image-paste`, `image-share`, `image-save-to-photos`, `image-save-as`, `image-delete` | Picture menu: right-click (Mac), long press (iPhone, iPad), VoiceOver custom actions | None | A picture is selected; Cut, Paste and Save Image As are Mac only; Save to Photos is iOS only |
 
@@ -262,13 +262,15 @@ Mac (window 1280 x 800 points; the window is not the key window in these capture
 
 No capture exists of: the writing state on the Mac (nothing visible changes), the Formatting popover on the Mac, notices, the save-failure and recovery states, or an empty body with the template link.
 
+None yet for the other-version notice: the capture script has not been run for the kept-both notice (captured by `SpecConflictCaptureTests` as entry-editor-kept-both-notice and entry-editor-held-notice on iPhone and iPad, and by `SpecMacLibraryStates` on the Mac). They are listed here once the files exist. The 1.0 conflict notice captures were removed.
+
 ## Source files
 
 View (the screen and its notices):
 - `apps/apple/JournalApp/Views/RootView.swift`: `detailContent`, `entryEditor`, `entryActionCatalog`, `entryMenu`, the Mac and iOS branches, `editorSize`.
 - `apps/apple/JournalApp/Views/RootView+Toolbar.swift`: navigation-bar items (Done, Entry Actions), the reading-bar buttons.
 - `apps/apple/JournalApp/Views/Mac/JournalToolbarController.swift`, `RootView+MacWindow.swift`: the Mac toolbar and its configuration.
-- `apps/apple/JournalApp/Views/EntryHeaderView.swift`, `EntryEditingNote.swift`, `EntryRecoveryNotice.swift`, `SaveFailureNotice.swift`, `ImageImportNotice.swift`, `TemplateSuggestionView.swift`; `ConflictNotice` in `SettingsView.swift`.
+- `apps/apple/JournalApp/Views/EntryHeaderView.swift`, `EntryEditingNote.swift`, `EntryRecoveryNotice.swift`, `SaveFailureNotice.swift`, `ImageImportNotice.swift`, `TemplateSuggestionView.swift`; `KeptVersionNotice.swift`.
 - `apps/apple/JournalApp/Views/ReadingBar.swift`, `apps/apple/JournalApp/Editor/WritingAccessory.swift`: the writing controls.
 
 Model:

@@ -25,7 +25,7 @@ Write a short description of every image in an entry or template, so VoiceOver c
 - Entry Actions ▸ Image Descriptions… (and the entry row's context menu), shown when the entry has images (`image-descriptions`).
 - A picture's menu ▸ Image Descriptions… (`image-descriptions`), and the VoiceOver action “Image Descriptions”.
 
-Offered (enabled) only when the entry is editable, isn't shown as Markdown source only, and has no changes to review.
+Offered (enabled) only when the entry is editable, isn't shown as Markdown source only, and has no change from another device still waiting to be combined (a few seconds at most, [flows/resolve-conflict.md](../flows/resolve-conflict.md)).
 
 ## Content
 

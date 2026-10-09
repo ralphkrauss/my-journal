@@ -5,7 +5,8 @@ using System.Text.Json;
 namespace Journal.Api.Tests;
 
 // Reproduces protocol/conformance/records/conflict-copy-ids-v1.json from protocol/conflicts.md alone (Identities): the
-// identity of an entry parked next to a permanent deletion. The server never interprets payloads, but Windows and
+// identity of an entry parked next to a permanent deletion and of the copy of the other version of an entry or
+// template, and the identities the cases of conflict-resolution-v1.json expect. The server never interprets payloads, but Windows and
 // Android will derive these identities too, and a .NET Guid built from the bytes is mixed-endian: the string is built
 // from the bytes instead.
 public sealed class ConflictIdentityConformanceTests
@@ -56,5 +57,41 @@ public sealed class ConflictIdentityConformanceTests
             Assert.True(seen.Add(identity), name);
         }
         Assert.True(seen.Count >= 6);
+    }
+
+    [Fact]
+    public void TheIdentitiesTheResolutionCasesExpectFollowTheContractFromTheExactTexts()
+    {
+        using var crypto = ConformanceFiles.Json("crypto/encryption-v2.json");
+        var info = Encoding.UTF8.GetBytes(Corpus().RootElement.GetProperty("info").GetString()!);
+        var key = HKDF.DeriveKey(HashAlgorithmName.SHA256, VaultKey(), 32, salt: [], info: info);
+        using var resolution = ConformanceFiles.Json("records/conflict-resolution-v1.json");
+        var copies = 0;
+        var parked = 0;
+        foreach (var item in resolution.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var name = item.GetProperty("name").GetString()!;
+            var recordId = item.GetProperty("recordID").GetString()!;
+            var expected = item.GetProperty("expected");
+            switch (expected.GetProperty("outcome").GetString())
+            {
+                case "keepBoth":
+                    // The copy is made of the other version, whatever this device holds.
+                    Assert.Equal(expected.GetProperty("copy").GetProperty("id").GetString(), Identity(key, "conflict-copy", recordId, item.GetProperty("other").GetString()!));
+                    copies++;
+                    break;
+                case "parked":
+                    // The edited version is parked: the one that is not the marker.
+                    var edited = expected.GetProperty("markerIsLocal").GetBoolean() ? "other" : "local";
+                    Assert.Equal(expected.GetProperty("parked").GetProperty("id").GetString(), Identity(key, "conflict-park", recordId, item.GetProperty(edited).GetString()!));
+                    parked++;
+                    break;
+                default:
+                    break;
+            }
+            Assert.NotNull(name);
+        }
+        Assert.True(copies >= 15);
+        Assert.True(parked >= 4);
     }
 }

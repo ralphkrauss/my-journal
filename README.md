@@ -90,7 +90,7 @@ Many journaling apps are good at what they do. Most are built around an account 
 - Add a device by scanning a QR code on a device you already use, by signing in with your master password, or with a pairing code and a check code.
 - Servers on your local network can be found with Bonjour, if you turn on the optional announcer.
 - Quiet by design: sync runs in the background and only shows a status when you need to act. Changes wait on the device while you’re offline.
-- If an entry or template changes on two devices at once, both versions are kept for you to review. Journals and permanent deletions settle themselves, keeping both versions, and Settings > Sync lists what was settled. Nothing is overwritten silently.
+- If an entry or template changes on two devices at once, both versions are kept: one stays where it is and the other is saved as a separate entry titled “(other version)”. Journals and permanent deletions settle themselves too, and Settings > Sync lists what was settled. Nothing is overwritten silently and you are not asked to choose.
 - Server backups and restores with integrity checks.
 
 ### Backups and portability

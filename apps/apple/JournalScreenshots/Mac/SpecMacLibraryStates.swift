@@ -12,7 +12,7 @@ extension SpecMacCapture {
     func libraryStates(_ sample: URL) async throws {
         await state("welcome") { try await welcome(sample) }
         await state("problems") { try await problems(sample) }
-        await state("changes to review") { try await changesToReview(sample) }
+        await state("kept both notice") { try await keptBothNotice(sample) }
     }
 
     /// A window with its own model, as the journal window has.
@@ -63,7 +63,7 @@ extension SpecMacCapture {
         }
     }
 
-    private func changesToReview(_ sample: URL) async throws {
+    private func keptBothNotice(_ sample: URL) async throws {
         let folder = try copy(of: sample)
         try await SpecLibraryFixtures.recordConflicts(in: folder, password: try password())
         let model = AppModel(directory: folder)
@@ -73,11 +73,7 @@ extension SpecMacCapture {
         await model.select(entry.id)
         window.setFrame(NSRect(x: 40, y: 120, width: 1280, height: 800), display: true)
         try await settle(2)
-        try await capture(window, "conflict-review-notice")
-        tap(window, at: 1209, fromTop: 80)
-        try await settle(3)
-        if window.attachedSheet != nil { try await captureSheet(window, "entry-conflict-default") }
-        try await closeSheets(of: window)
+        try await capture(window, "entry-editor-kept-both-notice")
         window.close()
     }
 }

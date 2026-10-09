@@ -1,7 +1,7 @@
 ---
 id: messages
 title: Messages
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-unsupported, conflict-kept-both, changed-on-two-devices-list, library-open-failure, erase-unopened-library, failure-messages, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, kept-both-notice, conflict-kept-both, changed-on-two-devices-list, library-open-failure, erase-unopened-library, failure-messages, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 sources:
   - apps/apple/Packages/JournalCore/Sources/JournalCore/SyncHealth.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/Models.swift
@@ -10,8 +10,9 @@ sources:
   - apps/apple/JournalApp/Model/
   - apps/apple/JournalApp/Views/SaveFailureNotice.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
-  - apps/apple/JournalApp/Views/ConflictRouting.swift
-  - apps/apple/JournalApp/Views/EntryConflictReview.swift
+  - apps/apple/JournalApp/Views/KeptVersionNotice.swift
+  - apps/apple/JournalApp/Views/KeptNotesSection.swift
+  - apps/apple/JournalApp/Model/ConflictNotes.swift
   - apps/apple/JournalApp/Views/LibraryProblemView.swift
   - apps/apple/JournalApp/Model/FailureMessage.swift
   - apps/apple/JournalApp/Model/NetworkFailureMessage.swift
@@ -24,7 +25,7 @@ sources:
 
 Every message that comes from the model layer rather than from one screen: sync states and their actions, server and network errors, every error type's description, save failures and paused writing, the generic alert, conflicts, unavailable and read-only content, the privacy cover, and accessibility announcements that aren't tied to one screen. The exact text of each key is in [copy/en.json](copy/en.json) (a message whose text another area also uses is keyed `common.*`); this page says when each appears, where, and what the person can do.
 
-Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-recovery.md](flows/sync-recovery.md), [flows/save-failure.md](flows/save-failure.md), [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md), [screens/unavailable-content.md](screens/unavailable-content.md).
+Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-recovery.md](flows/sync-recovery.md), [flows/save-failure.md](flows/save-failure.md), [screens/kept-version-notice.md](screens/kept-version-notice.md), [flows/resolve-conflict.md](flows/resolve-conflict.md), [screens/unavailable-content.md](screens/unavailable-content.md).
 
 ## How messages reach the person
 
@@ -35,8 +36,8 @@ Related files: [screens/sync-status.md](screens/sync-status.md), [flows/sync-rec
 | **Generic alert** | Title `common.alertTitle`, the message, `common.ok`, plus `common.tryAgain` while a save has failed | One per window. Never while locked or while the first journal is being created. Most "Couldn’t …", `messages.save.before.tryAgain`, "… couldn’t be displayed" messages and any operation error without its own place go here. |
 | **Lock screen note** | The same model error, in red, under "My Journal Is Locked" | Used instead of the generic alert while locked. Launch failures no longer use it: they show the library problem screen. |
 | **Library problem screen** | Heading, paragraphs and buttons for a library that can't be opened | Replaces the window; needs no authentication. See [screens/unavailable-content](screens/unavailable-content.md) and Library can’t be opened below. |
-| **Sheet errors** | An operation's error inside its own sheet (Connect to a Server, Encrypt Your Journals, Change Password, Add Device, Move Entry, Change Date, Image Descriptions, the conflict reviews, exports) | Errors stay on the sheet that caused them, never in an alert behind it. |
-| **Notices** | Save failure, writing paused (Mac), conflict, recovery and unavailable notices in the entry | Persistent while the state lasts, with their single action. |
+| **Sheet errors** | An operation's error inside its own sheet (Connect to a Server, Encrypt Your Journals, Change Password, Add Device, Move Entry, Change Date, Image Descriptions, exports) | Errors stay on the sheet that caused them, never in an alert behind it. |
+| **Notices** | Save failure, writing paused (Mac), other version kept, recovery and unavailable notices in the entry | Persistent while the state lasts, with their single action. |
 | **Announcements** | VoiceOver announcements | Only for results of actions the person started, and for errors appearing in an open sheet. |
 
 **Wording rules** (from AGENTS.md and the sync-health record): plain language; say what happened and what to do; "the server" rather than its address, except where the person confirms something about a specific server; local saving is distinguished from syncing ("Your changes are saved on this device."); no status codes, SQL, error domains or the word "request"; actions that open a flow end in "…"; no exclamation marks.
@@ -342,7 +343,6 @@ A network error is classified as sync classifies it, so one place knows what a n
 | `messages.entry.imagesChanged` | This entry has changed. Review its images again. | ImageDescriptionError.changed. | Image Descriptions sheet |  |  |
 | `messages.entry.archiveChanged` | This entry’s archive status changed. Review it before trying again. | EntryArchivingError.changed. Archiving was removed; nothing calls it. | none |  | unreachable |
 | `common.journalGone` | That journal is no longer available. Choose another journal. | Move Entry when the chosen journal was deleted meanwhile. | Move Entry |  |  |
-| `messages.entry.moveNeedsReview` | Review this entry’s changes before moving it. | Move Entry for an entry with changes to review. | Move Entry |  |  |
 | `messages.entry.copyLocation` | Choose a new location for the journal copy. | Restoring a journal copy without a new location (a guard). | journal restore |  | rare |
 | `messages.history.versionUnavailable` | This version is no longer available. Reload its history. | HistoryRecoveryError.unavailableVersion. | Version History |  |  |
 | `messages.history.chooseJournal` | Choose an available journal. | HistoryRecoveryError.destinationUnavailable (Version History restore). | Version History |  |  |
@@ -384,66 +384,25 @@ A network error is classified as sync classifies it, so one place knows what a n
 
 | Key | Text | When it appears | Shown in | Actions | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `messages.conflict.entryNotice` | This entry has changes from another device. | Notice above an entry or template that has changes to review (above the writing on every platform). | entry editor notice | common.reviewChanges |  |
-| `common.reviewChangesFor` | Review Changes for {title} | Accessibility label of each Review Changes button in Settings ▸ Sync ▸ Changes to Review. | Settings ▸ Sync |  |  |
-| `messages.conflict.needsReview` | Changes need review | Accessibility label of the exclamation mark on an entry row with changes to review. | entries list row |  |  |
-| `messages.conflict.settingsSection` | Changes to Review | Header of the section in Settings ▸ Sync that lists every entry or template with changes to review, and every one saved by a newer version. Shown only when there is one and the app is unlocked. Journals and permanent deletions are not listed: the app settles them itself (Changed on Two Devices). | Settings ▸ Sync |  |  |
-| `messages.conflict.locked` | Unlock My Journal to review changes. | Review sheet content when the journals locked while it was open (the sheet then closes). | review sheet |  |  |
-| `messages.conflict.resolved` | These changes have been resolved. | Review sheet when the conflict no longer exists (resolved here or on another device). | review sheet | common.done |  |
-| `messages.conflict.updateToReview` | Update My Journal to review these changes. | Review sheet when either version has content this version can’t read (unsupported conflict). | review sheet | Export Archive… |  |
-| `common.version` | Version | Label of the This Device / Other Device choice. | review sheet |  |  |
-| `common.thisDevice` | This Device | This device’s version, in the version choice and as the shown version’s heading. | review sheet |  |  |
-| `messages.conflict.version.otherDevice` | Other Device | The received version. | review sheet |  |  |
-| `messages.conflict.version.hintThisDevice` | Version from This Device | Accessibility hint of the read-only preview while This Device is shown. | entry review |  |  |
-| `messages.conflict.version.hintOtherDevice` | Version from Other Device | Accessibility hint of the preview while Other Device is shown. | entry review |  |  |
-| `messages.conflict.keepBoth` | Keep Both | Primary action in an entry or template review: keeps both versions as separate items. | entry review |  |  |
-| `messages.conflict.keepBothNote.entries` | Keep Both saves the versions as separate entries. | Note above Keep Both for an entry. | entry review |  |  |
-| `messages.conflict.keepBothNote.templates` | Keep Both saves the versions as separate templates. | Note above Keep Both for a template. | entry review |  |  |
-| `messages.conflict.keepBothOutcome.place` | Each version stays where it is. | Added after the Keep Both note when the versions are in different places (journal, Recently Deleted or archive). | entry review |  |  |
-| `messages.conflict.keepBothOutcome.date` | Each version keeps its date. | Added when the versions have different entry dates. | entry review |  |  |
-| `messages.conflict.keepBothOutcome.placeAndDate` | Each version keeps its place and date. | Added when both differ. | entry review |  |  |
-| `messages.conflict.keepOne` | Keep One Version | Menu with the two single-version choices. | entry review |  |  |
-| `messages.conflict.keepThisDevice` | Keep Version from This Device… | Item of Keep One Version; asks for confirmation. | entry review |  |  |
-| `messages.conflict.keepOtherDevice` | Keep Version from Other Device… | Item of Keep One Version; asks for confirmation. | entry review |  |  |
-| `messages.conflict.keepOne.title` | Keep this version? | Confirmation title for Keep Version from This Device… or Other Device…. | entry review confirmation | messages.conflict.keepVersion, common.cancel |  |
-| `messages.conflict.keepVersion` | Keep Version | Confirming button in every keep-one-version confirmation (entries and journals). | confirmations |  |  |
-| `messages.conflict.keepOne.history` | The original versions will remain in Version History. | Confirmation message; for Other Device it follows an outcome line when keeping it moves or redates the entry. | entry review confirmation |  |  |
-| `messages.conflict.outcome.entry.moveToRecentlyDeleted` | The entry will move to Recently Deleted. | Confirmation for Keep Version from Other Device… when that version of the entry is in Recently Deleted and this one isn’t. | entry review confirmation |  |  |
-| `messages.conflict.outcome.entry.moveTo` | The entry will move to {journal}. | Confirmation when that version of the entry is in another place; {journal} is its journal name (“Untitled Journal” when unnamed). | entry review confirmation |  |  |
-| `messages.conflict.outcome.entry.archiveIn` | The entry will be archived in {journal}. | Confirmation when that version of the entry was archived by an earlier version of My Journal. | entry review confirmation |  | legacy archive |
-| `messages.conflict.outcome.entry.dateChange` | The entry’s date will change to {date}. | Confirmation when only the entry’s date differs; {date} is the abbreviated date, for example “1 Oct 2026”. | entry review confirmation |  |  |
-| `messages.conflict.outcome.entry.moveToRecentlyDeletedAndDate` | The entry will move to Recently Deleted, and its date will change to {date}. | Place and date both differ. | entry review confirmation |  |  |
-| `messages.conflict.outcome.entry.moveToAndDate` | The entry will move to {journal}, and its date will change to {date}. | Place and date both differ. | entry review confirmation |  |  |
-| `messages.conflict.outcome.entry.archiveInAndDate` | The entry will be archived in {journal}, and its date will change to {date}. | Archived place and date both differ. | entry review confirmation |  | legacy archive |
-| `messages.conflict.outcome.template.moveToRecentlyDeleted` | The template will move to Recently Deleted. | Confirmation for Keep Version from Other Device… when that version of the template is in Recently Deleted and this one isn’t. | entry review confirmation |  |  |
-| `messages.conflict.outcome.template.moveTo` | The template will move to {journal}. | Confirmation when that version of the template is in another place; {journal} is its journal name (“Untitled Journal” when unnamed), or “Templates”. | entry review confirmation |  |  |
-| `messages.conflict.outcome.template.archiveIn` | The template will be archived in {journal}. | Confirmation when that version of the template was archived by an earlier version of My Journal. | entry review confirmation |  | legacy archive |
-| `messages.conflict.outcome.template.dateChange` | The template’s date will change to {date}. | Confirmation when only the template’s date differs; {date} is the abbreviated date, for example “1 Oct 2026”. | entry review confirmation |  |  |
-| `messages.conflict.outcome.template.moveToRecentlyDeletedAndDate` | The template will move to Recently Deleted, and its date will change to {date}. | Place and date both differ. | entry review confirmation |  |  |
-| `messages.conflict.outcome.template.moveToAndDate` | The template will move to {journal}, and its date will change to {date}. | Place and date both differ. | entry review confirmation |  |  |
-| `messages.conflict.outcome.template.archiveInAndDate` | The template will be archived in {journal}, and its date will change to {date}. | Archived place and date both differ. | entry review confirmation |  | legacy archive |
-| `messages.conflict.placement.inJournal` | In {journal} | Line under the shown version’s date when the versions are in different places; {journal} is its journal (“Untitled Journal” when unnamed). | entry review |  |  |
-| `messages.conflict.placement.inRecentlyDeleted` | In Recently Deleted | As above, for a version in Recently Deleted. | entry review |  |  |
-| `messages.conflict.placement.inTemplates` | In Templates | As above, for a template version. | entry review |  |  |
-| `messages.conflict.placement.archivedIn` | Archived in {journal} | As above, for a version archived by an earlier version of My Journal. | entry review |  | legacy archive |
-| `messages.conflict.placement.dated` | Dated {date} | Line when only the entry dates differ. | entry review |  |  |
-| `messages.conflict.placement.inJournalDated` | In {journal}, dated {date} | Place and date both differ. | entry review |  |  |
-| `messages.conflict.placement.inRecentlyDeletedDated` | In Recently Deleted, dated {date} | Place and date both differ. | entry review |  |  |
-| `messages.conflict.placement.inTemplatesDated` | In Templates, dated {date} | Place and date both differ. | entry review |  |  |
-| `messages.conflict.placement.archivedInDated` | Archived in {journal}, dated {date} | Place and date both differ. | entry review |  | legacy archive |
-| `messages.conflict.status.updated` | These changes were updated. Review both versions again. | Entry review: the other device’s version changed while the review was open, or a choice was refused because it changed. The choice is cleared and This Device is shown. | entry review status |  |  |
-| `messages.conflict.status.refreshFailed` | Changes couldn’t be updated. | Entry review: reading the changed versions again failed; previews and choices are hidden. | entry review status | common.tryAgain |  |
-| `messages.conflict.savingChanges` | Saving Changes… | Progress while a choice is saved in the entry review. | entry review |  |  |
-| `messages.conflict.updatingChanges` | Updating Changes… | Progress while the entry review reads the versions again. | entry review |  |  |
-| `messages.conflict.committedNotReloaded` | Changes saved. The entry couldn’t be reloaded. | Entry review: the choice was saved but reading the result failed. Only reloading is offered; the choice is never applied twice. | entry review | common.tryAgain, common.done |  |
-| `messages.conflict.kept.section` | Changed on Two Devices | Header of the section in Settings ▸ Sync that lists what the app settled itself: a journal renamed on two devices, and an item deleted permanently on one device and changed on another. Shown only when there are rows and the app is unlocked. Beside Changes to Review. | Settings ▸ Sync |  |  |
+| `messages.conflict.kept.notice.entry` | This entry was also changed on another device. The other version is saved as a separate entry. | Notice above the open entry on the device that kept both versions, when neither the title nor the text has the keyboard (otherwise the next time the entry is shown). | entry editor notice | show-other-version, dismiss-kept-notice | local to this device; no announcement |
+| `messages.conflict.kept.notice.entryNewer` | This entry was also changed on another device, and that version is newer. It is saved as a separate entry. | As above, when the other version’s modified time is later (device clocks; the wording only). | entry editor notice | show-other-version, dismiss-kept-notice |  |
+| `messages.conflict.kept.notice.template` | This template was also changed on another device. The other version is saved as a separate template. | As the entry notice, for a template. | entry editor notice | show-other-version, dismiss-kept-notice |  |
+| `messages.conflict.kept.notice.templateNewer` | This template was also changed on another device, and that version is newer. It is saved as a separate template. | As above, when the other version’s modified time is later. | entry editor notice | show-other-version, dismiss-kept-notice |  |
+| `messages.conflict.kept.noticeUpdate` | This entry has a version from a newer My Journal. Update My Journal to combine them. | Notice above an entry or template whose conflict is held because a newer My Journal wrote one of the versions. No buttons. | entry editor notice |  | settles by itself once the app can read both |
+| `messages.conflict.kept.showOther` | Show Other Version | First button of the notice: opens the other version wherever it is and marks the notice seen. | entry editor notice | show-other-version |  |
+| `common.dismiss` | Dismiss | Second button of the notice: marks it seen. The list row stays. | entry editor notice | dismiss-kept-notice |  |
+| `messages.conflict.copyTitle` | {title} (other version) | Title of the other version of an entry or template kept as a separate item: the title the lists show for it (its title, else its first line cut at 60 characters, else the name of an untitled entry or template) with this text appended. Always appended, never detected, never parsed; the body is untouched. | the entries list and everywhere the item’s title shows |  | written into the item, so every device and a 1.0 device see it |
+| `messages.lifecycle.combining` | Some changes from another device are still being combined. Try again in a moment. | JournalLifecycleError.conflict (and the permanent-deletion equivalent): Move Entry, restoring a Version History version, Delete Permanently and Delete Journal for an item whose conflict still waits to be settled, a few seconds after a sync. A conflict only a newer version can read shows the update messages instead. Delete All reads such an item as one that can’t be deleted yet. | Move Entry, Version History, generic alert |  |  |
+| `messages.conflict.kept.section` | Changed on Two Devices | Header of the section in Settings ▸ Sync that lists what the app settled itself: an entry or template kept as two versions, a journal renamed on two devices, and an item deleted permanently on one device and changed on another. Shown only when there are rows and the app is unlocked. | Settings ▸ Sync |  |  |
 | `messages.conflict.kept.footer` | Both versions are kept. This list clears after 30 days. | Footer of that section. Journal rename notes do not expire; only Clear List removes them. | Settings ▸ Sync |  |  |
+| `messages.conflict.kept.entry` | Changed on two devices. Both versions are kept. | Row: an entry or template changed on two devices and kept as two. The title is the other version’s current title; the row opens it wherever it is. A replaced copy updates its row. | Settings ▸ Sync ▸ Changed on Two Devices | open-kept-note |  |
+| `messages.conflict.kept.entryNewer` | Changed on two devices. The other version is newer. Both versions are kept. | As above, when the other version’s modified time is later (device clocks; the wording only). | Settings ▸ Sync ▸ Changed on Two Devices | open-kept-note |  |
 | `messages.conflict.kept.journalRenamed` | Renamed on two devices. The name is now “{name}”; the other was “{otherName}”. | Row: a journal renamed on two devices keeps the name that reached the server later (the server’s order, not the newer edit); the other name is here and in the journal’s history. Plain text. | Settings ▸ Sync ▸ Changed on Two Devices |  |  |
 | `messages.conflict.kept.deletedAndChanged` | Deleted permanently on one device and changed on another. The changed version is saved separately. | Row: the deletion stays final and the changed entry or template is saved as a new one in Recently Deleted (Unavailable Journals when its journal is gone). The row opens it wherever it is. | Settings ▸ Sync ▸ Changed on Two Devices | open-kept-note |  |
 | `messages.conflict.kept.journalDeleted` | Deleted permanently on one device and changed on another. It stays deleted. | Row: a journal deleted permanently on one device and changed on another stays deleted; no journal is created. Plain text. | Settings ▸ Sync ▸ Changed on Two Devices |  |  |
 | `messages.conflict.kept.rowHint` | Opens it. | Accessibility hint of a row that opens an item; its label is the title, the sentence, then the date and time. | Settings ▸ Sync ▸ Changed on Two Devices |  |  |
 | `messages.conflict.kept.clear` | Clear List | Last row of the section; forgets the notes at once, without confirmation. | Settings ▸ Sync ▸ Changed on Two Devices | clear-kept-notes |  |
-| `messages.conflict.kept.updateNeeded` | Some changes from another device need a newer version of My Journal. Update My Journal to combine them. | One more line in the Settings ▸ Sync footer while a journal or deletion change from another device stays held because a newer version of My Journal wrote it. No row, no alert. | Settings ▸ Sync footer |  |  |
+| `messages.conflict.kept.updateNeeded` | Some changes from another device need a newer version of My Journal. Update My Journal to combine them. | One more line in the Settings ▸ Sync footer while a change from another device (an entry, template, journal or deletion) stays held because a newer version of My Journal wrote it. No row, no alert. | Settings ▸ Sync footer |  |  |
 
 ## Accessibility announcements not tied to one screen
 
@@ -456,7 +415,7 @@ A network error is classified as sync classifies it, so one place knows what a n
 | `messages.encryption.announce.turningOn`, `messages.encryption.announce.updatingServer`, `messages.encryption.announce.done` | The encryption notice’s progress, wherever it is showing. |
 | `messages.export.archiveSaved` | After the archive is saved. |
 | Errors in open sheets | Connect to a Server, Encrypt Your Journals, and the lock screen announce their error when it appears. |
-| Focus moves | The entry review moves VoiceOver focus to its status after reading the versions again; unlocking behind App Lock's closing panel moves focus to the journals (iPhone and iPad). |
+| Focus moves | Unlocking behind App Lock's closing panel moves focus to the journals (iPhone and iPad). |
 
 The alert and the notices are not announced separately: an alert is read by the system, and notices are read in place.
 

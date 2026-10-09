@@ -64,7 +64,7 @@ final class ImportTests: XCTestCase {
         let pending = try await destination.pending()
         XCTAssertTrue(pending.allSatisfy { $0.baseRevision == 0 })
     }
-    func testImportedConflictStillRequiresResolutionAndKeepsBothVersions() async throws {
+    func testAnImportedConflictIsSettledByKeepingBothVersions() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let key = try VaultCrypto.generateKey()
@@ -84,16 +84,9 @@ final class ImportTests: XCTestCase {
             directory: root.appendingPathComponent("destination"), key: VaultCrypto.generateKey())
         try await destination.importAsNewJournals(from: source)
         let conflicts = try await destination.conflicts()
-        let conflict = try XCTUnwrap(conflicts.first)
-        XCTAssertEqual(conflict.local.title, local.title)
-        XCTAssertEqual(conflict.remote.title, other.title)
-        XCTAssertEqual(conflict.remoteRevision, 0)
-        XCTAssertNotEqual(conflict.id, local.id)
-        let pendingBeforeResolution = try await destination.pending()
-        XCTAssertTrue(pendingBeforeResolution.isEmpty)
-        try await destination.resolve(conflict, choice: .keepBoth)
+        XCTAssertTrue(conflicts.isEmpty, "The import settles what it finds, as a pull does")
         let items = try await destination.items()
-        XCTAssertEqual(Set(items.map(\.title)), [local.title, other.title])
+        XCTAssertEqual(Set(items.map(\.title)), [local.title, "\(other.title) (other version)"])
         let pendingAfterResolution = try await destination.pending()
         XCTAssertEqual(pendingAfterResolution.count, 2)
         XCTAssertTrue(pendingAfterResolution.allSatisfy { $0.baseRevision == 0 })

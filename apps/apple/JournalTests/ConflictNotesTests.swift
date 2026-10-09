@@ -4,7 +4,7 @@ import XCTest
 @testable import Journal
 
 /// Changes on two devices that this version settles itself, and what it tells the person afterwards
-/// (docs/design/1-1-conflicts-and-reconnect.md, step 1). The other device's versions arrive as sync delivers them.
+/// (docs/design/1-1-conflicts-and-reconnect.md). The other device's versions arrive as sync delivers them.
 @MainActor
 final class ConflictNotesTests: XCTestCase {
     // MARK: The open entry meets a permanent deletion
@@ -88,19 +88,24 @@ final class ConflictNotesTests: XCTestCase {
 
     // MARK: Changed on Two Devices
 
-    func testKeptNotesShowTheThreeKindsAndOpeningMarksTheNoteSeen() async throws {
+    func testKeptNotesShowTheFourKindsAndOpeningMarksTheNoteSeen() async throws {
         let library = try await startedLibrary()
         let (model, store) = (library.model, library.store)
         let entry = try await library.entryDeletedPermanentlyElsewhere(title: "Plans", text: "Edited here")
         try await library.journalRenamedOnTwoDevices(from: "Travel", here: "Trips", there: "Journeys")
         try await library.journalChangedAgainstPermanentDeletion(title: "Old", editedTo: "Old, renamed")
+        try await library.entryEditedOnTwoDevices(title: "Notes")
         let settled = try await store.resolveConflicts(at: .local)
-        XCTAssertEqual(settled.resolved.count, 3)
+        XCTAssertEqual(settled.resolved.count, 4)
         try await model.refresh()
-        XCTAssertTrue(model.conflicts.isEmpty, "Nothing of this is reviewed")
+        XCTAssertTrue(model.conflictedIDs.isEmpty, "Nothing waits for the person")
 
         let rows = model.keptNoteRows
-        XCTAssertEqual(rows.count, 3)
+        XCTAssertEqual(rows.count, 4)
+        let both = try XCTUnwrap(rows.first { $0.title == "Notes (other version)" })
+        XCTAssertEqual(both.sentence, "Changed on two devices. Both versions are kept.")
+        XCTAssertNotNil(both.opens, "The row opens the other version")
+        XCTAssertTrue(both.spokenLabel.hasPrefix("Notes (other version). Changed on two devices."), both.spokenLabel)
         let renamed = try XCTUnwrap(rows.first { $0.title == "Trips" })
         XCTAssertEqual(
             renamed.sentence, "Renamed on two devices. The name is now “Trips”; the other was “Journeys”.")
@@ -109,7 +114,7 @@ final class ConflictNotesTests: XCTestCase {
         XCTAssertEqual(
             deleted.sentence, "Deleted permanently on one device and changed on another. It stays deleted.")
         XCTAssertNil(deleted.opens)
-        let saved = try XCTUnwrap(rows.first { $0.opens != nil })
+        let saved = try XCTUnwrap(rows.first { $0.opens != nil && $0.title == "Plans" })
         XCTAssertEqual(saved.title, "Plans")
         XCTAssertEqual(
             saved.sentence,
@@ -156,23 +161,107 @@ final class ConflictNotesTests: XCTestCase {
         XCTAssertTrue(model.keptNoteRows.isEmpty)
     }
 
-    /// The person has nothing to do about a note, so it never counts as a problem for the rating request; changes
-    /// they still have to review do.
-    func testKeptNotesAreNotAProblemForTheRatingRequestButChangesToReviewAre() async throws {
+    /// The person has nothing to do about a note, so it never counts as a problem for the rating request; a change that
+    /// only a newer version can read does.
+    func testKeptNotesAreNotAProblemForTheRatingRequestButAHeldChangeIs() async throws {
         let library = try await startedLibrary()
         let (model, store) = (library.model, library.store)
         model.applicationActive = true
         _ = try await library.entryDeletedPermanentlyElsewhere(title: "Plans", text: "Edited here")
         try await library.journalRenamedOnTwoDevices(from: "Travel", here: "Trips", there: "Journeys")
+        try await library.entryEditedOnTwoDevices(title: "Notes")
         _ = try await store.resolveConflicts(at: .local)
         try await model.refresh()
-        XCTAssertEqual(model.keptNoteRows.count, 2)
+        XCTAssertEqual(model.keptNoteRows.count, 3)
         XCTAssertTrue(model.reviewStateIsClear)
 
-        try await library.entryEditedOnTwoDevices(title: "Notes")
+        try await library.entryHeldForANewerVersion(title: "Held")
         try await model.refresh()
-        XCTAssertEqual(model.conflicts.count, 1, "Entries still go through the review in this step")
+        XCTAssertTrue(model.heldChangesNeedUpdate)
         XCTAssertFalse(model.reviewStateIsClear)
+    }
+
+    // MARK: The notice above the open entry
+
+    func testTheOpenEntryShowsTheNoticeOnceUntilItIsDismissedOrTheOtherVersionIsOpened() async throws {
+        let library = try await startedLibrary()
+        let (model, store) = (library.model, library.store)
+        let entry = try await library.entryEditedOnTwoDevices(title: "Notes")
+        try await model.refresh()
+        model.selectedID = entry.id
+        model.draft = model.items.first { $0.id == entry.id }
+        let beforeSettling = model.entryNotice(for: try XCTUnwrap(model.draft))
+        XCTAssertNil(beforeSettling, "Nothing to say while the versions wait to be settled")
+
+        _ = try await store.resolveConflicts(at: .local)
+        try await model.refresh()
+        let open = try XCTUnwrap(model.draft)
+        guard case .keptBoth(let note)? = model.entryNotice(for: open) else {
+            return XCTFail("The entry says the other version was saved")
+        }
+        XCTAssertEqual(note.recordID, entry.id)
+        XCTAssertEqual(open.document.text, "Edited here", "This device's version stays the entry")
+
+        await model.dismissKeptNote(note.id)
+        XCTAssertNil(model.entryNotice(for: open), "Dismissed")
+        XCTAssertEqual(model.keptNoteRows.count, 1, "…and still listed in Settings until it expires")
+
+        let again = try await library.entryEditedOnTwoDevices(title: "Notes", revisions: (3, 4))
+        _ = try await store.resolveConflicts(at: .local)
+        try await model.refresh()
+        let second = try XCTUnwrap(model.items.first { $0.id == again.id })
+        guard case .keptBoth(let next)? = model.entryNotice(for: second) else {
+            return XCTFail("A later copy of the same entry is noted again")
+        }
+        let opened = await model.openKeptNote(next.id)
+        XCTAssertTrue(opened)
+        XCTAssertNotEqual(model.draft?.id, entry.id, "The other version is open")
+        XCTAssertNil(model.entryNotice(for: second), "Opening it marks the note seen")
+    }
+
+    func testTheNoticeSaysWhenTheOtherVersionIsNewerAndNothingShowsWhileLockedOrForAJournal() async throws {
+        let library = try await startedLibrary()
+        let (model, store) = (library.model, library.store)
+        let older = Date(timeIntervalSince1970: 1_700_000_000)
+        let newer = Date(timeIntervalSince1970: 1_700_100_000)
+        let entry = try await library.entryEditedOnTwoDevices(title: "Notes", here: older, there: newer)
+        _ = try await store.resolveConflicts(at: .local)
+        try await model.refresh()
+        guard case .keptBoth(let note)? = model.entryNotice(for: entry) else { return XCTFail("No notice") }
+        XCTAssertEqual(note.otherIsNewer, true)
+        let row = try XCTUnwrap(model.keptNoteRows.first)
+        XCTAssertEqual(row.sentence, "Changed on two devices. The other version is newer. Both versions are kept.")
+
+        model.locked = true
+        XCTAssertNil(model.entryNotice(for: entry), "Nothing is read while locked")
+        XCTAssertTrue(model.keptNoteRows.isEmpty)
+        model.locked = false
+        let journal = try XCTUnwrap(model.journals.first)
+        XCTAssertNil(model.entryNotice(for: journal))
+    }
+
+    /// The text under a resting cursor never moves: a notice that arrives while the person is in the entry waits for the
+    /// next time it is shown or for the editor to let go; one that has appeared stays.
+    func testANoticeWaitsForTheEditorToLetGoAndStaysOnceItHasAppeared() {
+        let notice = UUID()
+        var release = NoticeRelease()
+        XCTAssertTrue(release.isVisible(notice, whileWriting: false), "Shown in place when nobody is writing")
+        XCTAssertFalse(release.isVisible(notice, whileWriting: true), "…but not under a resting cursor")
+        release.reveal(notice, whileWriting: true)
+        XCTAssertFalse(release.isVisible(notice, whileWriting: true), "Revealing while writing does nothing")
+        release.reveal(notice, whileWriting: false)
+        XCTAssertTrue(release.isVisible(notice, whileWriting: true), "Once shown, it stays when writing starts again")
+        XCTAssertFalse(release.isVisible(UUID(), whileWriting: true), "Another notice waits for its own moment")
+    }
+
+    func testAnEntryHoldingAVersionFromANewerAppSaysSoWithoutAnyButtons() async throws {
+        let library = try await startedLibrary()
+        let model = library.model
+        let held = try await library.entryHeldForANewerVersion(title: "Held")
+        try await model.refresh()
+        XCTAssertEqual(model.entryNotice(for: held), .updateNeeded)
+        XCTAssertTrue(model.heldChangesNeedUpdate)
+        XCTAssertTrue(model.keptNoteRows.isEmpty, "A held change is one line in Settings ▸ Sync, not a row")
     }
 
     // MARK: Support
@@ -184,6 +273,7 @@ final class ConflictNotesTests: XCTestCase {
         let peerRoot: URL
         let journal: JournalItem
         private var cursor: Int64 = 0
+        private var entries: [String: UUID] = [:]
 
         init(model: AppModel, store: JournalStore, key: Data, peerRoot: URL, journal: JournalItem) {
             self.model = model
@@ -246,15 +336,58 @@ final class ConflictNotesTests: XCTestCase {
             try await deliver(marker, revision: 2)
         }
 
-        func entryEditedOnTwoDevices(title: String) async throws {
+        /// An entry edited here while another device edited it too. `revisions` are the revisions the entry is at and
+        /// the other device's version arrives at; a second call for the same entry continues from them.
+        @discardableResult func entryEditedOnTwoDevices(
+            title: String, here: Date? = nil, there: Date? = nil, revisions: (Int64, Int64) = (1, 2)
+        ) async throws -> JournalItem {
+            let id = entries[title] ?? UUID()
+            entries[title] = id
+            var entry = JournalItem(
+                id: id, kind: "entry", journalID: journal.id, title: title, document: .plain("Original"))
+            if revisions.0 == 1 {
+                try await deliver(entry, revision: 1)
+            } else {
+                let stored = try await store.item(id)
+                entry = try XCTUnwrap(stored)
+                // Sent and accepted, so the record is clean at the earlier revision.
+                for change in try await store.pending() where change.recordID == id {
+                    let receipt = RemoteChange(
+                        cursor: 100, recordId: id, revision: revisions.0, kind: "entry", payload: change.payload,
+                        deviceId: UUID(), modifiedAt: Date())
+                    try await store.acknowledge(change, receipt: receipt)
+                }
+            }
+            var mine = entry
+            mine.document = .plain(revisions.0 == 1 ? "Edited here" : "Edited here again")
+            if let here { mine.modifiedAt = here }
+            try await store.save(mine)
+            var theirs = entry
+            theirs.document = .plain("Edited there \(revisions.1)")
+            if let there { theirs.modifiedAt = there }
+            try await deliver(theirs, revision: revisions.1)
+            return mine
+        }
+
+        /// A record with a member this version doesn't know, as a newer app writes it, against writing here.
+        @discardableResult func entryHeldForANewerVersion(title: String) async throws -> JournalItem {
             let entry = JournalItem(kind: "entry", journalID: journal.id, title: title, document: .plain("Original"))
             try await deliver(entry, revision: 1)
             var mine = entry
             mine.document = .plain("Edited here")
             try await store.save(mine)
-            var theirs = entry
-            theirs.document = .plain("Edited there")
-            try await deliver(theirs, revision: 2)
+            var object = try XCTUnwrap(
+                JSONSerialization.jsonObject(with: PortableRecord.encode(entry)) as? [String: Any])
+            object["futureLayout"] = ["columns": 2]
+            let future = try JSONSerialization.data(withJSONObject: object, options: .sortedKeys)
+            cursor += 1
+            let change = RemoteChange(
+                cursor: cursor, recordId: entry.id, revision: 2, kind: "entry",
+                payload: try VaultCrypto.seal(
+                    future, key: key, context: VaultCrypto.recordContext(id: entry.id, kind: "entry")
+                ).base64EncodedString(), deviceId: UUID(), modifiedAt: Date())
+            try await store.apply([change], cursor: cursor)
+            return mine
         }
 
         func remote(_ item: JournalItem, revision: Int64, cursor: Int64? = nil) throws -> RemoteChange {

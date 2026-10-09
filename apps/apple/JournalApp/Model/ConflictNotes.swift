@@ -3,7 +3,8 @@ import JournalCore
 import os
 
 // Changes on two devices that this version settles itself, and what the person is told afterwards
-// (docs/design/1-1-conflicts-and-reconnect.md, step 1: journals and permanent deletions).
+// (docs/design/1-1-conflicts-and-reconnect.md): entries and templates keep both versions, journals keep one name and a
+// permanent deletion stays final.
 
 /// One row of Settings ▸ Sync ▸ Changed on Two Devices.
 struct KeptNoteRow: Identifiable, Equatable {
@@ -21,24 +22,35 @@ struct KeptNoteRow: Identifiable, Equatable {
     }
 }
 
-extension AppModel {
-    /// A conflict the person can still review. Journals and permanent deletions settle themselves; what a newer
-    /// version must read stays out of the review too, and Settings ▸ Sync says so (`heldChangesNeedUpdate`).
-    static func isReviewable(_ conflict: ConflictVersion) -> Bool {
-        conflict.local.kind != "journal" && !conflict.local.isPermanentlyDeleted
-            && !conflict.remote.isPermanentlyDeleted
-    }
+/// When a notice above the open entry may appear (docs/design/1-1-conflicts-and-reconnect.md, 4.2). Nothing is settled
+/// while the entry is being written, so a notice never arrives mid-keystroke, but one that arrives while the cursor
+/// rests in the title or the text would move the text under it: it waits until the entry is next shown or the editor
+/// lets go of the keyboard. One that has appeared stays, even when writing starts again.
+struct NoticeRelease: Equatable {
+    private(set) var shown: Set<UUID> = []
 
-    /// Takes the conflicts a read of the library found: all of them for the lifecycle, the reviewable ones for the
-    /// review, and whether any journal or deletion conflict waits for a newer version.
-    func adoptConflicts(_ rows: [ConflictVersion], held: Set<UUID>) {
-        conflictedIDs = Set(rows.map(\.id))
+    func isVisible(_ notice: UUID, whileWriting writing: Bool) -> Bool {
+        shown.contains(notice) || !writing
+    }
+    /// Called when the notice is first drawn, when the notice changes and when writing stops or starts.
+    mutating func reveal(_ notice: UUID, whileWriting writing: Bool) {
+        if !writing { shown.insert(notice) }
+    }
+}
+
+extension AppModel {
+    /// Takes the conflicts a read of the library found: all of them for the lifecycle, and whether any waits for a
+    /// newer version. Every one this version can read settles at the next pull.
+    func adoptConflicts(_ ids: Set<UUID>, held: Set<UUID>) {
+        if conflictedIDs != ids {
+            conflictedIDs = ids
+            lists.invalidate()
+        }
         heldConflictIDs = held
-        // A journal or deletion conflict that settles at the next pull doesn't make its journal unavailable.
-        settlingConflictIDs = Set(rows.filter { !Self.isReviewable($0) && !held.contains($0.id) }.map(\.id))
-        let needsUpdate = rows.contains { !Self.isReviewable($0) && held.contains($0.id) }
+        // A conflict that settles at the next pull doesn't make its journal unavailable.
+        settlingConflictIDs = ids.subtracting(held)
+        let needsUpdate = !held.isEmpty
         if heldChangesNeedUpdate != needsUpdate { heldChangesNeedUpdate = needsUpdate }
-        conflicts = rows.filter(Self.isReviewable)
     }
 
     // MARK: The list
@@ -52,6 +64,15 @@ extension AppModel {
 
     private func keptNoteRow(_ note: KeptNote) -> KeptNoteRow? {
         switch note.kind {
+        case .keptBoth:
+            guard let copyID = note.otherID, let copy = items.first(where: { $0.id == copyID }) else { return nil }
+            return KeptNoteRow(
+                id: note.id, title: keptTitle(of: copy, fallback: note.name),
+                sentence:
+                    note.otherIsNewer == true
+                    ? "Changed on two devices. The other version is newer. Both versions are kept."
+                    : "Changed on two devices. Both versions are kept.",
+                date: note.created, opens: copyID)
         case .journalRenamed:
             let current = items.first { $0.id == note.recordID && $0.kind == "journal" }
             let name = JournalNames.displayName(current?.title ?? note.name)
@@ -93,6 +114,37 @@ extension AppModel {
             try await store.clearKeptNotes()
             try await refresh()
         } catch { report(error, .saving) }
+    }
+
+    // MARK: The notice above the open entry
+
+    /// What the open entry or template says about a change made on two devices.
+    enum EntryNotice: Equatable {
+        /// The other version was saved as a separate entry or template, and the person has not seen that yet.
+        case keptBoth(KeptNote)
+        /// A version from a newer My Journal waits to be combined with this one.
+        case updateNeeded
+    }
+    func entryNotice(for item: JournalItem) -> EntryNotice? {
+        guard !locked, item.kind != "journal" else { return nil }
+        if heldConflictIDs.contains(item.id) { return .updateNeeded }
+        let note = keptNotes.first { note in
+            note.kind == .keptBoth && note.recordID == item.id && !note.seen
+                && items.contains { $0.id == note.otherID }
+        }
+        return note.map(EntryNotice.keptBoth)
+    }
+
+    /// The person dismissed the notice. The row in Settings stays until it expires.
+    func dismissKeptNote(_ id: UUID) async {
+        guard !locked, !replacingVault, let store else { return }
+        do {
+            try await store.markKeptNoteSeen(id)
+            try await refresh()
+        } catch {
+            Logger(subsystem: "org.privatejournal", category: "conflicts").error(
+                "A kept note could not be marked seen.")
+        }
     }
 
     /// Opens what a row names wherever it is, and marks the note seen. Returns whether it was opened.

@@ -33,7 +33,7 @@ When saving the open entry fails, the writing stays on screen and in memory, the
 
 All of the spec's table holds on Windows. The Windows mechanisms:
 
-- **Leaving the entry** (another entry, journal or collection, New entry, Settings, a review or history page): the action first awaits the save; if it fails the page does not change, the entry keeps focus with its writing, and the alert dialog shows because the person asked for it.
+- **Leaving the entry** (another entry, journal or collection, New entry, Settings, a history page): the action first awaits the save; if it fails the page does not change, the entry keeps focus with its writing, and the alert dialog shows because the person asked for it.
 - **Back in the stacked layout:** as the spec's iPhone row. The entry's page leaves at once, the entry stays selected with its writing in memory, and is deselected only after it saves; opening another entry tries to save first and stays on the list if that fails. The notice is on the entry's page, so a person who went back sees the failure again when the entry reopens, and the list row keeps its selection.
 - **Locking** (Ctrl+L, Win+L, sleep, user switch, inactivity): saves for up to 2 seconds, locks, then saves again; the writing stays in memory and the notice returns after unlocking.
 - **Closing:** the Keep open dialog above.

@@ -16,14 +16,14 @@ extension AppModel {
     }
     func canDescribeImages(in entryID: UUID) -> Bool {
         draft?.id == entryID && canEdit && draft?.document.requiresMarkdownSource == false
-            && !conflicts.contains { $0.id == entryID }
+            && !conflictedIDs.contains(entryID)
     }
     /// Whether an entry's row offers Image Descriptions. It depends on that entry, not on the open one: a Mac list's
     /// context menu leaves the selection as it is, and choosing the action opens the entry first.
     func offersImageDescriptions(for entry: JournalItem) -> Bool {
         guard !locked, !replacingVault, entry.deletedAt == nil, entry.document.isEditable,
             !entry.document.imageBlocks.isEmpty, !entry.document.requiresMarkdownSource,
-            !conflicts.contains(where: { $0.id == entry.id })
+            !conflictedIDs.contains(entry.id)
         else { return false }
         return entry.kind == "template" || (entry.kind == "entry" && lifecycle.location(of: entry).isInLiveJournal)
     }

@@ -232,7 +232,7 @@ The editing control, the title control and the keys; the rules themselves follow
 
 | Rules | Windows trigger | Rating | What is needed |
 | --- | --- | --- | --- |
-| X-1, X-3, X-4, X-5 | sync | App | Replace the shown text, selection stays where it fits; rebase edits to different blocks from both sides; typing over an unseen change keeps both versions for review; leaving an entry without typing never overwrites the other device's version |
+| X-1, X-3, X-4, X-5 | sync | App | Replace the shown text, selection stays where it fits; rebase edits to different blocks from both sides; typing over an unseen change keeps both versions (this device’s text stays, the other becomes a separate entry); leaving an entry without typing never overwrites the other device's version |
 | X-2 | sync while composing | Care | The change waits for `TextCompositionEnded`, then both are kept, block by block |
 
 #### V. Viewing and scrolling while writing

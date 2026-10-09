@@ -60,15 +60,16 @@ struct Probe {
         try await firstSync.synchronize()
         try await phoneSync.synchronize()
         let conflicts = try await phoneStore.conflicts()
-        guard conflicts.count == 1 else { throw ProbeFailure("offline edits did not make exactly one conflict") }
-        try await phoneStore.resolve(conflicts[0], choice: .keepBoth)
+        guard conflicts.isEmpty else {
+            throw ProbeFailure("offline edits were left for review, not kept as two entries")
+        }
         try await phoneSync.synchronize()
         try await firstSync.synchronize()
         let texts = Set(try await firstStore.items().filter { $0.kind == "entry" }.map(\.document.text))
         guard texts == Set(["Mac offline edit", "Phone offline edit"]) else {
-            throw ProbeFailure("Keep Both lost an edit")
+            throw ProbeFailure("keeping both versions lost an edit")
         }
-        print("PASS: concurrent offline edits preserved and Keep Both converges")
+        print("PASS: concurrent offline edits are both kept as entries and converge")
         let (published, third, recoveredKey) = try await recoverReplacement(
             anonymous, phrase: phrase, envelope: envelope, recoverySecret: recoverySecret, master: master)
         let replacementStore = try JournalStore(

@@ -25,13 +25,13 @@ One `ContentDialog`, default width (320 to 420 epx), content scrolling. Its titl
 | List of journals | `ListView`, `SelectionMode` Single, the journals in use except the entry's current one, in the pane's order; each row the name | The selected row uses the standard selection visual; no extra checkmark. A row whose name is the same as another listed journal's (ignoring case) is disabled (`IsEnabled` false, dimmed), cannot be chosen and shows `library.moveEntry.sameName` below its name |
 | Same-name explanation | `TextBlock`, `Caption`, secondary, under the list, `library.moveEntry.renameExplanation` | Windows wording: the pane, see Copy differences |
 | New journal | A `HyperlinkButton` `common.newJournalEllipsis` below the list (when there are journals) | Switches the dialog to the New journal step |
-| Error | `InfoBar`, Severity Error, not closable, content the message; then a `Button` `common.reviewChanges` when a conflict blocks the move | Announced when it opens. Review changes closes the dialog and opens the entry's review page; if already resolved, `messages.conflict.resolved` |
+| Error | `InfoBar`, Severity Error, not closable, content the message | Announced when it opens |
 | Moving | The list and buttons disabled, a `ProgressRing` beside `library.moveEntry.moving`; the dialog cannot be dismissed | |
 
 ### Action and states
 
 - **Move** saves the open entry first, then moves it. The dialog closes; the entry stays open, now shown in the destination journal's list. The entry keeps its date, text and images, and nothing else in either journal changes. Edit ▸ Undo does not undo a move.
-- **Selected journal disappears or becomes ambiguous:** the selection clears and `common.journalGone` shows. **Changes to review on the entry:** `messages.entry.moveNeedsReview` with Review changes. **The entry's journal or the destination is saved by a newer version:** `messages.lifecycle.unsupportedJournal`. **Open entry could not be saved:** `messages.save.before.goBack`. **Moved but not shown:** the dialog closes and the general error dialog says `common.entryMovedNotDisplayed`. Other errors show the error's own text. Errors are announced.
+- **Selected journal disappears or becomes ambiguous:** the selection clears and `common.journalGone` shows. **A change from another device on the entry, its journal or the destination still waits to be combined:** `messages.lifecycle.combining`. **The entry's journal or the destination is saved by a newer version:** `messages.lifecycle.unsupportedJournal`. **Open entry could not be saved:** `messages.save.before.goBack`. **Moved but not shown:** the dialog closes and the general error dialog says `common.entryMovedNotDisplayed`. Other errors show the error's own text. Errors are announced.
 - **Locked, or another entry opened:** the dialog closes and the move is cancelled if not committed. A lock after the commit cannot save the old journal membership back.
 
 ## Layout at each window width
@@ -69,7 +69,6 @@ Sentence case: "Move entry", "No other journals". `library.moveEntry.renameExpla
 ## Different by design
 
 - **New journal is a step of the dialog**, not a second sheet over the first ([8.1](../platform.md#81-rules)).
-- **Review changes closes the dialog and opens a page**, because conflict review is a page on Windows ([9](../platform.md#9-sheets-popovers-and-notices)), where Apple nests a sheet.
 - **No separate checkmark** on the selected row: the selection visual says it.
 - **The explanation names the navigation pane**, not the sidebar.
 

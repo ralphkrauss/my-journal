@@ -3,7 +3,7 @@ import UIKit
 import XCTest
 
 /// An edit made against another device's permanent deletion is saved separately and listed in Settings ▸ Sync ▸
-/// Changed on Two Devices (docs/design/1-1-conflicts-and-reconnect.md, step 1). The library is opened with the
+/// Changed on Two Devices (docs/design/1-1-conflicts-and-reconnect.md). The library is opened with the
 /// conflict an earlier version left, which this version settles when it opens.
 final class KeptNotesUITests: XCTestCase {
     @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }

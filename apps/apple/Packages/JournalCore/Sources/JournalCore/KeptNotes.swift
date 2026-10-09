@@ -5,6 +5,8 @@ import GRDB
 /// What this device tells the person about changes it settled on its own ("Changed on Two Devices").
 public struct KeptNote: Codable, Equatable, Sendable, Identifiable {
     public enum Kind: String, Codable, Sendable {
+        /// An entry or template changed on two devices; the other version is saved as a separate entry or template.
+        case keptBoth
         /// An entry or template edited on one device and deleted permanently on another; the edit is saved separately.
         case deletedAndChanged
         /// A journal edited on one device and deleted permanently on another; it stays deleted.
@@ -24,18 +26,22 @@ public struct KeptNote: Codable, Equatable, Sendable, Identifiable {
     public var kind: Kind
     /// The record that was settled.
     public var recordID: UUID
-    /// The record the row opens: the parked entry or template.
+    /// The record the row opens: the copy, or the parked entry or template.
     public var otherID: UUID?
     /// The journal's name now, or the name of what the person edited.
     public var name: String
     /// A journal name that lost.
     public var otherName: String?
+    /// The other version of an entry or template was modified later than this device's, by the clocks of the two
+    /// devices. Only the wording of the notice and the row uses it; nothing is decided by it.
+    public var otherIsNewer: Bool?
     /// The person has seen it, or opened what it names.
     public var seen: Bool
     public var created: Date
 
     public init(
-        kind: Kind, recordID: UUID, otherID: UUID? = nil, name: String, otherName: String? = nil, created: Date
+        kind: Kind, recordID: UUID, otherID: UUID? = nil, name: String, otherName: String? = nil,
+        otherIsNewer: Bool? = nil, created: Date
     ) {
         self.id = UUID()
         self.kind = kind
@@ -43,6 +49,7 @@ public struct KeptNote: Codable, Equatable, Sendable, Identifiable {
         self.otherID = otherID
         self.name = name
         self.otherName = otherName
+        self.otherIsNewer = otherIsNewer
         self.seen = false
         self.created = created
     }
@@ -71,7 +78,8 @@ struct KeptNotesState: Codable, Equatable, Sendable {
     var version = 1
     var copies: [KeptCopy] = []
     var notes: [KeptNote] = []
-    /// The steps of the one-time pass over rows an earlier version left that have run: 1 is journals and markers.
+    /// The steps of the one-time pass over rows an earlier version left that have run: 1 is journals and markers, 2
+    /// is the rest, entries and templates.
     var passStep = 0
     /// The rows the pass took when it first ran that are still to be settled; nil once none is, or before it ran.
     var passRecords: [UUID]?
@@ -83,6 +91,16 @@ struct KeptNotesState: Codable, Equatable, Sendable {
             let index = notes.firstIndex { $0.kind != .journalRenamed } ?? 0
             notes.remove(at: index)
         }
+    }
+    /// Notes that the copy `otherID` of an entry or template was made or replaced. A replacement updates the note the
+    /// copy already has, keeping whether the person saw it, so co-editing doesn't fill the list.
+    mutating func noteKeptBoth(_ note: KeptNote) {
+        guard let index = notes.firstIndex(where: { $0.kind == .keptBoth && $0.otherID == note.otherID }) else {
+            return add(note)
+        }
+        notes[index].name = note.name
+        notes[index].otherIsNewer = note.otherIsNewer
+        notes[index].created = note.created
     }
     mutating func remember(_ copy: KeptCopy) {
         copies.removeAll { $0.copyID == copy.copyID }
@@ -146,7 +164,7 @@ extension JournalStore {
                 case .journalRenamed: return true
                 case .journalDeleted, .unknown:
                     return now.timeIntervalSince(note.created) < KeptNotesState.noteLifetime
-                case .deletedAndChanged:
+                case .deletedAndChanged, .keptBoth:
                     guard now.timeIntervalSince(note.created) < KeptNotesState.noteLifetime else { return false }
                     return note.otherID.map { existing.contains(id($0)) } ?? false
                 }

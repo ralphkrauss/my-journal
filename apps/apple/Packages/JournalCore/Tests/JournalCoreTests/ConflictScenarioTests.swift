@@ -24,6 +24,7 @@ final class ConflictScenarioTests: XCTestCase {
         var devices: [String: Device] = [:]
         var order: [String] = []
         var identities: [String: UUID] = [:]
+        var backups: [String: MemoryServer.State] = [:]
         func device(_ name: String) throws -> Device { try XCTUnwrap(devices[name], name) }
         mutating func identity(_ record: String) -> UUID {
             if let known = identities[record] { return known }
@@ -39,7 +40,7 @@ final class ConflictScenarioTests: XCTestCase {
         let recovery = try XCTUnwrap(crypto["recovery"] as? [String: Any])
         let key = try XCTUnwrap(Data(base64Encoded: try XCTUnwrap(recovery["vaultKey"] as? String)))
         let scenarios = try XCTUnwrap(fixture["scenarios"] as? [[String: Any]])
-        XCTAssertGreaterThanOrEqual(scenarios.count, 8)
+        XCTAssertGreaterThanOrEqual(scenarios.count, 14)
         for scenario in scenarios {
             try await run(scenario, key: key)
         }
@@ -53,13 +54,13 @@ final class ConflictScenarioTests: XCTestCase {
         for device in try XCTUnwrap(scenario["devices"] as? [String]) {
             let store = try JournalStore(directory: root.appendingPathComponent("\(name)-\(device)"), key: key)
             await store.useClock { time.withLock { $0 } }
-            let engine = SyncEngine(store: store, server: server)
+            let engine = SyncEngine(store: store, server: DeviceServer(server: server, device: UUID()))
             if let size = scenario["pageSize"] as? Int { await engine.usePageSize(size) }
             library.devices[device] = Device(store: store, engine: engine)
             library.order.append(device)
         }
         for step in try XCTUnwrap(scenario["steps"] as? [[String: Any]]) {
-            try await perform(step, in: &library, scenario: name)
+            try await perform(step, in: &library, scenario: name, server: server)
         }
         try await check(try XCTUnwrap(scenario["expect"] as? [String: Any]), in: library, scenario: name)
         for device in library.devices.values { try await device.store.close() }
@@ -67,8 +68,27 @@ final class ConflictScenarioTests: XCTestCase {
 
     // MARK: Steps
 
-    private func perform(_ step: [String: Any], in library: inout Library, scenario: String) async throws {
+    private func perform(
+        _ step: [String: Any], in library: inout Library, scenario: String, server: MemoryServer, round: Int? = nil
+    ) async throws {
         let action = try XCTUnwrap(step["do"] as? String)
+        if action == "repeat" {
+            for round in 1...(try XCTUnwrap(step["times"] as? Int)) {
+                for inner in try XCTUnwrap(step["steps"] as? [[String: Any]]) {
+                    try await perform(inner, in: &library, scenario: scenario, server: server, round: round)
+                }
+            }
+            return
+        }
+        if action == "backupServer" {
+            library.backups[try XCTUnwrap(step["label"] as? String)] = await server.state
+            return
+        }
+        if action == "restoreServer" {
+            let backup = try XCTUnwrap(library.backups[try XCTUnwrap(step["label"] as? String)])
+            await server.restore(backup, identity: "restored-\(UUID().uuidString)")
+            return
+        }
         if action == "settleAll" {
             for _ in 0..<4 {
                 for name in library.order { try await synchronize(try library.device(name)) }
@@ -91,7 +111,7 @@ final class ConflictScenarioTests: XCTestCase {
                     document: .plain(try XCTUnwrap(step["text"] as? String))))
         case "editEntry":
             var item = try await stored(device, id)
-            item.document = .plain(try XCTUnwrap(step["text"] as? String))
+            item.document = .plain(Self.filled(try XCTUnwrap(step["text"] as? String), round))
             item.modifiedAt = time.withLock { $0 }
             try await device.store.save(item)
         case "renameJournal":
@@ -115,6 +135,11 @@ final class ConflictScenarioTests: XCTestCase {
             _ = try await device.store.permanentlyDelete(try await device.store.preparePermanentDeletion(id))
         default: XCTFail("\(scenario): unknown step \(action)")
         }
+    }
+
+    /// `{n}` stands for the number of the round of the `repeat` step that holds the step.
+    private static func filled(_ text: String, _ round: Int?) -> String {
+        text.replacingOccurrences(of: "{n}", with: round.map(String.init) ?? "")
     }
 
     private func delete(entry id: UUID, on device: Device) async throws {
@@ -175,16 +200,26 @@ final class ConflictScenarioTests: XCTestCase {
             let other = try await held(by: try library.device(name))
             XCTAssertEqual(other, reference, "\(scenario): \(name) holds the same records as \(library.order[0])")
         }
-        XCTAssertEqual(reference.count, expect["total"] as? Int, "\(scenario): the records")
+        if let total = expect["total"] as? Int {
+            XCTAssertEqual(reference.count, total, "\(scenario): the records")
+        }
+        if let atMost = expect["totalAtMost"] as? Int {
+            XCTAssertLessThanOrEqual(reference.count, atMost, "\(scenario): the records")
+        }
         for expectation in try XCTUnwrap(expect["records"] as? [[String: Any]]) {
             let matches = reference.filter { held in
                 if let record = expectation["record"] as? String, library.identities[record] != held.id { return false }
                 if let kind = expectation["kind"] as? String, kind != held.kind { return false }
                 if let title = expectation["title"] as? String, title != held.title { return false }
+                if let suffix = expectation["titleSuffix"] as? String, !held.title.hasSuffix(suffix) { return false }
                 if let text = expectation["text"] as? String, text != held.text { return false }
                 return expectation["state"] as? String == held.state
             }
-            XCTAssertEqual(matches.count, expectation["count"] as? Int ?? 1, "\(scenario): \(expectation)")
+            if let atMost = expectation["countAtMost"] as? Int {
+                XCTAssertLessThanOrEqual(matches.count, atMost, "\(scenario): \(expectation)")
+            } else {
+                XCTAssertEqual(matches.count, expectation["count"] as? Int ?? 1, "\(scenario): \(expectation)")
+            }
         }
         let notes = expect["notes"] as? [String: [String]] ?? [:]
         for name in library.order {

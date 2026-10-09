@@ -103,7 +103,7 @@ final class AppLockUITests: XCTestCase {
         try await store.close()
     }
 
-    @MainActor func testBackgroundLockDismissesConflictWithoutResolvingEitherVersion() async throws {
+    @MainActor func testBackgroundLockHidesTheKeptVersionNoticeAndLosesNeitherVersion() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("ConflictLock-" + UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let fixture = try await seed(root, withConflict: true)
@@ -119,35 +119,33 @@ final class AppLockUITests: XCTestCase {
         try turnOnAppLock(app: app)
         NavigationTestSupport.closeSettings(app)
         try openEntry(fixture.entry.title, app: app)
-        app.buttons["Review Changes"].firstMatch.tap()
-        let versions = app.descendants(matching: .any).matching(identifier: "conflict-version").firstMatch
-        guard versions.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
-        capture(app, "Conflict review before background lock")
+        // The version an earlier build left for review was kept as a separate entry when the library opened.
+        let showOther = app.buttons["Show Other Version"]
+        guard showOther.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
+        capture(app, "Kept-version notice before background lock")
         XCUIDevice.shared.press(.home)
         app.activate()
         guard app.staticTexts["My Journal Is Locked"].waitToAppear(timeout: 10) else {
             throw NavigationFailure.unreachableAction
         }
-        XCTAssertFalse(versions.exists)
+        XCTAssertFalse(showOther.exists)
         XCTAssertFalse(app.textViews["Entry text"].exists)
-        XCTAssertFalse(app.buttons["Keep Both"].exists)
-        capture(app, "Returning from background hides conflict")
+        capture(app, "Returning from background hides the notice")
         let unlock = app.buttons["Unlock with Face ID"]
         try reveal(unlock, app: app, container: app.scrollViews.firstMatch)
         unlock.tap()
         try openEntry(fixture.entry.title, app: app)
-        app.buttons["Review Changes"].firstMatch.tap()
-        guard versions.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
-        capture(app, "Unresolved conflict available after unlocking")
-        app.navigationBars["Review Changes"].buttons["Cancel"].tap()
+        guard showOther.waitToAppear(timeout: 10) else { throw NavigationFailure.unreachableAction }
+        capture(app, "Unseen notice available after unlocking")
         app.terminate()
         let store = try JournalStore(directory: root, key: fixture.key)
         let local = try await store.item(fixture.entry.id)
-        XCTAssertEqual(local, fixture.entry)
+        XCTAssertEqual(local?.document, fixture.entry.document, "This device's version is unchanged")
+        let entries = try await store.items().filter { $0.kind == "entry" }
+        XCTAssertEqual(entries.count, 2, "The other version is an entry of its own")
+        XCTAssertEqual(entries.filter { $0.document.text == "Preserve the other version too." }.count, 1)
         let conflicts = try await store.conflicts()
-        XCTAssertEqual(conflicts, [try XCTUnwrap(fixture.conflict)])
-        let history = try await store.history(for: fixture.entry.id)
-        XCTAssertTrue(history.isEmpty)
+        XCTAssertTrue(conflicts.isEmpty)
         try await store.close()
     }
 
@@ -255,7 +253,6 @@ final class AppLockUITests: XCTestCase {
         let key: Data
         let phrase: String
         let entry: JournalItem
-        var conflict: ConflictVersion?
     }
     @MainActor private func seed(_ root: URL, appLock: Bool = false, withConflict: Bool = false) async throws
         -> Fixture
@@ -270,7 +267,6 @@ final class AppLockUITests: XCTestCase {
         try await store.save(journal)
         try await store.save(entry)
         let saved = try await store.item(entry.id)
-        var conflict: ConflictVersion?
         if withConflict {
             var remote = try XCTUnwrap(saved)
             remote.document = .plain("Preserve the other version too.")
@@ -282,13 +278,12 @@ final class AppLockUITests: XCTestCase {
                     cursor: 1, recordId: remote.id, revision: 1,
                     kind: remote.kind, payload: payload.base64EncodedString(), deviceId: UUID(),
                     modifiedAt: remote.modifiedAt))
-            conflict = try await store.conflicts().first
         }
         try await store.close()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
         var configuration = Configuration(recovery: recovery, lastJournalID: journal.id, lastEntryID: entry.id)
         if appLock { configuration.appLock = true }
         try JournalCoding.encoder().encode(configuration).write(to: root.appendingPathComponent("configuration.json"))
-        return Fixture(key: key, phrase: phrase, entry: try XCTUnwrap(saved), conflict: conflict)
+        return Fixture(key: key, phrase: phrase, entry: try XCTUnwrap(saved))
     }
 }

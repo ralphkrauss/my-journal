@@ -146,8 +146,8 @@ extension AppModel {
         guard !replacingVault, !erasingLibrary, !connectingToServer, !creatingEntry, deleteAllPhase == .idle else {
             return false
         }
-        // Changes to review, or ones a newer version must open, count. Kept notes do not: the person has nothing to do.
-        guard !saveFailure, error == nil, conflicts.isEmpty, !heldChangesNeedUpdate, !openingJournals, !showsSyncStatus
+        // Changes a newer version must open count. Kept notes do not: the person has nothing to do.
+        guard !saveFailure, error == nil, !heldChangesNeedUpdate, !openingJournals, !showsSyncStatus
         else { return false }
         let presenting =
             settingsPresented || templateChooserPresented || archiveExportPresented

@@ -18,6 +18,10 @@ public struct ResolvedConflict: Sendable, Equatable {
     public enum Result: Sendable, Equatable, Hashable {
         /// The same content: the merged deletion state, or the other version as it is.
         case sameContent
+        /// An entry or template that differs: this device's version stays and the other version is a separate one.
+        /// `copyID` is where it is (a replaced copy keeps its identity), nil when a record with the derived identity
+        /// already existed and nothing was written.
+        case keptBoth(copyID: UUID?)
         /// An edit parked next to a permanent deletion; `parkedID` is where it is, nil when it was not needed.
         case deletedAndChanged(parkedID: UUID?)
         case twoDeletions
@@ -37,8 +41,6 @@ public struct ConflictResolutionReport: Sendable, Equatable {
     public var deferred = 0
     /// Rows left because a version can't be read yet, or can't be opened or settled; the next point tries again.
     public var held = 0
-    /// Rows the person still reviews.
-    public var review = 0
     public init() {}
     /// Whether anything was written that a synchronization should send.
     public var changedRecords: Bool { !resolved.isEmpty }
@@ -69,10 +71,9 @@ extension JournalStore {
                 continue
             }
             do {
-                switch try settleConflict(recordID, openingPass: false) {
+                switch try settleConflict(recordID) {
                 case .resolved(let resolved): report.resolved.append(resolved)
                 case .held: report.held += 1
-                case .review: report.review += 1
                 case .gone: break
                 }
             } catch is CancellationError {
@@ -84,16 +85,16 @@ extension JournalStore {
         return report
     }
 
-    /// Whether a conflict is waiting that a later point settles on its own: not held, not for review. A row that
+    /// Whether a conflict is waiting that a later point settles on its own: not held. A row that
     /// can't be read is held, so it is not waiting.
     func hasConflictAwaitingResolution() throws -> Bool {
         for recordID in try conflictedRecordIDs() {
             let waiting = try? db.read { db -> Bool in
                 guard let state = try conflictState(db, recordID: recordID) else { return false }
-                switch ConflictResolution.resolve(local: state.local, other: state.other, ids: copyIdentity) {
-                case .held, .review: return false
-                default: return true
+                if case .held = ConflictResolution.resolve(local: state.local, other: state.other, ids: copyIdentity) {
+                    return false
                 }
+                return true
             }
             if waiting == true { return true }
         }
@@ -114,26 +115,26 @@ extension JournalStore {
         return held
     }
 
-    /// The conflicted records that this version settles on its own at the next pull: readable, and a journal or a
-    /// deletion rather than an entry to review. They keep a journal in use; reading one as "needs a newer app" would
-    /// be wrong. A held row, an entry for review and a row that can't be opened are not among them.
+    /// The conflicted records that this version settles on its own at the next pull: those it can read. They keep a
+    /// journal in use; reading one as "needs a newer app" would be wrong. A held row and a row that can't be opened
+    /// are not among them.
     func settlingConflictIDs(_ db: Database) throws -> Set<UUID> {
         var settling = Set<UUID>()
         let rows = try String.fetchAll(
             db, sql: "SELECT record FROM conflicts WHERE record<>?", arguments: [LibraryRecord.idText])
         for recordID in rows.compactMap(UUID.init(uuidString:)) {
             guard let state = try? conflictState(db, recordID: recordID) else { continue }
-            switch ConflictResolution.resolve(local: state.local, other: state.other, ids: copyIdentity) {
-            case .held, .review: break
-            default: settling.insert(recordID)
+            if case .held = ConflictResolution.resolve(local: state.local, other: state.other, ids: copyIdentity) {
+                continue
             }
+            settling.insert(recordID)
         }
         return settling
     }
 
     /// The entry or template that settling a conflict of `recordID` parked next to its permanent deletion, only while
     /// it is still exactly what that settlement wrote: not deleted for good, still deleted at the marker's time, not
-    /// edited, and with no change queued or waiting for review. Anything else is nil, so nothing is written onto a
+    /// edited, and with no change queued and no conflict waiting on it. Anything else is nil, so nothing is written onto a
     /// record someone changed meanwhile.
     public func unchangedParkedEntry(_ parkedID: UUID, for recordID: UUID) throws -> JournalItem? {
         try db.read { db in
@@ -156,7 +157,7 @@ extension JournalStore {
             return parked
         }
     }
-    private func plaintextDigest(_ payload: String, id recordID: UUID, kind: String) throws -> String {
+    func plaintextDigest(_ payload: String, id recordID: UUID, kind: String) throws -> String {
         KeptNotesState.digest(of: try plaintext(payload, id: recordID, kind: kind))
     }
 
@@ -164,7 +165,7 @@ extension JournalStore {
         ConflictCopyIdentity(vaultKey: protection == .encrypted ? key : nil)
     }
 
-    private func isBeingWritten(_ recordID: UUID) -> Bool {
+    func isBeingWritten(_ recordID: UUID) -> Bool {
         guard let saved = lastSaves[recordID] else { return false }
         let elapsed = clock().timeIntervalSince(saved)
         return (0..<Self.writingPause).contains(elapsed)
@@ -180,15 +181,15 @@ extension JournalStore {
 
     // MARK: The one-time pass
 
-    /// Settles the journal and deletion rows an earlier version left (3.9), before any synchronization can replace a
-    /// row's other version. The rows present when the pass first runs are recorded once, in the sealed key, and
-    /// only those are ever taken: a row made later, such as one a crash left in the middle of a paged catch-up, waits
-    /// for a completed pull. A row that fails, or that the caller holds, stays on that list for the next call; the
-    /// pass is complete when the list is empty.
+    /// Settles the rows an earlier version left (3.9), before any synchronization can replace a row's other version.
+    /// The rows present when the pass first runs are recorded once, in the sealed key, and only those are ever taken:
+    /// a row made later, such as one a crash left in the middle of a paged catch-up, waits for a completed pull. A row
+    /// that fails, or that the caller holds, stays on that list for the next call; the pass is complete when the list
+    /// is empty.
     func completeOpeningPass(holding: Set<UUID>) throws -> [ResolvedConflict] {
         guard !openingPassComplete else { return [] }
         var state = try db.read { try keptNotesStore.state($0) }
-        guard state.passStep < Self.passStepJournalsAndDeletions else {
+        guard state.passStep < Self.passStepAllKinds else {
             openingPassComplete = true
             return []
         }
@@ -211,7 +212,7 @@ extension JournalStore {
                 continue
             }
             do {
-                if case .resolved(let result) = try settleConflict(recordID, openingPass: true) {
+                if case .resolved(let result) = try settleConflict(recordID) {
                     resolved.append(result)
                 }
             } catch is CancellationError {
@@ -224,19 +225,20 @@ extension JournalStore {
         try db.write { db in
             var latest = try keptNotesStore.state(db)
             latest.passRecords = remaining.isEmpty ? nil : remaining
-            if remaining.isEmpty { latest.passStep = max(latest.passStep, Self.passStepJournalsAndDeletions) }
+            if remaining.isEmpty { latest.passStep = max(latest.passStep, Self.passStepAllKinds) }
             try keptNotesStore.save(db, latest)
         }
         openingPassComplete = remaining.isEmpty
         return resolved
     }
-    static let passStepJournalsAndDeletions = 1
+    /// The first version of the pass settled journals and permanent deletions (1); this one settles every kind (2).
+    static let passStepAllKinds = 2
 
     // MARK: One conflict
 
     enum ConflictSettlement {
         case resolved(ResolvedConflict)
-        case held, review, gone
+        case held, gone
     }
 
     /// The two versions of a conflicted record as the database holds them.
@@ -253,8 +255,6 @@ extension JournalStore {
         let otherModified: Date
         /// The other version is the server's at that revision, rather than a version kept from a save on this device.
         var otherIsFromServer: Bool { otherDevice != nil && otherRevision > 0 }
-        /// Whether the opening pass takes this row: a journal, or a permanent deletion on either side.
-        var coveredByFirstPass: Bool { kind == "journal" || local.isMarker || other.isMarker }
     }
 
     func conflictState(_ db: Database, recordID: UUID) throws -> ConflictState? {
@@ -287,24 +287,19 @@ extension JournalStore {
         return try protection.decode(data, key: key, context: VaultCrypto.recordContext(id: recordID, kind: kind))
     }
 
-    func settleConflict(_ recordID: UUID, openingPass: Bool) throws -> ConflictSettlement {
+    func settleConflict(_ recordID: UUID) throws -> ConflictSettlement {
         // The transaction also changes what is queued in memory; if it rolls back, the queue stays as it was.
         let queuedBefore = unsentOperations
         let settlement: ConflictSettlement
         do {
             settlement = try db.write { db -> ConflictSettlement in
                 guard let state = try conflictState(db, recordID: recordID) else { return .gone }
-                if openingPass && !state.coveredByFirstPass { return .review }
                 let outcome = ConflictResolution.resolve(local: state.local, other: state.other, ids: copyIdentity)
-                // A review whose other version this device's record has already passed is out of date: it goes to
+                // A conflict whose other version this device's record has already passed is out of date: it goes to
                 // Version History and the row ends. Nothing about the record changes. A version this app can't
-                // read, or one for the person to review, keeps its row; a permanent deletion has no content to keep.
+                // read keeps its row; a permanent deletion has no content to keep.
                 guard state.localRevision <= state.otherRevision else {
-                    switch outcome {
-                    case .held: return .held
-                    case .review: return .review
-                    default: break
-                    }
+                    if case .held = outcome { return .held }
                     try supersede(db, state)
                     return .resolved(ResolvedConflict(recordID: recordID, kind: state.kind, result: .superseded))
                 }
@@ -326,7 +321,10 @@ extension JournalStore {
         }
         switch outcome {
         case .held: return .held
-        case .review: return .review
+        case .keepBoth(let copy):
+            try keepLocalVersion(db, state, record: nil)
+            let copyID = try keepOtherVersionAsCopy(db, copy: copy, state: state)
+            return settled(state, .keptBoth(copyID: copyID))
         case .sameContent(let record, let adoptsOther):
             if adoptsOther {
                 try adoptOtherVersion(db, state)
@@ -387,7 +385,7 @@ extension JournalStore {
         try adoptOtherVersion(db, state)
         return true
     }
-    private func settled(_ state: ConflictState, _ result: ResolvedConflict.Result) -> ConflictSettlement {
+    func settled(_ state: ConflictState, _ result: ResolvedConflict.Result) -> ConflictSettlement {
         .resolved(ResolvedConflict(recordID: state.recordID, kind: state.kind, result: result))
     }
 
@@ -395,7 +393,7 @@ extension JournalStore {
 
     /// The other version becomes the record. From the server it is clean and nothing is sent; a version kept from a
     /// save on this device may never have been sent, so it is queued on its revision.
-    private func adoptOtherVersion(_ db: Database, _ state: ConflictState) throws {
+    func adoptOtherVersion(_ db: Database, _ state: ConflictState) throws {
         let recordID = id(state.recordID)
         try db.execute(
             sql: "UPDATE records SET payload=?,revision=?,dirty=? WHERE id=?",
@@ -413,7 +411,7 @@ extension JournalStore {
     }
     /// This device's version stays the record, on top of the other one: rebased on its revision and queued. `record`
     /// is the content to write when it differs from this device's version, such as with a merged deletion state.
-    private func keepLocalVersion(_ db: Database, _ state: ConflictState, record: JournalItem?) throws {
+    func keepLocalVersion(_ db: Database, _ state: ConflictState, record: JournalItem?) throws {
         let recordID = id(state.recordID)
         var payload = state.localPayload
         if let record, record != state.local.item { payload = try encode(record) }
@@ -436,17 +434,17 @@ extension JournalStore {
         }
         try db.execute(sql: "DELETE FROM conflicts WHERE record=?", arguments: [recordID])
     }
-    private func removeQueuedChanges(_ db: Database, recordID: String) throws {
+    func removeQueuedChanges(_ db: Database, recordID: String) throws {
         let operations = try String.fetchAll(
             db, sql: "SELECT operation FROM outbox WHERE record=?", arguments: [recordID])
         try db.execute(sql: "DELETE FROM outbox WHERE record=?", arguments: [recordID])
         for operation in operations.compactMap(UUID.init(uuidString:)) { unsentOperations[operation] = nil }
     }
-    private func forgetCachedPayload(_ recordID: UUID) {
+    func forgetCachedPayload(_ recordID: UUID) {
         editablePayloads[recordID] = nil
         decodedRecords[recordID] = nil
     }
-    private func keepInHistory(_ db: Database, recordID: UUID, kind: String, payload: String, saved: Date) throws {
+    func keepInHistory(_ db: Database, recordID: UUID, kind: String, payload: String, saved: Date) throws {
         try db.execute(
             sql: "INSERT INTO history(record,kind,payload,saved) VALUES (?,?,?,?)",
             arguments: [id(recordID), kind, payload, JournalCoding.timestamp(saved)])
@@ -498,7 +496,7 @@ extension JournalStore {
         return parked.id
     }
     /// The copies whose record is still here; a copy whose record is gone is forgotten.
-    private func copiesThatStillExist(_ db: Database, _ copies: [KeptCopy]) throws -> [KeptCopy] {
+    func copiesThatStillExist(_ db: Database, _ copies: [KeptCopy]) throws -> [KeptCopy] {
         var kept: [KeptCopy] = []
         for copy in copies {
             let exists = try Bool.fetchOne(
@@ -507,7 +505,7 @@ extension JournalStore {
         }
         return kept
     }
-    private func addNote(_ db: Database, _ note: KeptNote) throws {
+    func addNote(_ db: Database, _ note: KeptNote) throws {
         var state = try keptNotesStore.state(db)
         state.add(note)
         try keptNotesStore.save(db, state)

@@ -213,6 +213,8 @@ enum ConformanceConflictCases {
             "differs-template", "A template that differs is kept for review like an entry.", weekly, text(weekly),
             text(template(title: "Weekly review, edited")))
 
+        addCopyCases(base, add: add)
+
         // Rows 4 and 5: permanent deletion.
         let theirs = marker(of: base, at: "2026-09-26T10:00:00Z")
         add(
@@ -272,6 +274,51 @@ enum ConformanceConflictCases {
         return cases
     }
 
+    /// What row 3 makes of the other version: its title, place, deletion state, dates and images.
+    private static func addCopyCases(
+        _ base: JournalItem, add: (String, String, JournalItem, String, String) -> Void
+    ) {
+        add(
+            "copy-other-in-recently-deleted",
+            "Row 3: the other version was deleted. Each version stays where it is: the copy keeps R's deletion state.",
+            base, text(entry(markdown: "Edited here.\n")),
+            text(deleted(entry(markdown: "Edited there.\n"), at: "2026-09-25T08:00:00Z")))
+        add(
+            "copy-untitled-uses-the-first-line",
+            "Row 3: R has no title. The title the lists show for it is used: its first line.", base,
+            text(entry(markdown: "Edited here.\n")), text(entry(title: "", markdown: "A first line\nand a second.\n")))
+        let family = "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}"
+        let longLine = String(repeating: "a", count: 59) + family + String(repeating: "b", count: 5)
+        add(
+            "copy-untitled-first-line-cut-at-60-clusters",
+            "Row 3: the first line is cut at 60 extended grapheme clusters: 59 letters and the family emoji, which is one cluster of five scalars.",
+            base, text(entry(markdown: "Edited here.\n")), text(entry(title: "", markdown: longLine + "\n")))
+        add(
+            "copy-untitled-and-empty",
+            "Row 3: R has neither a title nor text. The lists show it as a new entry, and so does the copy.", base,
+            text(entry(markdown: "Edited here.\n")), text(entry(title: "", markdown: "")))
+        add(
+            "copy-title-already-suffixed",
+            "Row 3: the suffix is always appended, never detected. A copy of a copy reads twice.", base,
+            text(entry(markdown: "Edited here.\n")),
+            text(entry(title: "Morning pages (other version)", markdown: "Edited there.\n")))
+        var restoredElsewhere = entry(markdown: "Edited there.\n")
+        restoredElsewhere.restoredFromDeletionID = deletionID
+        add(
+            "copy-drops-the-restoration-marker",
+            "Row 3: restoredFromDeletionID is marker bookkeeping of the record, not of a version; the copy has none.",
+            base, text(entry(markdown: "Edited here.\n")), text(restoredElsewhere))
+        let weekly = template()
+        add(
+            "copy-of-a-template", "Row 3 for a template: a separate template, the title with the same suffix.", weekly,
+            text(template(markdown: "## Edited here\n")), text(template(markdown: "## Edited there\n")))
+        add(
+            "copy-with-an-image",
+            "Row 3: the copy refers to the same attachment, by the same identity. No bytes are copied.", base,
+            text(entry(markdown: "Edited here.\n")),
+            text(entry(markdown: "Edited there.\n\n![A walk](attachments/\(imageID))\n")))
+    }
+
     // MARK: Expected
 
     /// What settling `testCase` produces, as the fixture states it.
@@ -282,7 +329,18 @@ enum ConformanceConflictCases {
         func identity(_ value: UUID?) -> Any { value?.uuidString.lowercased() ?? NSNull() }
         switch ConflictResolution.resolve(local: local, other: other, ids: ids) {
         case .held: return ["row": 1, "outcome": "held"]
-        case .review: return ["row": 3, "outcome": "review"]
+        case .keepBoth(let copy):
+            return [
+                "row": 3, "outcome": "keepBoth",
+                "copy": [
+                    "id": identity(copy.id), "kind": copy.kind, "title": copy.title, "titleIsCatalogText": true,
+                    "date": instant(copy.date), "modifiedAt": instant(copy.modifiedAt),
+                    "journalID": identity(copy.journalID), "archivedAt": instant(copy.archivedAt),
+                    "deletedAt": instant(copy.deletedAt), "deletedWithJournal": copy.deletedWithJournal,
+                    "restoredFromDeletionID": identity(copy.restoredFromDeletionID),
+                    "markdown": copy.document.version == 2 ? copy.document.markdown : NSNull(),
+                ] as [String: Any],
+            ]
         case .sameContent(let record, let adoptsOther):
             return [
                 "row": 2, "outcome": "sameContent", "adoptsOther": adoptsOther, "deletedAt": instant(record.deletedAt),

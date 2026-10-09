@@ -84,7 +84,7 @@ Nothing is written to the library in any of these states.
 | A journal, or a change to it from another device that a newer version wrote and that stays held | Left out of the Journals list; its entries are listed in Unavailable Journals | `common.updateToRestoreEntry` on each entry; a held change adds `messages.conflict.kept.updateNeeded` to the Settings ▸ Sync footer |
 | A journal in Recently Deleted | Shown without Restore; Export Archive… is offered | `messages.unavailable.restoreJournalNeedsUpdate` |
 | Pins and journal order | Kept as they are; changes are refused | `messages.library.needsUpdate` in Settings ▸ Sync; pinning, unpinning and moving a journal show `messages.library.needsUpdate` in the error alert |
-| A version of an entry or template in a conflict | The review can't be completed | `messages.conflict.updateToReview` (see [conflict-review.md](conflict-review.md)) |
+| A version of an entry or template in a conflict | The two versions can't be combined yet; the entry can still be edited | The notice above it, `messages.conflict.kept.noticeUpdate` (see [kept-version-notice.md](kept-version-notice.md)) |
 | The server, or content arriving by sync | Sync stops | `messages.sync.appUpdateNeeded` |
 | An archive to import into a device with journals | Refused | `messages.import.archiveNeedsUpdate` |
 | Merging this device's journals while connecting | Refused | `messages.import.mergeNeedsUpdate` |
@@ -95,7 +95,7 @@ Nothing is written to the library in any of these states.
 A sidebar row `common.unavailableJournals` (symbol: a folder with an exclamation mark), after Templates and Recently Deleted. It appears only while at least one entry is unavailable, or while it is open. It lists entries whose journal:
 
 - is **missing** on this device (not synced yet, or removed by an earlier version);
-- was saved by a **newer version**, or has a change from another device that a newer version wrote and that stays held (a journal never has changes to review of its own: the device settles them, [flows/resolve-conflict.md](../flows/resolve-conflict.md)).
+- was saved by a **newer version**, or has a change from another device that a newer version wrote and that stays held (the device settles every other change from another device itself, [flows/resolve-conflict.md](../flows/resolve-conflict.md)).
 
 The list title is `common.unavailableJournals`; its search field says `common.searchUnavailableEntries`; when empty it shows `messages.unavailable.empty`. Pinned entries aren't grouped at the top here.
 

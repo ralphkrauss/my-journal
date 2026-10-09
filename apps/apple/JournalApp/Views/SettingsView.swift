@@ -11,7 +11,6 @@ struct SettingsView: View {
     @State private var connect: ConnectionRequest?
     /// Changes when a Connect or Reconnect sheet opened from Sync closes, so Devices reads its list again.
     @State private var devicesReload = 0
-    @State private var reviewingConflict: ConflictVersion?
     @StateObject private var serverAgents = ServerAgentsController()
     #if os(iOS)
         /// The pane shown, so Sync Status can open Settings at Sync.
@@ -81,10 +80,6 @@ struct SettingsView: View {
             #endif
         }
         .sheet(item: $connect, onDismiss: { devicesReload += 1 }) { _ in ConnectionView() }
-        .sheet(item: $reviewingConflict) { ConflictReview(id: $0.id) }
-        .onValueChange(of: model.locked) { locked in
-            if locked { reviewingConflict = nil }
-        }
     }
     #if os(macOS)
         private func tab(_ tab: AppSettingsTab, _ title: String, symbol: String) -> some View {
@@ -205,7 +200,6 @@ struct SettingsView: View {
                 }
             }
             KeptNotesSection(open: openKeptNote)
-            ConflictSettingsSection { reviewingConflict = $0 }
             if model.connection != nil {
                 // Absent when the server doesn't accept this device: the Server section says why.
                 if !model.serverRefusesThisDevice { DevicesSection(reload: devicesReload) }
@@ -274,31 +268,6 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .modifier(ServerAgentsPresentation(controller: serverAgents))
-    }
-}
-
-struct ConflictNotice: View {
-    @EnvironmentObject var model: AppModel
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    let id: UUID
-    @State private var review = false
-    var body: some View {
-        let layout =
-            dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout())
-        layout {
-            Text("This entry has changes from another device.").font(.callout)
-            if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-            Button("Review Changes") {
-                Task {
-                    if await model.flush() {
-                        try? await model.refresh()
-                        review = true
-                    }
-                }
-            }
-        }.padding().background(.quaternary, ignoresSafeAreaEdges: [])
-            .sheet(isPresented: $review) { ConflictReview(id: id) }
     }
 }
 

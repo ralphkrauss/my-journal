@@ -80,7 +80,8 @@ Entry actions each first save the open writing; if that fails, nothing happens. 
 | `entry-actions` | `library.toolbar.entryActions` | Editor header ▸ More (…) menu; the same items in the entry row's context menu | — | — | One command list, two presentations ([5](platform.md#5-context-menus)). |
 | `find-in-entry` | `library.entryActions.findInEntry` | Edit ▸ Find; the find bar | same as Find | — | Not repeated in the Entry actions menu: Windows has the Edit menu. |
 | `pin-entry-row` | `library.entryList.swipe.pin` / `library.entryList.swipe.unpin`; `library.entryActions.pin` / `library.entryActions.unpin` | Entry row context menu; swipe (touch and pen); Entry actions | — | — | Leading swipe with full swipe. Does not change the selection. |
-| `review-changes` | `common.reviewChanges` | The notice's action for an entry or template with changes to review; Settings ▸ Sync ▸ Changes to review | — | — | A page ([9](platform.md#9-sheets-popovers-and-notices)). |
+| `show-other-version` | `messages.conflict.kept.showOther` | The Informational `InfoBar` above the writing of an entry or template that was kept as two versions: its `ActionButton` | — | — | Opens the other version in the library; marks the notice seen. |
+| `dismiss-kept-notice` | `common.dismiss` | The same `InfoBar`'s close button (`IsClosable`), named `common.dismiss` for Narrator | — | — | Marks the notice seen; the notice is not shown again. |
 | `change-date` | `library.entryActions.changeDate` | Entry row context menu; Entry actions | — | — | Dialog with a `CalendarDatePicker`, date only: the entry keeps its time of day, as the spec says ([31](platform.md#31-dates-time-zones-and-formats)). |
 | `move-entry` | `library.entryActions.moveEntry` | Entry row context menu; Entry actions | — | — | Dialog. |
 | `save-as-template` | `library.entryActions.saveAsTemplate` | Entry row context menu; Entry actions | — | — | Dialog with a name field. |

@@ -69,7 +69,8 @@ Scrolling content:
 | Open entry couldn't be saved first | `messages.save.before.goBack` |
 | Version gone | `messages.history.versionUnavailable`, with Reload History |
 | Journal gone | `messages.history.chooseJournal` (also when a chosen journal disappears while the sheet is open) |
-| Chosen journal saved by a newer version | `messages.lifecycle.unsupportedJournal` |
+| Chosen journal saved by a newer version, or the entry has a conflict only a newer version can read | `messages.lifecycle.unsupportedJournal` |
+| A change from another device on the chosen journal still waits to be combined (a few seconds) | `messages.lifecycle.combining`; choose Restore again in a moment |
 | Restored but not shown | `editor.history.restored` / `editor.history.restoredTemplate` (Restore hidden) |
 | Locked | The sheet closes; previews are cleared; the work is cancelled. A copy already committed stays. |
 

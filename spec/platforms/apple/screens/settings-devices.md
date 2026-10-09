@@ -45,7 +45,7 @@ Device names are `AppModel.deviceName`: `Host.current().localizedName` on the Ma
 
 ## Layout
 
-- **iPhone:** a section of the Sync pane pushed in the Settings sheet's `NavigationStack`, below the Server section (and Changes to Review) and above Stop Syncing…; grouped rounded rows, the revoke button a trailing red text button. A phone scrolls to it.
+- **iPhone:** a section of the Sync pane pushed in the Settings sheet's `NavigationStack`, below the Server section (and Changed on Two Devices) and above Stop Syncing…; grouped rounded rows, the revoke button a trailing red text button. A phone scrolls to it.
 - **iPad:** the same pane in the centred Settings form sheet.
 - **Mac:** a section of the Sync tab of the Settings window, 560 points wide at a fixed height of `min(640, screen height minus 120)` that scrolls inside ([settings-sync](settings-sync.md)). The revoke button is a bordered button. Sheets and the dialog attach to the Settings window.
 - Add Device on the Mac is a sheet with `frame(minWidth: 400, idealWidth: 460, minHeight: 440, idealHeight: 540)` ([add-device](add-device.md)); Connect to a Server is 440 to 480 wide.

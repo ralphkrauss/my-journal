@@ -128,9 +128,13 @@ final class EarlierBuildLibraryTests: XCTestCase {
             XCTAssertEqual(
                 sha256(bytes), image.sha256, "An image's bytes are exactly as they were.", file: file, line: line)
         }
-        XCTAssertEqual(model.conflicts.count, manifest.conflictCount, file: file, line: line)
-        XCTAssertEqual(
-            model.conflicts.first?.id.uuidString.lowercased(), manifest.conflictedEntryID, file: file, line: line)
+        // The version the earlier build kept for review was settled when the library opened: the entry is as it was, and
+        // the other version is an entry of its own, listed in Settings ▸ Sync.
+        XCTAssertTrue(model.conflictedIDs.isEmpty, "Nothing is left waiting for the person", file: file, line: line)
+        XCTAssertNotNil(byID[manifest.conflictedEntryID], file: file, line: line)
+        let copies = items.filter { $0.title.hasSuffix(" (other version)") }
+        XCTAssertEqual(copies.count, manifest.conflictCount, "The other version is kept", file: file, line: line)
+        XCTAssertEqual(model.keptNoteRows.count, manifest.conflictCount, file: file, line: line)
         let history = try XCTUnwrap(manifest.records.first { $0.historyRows > 0 }, file: file, line: line)
         let versions = try await store.history(for: try XCTUnwrap(UUID(uuidString: history.id)))
         XCTAssertGreaterThan(versions.count, 1, "Version History is kept.", file: file, line: line)

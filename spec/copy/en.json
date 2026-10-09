@@ -55,6 +55,10 @@
     "text": "Delete",
     "context": "Destructive button in the delete and Delete Permanently alerts, and the trailing swipe action on an entry or template row (to Recently Deleted; in Recently Deleted it asks to delete permanently)."
   },
+  "common.dismiss": {
+    "text": "Dismiss",
+    "context": "Button of the notice above an entry or template that was kept as two versions: closes the notice and marks it seen. The row in Settings ▸ Sync ▸ Changed on Two Devices stays until it expires."
+  },
   "common.done": {
     "text": "Done",
     "context": "Closes a sheet after its action completed; on iPhone and iPad also the button that ends typing in an entry and ends the Journals list's edit mode (accessibility label of the checkmark)."
@@ -196,14 +200,6 @@
     "text": "Another journal is named “{name}”, so this one will be restored as “{newName}”.",
     "context": "Deleted journal’s page, directly above Restore Journal, when the name is taken; {newName} adds a number, such as “Work 2”."
   },
-  "common.reviewChanges": {
-    "text": "Review Changes",
-    "context": "Opens the review of changes made on two devices (handoff to the conflict review screens)."
-  },
-  "common.reviewChangesFor": {
-    "text": "Review Changes for {title}",
-    "context": "Accessibility label of each Review Changes button in Settings ▸ Sync ▸ Changes to Review."
-  },
   "common.revokeAccess": {
     "text": "Revoke Access",
     "context": "Destructive button in the detail and its confirmation. Also: Destructive button of the revoke confirmation."
@@ -249,7 +245,7 @@
   },
   "common.thisDevice": {
     "text": "This Device",
-    "context": "This device’s version in the entry review: the version choice and the shown version’s heading. Also: Secondary line under this device’s name in Devices."
+    "context": "Secondary line under this device’s name in Devices."
   },
   "common.tryAgain": {
     "text": "Try Again",
@@ -281,7 +277,7 @@
   },
   "common.version": {
     "text": "Version",
-    "context": "Caption of the Version menu (above the chosen version’s time). Also: Label of the This Device / Other Device choice."
+    "context": "Caption of the Version menu in Version History (above the chosen version’s time)."
   },
   "common.versionHistoryEllipsis": {
     "text": "Version History…",
@@ -1731,61 +1727,9 @@
     "text": "Unpinned",
     "context": "VoiceOver announcement after Unpin Entry."
   },
-  "messages.conflict.committedNotReloaded": {
-    "text": "Changes saved. The entry couldn’t be reloaded.",
-    "context": "Entry review: the choice was saved but reading the result failed. Only reloading is offered; the choice is never applied twice."
-  },
-  "messages.conflict.entryNotice": {
-    "text": "This entry has changes from another device.",
-    "context": "Notice above an entry or template that has changes to review (above the writing on every platform)."
-  },
-  "messages.conflict.keepBoth": {
-    "text": "Keep Both",
-    "context": "Primary action in an entry or template review: keeps both versions as separate items."
-  },
-  "messages.conflict.keepBothNote.entries": {
-    "text": "Keep Both saves the versions as separate entries.",
-    "context": "Note above Keep Both for an entry."
-  },
-  "messages.conflict.keepBothNote.templates": {
-    "text": "Keep Both saves the versions as separate templates.",
-    "context": "Note above Keep Both for a template."
-  },
-  "messages.conflict.keepBothOutcome.date": {
-    "text": "Each version keeps its date.",
-    "context": "Added when the versions have different entry dates."
-  },
-  "messages.conflict.keepBothOutcome.place": {
-    "text": "Each version stays where it is.",
-    "context": "Added after the Keep Both note when the versions are in different places (journal, Recently Deleted or archive)."
-  },
-  "messages.conflict.keepBothOutcome.placeAndDate": {
-    "text": "Each version keeps its place and date.",
-    "context": "Added when both differ."
-  },
-  "messages.conflict.keepOne": {
-    "text": "Keep One Version",
-    "context": "Menu with the two single-version choices."
-  },
-  "messages.conflict.keepOne.history": {
-    "text": "The original versions will remain in Version History.",
-    "context": "Confirmation message; for Other Device it follows an outcome line when keeping it moves or redates the entry."
-  },
-  "messages.conflict.keepOne.title": {
-    "text": "Keep this version?",
-    "context": "Confirmation title for Keep Version from This Device… or Other Device…."
-  },
-  "messages.conflict.keepOtherDevice": {
-    "text": "Keep Version from Other Device…",
-    "context": "Item of Keep One Version; asks for confirmation."
-  },
-  "messages.conflict.keepThisDevice": {
-    "text": "Keep Version from This Device…",
-    "context": "Item of Keep One Version; asks for confirmation."
-  },
-  "messages.conflict.keepVersion": {
-    "text": "Keep Version",
-    "context": "Confirming button in every keep-one-version confirmation (entries and journals)."
+  "messages.conflict.copyTitle": {
+    "text": "{title} (other version)",
+    "context": "Title of the other version of an entry or template that was kept as a separate item: its title, or when empty the title the lists show for it (its first line cut at 60 characters, or “New Entry” or “Untitled Template”), with this text appended. Always appended, never detected and never parsed; the body is untouched. Written into the item, so it is stored and synced as the item’s title."
   },
   "messages.conflict.kept.clear": {
     "text": "Clear List",
@@ -1794,6 +1738,14 @@
   "messages.conflict.kept.deletedAndChanged": {
     "text": "Deleted permanently on one device and changed on another. The changed version is saved separately.",
     "context": "Row of Changed on Two Devices: an entry or template deleted permanently on one device and changed on another. The row opens the saved version wherever it is."
+  },
+  "messages.conflict.kept.entry": {
+    "text": "Changed on two devices. Both versions are kept.",
+    "context": "Row of Changed on Two Devices: an entry or template that was changed on two devices, kept as two. The row’s title is the other version’s current title and the row opens it."
+  },
+  "messages.conflict.kept.entryNewer": {
+    "text": "Changed on two devices. The other version is newer. Both versions are kept.",
+    "context": "As messages.conflict.kept.entry, when the other version’s modified time is later than this device’s version’s (device clocks; the wording only, never the choice of the record)."
   },
   "messages.conflict.kept.footer": {
     "text": "Both versions are kept. This list clears after 30 days.",
@@ -1807,6 +1759,26 @@
     "text": "Renamed on two devices. The name is now “{name}”; the other was “{otherName}”.",
     "context": "Row of Changed on Two Devices: a journal renamed on two devices keeps the later name. Plain text; rename notes never expire."
   },
+  "messages.conflict.kept.notice.entry": {
+    "text": "This entry was also changed on another device. The other version is saved as a separate entry.",
+    "context": "Notice above the open entry on the device that kept both versions, with Show Other Version and Dismiss below the text."
+  },
+  "messages.conflict.kept.notice.entryNewer": {
+    "text": "This entry was also changed on another device, and that version is newer. It is saved as a separate entry.",
+    "context": "As messages.conflict.kept.notice.entry, when the other version’s modified time is later than this device’s (device clocks; wording only)."
+  },
+  "messages.conflict.kept.notice.template": {
+    "text": "This template was also changed on another device. The other version is saved as a separate template.",
+    "context": "Notice above the open template on the device that kept both versions, with Show Other Version and Dismiss below the text."
+  },
+  "messages.conflict.kept.notice.templateNewer": {
+    "text": "This template was also changed on another device, and that version is newer. It is saved as a separate template.",
+    "context": "As messages.conflict.kept.notice.template, when the other version’s modified time is later than this device’s (device clocks; wording only)."
+  },
+  "messages.conflict.kept.noticeUpdate": {
+    "text": "This entry has a version from a newer My Journal. Update My Journal to combine them.",
+    "context": "Notice above an entry or template whose conflict waits for a newer version of My Journal. Text only, no buttons; it also shows for a template."
+  },
   "messages.conflict.kept.rowHint": {
     "text": "Opens it.",
     "context": "Accessibility hint of a Changed on Two Devices row that opens an entry or template."
@@ -1815,149 +1787,13 @@
     "text": "Changed on Two Devices",
     "context": "Header of the section in Settings ▸ Sync that lists what the app settled itself after something changed on two devices, shown only when there are rows and the app is unlocked."
   },
+  "messages.conflict.kept.showOther": {
+    "text": "Show Other Version",
+    "context": "Button of the notice above an entry or template that was kept as two versions: opens the other version, saved as a separate entry or template, wherever it is, and marks the notice seen."
+  },
   "messages.conflict.kept.updateNeeded": {
     "text": "Some changes from another device need a newer version of My Journal. Update My Journal to combine them.",
     "context": "Line added to the Settings ▸ Sync footer while a journal or deletion change from another device was saved by a newer version and stays held."
-  },
-  "messages.conflict.locked": {
-    "text": "Unlock My Journal to review changes.",
-    "context": "Review sheet content when the journals locked while it was open (the sheet then closes)."
-  },
-  "messages.conflict.needsReview": {
-    "text": "Changes need review",
-    "context": "Accessibility label of the exclamation mark on an entry row with changes to review."
-  },
-  "messages.conflict.outcome.entry.archiveIn": {
-    "text": "The entry will be archived in {journal}.",
-    "context": "Confirmation when that version of the entry was archived by an earlier version of My Journal."
-  },
-  "messages.conflict.outcome.entry.archiveInAndDate": {
-    "text": "The entry will be archived in {journal}, and its date will change to {date}.",
-    "context": "Archived place and date both differ."
-  },
-  "messages.conflict.outcome.entry.dateChange": {
-    "text": "The entry’s date will change to {date}.",
-    "context": "Confirmation when only the entry’s date differs; {date} is the abbreviated date, for example “1 Oct 2026”."
-  },
-  "messages.conflict.outcome.entry.moveTo": {
-    "text": "The entry will move to {journal}.",
-    "context": "Confirmation when that version of the entry is in another place; {journal} is its journal name (“Untitled Journal” when unnamed)."
-  },
-  "messages.conflict.outcome.entry.moveToAndDate": {
-    "text": "The entry will move to {journal}, and its date will change to {date}.",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.outcome.entry.moveToRecentlyDeleted": {
-    "text": "The entry will move to Recently Deleted.",
-    "context": "Confirmation for Keep Version from Other Device… when that version of the entry is in Recently Deleted and this one isn’t."
-  },
-  "messages.conflict.outcome.entry.moveToRecentlyDeletedAndDate": {
-    "text": "The entry will move to Recently Deleted, and its date will change to {date}.",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.outcome.template.archiveIn": {
-    "text": "The template will be archived in {journal}.",
-    "context": "Confirmation when that version of the template was archived by an earlier version of My Journal."
-  },
-  "messages.conflict.outcome.template.archiveInAndDate": {
-    "text": "The template will be archived in {journal}, and its date will change to {date}.",
-    "context": "Archived place and date both differ."
-  },
-  "messages.conflict.outcome.template.dateChange": {
-    "text": "The template’s date will change to {date}.",
-    "context": "Confirmation when only the template’s date differs; {date} is the abbreviated date, for example “1 Oct 2026”."
-  },
-  "messages.conflict.outcome.template.moveTo": {
-    "text": "The template will move to {journal}.",
-    "context": "Confirmation when that version of the template is in another place; {journal} is its journal name (“Untitled Journal” when unnamed), or “Templates”."
-  },
-  "messages.conflict.outcome.template.moveToAndDate": {
-    "text": "The template will move to {journal}, and its date will change to {date}.",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.outcome.template.moveToRecentlyDeleted": {
-    "text": "The template will move to Recently Deleted.",
-    "context": "Confirmation for Keep Version from Other Device… when that version of the template is in Recently Deleted and this one isn’t."
-  },
-  "messages.conflict.outcome.template.moveToRecentlyDeletedAndDate": {
-    "text": "The template will move to Recently Deleted, and its date will change to {date}.",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.placement.archivedIn": {
-    "text": "Archived in {journal}",
-    "context": "As above, for a version archived by an earlier version of My Journal."
-  },
-  "messages.conflict.placement.archivedInDated": {
-    "text": "Archived in {journal}, dated {date}",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.placement.dated": {
-    "text": "Dated {date}",
-    "context": "Line when only the entry dates differ."
-  },
-  "messages.conflict.placement.inJournal": {
-    "text": "In {journal}",
-    "context": "Line under the shown version’s date when the versions are in different places; {journal} is its journal (“Untitled Journal” when unnamed)."
-  },
-  "messages.conflict.placement.inJournalDated": {
-    "text": "In {journal}, dated {date}",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.placement.inRecentlyDeleted": {
-    "text": "In Recently Deleted",
-    "context": "As above, for a version in Recently Deleted."
-  },
-  "messages.conflict.placement.inRecentlyDeletedDated": {
-    "text": "In Recently Deleted, dated {date}",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.placement.inTemplates": {
-    "text": "In Templates",
-    "context": "As above, for a template version."
-  },
-  "messages.conflict.placement.inTemplatesDated": {
-    "text": "In Templates, dated {date}",
-    "context": "Place and date both differ."
-  },
-  "messages.conflict.resolved": {
-    "text": "These changes have been resolved.",
-    "context": "Review sheet when the conflict no longer exists (resolved here or on another device)."
-  },
-  "messages.conflict.savingChanges": {
-    "text": "Saving Changes…",
-    "context": "Progress while a choice is saved in the entry review."
-  },
-  "messages.conflict.settingsSection": {
-    "text": "Changes to Review",
-    "context": "Header of the section in Settings ▸ Sync that lists every entry or template with changes to review (and every one saved by a newer version), shown only when there is one and the app is unlocked."
-  },
-  "messages.conflict.status.refreshFailed": {
-    "text": "Changes couldn’t be updated.",
-    "context": "Entry review: reading the changed versions again failed; previews and choices are hidden."
-  },
-  "messages.conflict.status.updated": {
-    "text": "These changes were updated. Review both versions again.",
-    "context": "Entry review: the other device’s version changed while the review was open, or a choice was refused because it changed. The choice is cleared and This Device is shown."
-  },
-  "messages.conflict.updateToReview": {
-    "text": "Update My Journal to review these changes.",
-    "context": "Review sheet when either version has content this version can’t read (unsupported conflict)."
-  },
-  "messages.conflict.updatingChanges": {
-    "text": "Updating Changes…",
-    "context": "Progress while the entry review reads the versions again."
-  },
-  "messages.conflict.version.hintOtherDevice": {
-    "text": "Version from Other Device",
-    "context": "Accessibility hint of the preview while Other Device is shown."
-  },
-  "messages.conflict.version.hintThisDevice": {
-    "text": "Version from This Device",
-    "context": "Accessibility hint of the read-only preview while This Device is shown."
-  },
-  "messages.conflict.version.otherDevice": {
-    "text": "Other Device",
-    "context": "The received version."
   },
   "messages.connection.alreadyConnected": {
     "text": "This device is already connected to this server.",
@@ -2163,10 +1999,6 @@
     "text": "This entry has changed. Review its images again.",
     "context": "ImageDescriptionError.changed."
   },
-  "messages.entry.moveNeedsReview": {
-    "text": "Review this entry’s changes before moving it.",
-    "context": "Move Entry for an entry with changes to review."
-  },
   "messages.entry.unavailableForEditing": {
     "text": "This entry is no longer available for editing.",
     "context": "EntryDateError / ImageDescriptionError / EntryArchivingError .unavailable: the entry was deleted or moved meanwhile."
@@ -2366,6 +2198,10 @@
   "messages.lifecycle.changed": {
     "text": "This journal has changed. Review the entries before deleting it.",
     "context": "JournalLifecycleError.changed (Delete Journal sheet and prompt: the entries changed while the alert was open; the generic alert shows this text)."
+  },
+  "messages.lifecycle.combining": {
+    "text": "Some changes from another device are still being combined. Try again in a moment.",
+    "context": "JournalLifecycleError.conflict: Move Entry, restoring a Version History version and Delete Permanently on an item that has a change from another device waiting to be combined (the next sync settles it, a few seconds at most). A change that only a newer version can read shows the update messages instead. Delete All reads such an item as one that can’t be deleted yet (library.deleteAll.held.other)."
   },
   "messages.lifecycle.missingJournal": {
     "text": "This journal is unavailable.",
@@ -3851,7 +3687,7 @@
     "context": "Section header in Encrypt Your Journals (variant B) and its Done sheet when syncing."
   },
   "settings.encryption.otherDevices.signIn": {
-    "text": "Your other devices will stop syncing until you sign in on each one with your master password. Changes they haven’t synced are kept. Any that conflict are shown for review.",
+    "text": "Your other devices will stop syncing until you sign in on each one with your master password. Changes they haven’t synced are kept. Any that conflict keep both versions.",
     "context": "Encrypt Your Journals, variant B, Your Other Devices."
   },
   "settings.encryption.otherDevices.update": {

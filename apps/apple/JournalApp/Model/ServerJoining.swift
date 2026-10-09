@@ -159,7 +159,7 @@ extension AppModel {
             uploadLocal: uploadLocal, replacingEmptyLibrary: replacingEmptyLibrary)
     }
     /// What this library holds, as Connect to a Server describes it (docs/design/join-with-local-journals.md).
-    var libraryContents: LibraryContents { LibraryContents(items: items, conflicts: conflicts.count) }
+    var libraryContents: LibraryContents { LibraryContents(items: items, conflicts: conflictedIDs.count) }
     /// No library, or one nobody wrote anything in that isn't connected: joining a server replaces it.
     var nothingWritten: Bool { store == nil || (connection == nil && libraryContents.nothingWritten) }
     /// Joining a server merges this library's journals with the server's, after the Merge Journals step.

@@ -25,7 +25,7 @@ Occasionally asks, through the platform's own rating prompt, for a rating from s
 1. **Installed from the store:** release builds from the store only; test and development builds never ask.
 2. **Writing on five days:** the person's own edits to an entry were saved on at least 5 different local calendar days (each day counts once).
 3. **Not recently:** at least 120 days since the last time it asked.
-4. **No problem this session:** nothing showed an error alert, a failed save or an entry or template with changes to review since the app launched (or since Erase Journals and Settings) (see below).
+4. **No problem this session:** nothing showed an error alert, a failed save or a change from another device that waits for a newer version since the app launched (or since Erase Journals and Settings) (see below).
 
 There is no minimum age of the installation and no limit per app version: five writing days take at least five days, and 120 days between requests gives at most three a year, which is the platform's own limit.
 
@@ -35,7 +35,7 @@ There is no minimum age of the installation and no limit per app version: five w
 2. Two seconds later, if nothing happened meanwhile, and:
    - the app is active and unlocked, and the system's own authentication isn't in front;
    - nothing is running: no connecting, importing, encrypting, erasing, deleting all, creating an entry, or opening journals;
-   - no failed save, no error, no entry or template with changes to review;
+   - no failed save, no error, no change from another device waiting for a newer version;
    - Sync Status isn't showing: no sync state needs the person, and sync has not been failing for a day while changes wait ([screens/sync-status](../screens/sync-status.md));
    - no sheet or panel is open (Settings, template chooser, export or import, New Journal), and nothing covers the window (alert, popover, menu);
    - no text field has focus;
@@ -53,9 +53,9 @@ There is no minimum age of the installation and no limit per app version: five w
 Three things mark the session, and no request is made until the app launches again (locking and unlocking don't clear it):
 - an error alert;
 - a failed save;
-- an entry or template with changes to review (a conflict the person must decide). Journals and permanent deletions that the app settles itself, and the notes of Changed on Two Devices, never count.
+- a change from another device that waits for a newer version of My Journal (a held conflict). Everything the app settles itself, entries and templates kept as two versions included, and the notes of Changed on Two Devices, never count.
 
-A sync problem is not remembered: while Sync Status shows one, the moment above is not clear, and once it is gone the next pause can ask. A person who fixed a sync problem a few minutes ago may be asked; one who has had an error, a failed save or an entry conflict to decide this session cannot.
+A sync problem is not remembered: while Sync Status shows one, the moment above is not clear, and once it is gone the next pause can ask. A person who fixed a sync problem a few minutes ago may be asked; one who has had an error, a failed save or a held change this session cannot.
 
 ## Storage
 

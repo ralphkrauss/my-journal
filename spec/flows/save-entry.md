@@ -29,11 +29,11 @@ Writing is saved on this device as it happens, quietly, and is never lost: not w
 3. Once saved, sync is asked to send the change when writing pauses (specified with sync).
 4. Only the editor's changes count as edits. Opening an entry, scrolling, selecting or switching views writes nothing.
 5. A read-only entry (newer format, in Recently Deleted, journal unavailable) is never saved, and locking doesn't save it (`StaleDraftTests.testLockingSavesOnlyUnsavedWritingAndLeavesReadOnlyEntriesAlone`).
-6. A save never writes an older copy over a newer one stored meanwhile (from another device); it becomes a conflict to review instead (`screens/entry-conflict.md`).
+6. A save never writes an older copy over a newer one stored meanwhile (from another device); both versions are kept instead: this device’s stays the entry and the stored one becomes a separate entry ([flows/resolve-conflict.md](resolve-conflict.md)).
 
 ## Before anything leaves the entry
 
-Every action that leaves or acts on the open entry first finishes its save: opening another entry or journal, New Entry, Done (phone, tablet), the Entry Actions that open a sheet (Change Date, Move Entry, Save as Template, Image Descriptions, Version History), restoring a version, reviewing a conflict, deleting the open entry, locking and quitting. Pinning doesn't wait for the save; it doesn't change the entry's content. If the save fails, the action doesn't happen and the entry stays open with the writing intact; the operations that need a saved entry say so, with `messages.save.before.goBack` in a sheet or pane and `messages.save.before.tryAgain` in the generic alert ([save-failure.md](save-failure.md)).
+Every action that leaves or acts on the open entry first finishes its save: opening another entry or journal, New Entry, Done (phone, tablet), the Entry Actions that open a sheet (Change Date, Move Entry, Save as Template, Image Descriptions, Version History), restoring a version, deleting the open entry, locking and quitting. Pinning doesn't wait for the save; it doesn't change the entry's content. If the save fails, the action doesn't happen and the entry stays open with the writing intact; the operations that need a saved entry say so, with `messages.save.before.goBack` in a sheet or pane and `messages.save.before.tryAgain` in the generic alert ([save-failure.md](save-failure.md)).
 
 ## When saving fails
 

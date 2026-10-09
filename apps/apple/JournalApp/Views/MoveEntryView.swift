@@ -12,8 +12,6 @@ struct MoveEntryView: View {
     @Environment(\.dismiss) var dismiss
     let entryID: UUID
     @State private var creatingJournal = false
-    @State private var conflictToReview: UUID?
-    @State private var reviewing = false
     @State private var selection: UUID?
     @State private var busy = false
     @State private var error: String?
@@ -47,18 +45,10 @@ struct MoveEntryView: View {
     var body: some View {
         layout.interactiveDismissDisabled(busy)
             .sheet(isPresented: $creatingJournal) { RecoveryJournalView(entryID: entryID) }
-            .sheet(isPresented: $reviewing) {
-                if let id = conflictToReview, model.conflicts.contains(where: { $0.id == id }) {
-                    ConflictReview(id: id)
-                } else {
-                    Text("These changes have been resolved.").padding()
-                }
-            }
             .onDisappear { operation?.cancel() }
             .onValueChange(of: model.locked) { locked in
                 if locked {
                     creatingJournal = false
-                    reviewing = false
                     operation?.cancel()
                     dismiss()
                 }
@@ -66,7 +56,6 @@ struct MoveEntryView: View {
             .onValueChange(of: model.draft?.id) { currentID in
                 if currentID != entryID {
                     creatingJournal = false
-                    reviewing = false
                     operation?.cancel()
                     dismiss()
                 }
@@ -144,7 +133,6 @@ struct MoveEntryView: View {
             }
             if !destinations.isEmpty { Button("New Journal…") { creatingJournal = true }.padding().disabled(busy) }
             if let error { Text(error).foregroundStyle(.red).padding().accessibilityIdentifier("Move error") }
-            if conflictToReview != nil { Button("Review Changes") { reviewing = true }.padding().disabled(busy) }
             if busy { ProgressView("Moving Entry…").padding() }
         }
     }
@@ -160,12 +148,11 @@ struct MoveEntryView: View {
             } catch JournalLifecycleError.conflict(let id) {
                 try? await model.refresh()
                 guard !model.locked else { return }
-                // An entry's changes can be reviewed; a journal's wait for a newer version of the app.
-                if model.conflicts.contains(where: { $0.id == id }) {
-                    conflictToReview = id
-                    showError("These changes need review before you can continue.")
-                } else {
+                // An entry's changes are combined at the next sync; what a newer version of the app must read waits for it.
+                if model.heldConflictIDs.contains(id) {
                     showError(JournalLifecycleError.unsupportedJournal.shown(.saving))
+                } else {
+                    showError(JournalLifecycleError.conflict(id).shown(.saving))
                 }
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }

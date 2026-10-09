@@ -49,7 +49,7 @@ Also: Settings ▸ Agent Access shows Reconnect… with `settings.agents.connect
 
 1. The server is set up, so this device signs in: Enter {credential} (Sign In), or, for a server without encryption and a device whose library is unencrypted, Add This Device / Use a Recovery Code; Use a Connected Device Instead… is also available. A device with an encrypted library is refused by a server without encryption with `messages.connection.encryptionOff`.
 2. On access:
-   - if the server holds this same library (it holds a record this library synced before, or is empty, and for an encrypted server the same key): this device continues by identity, keeping its pending changes; nothing is merged. Identical records are adopted, different ones become changes to review, missing ones are sent;
+   - if the server holds this same library (it holds a record this library synced before, or is empty, and for an encrypted server the same key): this device continues by identity, keeping its pending changes; nothing is merged. Identical records are adopted, different ones keep both versions ([flows/resolve-conflict.md](resolve-conflict.md)), missing ones are sent;
    - if the server holds another library: **Merge Journals** appears before anything is sent ("Merge only if {host} is your server."). Merge continues; Cancel leaves everything as it was.
 3. The sheet closes; sync resumes. Cancel or Back from Merge Journals gives up the access just granted, and nothing was sent (owner decision, 2026-10-06; the landing steps are in [flows/connect-to-server](connect-to-server.md), Merge Journals).
 
@@ -57,7 +57,7 @@ Also: Settings ▸ Agent Access shows Reconnect… with `settings.agents.connect
 
 1. The sign-in step reads `settings.connect.signIn.introEncrypted` ("The server now uses encryption. Enter its master password.") with footer `settings.connect.signIn.footerEncrypted` ("The journals on this device will be encrypted too. Changes that haven’t synced are kept.").
 2. Sign In: this device's journals are encrypted with the server's key, keeping their identities and unsynced changes; the busy row shows encryption progress (`settings.encryption.progress`). When the sheet was opened from the Encrypt Your Journals form (variant C), the form gives way to the journals when this finishes, and Not Now on the form is the way back without signing in.
-3. The sheet closes; sync resumes. Pending changes are sent; any that conflict are shown for review. A replaced server is a different library and takes Merge Journals instead; encryption turned on elsewhere is the same library and re-encrypts this one with the server's key.
+3. The sheet closes; sync resumes. Pending changes are sent; any that conflict keep both versions. A replaced server is a different library and takes Merge Journals instead; encryption turned on elsewhere is the same library and re-encrypts this one with the server's key.
 
 ## Errors
 

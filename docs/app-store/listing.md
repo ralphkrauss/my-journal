@@ -27,8 +27,8 @@ python3 -c 'import sys; s=sys.stdin.read().rstrip("\n"); print(len(s), "characte
 | Name | 30 characters | 26 characters | [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information) |
 | Subtitle | 30 characters | 28 characters | [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information) |
 | Promotional text | 170 characters | 144 characters | [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information) |
-| Description, iOS | 4000 characters | 3506 characters (3562 bytes) | same |
-| Description, macOS | 4000 characters | 3680 characters (3734 bytes) | same |
+| Description, iOS | 4000 characters | 3508 characters (3564 bytes) | same |
+| Description, macOS | 4000 characters | 3682 characters (3736 bytes) | same |
 | Keywords | 100 bytes, comma-separated, no spaces after commas, each longer than 2 characters | 97 bytes, 13 keywords; English (U.K.) set 100 bytes, 11 keywords | same; [App Store search](https://developer.apple.com/app-store/search/) |
 | What's New | Not shown for the first version | 593 characters, for TestFlight and GitHub | same |
 
@@ -90,7 +90,7 @@ YOUR SERVER, OR NONE
 • Your iPhone and iPad reach it over a private network you set up, such as a VPN, or over HTTPS.
 • Add an iPhone or iPad by scanning a code on a device you already use, or any device by entering your master password.
 • Sync works quietly and tells you only when something needs attention.
-• If an entry changes on two devices before they sync, both versions are kept for you to review. Nothing is overwritten.
+• If an entry changes on two devices before they sync, both versions are kept as separate entries. Nothing is overwritten.
 
 OPEN AND PORTABLE
 • The apps and the sync server are open source under the Apache License 2.0. You can build them yourself.
@@ -182,7 +182,7 @@ YOUR SERVER, OR NONE
 • Run the open-source server on a home server, a computer you keep on, or a hosting service you choose. Your Mac, iPhone and iPad reach it over a private network you set up, such as a VPN, or over HTTPS.
 • Add a device by entering your master password, or by approving it on a device you already use and checking that both show the same code.
 • Sync works quietly and tells you only when something needs attention.
-• If an entry changes on two devices before they sync, both versions are kept for you to review. Nothing is overwritten.
+• If an entry changes on two devices before they sync, both versions are kept as separate entries. Nothing is overwritten.
 
 OPEN AND PORTABLE
 • The apps and the sync server are open source under the Apache License 2.0. You can build them yourself.
@@ -271,7 +271,7 @@ Every feature in the descriptions was checked in the code on 2026-10-05. The tem
 | Encryption on by default (Use Encryption is the suggested choice on the first screen) | `CreateJournalView.swift` |
 | App Lock with Face ID, Touch ID or the passcode (no PIN); Mac locks after inactivity (30 minutes by default), on sleep and on switching users | `AppLockSettings.swift`, `InactivityLockSettings.swift` |
 | Erase Journals and Settings | `EraseSection.swift` (build 16) |
-| Sync only through the person's server, which the apps don't include (since 2026-10-05); scanning a code; entries and templates that differ are kept for review, and journals and deletions that differ settle themselves, keeping both versions; quiet sync status | `ServerClient.swift`, `SettingsView.swift`, `AddDeviceView.swift`, `client-only-mac-lists-markdown-2026-10-05.md`, `quiet-sync-and-title-alignment.md` |
+| Sync only through the person's server, which the apps don't include (since 2026-10-05); scanning a code; entries, templates, journals and deletions that differ settle themselves, keeping both versions (a notice and Changed on Two Devices say so); quiet sync status | `ServerClient.swift`, `SettingsView.swift`, `AddDeviceView.swift`, `client-only-mac-lists-markdown-2026-10-05.md`, `quiet-sync-and-title-alignment.md` |
 | Agent access on every platform through the person's server, read-only, per journal, revocable | `ServerAgentsView.swift`, `agent-access-simplified.md` |
 | Export as Markdown, with images (build 17) | `MarkdownExportView.swift`, `JournalCore/MarkdownExport.swift`, [protocol/markdown-export.md](../../protocol/markdown-export.md) |
 | No analytics, ads or tracking | [app-privacy.md](app-privacy.md) |

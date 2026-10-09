@@ -9,7 +9,7 @@ public enum JournalLifecycleError: Error, LocalizedError, Sendable {
         case .unsupportedJournal: return "Update My Journal to make changes to this journal."
         case .alreadyDeleted: return "This journal is already in Recently Deleted."
         case .alreadyRestored: return "This journal has already been restored."
-        case .conflict: return "These changes need review before you can continue."
+        case .conflict: return "Some changes from another device are still being combined. Try again in a moment."
         case .destinationGone: return "The journal to restore into is no longer available. Nothing was restored."
         }
     }
@@ -29,7 +29,7 @@ public enum EntryLocation: Equatable, Sendable {
 }
 
 /// Why an entry's journal is unavailable. A journal with a conflict that waits for a newer app is unsupported: this
-/// version settles every other journal conflict on its own.
+/// version settles every other conflict on its own.
 public enum UnavailableJournal: Equatable, Sendable {
     case missing, unsupported
 }
@@ -51,7 +51,7 @@ public struct JournalLifecycleSnapshot: Sendable {
         parents = Dictionary(
             self.items.filter { $0.kind == "journal" }.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
-    /// The conflicted records that keep a journal out of use: a version this app can't read, or an entry to review.
+    /// The conflicted records that keep a journal out of use: those holding a version this app can't read.
     private var unusableIDs: Set<UUID> { conflictedIDs.subtracting(settlingIDs) }
     public var liveJournals: [JournalItem] {
         parents.values.filter { $0.deletedAt == nil && $0.document.isEditable && !unusableIDs.contains($0.id) }

@@ -42,7 +42,7 @@ Within a section, entries are sorted by entry date, newest first (ties by identi
 
 **Row** (every row the same height, as in Notes):
 
-1. First line, small secondary text: the entry date as day and abbreviated month (“6 Oct”). In All Entries, at the trailing end, the entry's journal with a closed-book symbol (`common.untitledJournal` when blank). At the far trailing end, an exclamation-circle symbol when the entry has changes to review (accessibility label `messages.conflict.needsReview`).
+1. First line, small secondary text: the entry date as day and abbreviated month (“6 Oct”). In All Entries, at the trailing end, the entry's journal with a closed-book symbol (`common.untitledJournal` when blank).
 2. Title, medium weight, one line: the entry's title; if blank, its first line of text; if empty, `library.entryList.untitledEntry`.
 3. Preview, secondary text, one line: the start of the text with runs of whitespace collapsed; `library.entryList.noAdditionalText` when there is none.
 
@@ -98,7 +98,7 @@ From the leading swipe, the context menu, Entry Actions, or File ▸ Pin Entry (
 - VoiceOver announces `messages.announce.pinned` or `messages.announce.unpinned`, and its focus follows the row to its new section.
 - Undo and Redo: Edit ▸ Undo Pin Entry / Undo Unpin Entry (`library.entryActions.pinUndo`, `library.entryActions.unpin`).
 - A pin belongs to the entry: it's kept through edits, Change Date, Move Entry, deletion (hidden in Recently Deleted) and restoring. Copies (Save as Template, Version History copies) aren’t pinned. Pins sync.
-- Can be pinned: an entry listed in a journal in use, while unlocked and not replacing the library, including read-only entries and entries with changes to review. Not templates, not entries in Recently Deleted or Unavailable Journals.
+- Can be pinned: an entry listed in a journal in use, while unlocked and not replacing the library, including read-only entries. Not templates, not entries in Recently Deleted or Unavailable Journals.
 - Failure: error alert `messages.generic.pinFailed` or `messages.generic.unpinFailed`; `messages.library.needsUpdate` when the library record is from a newer version.
 
 ### Delete Entry (`delete-entry`)

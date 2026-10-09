@@ -46,7 +46,7 @@ The folder holds:
 - the images, in an `attachments` folder beside the entries. HEIC photos are converted to JPEG, so other apps can show them;
 - your templates, in a `Templates` folder.
 
-Recently Deleted, earlier versions, and the other version of an entry with [changes from another device](troubleshooting.md#an-entry-has-changes-from-another-device) aren’t included. If something was left out, such as images that haven’t downloaded yet, a note under the button says what and what to do, for example to export again after syncing.
+Recently Deleted, earlier versions, and the other version of an entry whose [change from another device](troubleshooting.md#something-changed-on-two-devices) is held until you update My Journal aren’t included. When both versions were kept, the other one is a separate entry and is included. If something was left out, such as images that haven’t downloaded yet, a note under the button says what and what to do, for example to export again after syncing.
 
 The files aren’t encrypted, even when your journals are, so anyone with the folder can read them. Photos keep their original metadata, which can include where they were taken; check before you share the files. The exact format is in [Markdown export](../../protocol/markdown-export.md).
 

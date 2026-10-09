@@ -65,7 +65,7 @@ final class StaleDraftTests: XCTestCase {
         XCTAssertNil(stored?.deletedAt)
         XCTAssertEqual(stored?.isPermanentlyDeleted, false)
         let conflicts = try await store.conflicts()
-        XCTAssertTrue(conflicts.isEmpty, "Nothing was typed here, so there is nothing to review")
+        XCTAssertTrue(conflicts.isEmpty, "Nothing was typed here, so there is nothing to keep apart")
     }
 
     func testAnOpenEntryFollowsOtherDevicesAndTypingOverAnUnseenChangeKeepsBoth() async throws {
@@ -83,7 +83,7 @@ final class StaleDraftTests: XCTestCase {
         XCTAssertEqual(conflicts.first?.remote.document.text, "Rewritten on the iPad")
         XCTAssertEqual(conflicts.first?.local.document.text, "Continued on the iPhone, then on the Mac")
         try await model.refresh()
-        XCTAssertEqual(model.conflicts.map(\.id), [id])
+        XCTAssertEqual(model.conflictedIDs, [id], "Settled once writing pauses; nothing is asked")
     }
 
     func testLockingSavesOnlyUnsavedWritingAndLeavesReadOnlyEntriesAlone() async throws {

@@ -57,7 +57,7 @@ A standard settings window with a tab bar of five tabs, each with an icon, in th
 4. `settings.pane.backup`
 5. `settings.pane.agents`
 
-Each tab's content is a grouped form, 560 points wide. The window resizes to each tab's content, up to the screen's usable height (less room for the title bar and tabs); longer content scrolls. Every tab except General keeps a minimum height of 440 points so the sheets it presents fit inside the window. The Sync tab has one height, the smaller of 640 points and the room the screen allows, and scrolls inside it, because it gains and loses sections (Devices, Changes to Review) as the connection changes and the device list arrives, and the window must not jump. A tab whose content fits doesn't rubber-band when scrolled.
+Each tab's content is a grouped form, 560 points wide. The window resizes to each tab's content, up to the screen's usable height (less room for the title bar and tabs); longer content scrolls. Every tab except General keeps a minimum height of 440 points so the sheets it presents fit inside the window. The Sync tab has one height, the smaller of 640 points and the room the screen allows, and scrolls inside it, because it gains and loses sections (Devices, Changed on Two Devices) as the connection changes and the device list arrives, and the window must not jump. A tab whose content fits doesn't rubber-band when scrolled.
 
 There is no About section and no Done button: About is in the Help menu (`screens/settings-about`), and Erase Journals and Settings… is the last group of General (`screens/settings-general`).
 

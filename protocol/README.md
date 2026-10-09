@@ -9,7 +9,7 @@ This contract is implemented by the ASP.NET Core server and the shared Swift cor
 | [archive.md](archive.md) | The `.journalarchive` package and its database |
 | [markdown-export.md](markdown-export.md) | Export as Markdown: the folder of Markdown files with front matter and images, for other apps |
 | [journal-lifecycle.md](journal-lifecycle.md), [permanent-deletion.md](permanent-deletion.md), [entry-archiving.md](entry-archiving.md), [history-recovery.md](history-recovery.md) | Deletion, restoration and history rules |
-| [conflicts.md](conflicts.md) | Settling a record changed on two devices without asking (conflicts v1): the rules, identities of parked entries, when they run, and the pass over conflicts an earlier version left |
+| [conflicts.md](conflicts.md) | Settling a record changed on two devices without asking (conflicts v1): the rules, the copy of the other version of an entry or template, identities of copies and parked entries, when they run, and the pass over conflicts an earlier version left |
 | [server-backup.md](server-backup.md) | The server's backup directory, upgrades and downgrades |
 | [agent-access-server.md](agent-access-server.md) | Agent access through the server's MCP endpoint: transport, authorization, keys and the agent's copy |
 | [conformance/](conformance/README.md) | Fixed, versioned test vectors every client and the server must read and produce |

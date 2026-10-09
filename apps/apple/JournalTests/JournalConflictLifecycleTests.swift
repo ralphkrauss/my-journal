@@ -70,9 +70,9 @@ final class JournalConflictLifecycleTests: XCTestCase {
         XCTAssertEqual(retained?.journalID, journal.id)
         try await reopened.store?.close()
     }
-    /// Review Changes says where each version is when the other device moved or deleted the entry, and the choices
-    /// keep each version there, as the review says.
-    func testEntryReviewSaysWhereEachVersionIsAndKeepBothKeepsThemThere() async throws {
+    /// Each version stays where it is when the other device moved or deleted the entry: this device's in its journal,
+    /// the other in Recently Deleted, with a title that says it is the other version.
+    func testKeepingBothLeavesEachVersionWhereItIs() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let key = try VaultCrypto.generateKey()
@@ -89,41 +89,20 @@ final class JournalConflictLifecycleTests: XCTestCase {
         remote.journalID = home.id
         remote.deletedAt = Date()
         remote.document = JournalDocument(blocks: [DocumentBlock(runs: [TextRun("Older text")])])
-        let conflict = try await installConflict(remote, revision: 1, store: store, key: key)
-        let journals = [work, home]
-        XCTAssertEqual(
-            ConflictPlacement.line(for: conflict.local, other: conflict.remote, journals: journals), "In Work")
-        XCTAssertEqual(
-            ConflictPlacement.line(for: conflict.remote, other: conflict.local, journals: journals),
-            "In Recently Deleted")
-        XCTAssertEqual(
-            ConflictPlacement.outcome(keepingRemote: conflict.remote, local: conflict.local, journals: journals),
-            "The entry will move to Recently Deleted.")
-        XCTAssertEqual(
-            ConflictPlacement.keepBothOutcome(conflict.local, conflict.remote), "Each version stays where it is.")
-        var archived = remote
-        archived.deletedAt = nil
-        archived.archivedAt = Date()
-        archived.date = Date(timeIntervalSince1970: 1_790_000_000)
-        let archivedLine = try XCTUnwrap(ConflictPlacement.line(for: archived, other: local, journals: journals))
-        XCTAssertTrue(archivedLine.hasPrefix("Archived in Home, dated "), archivedLine)
-        let archivedOutcome = try XCTUnwrap(
-            ConflictPlacement.outcome(keepingRemote: archived, local: local, journals: journals))
-        XCTAssertTrue(archivedOutcome.hasPrefix("The entry will be archived in Home, and its date will change to "))
-        var edited = local
-        edited.document = remote.document
-        XCTAssertNil(ConflictPlacement.line(for: edited, other: local, journals: journals))
-        XCTAssertNil(ConflictPlacement.keepBothOutcome(edited, local))
-        try await store.resolve(conflict, choice: .keepBoth)
+        _ = try await installConflict(remote, revision: 1, store: store, key: key)
+        let report = try await store.resolveConflicts(at: .local)
+        XCTAssertEqual(report.resolved.count, 1)
         let entries = try await store.items().filter { $0.kind == "entry" }
         XCTAssertEqual(entries.count, 2)
         let kept = try XCTUnwrap(entries.first { $0.id == local.id })
         XCTAssertEqual(kept.journalID, work.id)
         XCTAssertNil(kept.deletedAt)
+        XCTAssertEqual(kept.document.text, "Edited here")
         let copy = try XCTUnwrap(entries.first { $0.id != local.id })
         XCTAssertEqual(copy.journalID, home.id)
         XCTAssertNotNil(copy.deletedAt)
         XCTAssertEqual(copy.document, remote.document)
+        XCTAssertEqual(copy.title, "Plans (other version)")
         try await store.close()
     }
 

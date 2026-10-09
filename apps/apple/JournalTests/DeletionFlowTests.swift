@@ -191,7 +191,7 @@ final class DeletionFlowTests: XCTestCase {
         model.store = store
         model.loaded = true
         try await model.refresh()
-        XCTAssertTrue(model.conflicts.isEmpty, "Nothing is left to review")
+        XCTAssertTrue(model.conflictedIDs.isEmpty, "Nothing is left waiting")
         XCTAssertEqual(model.filteredDeletedTemplates.map(\.id), [parkedID])
         XCTAssertEqual(model.filteredDeletedTemplates.first?.title, edited.title)
         XCTAssertFalse(model.items.contains { $0.id == template.id }, "The deletion is final")

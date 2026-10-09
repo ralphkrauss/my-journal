@@ -43,7 +43,7 @@ Insert Image is a request, not a view: `EditorActions.insertImage(from:)` record
 | Picker | `ImagePickerPresenter`: `.photosPicker` (`maxSelectionCount: nil`, `selectionBehavior: .ordered`, `matching: .images`); `CameraPicker` (`UIImagePickerController`, source camera) in `.fullScreenCover`; `.fileImporter(allowedContentTypes: [.image], allowsMultipleSelection: true)` | `.fileImporter` with the same arguments, which is the system open panel. Whatever the recorded source says, the Mac presents the open panel |
 | Format menu on iPad | Format ▸ Insert ▸ Image… calls `insertImage(from: .photos)`. From the Formatting panel, `finishPresentation` also uses `.photos` | Format ▸ Insert ▸ Image… calls `insertImage(from: .files)` |
 | Camera denied | `ImagePickerPresenter` shows an `.alert` (`CameraPicker.isDenied`): `editor.insertImage.cameraOff.title`, `editor.insertImage.cameraOff.message`, buttons `common.openSettings` and `common.cancel`. A restricted camera hides Take Photo | None |
-| Progress | `ImageImportNotice`, above the whole editor (above the title header), under the conflict notice | The same view, between the title and the text |
+| Progress | `ImageImportNotice`, above the whole editor (above the title header), under the other-version notice | The same view, between the title and the text |
 | Result | `ImageInsertionSession.insert` | The same |
 
 Session (`ImageInsertionSession`, the same on all devices):
@@ -65,7 +65,7 @@ Placeholders (all devices, `ImagePresentation.attachment`): a picture with no by
 
 ## Layout
 
-- The notice is a full-width bar (`.background(.quaternary)`), laid out as the conflict notice: side by side, stacked at accessibility text sizes (`dynamicTypeSize.isAccessibilitySize`), where Stop goes below the text.
+- The notice is a full-width bar (`.background(.quaternary)`), laid out like `KeptVersionNotice`: side by side, stacked at accessibility text sizes (`dynamicTypeSize.isAccessibilitySize`), where Stop goes below the text.
 - iPhone and iPad: the notice sits above the entry, title included, so it stays in view whatever the scroll position (the title is part of the scrolling text view). Mac: it sits between the title and the text view.
 - The Photo Library picker is the system sheet, the camera a full-screen cover, the file importer a document picker (iPhone, iPad) or the open panel (Mac). The Insert Image menu opens upward from the bottom bar on iPhone and iPad.
 - The detail column is at most 760 points wide on all devices, so a picture is at most the text width minus 20 points (`imageLayout`); smaller pictures keep their size.

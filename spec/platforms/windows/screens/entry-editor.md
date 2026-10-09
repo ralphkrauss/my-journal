@@ -2,7 +2,7 @@
 id: entry-editor
 title: Entry editor (Windows)
 spec: screens/entry-editor.md
-features: [entry-title, entry-body, autosave, save-failure-recovery, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, image-descriptions, image-placeholders, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, find-in-entry, text-size, spelling-and-substitutions, template-suggestion, entry-actions, change-entry-date, move-entry, pin-entry, save-as-template, delete-entry, version-history, conflict-review-entry, read-only-newer-content, source-only-entry, editor-only, writing-controls, conflict-notice, writing-paused-notice, previous-next-entry]
+features: [entry-title, entry-body, autosave, save-failure-recovery, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, image-descriptions, image-placeholders, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, find-in-entry, text-size, spelling-and-substitutions, template-suggestion, entry-actions, change-entry-date, move-entry, pin-entry, save-as-template, delete-entry, version-history, kept-both-notice, read-only-newer-content, source-only-entry, editor-only, writing-controls, writing-paused-notice, previous-next-entry]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/rich-edit-box
@@ -52,9 +52,9 @@ All are inline, non-modal and not closable ([9.1](../platform.md#91-notices)); e
 | 1 | Save failure | Error | Title `messages.save.notSaved`; while retrying `messages.save.saving` with an indeterminate `ProgressBar` in the content and the action disabled | `ActionButton` `common.tryAgain` |
 | 2 | Writing paused (library being replaced; the entry is read-only meanwhile) | Informational | `messages.writingPaused.connecting` (only after 1 s), `messages.writingPaused.connectionFailed` | None: Show Connection is not offered because the flow's page is modal over the only window. `messages.writingPaused.encrypting` is never shown: Windows runs no encryption |
 | 3 | Recovery or unavailable | Informational | [recently-deleted](recently-deleted.md), [unavailable-content](unavailable-content.md) | As those files |
-| 4 | Conflict | Warning | `messages.conflict.entryNotice`; the entry stays editable | `ActionButton` `common.reviewChanges`: saves the open writing, refreshes, opens the review page ([screens/entry-conflict](../../../screens/entry-conflict.md)) |
+| 4 | Other version kept | Informational, closable | `messages.conflict.kept.notice.entry`, `.entryNewer`, `.template` or `.templateNewer`; a held version shows `messages.conflict.kept.noticeUpdate`; the entry stays editable | `ActionButton` `messages.conflict.kept.showOther`; the close button is `common.dismiss` ([kept-version-notice](kept-version-notice.md)) |
 
-At 200% text size or more, a recovery or review bar is capped at half the pane's height and scrolls.
+At 200% text size or more, a recovery or notice bar is capped at half the pane's height and scrolls.
 
 ### Title
 
@@ -214,7 +214,7 @@ Placement and shortcuts are in [commands.md](../commands.md) (Editor). The page 
 | `entry-actions` | Editor header More | as in commands.md | An entry or template is open |
 | `find`, `find-in-entry` | Edit menu; the find bar | Ctrl+F, Ctrl+H, F3, Shift+F3 | An entry or template is open, including read-only ones |
 | `use-a-template` | The placeholder link | none | The template suggestion is shown |
-| `review-changes` | The conflict notice | none | A conflict notice is shown |
+| `show-other-version`, `dismiss-kept-notice` | The other-version notice | none | The notice is shown |
 | `format-*` | Format menu; the formatting bar; the selection mini-toolbar | as in commands.md | [format-sheet](format-sheet.md) |
 
 - Tab in the body types a tab character in a paragraph and acts as Indent in a list item or code ([flows/editing-rules](../flows/editing-rules.md), I-12); F6 and Shift+F6 always leave the editor.

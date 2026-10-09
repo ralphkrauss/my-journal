@@ -95,7 +95,7 @@ Every error is announced. Field errors are the field's hint and move focus there
 | --- | --- |
 | Earlier devices, all encrypted; one updates | Nothing changes. Same formats, protocol and server. |
 | Earlier devices, all unencrypted, one server; device A updates | A shows variant B. A encrypts and switches the server; every other device is revoked. An earlier-version device then shows "Encryption was turned on from another device. Sign in to keep syncing." and signs in with the master password. |
-| …then device B updates before signing in | B shows variant C and signs in the same way; its offline edits become normal reviews; nothing is duplicated. |
+| …then device B updates before signing in | B shows variant C and signs in the same way; its offline edits that conflict keep both versions ([flows/resolve-conflict.md](resolve-conflict.md)); nothing is lost. |
 | …then device B (unencrypted, this version) is offline | B shows variant D; Not Now opens it as before until it can reach the server. |
 | A new device joins that server before any old device updated | Refused with `messages.connection.encryptionOff`; nothing is sent. |
 | Windows and Android | They never create unencrypted libraries and have none to migrate. They refuse a server whose recovery format is 3 or 4 with `messages.connection.encryptionOff`. They have no form, Not Now, Stop Syncing for this purpose, or sign-in variant. This is the specification they will follow, not code that exists. |

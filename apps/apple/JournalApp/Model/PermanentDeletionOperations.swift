@@ -103,7 +103,7 @@ enum DeleteAllPhase: Equatable {
 
 /// Why Delete All leaves an item in Recently Deleted.
 enum DeletionHold: Error, Sendable {
-    case review, newerVersion, other
+    case newerVersion, other
 }
 
 /// What Delete All checked before its confirmation: the items it will delete, journals first, each with the rows that
@@ -217,8 +217,6 @@ extension AppModel {
                 return .success(try await store.preparePermanentDeletion(id))
             } catch PermanentDeletionError.missing, PermanentDeletionError.permanentlyDeleted {
                 return nil
-            } catch PermanentDeletionError.conflict {
-                return .failure(.review)
             } catch PermanentDeletionError.unsupported {
                 return .failure(.newerVersion)
             } catch {

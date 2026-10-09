@@ -10,6 +10,11 @@ final class ConflictResolutionTests: ConflictTestCase {
     private func resolve(_ local: JournalItem, _ other: JournalItem) throws -> ConflictOutcome {
         ConflictResolution.resolve(local: try side(local), other: try side(other), ids: ids)
     }
+    /// The copy row 3 makes of the other version, or nil when the outcome is any other row.
+    private func copy(_ outcome: ConflictOutcome) -> JournalItem? {
+        guard case .keepBoth(let copy) = outcome else { return nil }
+        return copy
+    }
 
     // MARK: Row 1 and equality
 
@@ -45,7 +50,7 @@ final class ConflictResolutionTests: ConflictTestCase {
         template.modifiedAt = template.date
         var changed = template
         changed.title = "Weekly, edited"
-        XCTAssertEqual(try resolve(template, changed), .review)
+        XCTAssertNotNil(copy(try resolve(template, changed)))
         var journals = journal("Work")
         var withTemplate = journals
         withTemplate.defaultTemplateID = UUID()
@@ -63,11 +68,11 @@ final class ConflictResolutionTests: ConflictTestCase {
         var one = entry(composed, text: "same")
         var two = one
         two.title = decomposed
-        XCTAssertEqual(try resolve(one, two), .review)
+        XCTAssertNotNil(copy(try resolve(one, two)))
         one.document = .plain(composed)
         two = one
         two.document = .plain(decomposed)
-        XCTAssertEqual(try resolve(one, two), .review)
+        XCTAssertNotNil(copy(try resolve(one, two)))
         let work = journal(composed)
         var renamed = work
         renamed.title = decomposed
@@ -97,7 +102,7 @@ final class ConflictResolutionTests: ConflictTestCase {
             let changed = try JSONSerialization.data(withJSONObject: alteredRecord, options: .sortedKeys)
             let other = ConflictSide(plaintext: changed, id: base.id, kind: "entry")
             let outcome = ConflictResolution.resolve(local: try side(base), other: other, ids: ids)
-            XCTAssertEqual(outcome, .review, "\(member) alone is a difference")
+            XCTAssertNotNil(copy(outcome), "\(member) alone is a difference")
         }
     }
 
@@ -255,7 +260,71 @@ final class ConflictResolutionTests: ConflictTestCase {
         XCTAssertEqual(record.deletedAt, deleted.deletedAt)
     }
 
-    func testEntriesAndTemplatesThatDifferStayForReviewUntilTheyAreSettledToo() throws {
-        XCTAssertEqual(try resolve(entry("A", text: "one"), entry("A", text: "two")), .review)
+    // MARK: Entries and templates that differ (row 3)
+
+    func testEntriesAndTemplatesThatDifferKeepThisVersionAndMakeTheOtherAVersionOfItsOwn() throws {
+        let local = entry("A", text: "one", journal: UUID())
+        var other = entry("A", text: "two", journal: local.journalID, seconds: 1_700_000_500)
+        other.id = local.id
+        other.restoredFromDeletionID = UUID()
+        other.archivedAt = Date(timeIntervalSince1970: 1_700_000_900)
+        let made = try XCTUnwrap(copy(try resolve(local, other)))
+        XCTAssertNotEqual(made.id, local.id)
+        XCTAssertEqual(made.title, "A (other version)")
+        XCTAssertEqual(made.document, other.document, "The body is never touched")
+        XCTAssertEqual(made.date, other.date, "Each version keeps its date")
+        XCTAssertEqual(made.modifiedAt, other.modifiedAt, "Not the time of the settlement: nothing reads a clock")
+        XCTAssertEqual(made.journalID, other.journalID)
+        XCTAssertEqual(made.archivedAt, other.archivedAt)
+        XCTAssertNil(made.restoredFromDeletionID, "Marker bookkeeping belongs to the record")
+        XCTAssertNil(made.deletedAt)
+        var template = JournalItem(kind: "template", title: "Weekly", document: .plain("a"))
+        template.modifiedAt = template.date
+        var edited = template
+        edited.document = .plain("b")
+        XCTAssertEqual(try XCTUnwrap(copy(try resolve(template, edited))).kind, "template")
+    }
+
+    func testTheCopyOfAnotherVersionInRecentlyDeletedStaysThere() throws {
+        let local = entry("A", text: "one")
+        var other = local
+        other.document = .plain("two")
+        other.deletedAt = Date(timeIntervalSince1970: 1_750_000_000)
+        other.deletedWithJournal = true
+        let made = try XCTUnwrap(copy(try resolve(local, other)))
+        XCTAssertEqual(made.deletedAt, other.deletedAt, "Each version stays where it is")
+        XCTAssertTrue(made.deletedWithJournal)
+    }
+
+    func testEveryDeviceDerivesTheSameCopyFromTheSameOtherVersion() throws {
+        let local = entry("A", text: "one")
+        var other = local
+        other.document = .plain("two")
+        let here = try XCTUnwrap(copy(try resolve(local, other)))
+        let there = try XCTUnwrap(copy(try resolve(entry("A", text: "different local"), other)))
+        XCTAssertEqual(here.id, there.id, "The copy depends on the other version and the record, not on this device's")
+        var later = other
+        later.document = .plain("three")
+        XCTAssertNotEqual(try XCTUnwrap(copy(try resolve(local, later))).id, here.id)
+    }
+
+    func testTheCopyTitleIsAlwaysAppendedAndTheListTitleIsUsedWhenThereIsNone() {
+        var item = entry("Trip", text: "body")
+        XCTAssertEqual(ConflictResolution.copyTitle(of: item), "Trip (other version)")
+        item.title = "Trip (other version)"
+        XCTAssertEqual(
+            ConflictResolution.copyTitle(of: item), "Trip (other version) (other version)",
+            "Never detected: a copy of a copy reads twice")
+        item.title = "  "
+        item.document = .plain("First line of the entry\nsecond")
+        XCTAssertEqual(ConflictResolution.copyTitle(of: item), "First line of the entry (other version)")
+        item.document = .plain(String(repeating: "👨‍👩‍👧", count: 70))
+        XCTAssertEqual(
+            ConflictResolution.copyTitle(of: item), String(repeating: "👨‍👩‍👧", count: 60) + " (other version)",
+            "Cut at 60 extended grapheme clusters, not scalars or bytes")
+        item.document = .plain("")
+        XCTAssertEqual(ConflictResolution.copyTitle(of: item), "New Entry (other version)")
+        item.kind = "template"
+        XCTAssertEqual(ConflictResolution.copyTitle(of: item), "Untitled Template (other version)")
     }
 }

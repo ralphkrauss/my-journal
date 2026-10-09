@@ -197,22 +197,14 @@ final class AppModel: ObservableObject {
     let imageLoader = DocumentImageLoader()
     var imageData: [UUID: Data] { imageLoader.images }
     private var imageSubscription: AnyCancellable?
-    /// The changes the person can still review: entries and templates changed on two devices, and those a newer
-    /// version of the app must open. Journal and deletion conflicts have no review; this version settles them itself
-    /// (ConflictNotes.swift).
-    @Published var conflicts: [ConflictVersion] = [] {
-        didSet {
-            lists.invalidate()
-            if !conflicts.isEmpty { reviewRequests.noteProblem() }
-        }
-    }
-    /// Every record that has a conflict, reviewable or not; the lifecycle of journals and entries follows it.
+    /// Every record that has a conflict. This version settles each one it can read at the next pull (ConflictNotes.swift),
+    /// so they wait only briefly; the lifecycle of journals and entries follows them.
     var conflictedIDs: Set<UUID> = []
-    /// The conflicted journals and deletions that settle at the next pull, which don't keep a journal out of use.
+    /// The conflicted records that settle at the next pull, which don't keep a journal out of use.
     var settlingConflictIDs: Set<UUID> = []
     /// The conflicts that wait for a version of this app that can read them.
     var heldConflictIDs: Set<UUID> = []
-    /// A journal or deletion conflict waits for a newer version (Settings ▸ Sync says so).
+    /// A conflict waits for a newer version (Settings ▸ Sync says so, and so does the entry).
     @Published var heldChangesNeedUpdate = false {
         didSet { if heldChangesNeedUpdate { reviewRequests.noteProblem() } }
     }
@@ -498,7 +490,7 @@ final class AppModel: ObservableObject {
         firstReadPending = false
         failedRetries = 0
         items = snapshot.items
-        adoptConflicts(snapshot.conflicts, held: held)
+        adoptConflicts(Set(snapshot.conflicts.map(\.id)), held: held)
         if notes != keptNotes { keptNotes = notes }
         pendingSync = snapshot.pending
         if library != snapshot.library { library = snapshot.library }

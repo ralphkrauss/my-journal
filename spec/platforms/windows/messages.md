@@ -2,13 +2,13 @@
 id: messages
 title: Messages (Windows)
 spec: messages.md
-features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, conflict-notice, changes-to-review-list, conflict-review-entry, conflict-review-unsupported, conflict-kept-both, changed-on-two-devices-list, library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
+features: [sync-health, sync-status, sync-item-refusal, save-failure-recovery, writing-paused-notice, generic-error-alert, kept-both-notice, conflict-kept-both, changed-on-two-devices-list, library-open-failure, read-only-newer-content, unavailable-journals, privacy-cover, accessibility-announcements]
 status: reviewed
 ---
 
 # Messages (Windows)
 
-Where each message of the spec's [messages](../../messages.md) appears on Windows, with which control, at which severity, and how Narrator hears it. The spec says when a message appears and what the person can do; its copy keys are used unchanged (sentence case and the vocabulary variants of [platform.md, 12](platform.md#12-copy-casing-ellipses-and-vocabulary) apply). This file decides only the surface. [platform.md, 8, 9 and 11](platform.md#8-dialogs) hold the control rules; the pages that own each message have their own mapping: [sync-status](screens/sync-status.md), [sync-recovery](flows/sync-recovery.md), [save-failure](flows/save-failure.md), [conflict-review](screens/conflict-review.md), [unavailable-content](screens/unavailable-content.md).
+Where each message of the spec's [messages](../../messages.md) appears on Windows, with which control, at which severity, and how Narrator hears it. The spec says when a message appears and what the person can do; its copy keys are used unchanged (sentence case and the vocabulary variants of [platform.md, 12](platform.md#12-copy-casing-ellipses-and-vocabulary) apply). This file decides only the surface. [platform.md, 8, 9 and 11](platform.md#8-dialogs) hold the control rules; the pages that own each message have their own mapping: [sync-status](screens/sync-status.md), [sync-recovery](flows/sync-recovery.md), [save-failure](flows/save-failure.md), [kept-version-notice](screens/kept-version-notice.md), [unavailable-content](screens/unavailable-content.md).
 
 Microsoft's guidance for choosing the surface, which the rules below apply: an `InfoBar` is for a changed application state that stays until it is resolved or acknowledged, inline and not time-critical; a `ContentDialog` is for confirming an action the person started, for information they must read, and for a state so severe that the app cannot continue; a `Flyout` is for information tied to one control; a field's own error is inline next to the field ([InfoBar](https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/infobar), [Dialogs](https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/dialogs-and-flyouts/dialogs), checked 2026-10-06). Quiet saving and syncing is a product rule: nothing below shows, sounds or flashes during normal saving or syncing.
 
@@ -23,7 +23,7 @@ Microsoft's guidance for choosing the surface, which the rules below apply: an `
 | Generic alert (`common.alertTitle`, the message, `common.ok`, plus `common.tryAgain` while a save has failed) | A `ContentDialog` through the dialog queue below: no title (`common.alertTitle` is left out, [8.1](platform.md#81-rules) rule 3), content the message, Close `common.ok`; Primary `common.tryAgain` (default button) while a save has failed | One at a time, only from a person-started action or a window-level model error, never while locked or while the first journal is being created |
 | Lock screen note | An error `InfoBar` in the lock page ([unavailable-content](screens/unavailable-content.md)) | Opened when the lock page appears or the message changes (a changed message in an open bar is not announced, so a new bar replaces it) |
 | Sheet errors (an operation's error inside its own sheet) | An inline `InfoBar`, Severity Error, not closable, in the dialog's or page's content, above the buttons | Never a second dialog; the bar is announced when it opens |
-| Notices above the writing (save failure, writing paused, conflict, recovery, unavailable) | `InfoBar`s above the title, in the order of [entry-editor](screens/entry-editor.md) | Not closable; each closes when its state ends |
+| Notices above the writing (save failure, writing paused, other version kept, recovery, unavailable) | `InfoBar`s above the title, in the order of [entry-editor](screens/entry-editor.md) | Not closable; each closes when its state ends |
 | Announcements | Narrator notifications, below | Only for results of actions the person started and for errors that appear in an open dialog or page |
 
 ### Severity
@@ -34,7 +34,7 @@ Microsoft's guidance for choosing the surface, which the rules below apply: an `
 | This device's own data cannot be read (`messages.sync.localDataUnreadable`), a failed save (`messages.save.notSaved`), an error inside a dialog or page, the lock page's note (except `messages.library.deviceKeyUnavailable`, below) | Error | A problem that has happened |
 | `messages.library.deviceKeyUnavailable` on the lock page | Warning | It explains why the password is asked; nothing has failed that the person can fix by retrying |
 | Offline, can't reach, server busy, `messages.sync.waiting`, writing paused, recovery and unavailable notices | Informational | Expected or temporary; quiet by design. |
-| Changes to review (`messages.conflict.entryNotice`) | Warning | The person has a decision to make |
+| The other-version notice (`messages.conflict.kept.notice.entry`, `.entryNewer`, `.template`, `.templateNewer`) and the held line (`messages.conflict.kept.noticeUpdate`) | Informational | Nothing is wrong and nothing is asked; quiet by design |
 | `messages.sync.pausedForSaveFailure` | Warning | Sync waits for the save; the Error is the save notice itself |
 
 Every bar has its icon and its text states the situation, so severity is never colour alone ([9.1](platform.md#91-notices)). Success is never shown: nothing completes loudly (the spec has no success message).
@@ -110,7 +110,7 @@ Messages marked unreachable or rare in the spec's notes are mapped like their gr
 
 - Unavailable and read-only content and `common.myJournalIsLocked` are in [unavailable-content](screens/unavailable-content.md) and [lock-screen](screens/lock-screen.md). There is no privacy cover on Windows ([platform.md, 20](platform.md#20-screen-capture-and-window-privacy)).
 - **App Lock is paused** (Windows Hello not set up, not available or turned off by policy while App Lock is on, D42) is a Warning `InfoBar`, not closable, at the top of the library window on every page while the state lasts; it is not part of the editor's notice order. Text and rules: [flows/app-lock](flows/app-lock.md).
-- Every key of the spec's Conflicts section is mapped in [conflict-review](screens/conflict-review.md), [entry-conflict](screens/entry-conflict.md), [settings-sync](screens/settings-sync.md) (the Changed on two devices group, `messages.conflict.kept.*`) and [resolve-conflict](flows/resolve-conflict.md). Settling a journal or a permanent deletion has no message at all: it is quiet and appears only in that group.
+- Every key of the spec's Conflicts section is mapped in [kept-version-notice](screens/kept-version-notice.md), [settings-sync](screens/settings-sync.md) (the Changed on two devices group, `messages.conflict.kept.*`) and [resolve-conflict](flows/resolve-conflict.md). Settling a conflict has no message of its own: it is quiet and appears only in that group and in the notice above the open entry or template. `messages.lifecycle.combining` shows where a refused Move entry, Version history restore or Delete permanently shows its errors.
 - **Restore** (`messages.restore.destinationGone`, `common.entryMovedNotDisplayed`) and **the template chooser** (`library.templateChooser.entryChanged`) show in the alert dialog, as the spec's general error alert; the restored-elsewhere announcement is below.
 
 ### Title bar and command bar
@@ -130,7 +130,7 @@ Sync state has no title-bar text and no badge on the title bar during normal syn
 | --- | --- | --- | --- |
 | `sync-now` | The Sync page and the Sync status flyout, as the bar's or the card's action | none | As the spec's rule: connected, unlocked, not replacing the journals, no failed save, no sync the person started running |
 | `sync-reconnect` | The Sync page bar, the Devices page and the Sync status flyout | none | The state calls for it |
-| `review-changes` | The conflict notice; the Changes to review list | none | Unlocked |
+| `show-other-version`, `dismiss-kept-notice` | The other-version notice's action and close buttons | none | Unlocked |
 | `try-syncing-again` | The recovery notice | none | The journal is missing and the library syncs |
 
 Keyboard: a bar's action button is in the tab order after the bar's title; Esc closes the alert dialog (Close `common.ok`); Enter chooses the default button only where the dialog sets one. No message has a shortcut of its own.

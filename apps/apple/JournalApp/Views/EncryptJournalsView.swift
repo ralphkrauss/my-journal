@@ -137,7 +137,7 @@ struct EncryptJournalsView: View {
             Text("Your Other Devices").font(.headline).accessibilityAddTraits(.isHeader)
             note("Before you encrypt, let your other devices sync.")
             note(
-                "Your other devices will stop syncing until you sign in on each one with your master password. Changes they haven’t synced are kept. Any that conflict are shown for review."
+                "Your other devices will stop syncing until you sign in on each one with your master password. Changes they haven’t synced are kept. Any that conflict keep both versions."
             )
             note(
                 "Agents with access to your journals on \(upgrade.host) lose it. Give them access again afterward.")

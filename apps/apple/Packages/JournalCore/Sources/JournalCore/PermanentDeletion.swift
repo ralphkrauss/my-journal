@@ -45,9 +45,9 @@ public struct PermanentDeletionPlan: Sendable {
             guard item.document.isEditable, item.preservedJSON == nil else {
                 throw PermanentDeletionError.unsupported
             }
-            // A journal's conflict is settled automatically; one still there waits for a newer version of the app.
+            // A conflict this version can read is settled at the next pull; one it can't waits for a newer version.
             guard !snapshot.conflictedIDs.contains(item.id) else {
-                throw item.kind == "journal" ? PermanentDeletionError.unsupported : .conflict(item.id)
+                throw snapshot.settlingIDs.contains(item.id) ? PermanentDeletionError.conflict(item.id) : .unsupported
             }
         }
         return Self(

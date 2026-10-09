@@ -1,7 +1,7 @@
 ---
 id: entry-editor
 title: Entry editor
-features: [entry-title, entry-body, autosave, save-failure-recovery, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, image-descriptions, image-placeholders, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, find-in-entry, text-size, spelling-and-substitutions, template-suggestion, entry-actions, change-entry-date, move-entry, pin-entry, save-as-template, delete-entry, version-history, conflict-review-entry, read-only-newer-content, source-only-entry, editor-only, writing-controls, conflict-notice, writing-paused-notice, previous-next-entry]
+features: [entry-title, entry-body, autosave, save-failure-recovery, inline-formatting, paragraph-styles, lists, checklists, list-indentation, block-quotes, code-blocks, horizontal-rules, tables, links, inert-links, insert-image, image-actions, image-descriptions, image-placeholders, markdown-as-you-type, source-view, paste-and-drop, copy-to-other-apps, undo-redo, find-in-entry, text-size, spelling-and-substitutions, template-suggestion, entry-actions, change-entry-date, move-entry, pin-entry, save-as-template, delete-entry, version-history, kept-both-notice, read-only-newer-content, source-only-entry, editor-only, writing-controls, writing-paused-notice, previous-next-entry]
 sources:
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Views/RootView+Toolbar.swift
@@ -11,7 +11,7 @@ sources:
   - apps/apple/JournalApp/Views/EntryEditingNote.swift
   - apps/apple/JournalApp/Views/EntryRecoveryNotice.swift
   - apps/apple/JournalApp/Views/SaveFailureNotice.swift
-  - apps/apple/JournalApp/Views/SettingsView.swift (ConflictNotice)
+  - apps/apple/JournalApp/Views/KeptVersionNotice.swift
   - apps/apple/JournalApp/Views/ReadingBar.swift
   - apps/apple/JournalApp/Views/ImageImportNotice.swift
   - apps/apple/JournalApp/Editor/NativeEditor.swift
@@ -62,14 +62,14 @@ The precise behaviour of every key, command and edit is in `flows/editing-rules.
 
 - Choosing an entry or template in the entries list (computer, tablet: the detail column; phone: pushed onto the stack).
 - New Entry (the new entry is empty and opens with its title focused and selected; see Rules).
-- Restoring a version, moving or restoring an entry, and resolving a conflict open the result in the editor.
+- Restoring a version, moving or restoring an entry, and showing the other version from the notice open the result in the editor.
 - After launch or unlock, the entry that was open reopens (phone: only if it is still editable in its journal).
 
 ## Content
 
 Top to bottom, inside the detail area (max 760 pt wide on every platform, centred, with 24 pt margins on the computer).
 
-1. **Notices above the writing** (each only in its state; see States). Order on the computer: writing-paused notice, recovery notice, conflict notice. On the phone and tablet the recovery notice is part of the scrolling header (item 2) and the conflict notice sits above the scrolling writing, so it stays in view.
+1. **Notices above the writing** (each only in its state; see States). Order on the computer: writing-paused notice, recovery notice, other-version notice. On the phone and tablet the recovery notice is part of the scrolling header (item 2) and the other-version notice sits above the scrolling writing, so it stays in view.
 2. **Header**, which scrolls with the body on the phone and tablet and sits above the body on the computer:
    - Save-failure notice (phone, tablet: first in the header; computer: below the body). See States.
    - Recovery notice (phone, tablet).
@@ -125,7 +125,7 @@ All sizes are relative to the body text size *s* (computer default 16 pt, View �
 | Find in Entry | `find-in-entry` | — | Phone, tablet: the system find navigator for this entry. Computer: Edit ▸ Find ▸ Find… opens the find bar above the entry (it never covers the first line). |
 | Act on a picture | `image-*` | See `flows/image-actions.md` | Context menu or long press on a picture. |
 | Use a template | `use-a-template` | Template suggestion shown | The link, or File ▸ Use a Template… on a computer and on a tablet with a keyboard: opens the template chooser; a choice fills this entry's body and keeps its title, as one undoable change (specified with the template chooser). |
-| Review Changes | `review-changes` | Conflict notice shown | Saves the open writing, refreshes, then opens `screens/entry-conflict.md`. |
+| Show Other Version, Dismiss | `show-other-version`, `dismiss-kept-notice` | Other-version notice shown | Open the other version, or remove the notice ([screens/kept-version-notice.md](kept-version-notice.md)). |
 
 **Entry Actions menu** (the editor's “…”; same items as the entry's row context menu, built from one list):
 
@@ -149,7 +149,7 @@ Each item first saves the open writing; if that save fails the action doesn't ru
 | Writing (computer) | Two lines of room are kept below the line being typed (never more than a quarter of the editor's height); the editor's own edits (Return in a list, shortcuts, paste, undo) reveal the caret with that room. | — |
 | Saving | Nothing shows. Saving is quiet. | — |
 | Save failed | The app's error alert (title `common.alertTitle`, specified with the journal window) with `common.saveFailed` (named entry) or `common.saveFailedLocked`, buttons `common.tryAgain` and `common.ok`. Then a persistent notice: `messages.save.notSaved` in red, a `common.tryAgain` button, and while retrying `messages.save.saving` with a small progress indicator. The person can't leave the entry until it saves. See `flows/save-entry.md`. | as listed |
-| Conflict | A band above the writing (callout text, quaternary fill), side by side; stacked at accessibility text sizes. The entry stays editable. | `messages.conflict.entryNotice`, `common.reviewChanges` |
+| Other version kept | A band above the writing (callout text, quaternary fill): the text, then Show Other Version and Dismiss below it; the buttons stack at accessibility text sizes. Added only when neither the title nor the text has the keyboard. The entry stays editable. A version only a newer My Journal can read shows the text alone ([screens/kept-version-notice.md](kept-version-notice.md)) | `messages.conflict.kept.notice.entry`, `.entryNewer`, `.template`, `.templateNewer`, `messages.conflict.kept.noticeUpdate`, `messages.conflict.kept.showOther`, `common.dismiss` |
 | Read-only: newer format | Title shown as static text (phone, tablet) or a disabled field (computer); body selectable but not editable; formatting, Insert Image and View Source disabled; checkboxes disabled; picture menus offer only Copy, Share and Save. | `messages.error.unsupportedFormat` |
 | Source only | The entry opens in source view; View Preview is disabled, with the help text below. Everything else is editable as Markdown text. | `messages.unavailable.markdownSource`, `common.previewUnavailable` |
 | In Recently Deleted (entry) | Read-only, with a recovery notice band (quaternary fill) above. The text and the one button depend on where the entry can go, and are listed with the Recently Deleted screen (`screens/recently-deleted.md`, Recovery notice): `library.recoveryNotice.entry` with `common.restore` when its journal is in use; with `library.recoveryNotice.journalDeleted` and `library.recentlyDeleted.restoreTo` when its journal is in Recently Deleted; `library.recoveryNotice.legacy` for an entry an earlier version deleted with its journal; `library.recoveryNotice.createJournalFirst` instead of a button when no journal is in use. At accessibility text sizes the notice takes at most half the height and scrolls. | as listed |
@@ -164,7 +164,7 @@ Each item first saves the open writing; if that save fails the action doesn't ru
 
 - **Editable** means: the library is open and unlocked, not being replaced (connecting, encrypting the journals), the item isn't deleted, its document is in a format this version can edit, and it is a template or an entry in a journal that is in use. A conflict doesn't make it read-only.
 - **Saving**: every change to the title or body is saved to this device as it happens, without a Save command or a delay; sync follows when writing pauses. Leaving the entry first finishes the save. Details and failure handling: `flows/save-entry.md`.
-- **Never lose writing**: a change from elsewhere (sync) to the open entry replaces what's shown only while the person isn't composing with an input method; it waits for the composition to end and then applies both, block by block. Writing over a change this device hasn't shown yet keeps both versions for review (`flows/editing-rules.md` X-1 to X-5).
+- **Never lose writing**: a change from elsewhere (sync) to the open entry replaces what's shown only while the person isn't composing with an input method; it waits for the composition to end and then applies both, block by block. Writing over a change this device hasn't shown yet keeps both versions: this device’s text stays and the other becomes a separate entry (`flows/editing-rules.md` X-1 to X-5; [flows/resolve-conflict.md](../flows/resolve-conflict.md)).
 - **New entry**: opens with the title focused and its text selected. When a template has filled the entry, Return in the title moves to the template's first empty paragraph (its answer line).
 - **Template suggestion**: offered when the item is an entry, it can be edited, at least one template can be used, and the body has no characters and no images (whatever the title).
 - **Title display elsewhere**: an entry without a title is named by its first line of text, or `library.entryList.untitledEntry` when it has none.

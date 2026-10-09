@@ -67,7 +67,8 @@ Entry actions (the Entry Actions “…” menu in the editor, and an entry's ro
 | `entry-actions` | toolbar menu over the editor | — | editor bar ⋯ |  |
 | `find-in-entry` | Edit ▸ Find ▸ Find… ⌘F | ⌘F | Entry Actions (first) | The find bar on the Mac, the find navigator on iPhone and iPad. |
 | `pin-entry-row` | context menu; trackpad leading swipe | — | leading swipe (full swipe), context menu, Entry Actions |  |
-| `review-changes` | notice above an entry or template with changes to review; Settings ▸ Sync ▸ Changes to Review | same | same |  |
+| `show-other-version` | first button of the notice above an entry or template that was kept as two versions | — | same | Plain text button on iPhone and iPad, bordered on the Mac. |
+| `dismiss-kept-notice` | second button of the same notice | — | same |  |
 | `change-date` | context menu; Entry Actions | — | same |  |
 | `move-entry` | context menu; Entry Actions | — | same |  |
 | `save-as-template` | context menu; Entry Actions | — | same |  |
@@ -168,7 +169,7 @@ The keys, where they act and their results are in [commands.md](../../commands.m
 
 ## Settings
 
-The Settings tables place the commands of [commands.md](../../commands.md#settings). Commands that live on other surfaces are defined once in the sections above and only placed here: `open-settings`, `lock-my-journal` (App Lock section), `import-archive`, `export-archive`, `export-markdown` (Backup), `help-guide`, `review-changes` (Changes to Review). The Settings ▸ About links have their own ids because the Help menu items (`help-privacy`, `help-support`, `help-source`, `help-rate`) are Mac and iPad-keyboard commands with the same destinations.
+The Settings tables place the commands of [commands.md](../../commands.md#settings). Commands that live on other surfaces are defined once in the sections above and only placed here: `open-settings`, `lock-my-journal` (App Lock section), `import-archive`, `export-archive`, `export-markdown` (Backup), `help-guide`. The Settings ▸ About links have their own ids because the Help menu items (`help-privacy`, `help-support`, `help-source`, `help-rate`) are Mac and iPad-keyboard commands with the same destinations.
 
 ### Settings structure
 

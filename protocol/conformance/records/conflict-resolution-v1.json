@@ -153,7 +153,7 @@
       "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
       "name" : "same-written-differently",
       "note" : "Row 2 compares decoded values, never bytes: the same members in another order and with white space.",
-      "other" : "{\n  \"title\" : \"Morning pages\",\n  \"deletedWithJournal\" : false,\n  \"kind\" : \"entry\",\n  \"journalID\" : \"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\n  \"date\" : \"2026-09-20T12:00:00Z\",\n  \"id\" : \"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\n  \"modifiedAt\" : \"2026-09-20T12:30:00Z\",\n  \"document\" : {\n    \"metadata\" : {\n      \"blockIDs\" : [\n        \"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"\n      ],\n      \"imageTypes\" : {\n\n      },\n      \"segmentLengths\" : [\n        14\n      ]\n    },\n    \"version\" : 2,\n    \"markdown\" : \"Morning walk.\\n\"\n  }\n}",
+      "other" : "{\n  \"modifiedAt\" : \"2026-09-20T12:30:00Z\",\n  \"title\" : \"Morning pages\",\n  \"id\" : \"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\n  \"deletedWithJournal\" : false,\n  \"document\" : {\n    \"metadata\" : {\n      \"blockIDs\" : [\n        \"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"\n      ],\n      \"imageTypes\" : {\n\n      },\n      \"segmentLengths\" : [\n        14\n      ]\n    },\n    \"version\" : 2,\n    \"markdown\" : \"Morning walk.\\n\"\n  },\n  \"date\" : \"2026-09-20T12:00:00Z\",\n  \"kind\" : \"entry\",\n  \"journalID\" : \"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\"\n}",
       "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
     },
     {
@@ -173,7 +173,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "e27fe177-6d9d-82bc-9e7e-5901d67d6433",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Another title (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -185,7 +199,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "d9d0faca-25a3-8b80-a3b4-18006b0e3211",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Café (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -197,7 +225,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789992000,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "190d2973-db02-8f6e-be3e-fb463934e398",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -209,7 +251,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "0357b9b8-7c0b-8582-8b03-58bd34a1b8a6",
+          "journalID" : "9b8a7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -221,7 +277,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : 1790078400,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "8fe750de-0800-8cfe-ad3d-b5b796894564",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -233,7 +303,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "60b8d8c2-e6aa-89c4-958e-934c20aaf6a0",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk, and more.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -245,7 +329,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "6959b81e-8eeb-81fd-87b2-e40b109f0fdf",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -257,7 +355,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "b3bd8455-a91a-8270-b1b9-ad5644f7483b",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -269,7 +381,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "027d42d1-4846-8938-995f-d51fc6ebd027",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Morning walk.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "entry",
@@ -281,7 +407,21 @@
     },
     {
       "expected" : {
-        "outcome" : "review",
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1770091506,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "a9edd445-7d7f-84dd-8a69-9c314f462cc3",
+          "journalID" : null,
+          "kind" : "template",
+          "markdown" : "## What went well?\n",
+          "modifiedAt" : 1770091506,
+          "restoredFromDeletionID" : null,
+          "title" : "Weekly review, edited (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
         "row" : 3
       },
       "kind" : "template",
@@ -290,6 +430,214 @@
       "note" : "A template that differs is kept for review like an entry.",
       "other" : "{\"date\":\"2026-02-03T04:05:06Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## What went well?\\n\",\"metadata\":{\"blockIDs\":[\"F4FCE7D0-A729-5BA0-0C20-FC90B8E13331\"],\"imageTypes\":{},\"segmentLengths\":[19]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-03T04:05:06Z\",\"title\":\"Weekly review, edited\"}",
       "recordID" : "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : 1790323200,
+          "deletedWithJournal" : false,
+          "id" : "fa08493d-3485-8c26-a852-9354c3d7ab8a",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Edited there.\n",
+          "modifiedAt" : 1790323200,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-other-in-recently-deleted",
+      "note" : "Row 3: the other version was deleted. Each version stays where it is: the copy keeps R's deletion state.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedAt\":\"2026-09-25T08:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited there.\\n\",\"metadata\":{\"blockIDs\":[\"7887F699-E42B-CE0A-F258-BC033A4E4990\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-25T08:00:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "089dd36b-8eec-8b33-88a1-a8f675039553",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "A first line\nand a second.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "A first line (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-untitled-uses-the-first-line",
+      "note" : "Row 3: R has no title. The title the lists show for it is used: its first line.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"A first line\\nand a second.\\n\",\"metadata\":{\"blockIDs\":[\"354F764A-6AA0-F6BB-6CAE-D112FFD1E22C\"],\"imageTypes\":{},\"segmentLengths\":[27]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "80a93be0-d832-88df-91ce-e8221b6db69a",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa👨‍👩‍👧bbbbb\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa👨‍👩‍👧 (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-untitled-first-line-cut-at-60-clusters",
+      "note" : "Row 3: the first line is cut at 60 extended grapheme clusters: 59 letters and the family emoji, which is one cluster of five scalars.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa👨‍👩‍👧bbbbb\\n\",\"metadata\":{\"blockIDs\":[\"AE22E169-A546-FB43-37A8-77FCC388515E\"],\"imageTypes\":{},\"segmentLengths\":[83]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "f2295174-a68d-86dc-96fc-6a8052b20045",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "New Entry (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-untitled-and-empty",
+      "note" : "Row 3: R has neither a title nor text. The lists show it as a new entry, and so does the copy.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "ee4fa626-67cb-867c-8551-fc899d766f91",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Edited there.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version) (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-title-already-suffixed",
+      "note" : "Row 3: the suffix is always appended, never detected. A copy of a copy reads twice.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited there.\\n\",\"metadata\":{\"blockIDs\":[\"7887F699-E42B-CE0A-F258-BC033A4E4990\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages (other version)\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "3a5bcfbe-17f8-8b48-9307-bc317714d79a",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Edited there.\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-drops-the-restoration-marker",
+      "note" : "Row 3: restoredFromDeletionID is marker bookkeeping of the record, not of a version; the copy has none.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited there.\\n\",\"metadata\":{\"blockIDs\":[\"7887F699-E42B-CE0A-F258-BC033A4E4990\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"restoredFromDeletionID\":\"C0FFEE00-1111-4222-8333-444455556666\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1770091506,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "3b779d5d-4574-81c9-84a0-5386faeff6d2",
+          "journalID" : null,
+          "kind" : "template",
+          "markdown" : "## Edited there\n",
+          "modifiedAt" : 1770091506,
+          "restoredFromDeletionID" : null,
+          "title" : "Weekly review (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "template",
+      "local" : "{\"date\":\"2026-02-03T04:05:06Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## Edited here\\n\",\"metadata\":{\"blockIDs\":[\"E514959C-C91C-732E-BD32-6E354F7E6278\"],\"imageTypes\":{},\"segmentLengths\":[15]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-03T04:05:06Z\",\"title\":\"Weekly review\"}",
+      "name" : "copy-of-a-template",
+      "note" : "Row 3 for a template: a separate template, the title with the same suffix.",
+      "other" : "{\"date\":\"2026-02-03T04:05:06Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"## Edited there\\n\",\"metadata\":{\"blockIDs\":[\"CA28CEE8-4BF6-F224-2C27-7B29A170C4DD\"],\"imageTypes\":{},\"segmentLengths\":[16]},\"version\":2},\"id\":\"A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D\",\"kind\":\"template\",\"modifiedAt\":\"2026-02-03T04:05:06Z\",\"title\":\"Weekly review\"}",
+      "recordID" : "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+      "expected" : {
+        "copy" : {
+          "archivedAt" : null,
+          "date" : 1789905600,
+          "deletedAt" : null,
+          "deletedWithJournal" : false,
+          "id" : "4c7126b7-6073-829d-aba2-464c60785c07",
+          "journalID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d",
+          "kind" : "entry",
+          "markdown" : "Edited there.\n\n![A walk](attachments/01234567-89ab-4cde-8fab-0123456789ab)\n",
+          "modifiedAt" : 1789907400,
+          "restoredFromDeletionID" : null,
+          "title" : "Morning pages (other version)",
+          "titleIsCatalogText" : true
+        },
+        "outcome" : "keepBoth",
+        "row" : 3
+      },
+      "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited here.\\n\",\"metadata\":{\"blockIDs\":[\"06EF4DE8-0A16-E1E7-DF52-47FE15AC7958\"],\"imageTypes\":{},\"segmentLengths\":[13]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "name" : "copy-with-an-image",
+      "note" : "Row 3: the copy refers to the same attachment, by the same identity. No bytes are copied.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Edited there.\\n\\n![A walk](attachments\\/01234567-89ab-4cde-8fab-0123456789ab)\\n\",\"metadata\":{\"blockIDs\":[\"72754BD1-1BAC-2445-B980-C7F5AA442D88\",\"EC7434D7-05B6-B148-123E-C5D920ECF8D2\"],\"imageTypes\":{},\"segmentLengths\":[15,60]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
     },
     {
       "expected" : {

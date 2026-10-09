@@ -225,6 +225,7 @@ final class SyncEfficiencyTests: XCTestCase {
         let server = MemoryServer()
         let clock = TestClock()
         let phone = try device("phone")
+        await phone.useClock { clock.now }
         let mac = try device("mac")
         let phoneSync = SyncEngine(store: phone, server: server, now: { clock.now })
         let macSync = SyncEngine(store: mac, server: server)
@@ -244,16 +245,18 @@ final class SyncEfficiencyTests: XCTestCase {
         XCTAssertTrue(report.settled, "Waiting for a retry time")
         XCTAssertEqual(report.earliestRetry ?? 0, 14, accuracy: 0.5)
 
-        // The Mac edits it too: the phone's change now waits for a review, and its retry time schedules nothing.
+        // The Mac edits it too: the phone's change is replaced by the settled version, and its retry time schedules
+        // nothing.
         let onMac = try await mac.item(entry.id)
         var fromMac = try XCTUnwrap(onMac)
         fromMac.document = .plain("Edited on the Mac")
         try await mac.save(fromMac)
         try await macSync.synchronize()
+        clock.advance(by: 3)
         report = try await phoneSync.synchronize()
         let reviews = try await phone.conflicts()
-        XCTAssertEqual(reviews.count, 1)
-        XCTAssertTrue(report.settled, "A change waiting for a review is settled")
+        XCTAssertTrue(reviews.isEmpty, "Both versions were kept in the same round")
+        XCTAssertTrue(report.settled, "The replaced change is not waiting for its retry time")
         XCTAssertNil(report.earliestRetry)
     }
 }

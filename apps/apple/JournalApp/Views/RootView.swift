@@ -504,10 +504,7 @@ struct RootView: View {
             VStack(alignment: .leading, spacing: 5) {
                 if dynamicTypeSize.isAccessibilitySize {
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(entry.date, format: .dateTime.day().month(.abbreviated))
-                            entryConflictIndicator(entry)
-                        }
+                        Text(entry.date, format: .dateTime.day().month(.abbreviated))
                         if model.showingAllEntries {
                             Text(journalName(for: entry)).fixedSize(horizontal: false, vertical: true)
                         }
@@ -521,7 +518,6 @@ struct RootView: View {
                             Label(journalName(for: entry), systemImage: "book.closed").font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        entryConflictIndicator(entry)
                     }
                 }
                 Text(entry.displayTitle).font(.body.weight(.medium))
@@ -551,11 +547,6 @@ struct RootView: View {
                     }.tint(.accentColor)
                 }
             }
-    }
-    @ViewBuilder private func entryConflictIndicator(_ entry: JournalItem) -> some View {
-        if model.conflicts.contains(where: { $0.id == entry.id }) {
-            Image(systemName: "exclamationmark.circle").accessibilityLabel("Changes need review")
-        }
     }
     private func entryActions(_ entry: JournalItem) -> some View {
         MenuActionsView(actions: entryActionCatalog(entry))
@@ -800,9 +791,7 @@ struct RootView: View {
                         {
                             recoveryNotice(item, availableHeight: geometry.size.height)
                         }
-                        if model.conflicts.contains(where: { $0.id == item.id }) {
-                            ConflictNotice(id: item.id)
-                        }
+                        KeptVersionNotice(item: item, stacked: usesStackedNavigation).id(item.id)
                         VStack(alignment: .leading, spacing: 12) {
                             EntryTitleEditor(
                                 text: binding(\.title, default: item.title, itemID: item.id),
@@ -817,9 +806,7 @@ struct RootView: View {
                     #else
                         // Above the writing rather than in it, so it stays in view however far the entry is
                         // scrolled, as on the Mac.
-                        if model.conflicts.contains(where: { $0.id == item.id }) {
-                            ConflictNotice(id: item.id)
-                        }
+                        KeptVersionNotice(item: item, stacked: usesStackedNavigation).id(item.id)
                     #endif
                     if let session = imageInsertion {
                         ImageImportNotice(session: session) { cancelImageImport() }

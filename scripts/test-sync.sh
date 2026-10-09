@@ -79,7 +79,7 @@ fi
 
 # A server whose data folder is replaced by an older copy keeps its identity, and the Mac's edits take the positions,
 # records and revision numbers of the phone's lost ones: whether the phone had read past its edits or not, and edited
-# again, both versions are kept for review (protocol/README.md, sync-continuity-digest).
+# again, both versions are kept as entries (protocol/README.md, sync-continuity-digest).
 mkdir "$task_dir/rollback-probe"
 start_server "$task_dir/rollback-server"
 probe rollback-setup "$address" "$task_dir/rollback-server/setup-code" "$task_dir/rollback-probe"

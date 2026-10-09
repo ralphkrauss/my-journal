@@ -174,7 +174,6 @@ struct DeleteAllCopy {
         let items = one ? "1 item" : "\(held.count) items"
         let reason: String
         switch held.allSatisfy({ $0 == first }) ? first : .other {
-        case .review: reason = one ? "has changes that need review" : "have changes that need review"
         case .newerVersion:
             return one
                 ? "1 item was saved by a newer version and stays in Recently Deleted. Update My Journal to delete it."
@@ -189,11 +188,6 @@ struct DeleteAllCopy {
         let one = held.count == 1
         let message: String
         switch held.allSatisfy({ $0 == held.first }) ? held.first ?? .other : .other {
-        case .review:
-            message =
-                one
-                ? "This has changes that need review before it can be deleted."
-                : "These items have changes that need review before they can be deleted."
         case .newerVersion:
             message = one ? "Update My Journal to delete this." : "Update My Journal to delete these items."
         case .other: message = one ? "This can’t be deleted yet." : "These items can’t be deleted yet."

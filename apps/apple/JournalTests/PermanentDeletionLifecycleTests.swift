@@ -171,7 +171,7 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
         XCTAssertNil(stillThere?.deletedAt)
     }
 
-    /// Delete All checks before its alert: an item with changes from another device to review isn't offered, and a
+    /// Delete All checks before its alert: an item with changes from another device that are still being combined isn't offered, and a
     /// deleted journal that can't be deleted keeps its entries, so restoring it never leaves entries missing.
     func testDeleteAllLeavesOutWhatCannotBeDeletedAndKeepsAJournalWithItsEntries() async throws {
         let (model, store) = try await recentlyDeletedModel()
@@ -194,7 +194,7 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
         XCTAssertEqual(
             Set(review.held.map(\.id)), Set([reviewed.id, old.id] + oldEntries.map(\.id)),
             "The journal stays with both its entries.")
-        XCTAssertTrue(review.held.allSatisfy { $0.reason == .review })
+        XCTAssertTrue(review.held.allSatisfy { $0.reason == .other })
         model.removeFromLists(review)
         let batch = try await model.permanentlyDeleteAll(review)
 
@@ -312,11 +312,11 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
         XCTAssertEqual(entries.message, PermanentDeletionCopy.retention)
         XCTAssertEqual(DeleteAllCopy(DeleteAllSummary(templates: 1, entries: 1)).title, "Delete 2 Items Permanently?")
         let mixed = DeleteAllCopy(
-            DeleteAllSummary(journals: 2, templates: 1, entries: 11, held: [.review, .review, .review]))
+            DeleteAllSummary(journals: 2, templates: 1, entries: 11, held: [.other, .other, .other]))
         XCTAssertEqual(mixed.title, "Delete 14 Items Permanently?")
         XCTAssertEqual(
             mixed.message,
-            "Includes 2 journals, 1 template, and 11 entries. 3 items have changes that need review and will stay in "
+            "Includes 2 journals, 1 template, and 11 entries. 3 items can’t be deleted yet and will stay in "
                 + "Recently Deleted. You can’t undo this. Copies may remain in archives, backups, and server history.")
         let journal = DeleteAllCopy(
             DeleteAllSummary(journals: 1, entries: 3, held: [.newerVersion], single: ("journal", "Work", 3)))
@@ -327,9 +327,9 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
                 + "Update My Journal to delete it. You can’t undo this. Copies may remain in archives, backups, and "
                 + "server history.")
         XCTAssertEqual(
-            DeleteAllCopy.heldSentence([.review, .newerVersion]),
+            DeleteAllCopy.heldSentence([.other, .newerVersion]),
             "2 items can’t be deleted yet and will stay in Recently Deleted.")
-        XCTAssertEqual(DeleteAllCopy.nothingDeletable([.review]).title, "Item Can’t Be Deleted")
+        XCTAssertEqual(DeleteAllCopy.nothingDeletable([.other]).title, "Item Can’t Be Deleted")
         XCTAssertEqual(
             DeleteAllCopy.nothingDeletable([.newerVersion, .newerVersion]).message,
             "Update My Journal to delete these items.")

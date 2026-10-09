@@ -12,7 +12,10 @@
     "deleteEntry": "record: to Recently Deleted",
     "deleteForGood": "record: Delete Permanently (an entry or journal in Recently Deleted; a journal takes its entries with it)",
     "sync": "device: one synchronization round: send, read every page, settle conflicts, send what that queued",
-    "settleAll": "every device synchronizes in turn, repeatedly, until nothing changes"
+    "settleAll": "every device synchronizes in turn, repeatedly, until nothing changes",
+    "repeat": "times, steps: runs the steps that many times; {n} in a text stands for the number of the round, from 1",
+    "backupServer": "label: remembers everything the server holds",
+    "restoreServer": "label: the server goes back to what it held at that backup and takes a new identity, as a restored backup does"
   },
   "states": {
     "entry": "live (in a journal in use), recentlyDeleted, unavailable (its journal is gone), permanentlyDeleted",
@@ -221,6 +224,185 @@
           {"kind": "entry", "title": "Notes", "text": "words written on A", "state": "unavailable"}
         ],
         "notes": {"A": ["deletedAndChanged", "journalDeleted"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "entry-edited-on-three-devices-a-then-b-then-c",
+      "note": "The version that reached the server last is the entry; each device that overwrote a version it had not seen keeps it as a separate entry. Every text exists once, on every device.",
+      "devices": ["A", "B", "C"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "page", "journal": "home", "title": "Page", "text": "t"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a"},
+        {"device": "B", "do": "editEntry", "record": "page", "text": "b"},
+        {"device": "C", "do": "editEntry", "record": "page", "text": "c"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 4,
+        "records": [
+          {"record": "page", "kind": "entry", "title": "Page", "text": "c", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "a", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "b", "state": "live"}
+        ],
+        "notes": {"B": ["keptBoth"], "C": ["keptBoth"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "entry-edited-on-three-devices-c-then-b-then-a",
+      "note": "The same edits, reaching the server in the other order: the last one is the entry.",
+      "devices": ["A", "B", "C"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "page", "journal": "home", "title": "Page", "text": "t"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a"},
+        {"device": "B", "do": "editEntry", "record": "page", "text": "b"},
+        {"device": "C", "do": "editEntry", "record": "page", "text": "c"},
+        {"device": "C", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 4,
+        "records": [
+          {"record": "page", "kind": "entry", "title": "Page", "text": "a", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "c", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "b", "state": "live"}
+        ],
+        "notes": {"A": ["keptBoth"], "B": ["keptBoth"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "entry-edited-on-three-devices-across-page-boundaries",
+      "note": "One change per page, so the catch-up of a device ends inside the log; the other version of each record is final only at the last page, and the result is the same.",
+      "devices": ["A", "B", "C"],
+      "pageSize": 1,
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "page", "journal": "home", "title": "Page", "text": "t"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a"},
+        {"device": "B", "do": "editEntry", "record": "page", "text": "b"},
+        {"device": "C", "do": "editEntry", "record": "page", "text": "c"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 4,
+        "records": [
+          {"record": "page", "kind": "entry", "title": "Page", "text": "c", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "a", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "b", "state": "live"}
+        ],
+        "notes": {"B": ["keptBoth"], "C": ["keptBoth"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "several-versions-of-an-entry-arrive-while-another-is-unsent",
+      "note": "A writes three versions while B is offline with one edit of its own: B keeps one copy, of the latest version it meets, and the earlier ones are not copied.",
+      "devices": ["A", "B"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "page", "journal": "home", "title": "Page", "text": "t"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "B", "do": "editEntry", "record": "page", "text": "b"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a1"},
+        {"device": "A", "do": "sync"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a2"},
+        {"device": "A", "do": "sync"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a3"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 3,
+        "records": [
+          {"record": "page", "kind": "entry", "title": "Page", "text": "b", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "a3", "state": "live"}
+        ],
+        "notes": {"B": ["keptBoth"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "two-devices-typing-in-one-entry-for-twenty-rounds",
+      "note": "Each device writes, pauses and synchronizes in turn. Each device keeps one copy of the other and replaces it with the other's later version as long as nobody touched it, so there are two copies in all, not one per exchange. The last text written by each device exists, and the entry is the last one that reached the server.",
+      "devices": ["A", "B"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "page", "journal": "home", "title": "Page", "text": "t"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"do": "repeat", "times": 20, "steps": [
+          {"device": "A", "do": "editEntry", "record": "page", "text": "a{n}"},
+          {"device": "A", "do": "sync"},
+          {"device": "B", "do": "editEntry", "record": "page", "text": "b{n}"},
+          {"device": "B", "do": "sync"}
+        ]},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 4,
+        "records": [
+          {"record": "page", "kind": "entry", "title": "Page", "text": "b20", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "a20", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "b19", "state": "live"}
+        ],
+        "notes": {"A": ["keptBoth"], "B": ["keptBoth"]},
+        "reviewRows": 0
+      }
+    },
+    {
+      "name": "server-restored-to-a-backup-and-three-devices-reconnect",
+      "note": "A, B and C hold a version the restored server lost; D wrote another one on the restored server. Whichever devices reconcile first, every device ends with both texts once: the other version is kept as one separate entry, not one per device.",
+      "devices": ["A", "B", "C", "D"],
+      "steps": [
+        {"device": "A", "do": "createJournal", "record": "home", "title": "Home"},
+        {"device": "A", "do": "createEntry", "record": "page", "journal": "home", "title": "Page", "text": "t"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"device": "D", "do": "sync"},
+        {"do": "backupServer", "label": "before"},
+        {"device": "A", "do": "editEntry", "record": "page", "text": "a"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "restoreServer", "label": "before"},
+        {"device": "D", "do": "editEntry", "record": "page", "text": "d"},
+        {"device": "D", "do": "sync"},
+        {"device": "A", "do": "sync"},
+        {"device": "B", "do": "sync"},
+        {"device": "C", "do": "sync"},
+        {"do": "settleAll"}
+      ],
+      "expect": {
+        "total": 3,
+        "records": [
+          {"record": "page", "kind": "entry", "title": "Page", "text": "a", "state": "live"},
+          {"kind": "entry", "title": "Page (other version)", "text": "d", "state": "live"}
+        ],
+        "notes": {"A": ["keptBoth"]},
         "reviewRows": 0
       }
     }

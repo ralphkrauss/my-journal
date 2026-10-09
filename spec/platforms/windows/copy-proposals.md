@@ -83,10 +83,9 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `common.share` | Share… | Share | ellipsis | 12.2; the image actions use it, the Agent access page does not |
 | `settings.devices.revoke` | Revoke Access… | Revoke access | ellipsis | 12.2 |
 | `messages.syncStatus.settings` | Sync Settings… | Sync settings | ellipsis | 12.2 |
-| `messages.conflict.keepThisDevice` | Keep Version from This Device… | Keep version from this device | ellipsis | 12.2 |
-| `messages.conflict.keepOtherDevice` | Keep Version from Other Device… | Keep version from other device | ellipsis | 12.2 |
 | `common.exportArchive` | Export Archive… | Export archive… | casing | 12.1; the ellipsis stays (12.2) |
 | `messages.conflict.kept.clear` | Clear List | Clear list | casing | 12.1 |
+| `messages.conflict.kept.showOther` | Show Other Version | Show other version | casing | 12.1 |
 | `messages.conflict.kept.section` | Changed on Two Devices | Changed on two devices | casing | 12.1 |
 | `library.recentlyDeleted.restoreJournal` | Restore Journal | Restore journal | casing | 12.1 |
 | `library.menu.file.useTemplate` | Use a Template… | Use a template… | casing | 12.1; the ellipsis stays (12.2) |
@@ -142,16 +141,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `library.recoveryNotice.journalDeleted` | The journal is in Recently Deleted. | The journal is in Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.recoveryNotice.template` | This template is in Recently Deleted. | This template is in Recently deleted. | label in a sentence | B27, 12.1 |
 | `library.restoreJournal.explanation` | Entries deleted with this journal will return, including entries that sync later. Entries you deleted separately will stay in Recently Deleted. | Entries deleted with this journal will return, including entries that sync later. Entries you deleted separately will stay in Recently deleted. | label in a sentence | B27, 12.1 |
-| `messages.conflict.keepBothNote.entries` | Keep Both saves the versions as separate entries. | Keep both saves the versions as separate entries. | label in a sentence | B27, 12.1 |
-| `messages.conflict.keepBothNote.templates` | Keep Both saves the versions as separate templates. | Keep both saves the versions as separate templates. | label in a sentence | B27, 12.1 |
-| `messages.conflict.keepOne.history` | The original versions will remain in Version History. | The original versions will remain in Version history. | label in a sentence | B27, 12.1 |
-| `messages.conflict.version.hintOtherDevice` | Version from Other Device | Version from other device | label in a sentence | B27, 12.1 |
-| `messages.conflict.version.hintThisDevice` | Version from This Device | Version from this device | label in a sentence | B27, 12.1 |
-| `messages.conflict.outcome.entry.moveToRecentlyDeleted` | The entry will move to Recently Deleted. | The entry will move to Recently deleted. | label in a sentence | B27, 12.1 |
-| `messages.conflict.outcome.entry.moveToRecentlyDeletedAndDate` | The entry will move to Recently Deleted, and its date will change to {date}. | The entry will move to Recently deleted, and its date will change to {date}. | label in a sentence | B27, 12.1 |
-| `messages.conflict.outcome.template.moveToRecentlyDeleted` | The template will move to Recently Deleted. | The template will move to Recently deleted. | label in a sentence | B27, 12.1 |
-| `messages.conflict.outcome.template.moveToRecentlyDeletedAndDate` | The template will move to Recently Deleted, and its date will change to {date}. | The template will move to Recently deleted, and its date will change to {date}. | label in a sentence | B27, 12.1 |
-| `messages.conflict.placement.inRecentlyDeletedDated` | In Recently Deleted, dated {date} | In Recently deleted, dated {date} | label in a sentence | B27, 12.1 |
 | `messages.lifecycle.alreadyDeleted` | This journal is already in Recently Deleted. | This journal is already in Recently deleted. | label in a sentence | B27, 12.1 |
 | `settings.archiveImport.recentlyDeleted` | {count} in Recently Deleted | {count} in Recently deleted | label in a sentence | B27, 12.1 |
 | `settings.backup.markdown.footer` | Saves your journals and their images as Markdown files that other apps can open. The files aren’t encrypted. To keep a copy you can import later, use Export Archive. | Saves your journals and their images as Markdown files that other apps can open. The files aren’t encrypted. To keep a copy you can import later, use Export archive. | label in a sentence | B27, 12.1 |
