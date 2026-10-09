@@ -1,4 +1,5 @@
 import XCTest
+import os
 
 @testable import JournalCore
 
@@ -250,5 +251,85 @@ final class FileArchiveTests: XCTestCase {
         } catch JournalError.invalidData {}
         XCTAssertFalse(FileManager.default.fileExists(atPath: archive.path))
         try await store.close()
+    }
+    // MARK: Reading through restore
+
+    /// A library with enough records that its database compresses less than the expansion limit allows.
+    private func makeDenseLibrary() async throws -> Library {
+        let library = try await makeLibrary()
+        var generator = SystemRandomNumberGenerator()
+        for number in 0..<120 {
+            let text = (0..<80).map { _ in String(UInt64.random(in: 0...UInt64.max, using: &generator), radix: 36) }
+            let entry = JournalItem(
+                kind: "entry", title: "Entry \(number)",
+                document: .init(blocks: [DocumentBlock(runs: [TextRun(text.joined())])]))
+            _ = try await library.store.save(entry)
+        }
+        return library
+    }
+
+    /// Deflated entries restore through the whole reader (container, hashes, database inspection, store), in tiny
+    /// chunks that split the compressed stream and its output at every kind of boundary.
+    func testDeflatedEntriesRestoreInSmallChunks() async throws {
+        let library = try await makeDenseLibrary()
+        let stored = root.appendingPathComponent("stored.journalarchive")
+        try await VaultArchive.exportFile(
+            store: library.store, recovery: library.recovery, key: library.key, to: stored)
+        let deflated = root.appendingPathComponent("deflated.journalarchive")
+        let count = try ArchiveRepack.deflate(stored, to: deflated)
+        XCTAssertGreaterThanOrEqual(count, 2, "the database and the header at least are deflated")
+        XCTAssertLessThan(
+            try deflated.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0,
+            try stored.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0)
+        for chunk in [1, 13, 4096] {
+            var options = ArchiveOptions.standard
+            options.chunkBytes = chunk
+            let destination = root.appendingPathComponent("restored-\(chunk)")
+            let restored = try await VaultArchive.restore(
+                from: deflated, to: destination, phrase: library.phrase, options: options)
+            let entry = try await restored.store.item(library.entry.id)
+            XCTAssertEqual(entry?.title, library.entry.title, "chunk \(chunk)")
+            let count = try await restored.store.items().count
+            XCTAssertEqual(count, 121, "chunk \(chunk)")
+            for (identifier, bytes) in library.images {
+                let image = try await restored.store.attachment(identifier)
+                XCTAssertEqual(image, bytes, "chunk \(chunk)")
+            }
+            try await restored.store.close()
+        }
+        try await library.store.close()
+    }
+
+    /// Cancelling a restore while it extracts stops at the next chunk and removes the staging folder it made, and
+    /// reports the cancellation rather than damage.
+    func testCancellingARestoreMidExtractionRemovesTheStagingFolder() async throws {
+        let library = try await makeLibrary()
+        let archive = root.appendingPathComponent("library.journalarchive")
+        try await VaultArchive.exportFile(
+            store: library.store, recovery: library.recovery, key: library.key, to: archive)
+        let before = try Data(contentsOf: archive)
+        let destination = root.appendingPathComponent("restored")
+        var options = ArchiveOptions.standard
+        options.chunkBytes = 512
+        let chunkLimit: UInt64 = 20_000
+        let reached = OSAllocatedUnfairLock(initialState: UInt64(0))
+        options.didExtract = { total in
+            reached.withLock { $0 = total }
+            if total >= chunkLimit { withUnsafeCurrentTask { $0?.cancel() } }
+        }
+        let phrase = library.phrase
+        let task = Task {
+            try await VaultArchive.restore(from: archive, to: destination, phrase: phrase, options: options)
+        }
+        do {
+            _ = try await task.value
+            XCTFail("A cancelled restore must not complete")
+        } catch is CancellationError {}
+        let extracted = reached.withLock { $0 }
+        XCTAssertGreaterThanOrEqual(extracted, chunkLimit)
+        XCTAssertLessThan(extracted, chunkLimit + 512, "no chunk is read after the cancellation")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path))
+        XCTAssertEqual(try Data(contentsOf: archive), before)
+        try await library.store.close()
     }
 }

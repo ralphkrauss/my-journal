@@ -501,8 +501,12 @@ internal sealed class ZipContainerReader : IDisposable
         return (size, compressed, offset, disk);
     }
 
+    // The data of the extra field with this identifier. Two of them are damage (readers disagree about which one
+    // counts); a field that runs past the end ends the search.
     private static ReadOnlySpan<byte> FindExtraField(ReadOnlySpan<byte> extra, ushort identifier)
     {
+        ReadOnlySpan<byte> found = [];
+        var seen = false;
         while (extra.Length >= 4)
         {
             var id = BinaryPrimitives.ReadUInt16LittleEndian(extra);
@@ -513,11 +517,16 @@ internal sealed class ZipContainerReader : IDisposable
             }
             if (id == identifier)
             {
-                return extra.Slice(4, length);
+                if (seen)
+                {
+                    throw ArchiveRefusal.Damaged($"two extra fields with identifier {identifier}");
+                }
+                seen = true;
+                found = extra.Slice(4, length);
             }
             extra = extra[(4 + length)..];
         }
-        return [];
+        return found;
     }
 
     private static byte[] ReadAt(SafeFileHandle file, ulong fileLength, ulong offset, int count)

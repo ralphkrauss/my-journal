@@ -50,9 +50,11 @@ final class ArchiveSweepTests: XCTestCase {
         try container.extract(plan, manifest: parsed, into: destination)
     }
 
-    private func bases() throws -> [(String, Corpus.ManifestText)] {
+    private func bases(
+        _ names: [String] = ["stored", "deflated", "data-descriptors", "zip64-small", "unlisted-noise"]
+    ) throws -> [(String, Corpus.ManifestText)] {
         let corpus = try Conformance.decode(Corpus.self, "archive/v2/container-v2.json")
-        return try ["stored", "deflated", "data-descriptors", "zip64-small", "unlisted-noise"].map { name in
+        return try names.map { name in
             let item = try XCTUnwrap(corpus.cases.first { $0.name == name })
             return (item.file, try XCTUnwrap(item.manifest))
         }
@@ -107,6 +109,35 @@ final class ArchiveSweepTests: XCTestCase {
         }
     }
 
+    /// Sizes, offsets, counts and lengths are two, four and eight bytes wide. Setting a field-sized run at every
+    /// position to the values that overflow arithmetic reaches the checks that changing a single byte to its
+    /// complement does not.
+    func testSettingFieldsToExtremeValuesEndsInAcceptanceOrDamage() throws {
+        // All ones at each width (the ZIP64 sentinels and the largest value), and 2^63 (what a signed conversion of an
+        // eight-byte field can't hold). The three archives that differ in structure, to keep the run short.
+        let runs: [[UInt8]] = [
+            [0xFF, 0xFF], [0xFF, 0xFF, 0xFF, 0xFF], [UInt8](repeating: 0xFF, count: 8), [0, 0, 0, 0, 0, 0, 0, 0x80],
+        ]
+        for (file, manifest) in try bases(["stored", "deflated", "zip64-small"]) {
+            let mutated = root.appendingPathComponent("extreme.zip")
+            try? FileManager.default.removeItem(at: mutated)
+            try FileManager.default.copyItem(at: Conformance.url("archive/v2/" + file), to: mutated)
+            let original = try Data(contentsOf: mutated)
+            let skipped = try interiorOfData(mutated)
+            let handle = try FileHandle(forUpdating: mutated)
+            defer { try? handle.close() }
+            for index in 0..<original.count where !skipped.contains(index) {
+                for run in runs where index + run.count <= original.count {
+                    try handle.seek(toOffset: UInt64(index))
+                    try handle.write(contentsOf: Data(run))
+                    requireCleanOutcome(mutated, manifest: manifest, label: "\(file) at \(index) with \(run)")
+                    try handle.seek(toOffset: UInt64(index))
+                    try handle.write(contentsOf: original[index..<(index + run.count)])
+                }
+            }
+        }
+    }
+
     func testCuttingAnArchiveAtAnyLengthEndsInDamage() throws {
         for (file, manifest) in try bases() {
             let original = try Conformance.data("archive/v2/" + file)
@@ -150,10 +181,10 @@ final class ArchiveSweepTests: XCTestCase {
             let bytes = Data(
                 (0..<Int.random(in: 0..<80, using: &generator)).map { _ in UInt8.random(in: 0...255, using: &generator)
                 })
-            _ = try? StrictJSON.parse(bytes)
+            _ = try? StrictJSON.parse(bytes, maximumValues: ArchiveLimits.headerJSONValues)
         }
         let deep = Data(String(repeating: "[", count: 5000).utf8)
-        XCTAssertThrowsError(try StrictJSON.parse(deep))
+        XCTAssertThrowsError(try StrictJSON.parse(deep, maximumValues: ArchiveLimits.headerJSONValues))
     }
 
     /// A restore can be cancelled while it extracts: the next chunk is not read.

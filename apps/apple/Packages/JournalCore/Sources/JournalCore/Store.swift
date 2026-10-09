@@ -92,6 +92,8 @@ public actor JournalStore {
         var configuration = Configuration()
 
         configuration.prepareDatabase { db in
+            // A restored library's schema was written by someone else (ArchiveDatabaseInspection checked it first).
+            try db.hardenAgainstHostileSchema()
             try db.execute(sql: "PRAGMA foreign_keys = ON")
             // Every committed save stays durable, also with the write-ahead log.
             try db.execute(sql: "PRAGMA synchronous = FULL")

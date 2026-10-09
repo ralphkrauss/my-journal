@@ -22,7 +22,10 @@ enum DirectoryArchive {
     static func readHeader(in source: URL) throws -> Header {
         let data = try readSmallFile(
             source.appendingPathComponent(ArchiveNames.header), limit: ArchiveLimits.headerBytes)
-        guard let root = try StrictJSON.parse(data).object else { throw JournalError.invalidData }
+        let parsed = try StrictJSON.parse(
+            data, keeping: ["archiveVersion", "version", "recovery", "manifest"],
+            maximumValues: ArchiveLimits.headerJSONValues)
+        guard let root = parsed.object else { throw JournalError.invalidData }
         // A folder that holds an unpacked file archive is not a directory archive.
         guard root["archiveVersion"] == nil else { throw JournalError.invalidData }
         guard let versionText = root["version"]?.number, let version = ArchiveJSONValue.exactSize(versionText),
@@ -35,7 +38,7 @@ enum DirectoryArchive {
         return Header(version: version, recovery: envelope, manifest: sealed)
     }
 
-    private static func envelope(_ members: [String: ArchiveJSONValue]) throws -> RecoveryEnvelope {
+    private static func envelope(_ members: [ArchiveJSONKey: ArchiveJSONValue]) throws -> RecoveryEnvelope {
         guard let salt = members["salt"]?.string, let wrapped = members["wrappedKey"]?.string,
             let iterationsText = members["iterations"]?.number,
             let iterations = ArchiveJSONValue.exactSize(iterationsText),
@@ -53,14 +56,16 @@ enum DirectoryArchive {
     /// The manifest, whose keys become file names: every key must be a lower-case UUID before any file operation, since
     /// a plain manifest is unauthenticated and a name such as `../x` must not reach outside the staging folder.
     static func parseManifest(_ data: Data) throws -> Manifest {
-        guard let root = try StrictJSON.parse(data).object, let database = root["database"]?.string,
+        let parsed = try StrictJSON.parse(
+            data, keeping: ["database", "attachments"], maximumValues: ArchiveLimits.manifestJSONValues)
+        guard let root = parsed.object, let database = root["database"]?.string,
             ArchiveNames.isHexDigest(database), let listed = root["attachments"]?.object
         else { throw JournalError.invalidData }
         var attachments: [String: String] = [:]
-        for (identifier, value) in listed {
-            guard ArchiveNames.isLowercaseUUID(identifier), let digest = value.string, ArchiveNames.isHexDigest(digest)
+        for (key, value) in listed {
+            guard ArchiveNames.isLowercaseUUID(key.bytes), let digest = value.string, ArchiveNames.isHexDigest(digest)
             else { throw JournalError.invalidData }
-            attachments[identifier] = digest
+            attachments[key.text] = digest
         }
         return Manifest(database: database, attachments: attachments)
     }
@@ -87,15 +92,13 @@ enum DirectoryArchive {
         let total = try measure(manifest, in: source)
         try options.requireSpace(try total.multiplying(by: 2), at: destination.deletingLastPathComponent())
         let manager = FileManager.default
-        guard !manager.fileExists(atPath: destination.path) else { throw JournalError.invalidData }
-        try manager.createDirectory(
-            at: destination, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        try StagingFolder.create(at: destination)
         do {
             try copy(manifest, from: source, to: destination, options: options)
             try Task.checkCancellation()
             return try await ArchiveStaging.open(
                 destination, key: recovered.0, recovery: header.recovery,
-                protection: header.recovery.contentProtection)
+                protection: header.recovery.contentProtection, options: options)
         } catch {
             // Only this newly created directory is owned by the failed restore.
             try? manager.removeItem(at: destination)
@@ -147,7 +150,8 @@ enum DirectoryArchive {
     private static func copyFile(from source: URL, to target: URL, limit: UInt64, expecting digest: String, chunk: Int)
         throws
     {
-        let descriptor = open(source.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+        // O_NONBLOCK: a named pipe put in the file's place would otherwise hold the open until something writes to it.
+        let descriptor = open(source.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK)
         guard descriptor >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
         defer { Darwin.close(descriptor) }
         var information = stat()
@@ -201,9 +205,14 @@ enum DirectoryArchive {
     private static func readSmallFile(_ file: URL, limit: UInt64) throws -> Data {
         let size = try regularFileSize(file)
         guard size > 0, size <= limit else { throw JournalError.invalidData }
-        let descriptor = open(file.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+        let descriptor = open(file.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK)
         guard descriptor >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
         defer { Darwin.close(descriptor) }
+        // What was checked by name may have been replaced since.
+        var information = stat()
+        guard fstat(descriptor, &information) == 0, (information.st_mode & S_IFMT) == S_IFREG else {
+            throw JournalError.invalidData
+        }
         var data = Data()
         var buffer = [UInt8](repeating: 0, count: 64 * 1024)
         while true {

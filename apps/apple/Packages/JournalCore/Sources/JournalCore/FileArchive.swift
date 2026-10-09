@@ -122,14 +122,12 @@ enum FileArchive {
         // The staging copy and the install that follows (which writes the images again).
         try options.requireSpace(try plan.declaredBytes.multiplying(by: 2), at: parent)
         let manager = FileManager.default
-        guard !manager.fileExists(atPath: destination.path) else { throw JournalError.invalidData }
-        try manager.createDirectory(
-            at: destination, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        try StagingFolder.create(at: destination)
         do {
             try container.extract(plan, manifest: manifest, into: destination)
             try Task.checkCancellation()
             return try await ArchiveStaging.open(
-                destination, key: recovered.0, recovery: header.recovery, protection: .encrypted)
+                destination, key: recovered.0, recovery: header.recovery, protection: .encrypted, options: options)
         } catch {
             try? manager.removeItem(at: destination)
             throw error

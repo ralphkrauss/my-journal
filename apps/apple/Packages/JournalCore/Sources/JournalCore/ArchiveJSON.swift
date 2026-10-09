@@ -1,8 +1,21 @@
 import Foundation
 
+/// A member name as the bytes of its UTF-8 text. Swift compares strings by canonical equivalence, so the Kelvin sign
+/// (U+212A) equals `K` and a composed and a decomposed `é` are one name; other readers compare bytes, and two readers
+/// must see the same members (protocol/archive.md, Rules for both kinds).
+struct ArchiveJSONKey: Hashable, ExpressibleByStringLiteral {
+    let bytes: [UInt8]
+
+    init(bytes: [UInt8]) { self.bytes = bytes }
+
+    init(stringLiteral value: String) { bytes = Array(value.utf8) }
+
+    var text: String { String(decoding: bytes, as: UTF8.self) }
+}
+
 /// A JSON value read by `StrictJSON`.
 enum ArchiveJSONValue: Equatable {
-    case object([String: ArchiveJSONValue])
+    case object([ArchiveJSONKey: ArchiveJSONValue])
     case array([ArchiveJSONValue])
     case string(String)
     /// The number exactly as written, so a reader can refuse floats, exponents and leading zeros itself.
@@ -10,7 +23,7 @@ enum ArchiveJSONValue: Equatable {
     case bool(Bool)
     case null
 
-    var object: [String: ArchiveJSONValue]? {
+    var object: [ArchiveJSONKey: ArchiveJSONValue]? {
         if case .object(let members) = self { return members }
         return nil
     }
@@ -36,22 +49,35 @@ enum ArchiveJSONValue: Equatable {
 
 /// A small JSON reader for the archive header and manifest. Foundation's reader keeps the last of two members with the
 /// same name, other readers keep the first, and a header read two ways would be two different archives, so a repeated
-/// member name is an error here. It also refuses a byte order mark, comments, trailing commas and anything nested
-/// deeper than `ArchiveLimits.jsonDepth`.
+/// member name is an error here. Names are compared as bytes. It also refuses a byte order mark, comments, trailing
+/// commas, anything nested deeper than `ArchiveLimits.jsonDepth` and more values than its caller allows.
+///
+/// Memory is bounded by the input and by the value limit: members of the top-level object that the caller doesn't
+/// name are checked but never built, so 16 MiB of `0,` costs no more than 16 MiB of `{}` or of nothing.
 struct StrictJSON {
     private let bytes: [UInt8]
+    private let keeping: Set<ArchiveJSONKey>?
+    private let maximumValues: Int
     private var position = 0
+    private var values = 0
 
-    static func parse(_ data: Data) throws -> ArchiveJSONValue {
-        var parser = StrictJSON(bytes: Array(data))
+    /// `keeping` names the members of the top-level object to read; the others are validated and dropped. Nil keeps
+    /// everything. `maximumValues` counts every value, of every kind, at every depth.
+    static func parse(_ data: Data, keeping: Set<ArchiveJSONKey>? = nil, maximumValues: Int) throws -> ArchiveJSONValue
+    {
+        var parser = StrictJSON(bytes: Array(data), keeping: keeping, maximumValues: maximumValues)
         parser.skipWhitespace()
-        let value = try parser.value(depth: 0)
+        let value = try parser.value(depth: 0, retain: true)
         parser.skipWhitespace()
         guard parser.position == parser.bytes.count else { throw JournalError.invalidData }
         return value
     }
 
-    private init(bytes: [UInt8]) { self.bytes = bytes }
+    private init(bytes: [UInt8], keeping: Set<ArchiveJSONKey>?, maximumValues: Int) {
+        self.bytes = bytes
+        self.keeping = keeping
+        self.maximumValues = maximumValues
+    }
 
     private var current: UInt8? { position < bytes.count ? bytes[position] : nil }
 
@@ -64,12 +90,18 @@ struct StrictJSON {
         position += 1
     }
 
-    private mutating func value(depth: Int) throws -> ArchiveJSONValue {
-        guard depth <= ArchiveLimits.jsonDepth, let byte = current else { throw JournalError.invalidData }
+    /// With `retain` false the value is read and checked but not kept: containers are not built and the result is
+    /// `.null`.
+    private mutating func value(depth: Int, retain: Bool) throws -> ArchiveJSONValue {
+        values += 1
+        guard values <= maximumValues, let byte = current else { throw JournalError.invalidData }
         switch byte {
-        case 0x7B: return try object(depth: depth)
-        case 0x5B: return try array(depth: depth)
-        case 0x22: return .string(try string())
+        case 0x7B: return try object(depth: depth, retain: retain)
+        case 0x5B: return try array(depth: depth, retain: retain)
+        case 0x22:
+            // One String, which also checks the bytes are UTF-8; a string that isn't kept is dropped at once.
+            guard let text = Self.validText(try rawString()) else { throw JournalError.invalidData }
+            return retain ? .string(text) : .null
         case 0x74: return try literal("true", .bool(true))
         case 0x66: return try literal("false", .bool(false))
         case 0x6E: return try literal("null", .null)
@@ -82,9 +114,16 @@ struct StrictJSON {
         return value
     }
 
-    private mutating func object(depth: Int) throws -> ArchiveJSONValue {
+    /// A container nested `jsonDepth` deep is the deepest allowed: the top-level one is depth 0 and the first.
+    private func requireRoom(forContainerAt depth: Int) throws {
+        guard depth < ArchiveLimits.jsonDepth else { throw JournalError.invalidData }
+    }
+
+    private mutating func object(depth: Int, retain: Bool) throws -> ArchiveJSONValue {
+        try requireRoom(forContainerAt: depth)
         try expect(0x7B)
-        var members: [String: ArchiveJSONValue] = [:]
+        var members: [ArchiveJSONKey: ArchiveJSONValue] = [:]
+        var dropped: Set<ArchiveJSONKey> = []
         skipWhitespace()
         if current == 0x7D {
             position += 1
@@ -93,12 +132,16 @@ struct StrictJSON {
         while true {
             skipWhitespace()
             guard current == 0x22 else { throw JournalError.invalidData }
-            let name = try string()
-            guard members[name] == nil else { throw JournalError.invalidData }
+            let nameBytes = try rawString()
+            guard Self.validText(nameBytes) != nil else { throw JournalError.invalidData }
+            let name = ArchiveJSONKey(bytes: nameBytes)
+            guard members[name] == nil, !dropped.contains(name) else { throw JournalError.invalidData }
             skipWhitespace()
             try expect(0x3A)
             skipWhitespace()
-            members[name] = try value(depth: depth + 1)
+            let keepMember = retain && (depth > 0 || keeping?.contains(name) ?? true)
+            let member = try value(depth: depth + 1, retain: keepMember)
+            if keepMember { members[name] = member } else { dropped.insert(name) }
             skipWhitespace()
             if current == 0x2C {
                 position += 1
@@ -109,7 +152,8 @@ struct StrictJSON {
         }
     }
 
-    private mutating func array(depth: Int) throws -> ArchiveJSONValue {
+    private mutating func array(depth: Int, retain: Bool) throws -> ArchiveJSONValue {
+        try requireRoom(forContainerAt: depth)
         try expect(0x5B)
         var items: [ArchiveJSONValue] = []
         skipWhitespace()
@@ -119,7 +163,8 @@ struct StrictJSON {
         }
         while true {
             skipWhitespace()
-            items.append(try value(depth: depth + 1))
+            let item = try value(depth: depth + 1, retain: retain)
+            if retain { items.append(item) }
             skipWhitespace()
             if current == 0x2C {
                 position += 1
@@ -158,16 +203,27 @@ struct StrictJSON {
         while let byte = current, (0x30...0x39).contains(byte) { position += 1 }
     }
 
-    private mutating func string() throws -> String {
+    /// The text of `bytes` if they are valid UTF-8: decoding replaces what is invalid, so only valid bytes come back
+    /// unchanged. (Foundation's `String(bytes:encoding:)` would do the same with an extra copy of a large string.)
+    private static func validText(_ bytes: [UInt8]) -> String? {
+        let text = String(decoding: bytes, as: UTF8.self)
+        return text.utf8.elementsEqual(bytes) ? text : nil
+    }
+
+    /// The bytes of a string with its escapes resolved. The caller checks that they are UTF-8.
+    private mutating func rawString() throws -> [UInt8] {
         try expect(0x22)
         var decoded: [UInt8] = []
+        // The text can't be longer than the bytes up to the closing quote; reserving them avoids the doubling of a
+        // growing array, which would hold twice a 16 MiB string for a moment.
+        var end = position
+        while end < bytes.count, bytes[end] != 0x22 { end += bytes[end] == 0x5C ? 2 : 1 }
+        decoded.reserveCapacity(min(end, bytes.count) - position)
         while true {
             guard let byte = current else { throw JournalError.invalidData }
             position += 1
             switch byte {
-            case 0x22:
-                guard let text = String(bytes: decoded, encoding: .utf8) else { throw JournalError.invalidData }
-                return text
+            case 0x22: return decoded
             case 0x5C: try appendEscape(to: &decoded)
             case 0x00..<0x20: throw JournalError.invalidData
             default: decoded.append(byte)

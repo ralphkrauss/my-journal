@@ -7,7 +7,9 @@ final class ArchiveInput {
     let size: UInt64
 
     init(path: String) throws {
-        let descriptor = open(path, O_RDONLY | O_CLOEXEC)
+        // Without O_NONBLOCK, opening a named pipe waits until something writes to it. The file is a regular one or
+        // refused, and reads of a regular file are not affected by the flag, which is cleared again below.
+        let descriptor = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK)
         guard descriptor >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
         var information = stat()
         guard fstat(descriptor, &information) == 0 else {
@@ -19,6 +21,7 @@ final class ArchiveInput {
             close(descriptor)
             throw JournalError.invalidData
         }
+        _ = fcntl(descriptor, F_SETFL, fcntl(descriptor, F_GETFL) & ~O_NONBLOCK)
         self.descriptor = descriptor
         self.size = UInt64(information.st_size)
     }
@@ -301,17 +304,28 @@ struct ZipDirectory {
             compressedSize: compressed, size: size, localHeaderOffset: offset)
     }
 
-    /// The data of the ZIP64 extended information field (header ID 1) among the extra fields.
+    /// The data of the ZIP64 extended information field (header ID 1) among the extra fields. Two of them are damage:
+    /// readers disagree about which one counts. A field that runs past the end ends the search; it is damage only when
+    /// the ZIP64 field was not found before it.
     private static func zip64Members(in extra: [UInt8]) throws -> ZipMembers {
         var position = 0
+        var found: ZipMembers?
         while position + 4 <= extra.count {
             let identifier = try extra.le16(position)
             let length = Int(try extra.le16(position + 2))
-            guard position + 4 + length <= extra.count else { throw JournalError.invalidData }
-            if identifier == 1 { return ZipMembers(bytes: Array(extra[(position + 4)..<(position + 4 + length)])) }
+            guard position + 4 + length <= extra.count else {
+                // A broken field after the ZIP64 one is as unknown to this reader as any other field.
+                if found != nil { break }
+                throw JournalError.invalidData
+            }
+            if identifier == 1 {
+                guard found == nil else { throw JournalError.invalidData }
+                found = ZipMembers(bytes: Array(extra[(position + 4)..<(position + 4 + length)]))
+            }
             position += 4 + length
         }
-        throw JournalError.invalidData
+        guard let found else { throw JournalError.invalidData }
+        return found
     }
 }
 

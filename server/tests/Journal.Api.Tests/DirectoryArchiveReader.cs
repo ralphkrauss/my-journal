@@ -31,7 +31,7 @@ internal static class DirectoryArchiveReader
         {
             throw ArchiveRefusal.Damaged("there is no usable archive.json");
         }
-        using var header = ArchiveStrictJson.Parse(File.ReadAllBytes(headerFile.FullName), "archive.json");
+        using var header = ArchiveStrictJson.Parse(File.ReadAllBytes(headerFile.FullName), "archive.json", ArchiveStrictJson.MaxHeaderValues);
         var root = header.RootElement;
         if (root.ValueKind != JsonValueKind.Object || root.TryGetProperty("archiveVersion", out _))
         {
@@ -107,7 +107,7 @@ internal static class DirectoryArchiveReader
     // {"database": "<sha256>", "attachments": {"<UUID>": "<sha256>"}}. Every key is checked before any is used as a name.
     private static Manifest ParseManifest(byte[] json)
     {
-        using var document = ArchiveStrictJson.Parse(json, "the manifest");
+        using var document = ArchiveStrictJson.Parse(json, "the manifest", ArchiveStrictJson.MaxManifestValues);
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object
             || !root.TryGetProperty("database", out var database)

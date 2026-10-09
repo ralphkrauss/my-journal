@@ -183,6 +183,7 @@ final class Reencryption {
     init(directory: URL, key: Data, progress: @escaping @Sendable (Double) -> Void) throws {
         var configuration = Configuration()
         configuration.prepareDatabase { db in
+            try db.hardenAgainstHostileSchema()
             try db.execute(sql: "PRAGMA foreign_keys = ON")
             // Readable content that's replaced is overwritten rather than left in free pages.
             try db.execute(sql: "PRAGMA secure_delete = ON")

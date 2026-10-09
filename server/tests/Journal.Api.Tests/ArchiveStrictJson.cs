@@ -9,11 +9,16 @@ namespace Journal.Api.Tests;
 internal static class ArchiveStrictJson
 {
     private const int MaxDepth = 32;
+
+    // The most values of every kind (objects, arrays, strings, numbers and literals) a header and a manifest may hold:
+    // about three per image for 100,000 images (protocol/archive.md, Limits).
+    public const int MaxHeaderValues = 1_000;
+    public const int MaxManifestValues = 400_000;
     public const long MaxSafeInteger = (1L << 53) - 1;
 
     // UTF-8 JSON without a byte order mark, comments or trailing commas, nesting at most 32 deep and no member name
     // repeated in any object. Throws a damaged refusal otherwise.
-    public static JsonDocument Parse(ReadOnlySpan<byte> utf8, string what)
+    public static JsonDocument Parse(ReadOnlySpan<byte> utf8, string what, int maximumValues)
     {
         if (utf8.StartsWith(new byte[] { 0xEF, 0xBB, 0xBF }))
         {
@@ -21,7 +26,7 @@ internal static class ArchiveStrictJson
         }
         try
         {
-            RejectRepeatedMembers(utf8);
+            RejectRepeatedMembers(utf8, maximumValues);
             return JsonDocument.Parse(utf8.ToArray(), new JsonDocumentOptions { MaxDepth = MaxDepth });
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException or ArgumentException or DecoderFallbackException)
@@ -30,14 +35,20 @@ internal static class ArchiveStrictJson
         }
     }
 
-    // Walks the tokens once, keeping the member names of every open object. The reader itself refuses comments,
-    // trailing commas, invalid UTF-8, trailing text and nesting over the maximum.
-    private static void RejectRepeatedMembers(ReadOnlySpan<byte> utf8)
+    // Walks the tokens once, keeping the member names of every open object (compared as strings of UTF-16 code units,
+    // which for valid UTF-8 text is the same as comparing the bytes) and counting values. The reader itself refuses
+    // comments, trailing commas, invalid UTF-8, trailing text and nesting over the maximum.
+    private static void RejectRepeatedMembers(ReadOnlySpan<byte> utf8, int maximumValues)
     {
         var reader = new Utf8JsonReader(utf8, new JsonReaderOptions { MaxDepth = MaxDepth });
         var names = new Stack<HashSet<string>?>();
+        var values = 0;
         while (reader.Read())
         {
+            if (reader.TokenType is not (JsonTokenType.PropertyName or JsonTokenType.EndObject or JsonTokenType.EndArray) && ++values > maximumValues)
+            {
+                throw ArchiveRefusal.Damaged($"more than {maximumValues} JSON values");
+            }
             switch (reader.TokenType)
             {
                 case JsonTokenType.StartObject:

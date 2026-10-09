@@ -12,18 +12,20 @@ struct ArchiveManifest {
     /// Unknown members are ignored so the manifest can grow; a repeated member, a key that is not a lower-case UUID, a
     /// hash that is not lower-case hex and a size that is not a plain integer up to 2^53 - 1 are damage.
     static func parse(_ data: Data) throws -> ArchiveManifest {
-        guard let root = try StrictJSON.parse(data).object, let database = root["database"]?.object,
+        let parsed = try StrictJSON.parse(
+            data, keeping: ["database", "attachments"], maximumValues: ArchiveLimits.manifestJSONValues)
+        guard let root = parsed.object, let database = root["database"]?.object,
             let images = root["attachments"]?.object
         else { throw JournalError.invalidData }
         var attachments: [String: File] = [:]
-        for (identifier, value) in images {
-            guard ArchiveNames.isLowercaseUUID(identifier) else { throw JournalError.invalidData }
-            attachments[identifier] = try file(value.object)
+        for (key, value) in images {
+            guard ArchiveNames.isLowercaseUUID(key.bytes) else { throw JournalError.invalidData }
+            attachments[key.text] = try file(value.object)
         }
         return ArchiveManifest(database: try file(database), attachments: attachments)
     }
 
-    private static func file(_ members: [String: ArchiveJSONValue]?) throws -> File {
+    private static func file(_ members: [ArchiveJSONKey: ArchiveJSONValue]?) throws -> File {
         guard let members, let hash = members["sha256"]?.string, ArchiveNames.isHexDigest(hash),
             let text = members["bytes"]?.number, let bytes = ArchiveJSONValue.exactSize(text)
         else { throw JournalError.invalidData }
@@ -49,7 +51,9 @@ struct FileArchiveHeader {
     static let manifestContext = "journal:v2:archive"
 
     static func parse(_ data: Data) throws -> FileArchiveHeader {
-        guard let root = try StrictJSON.parse(data).object, let versionText = root["archiveVersion"]?.number,
+        let parsed = try StrictJSON.parse(
+            data, keeping: ["archiveVersion", "recovery", "manifest"], maximumValues: ArchiveLimits.headerJSONValues)
+        guard let root = parsed.object, let versionText = root["archiveVersion"]?.number,
             let version = ArchiveJSONValue.exactSize(versionText)
         else { throw JournalError.invalidData }
         guard version <= archiveVersion else { throw JournalError.newerVersion }
@@ -61,7 +65,7 @@ struct FileArchiveHeader {
 
     /// The bounds are the CPU limit before a password is typed: a 16-byte salt, 100,000 to 2,000,000 iterations and
     /// recovery format 1 or 2. A file archive is always encrypted, so formats 3 and 4 are damage here.
-    private static func envelope(_ members: [String: ArchiveJSONValue]) throws -> RecoveryEnvelope {
+    private static func envelope(_ members: [ArchiveJSONKey: ArchiveJSONValue]) throws -> RecoveryEnvelope {
         guard let salt = members["salt"]?.string, Data(base64Encoded: salt)?.count == 16,
             let wrapped = members["wrappedKey"]?.string, Data(base64Encoded: wrapped) != nil,
             let iterationsText = members["iterations"]?.number,
@@ -139,6 +143,7 @@ final class ArchiveContainer {
     func extract(_ plan: Plan, manifest: ArchiveManifest, into destination: URL) throws {
         let images = destination.appendingPathComponent(ArchiveNames.attachmentsFolder, isDirectory: true)
         try FileManager.default.createDirectory(at: images, withIntermediateDirectories: true)
+        var written: UInt64 = 0
         for range in plan.ranges {
             let expected: ArchiveManifest.File
             let target: URL
@@ -153,9 +158,25 @@ final class ArchiveContainer {
             case .header: throw JournalError.invalidData
             }
             let output = try OutputFile(creating: target)
-            let extraction = try ZipExtractor.extract(range, from: input, options: options) { try output.write($0) }
+            let extraction = try ZipExtractor.extract(range, from: input, options: options) { chunk in
+                try output.write(chunk)
+                written += UInt64(chunk.count)
+                options.didExtract?(written)
+            }
             try output.close()
             guard extraction.sha256 == expected.sha256 else { throw JournalError.invalidData }
+        }
+    }
+}
+
+/// The new folder a restore extracts into. It is created without its parents and an existing folder is an error, so a
+/// folder that is already there, or appears between a check and this call, is never taken for the restore's own and
+/// removed when the restore fails.
+enum StagingFolder {
+    static func create(at url: URL) throws {
+        guard mkdir(url.path, 0o700) == 0 else {
+            if errno == EEXIST { throw JournalError.invalidData }
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
         }
     }
 }

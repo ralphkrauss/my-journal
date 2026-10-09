@@ -28,6 +28,6 @@ let package = Package(
             ]),
         .executableTarget(name: "JournalProbe", dependencies: ["JournalCore"]),
         .executableTarget(name: "JournalMeasure", dependencies: ["JournalCore"]),
-        .testTarget(name: "JournalCoreTests", dependencies: ["JournalCore"]),
+        .testTarget(name: "JournalCoreTests", dependencies: ["JournalCore", "CJournalArchive"]),
     ]
 )

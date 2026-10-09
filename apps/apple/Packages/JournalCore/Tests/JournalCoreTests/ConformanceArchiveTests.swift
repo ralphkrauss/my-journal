@@ -11,6 +11,11 @@ final class ConformanceArchiveTests: XCTestCase {
     private static let base = "archive/v1"
     private let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
+    override func setUp() {
+        // A restore creates its own folder, not the folders above it.
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    }
+
     override func tearDown() {
         try? FileManager.default.removeItem(at: root)
     }

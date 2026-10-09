@@ -16,7 +16,7 @@ internal sealed record ArchiveHeader(int FormatVersion, byte[] Salt, int Iterati
     // refused before anything else of it is read, because its other members mean whatever that version says.
     public static ArchiveHeader Parse(ReadOnlySpan<byte> json)
     {
-        using var document = ArchiveStrictJson.Parse(json, "archive.json");
+        using var document = ArchiveStrictJson.Parse(json, "archive.json", ArchiveStrictJson.MaxHeaderValues);
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("archiveVersion", out var versionElement))
         {
@@ -76,7 +76,7 @@ internal sealed record ArchiveManifest(ManifestEntry Database, IReadOnlyDictiona
 
     public static ArchiveManifest Parse(ReadOnlySpan<byte> json)
     {
-        using var document = ArchiveStrictJson.Parse(json, "the manifest");
+        using var document = ArchiveStrictJson.Parse(json, "the manifest", ArchiveStrictJson.MaxManifestValues);
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("database", out var database) || !root.TryGetProperty("attachments", out var attachments) || attachments.ValueKind != JsonValueKind.Object)
         {

@@ -821,6 +821,50 @@
     },
     {
       "expect": "damaged",
+      "file": "container/zip64-duplicate-extra.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-duplicate-extra",
+      "note": "Two ZIP64 extra fields on an entry whose fields are saturated: readers disagree about which one counts."
+    },
+    {
+      "expect": "accept",
+      "file": "container/zip64-duplicate-extra-not-needed.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-duplicate-extra-not-needed",
+      "note": "Two ZIP64 extra fields on an entry with no saturated field: the field is not consulted, so it is ignored like any extra field."
+    },
+    {
+      "expect": "damaged",
       "file": "container/central-extra-past-directory.zip",
       "manifest": {
         "attachments": {
@@ -1558,6 +1602,27 @@
       "note": "Text that is not JSON."
     },
     {
+      "expect": "accept",
+      "file": "container/manifest-depth-32.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}},\"x\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}",
+      "name": "manifest-depth-32",
+      "note": "Containers nested 32 deep in all (the manifest object and 31 arrays): the deepest allowed."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-depth-33.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}},\"x\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}",
+      "name": "manifest-depth-33",
+      "note": "Containers nested 33 deep: one too many."
+    },
+    {
+      "expect": "accept",
+      "file": "container/manifest-names-equal-only-by-normalization.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}},\"K\":0,\"\\u212a\":0,\"\\u00e9\":0,\"e\\u0301\":0}",
+      "name": "manifest-names-equal-only-by-normalization",
+      "note": "Unknown members whose names are canonically equivalent (K and the Kelvin sign, composed and decomposed e-acute) but not the same bytes: distinct members, so no repeated name."
+    },
+    {
       "expect": "damaged",
       "file": "container/header-duplicate-recovery.zip",
       "manifest": {
@@ -1723,6 +1788,90 @@
       },
       "name": "header-manifest-not-base64",
       "note": "The manifest member is not base64.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-member-name-lookalike.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-member-name-lookalike",
+      "note": "The wrapped key's member is spelled with a Kelvin sign (U+212A) instead of K: canonically equivalent, but not the member a reader looks for, so recovery has no wrappedKey.",
+      "parseHeader": true
+    },
+    {
+      "expect": "accept",
+      "file": "container/header-names-equal-only-by-normalization.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-names-equal-only-by-normalization",
+      "note": "Unknown members whose names are canonically equivalent but not the same bytes (K and the Kelvin sign, composed and decomposed e-acute): distinct members, ignored.",
+      "parseHeader": true
+    },
+    {
+      "expect": "accept",
+      "file": "container/header-depth-32.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-depth-32",
+      "note": "Containers nested 32 deep in all (the header object and 31 arrays): the deepest allowed.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-depth-33.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-depth-33",
+      "note": "Containers nested 33 deep: one too many.",
+      "parseHeader": true
+    },
+    {
+      "expect": "accept",
+      "file": "container/header-values-at-limit.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-values-at-limit",
+      "note": "Exactly 1000 JSON values in all (every object, array, string, number and literal counts one): the most a header may hold.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-values-over-limit.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-values-over-limit",
+      "note": "1001 JSON values: one too many.",
       "parseHeader": true
     },
     {

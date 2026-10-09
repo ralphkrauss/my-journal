@@ -46,7 +46,9 @@ public sealed class ArchiveV2ConformanceTests
     private static List<string> ExtractionDifferences(string name, JsonElement container, FileArchiveContents contents, string? crossCheckWith)
     {
         var differences = new List<string>();
-        var manifest = container.TryGetProperty("manifest", out var object_) ? object_ : default;
+        // A case whose manifest is given as text (where the text is the point) carries no manifest object: read the text.
+        using var parsedText = container.TryGetProperty("manifestText", out var text) ? JsonDocument.Parse(text.GetString()!) : null;
+        var manifest = parsedText?.RootElement ?? container.GetProperty("manifest");
         var listed = new List<(string Key, string EntryName, JsonElement Entry)> { ("journal.sqlite", "journal.sqlite", manifest.GetProperty("database")) };
         listed.AddRange(manifest.GetProperty("attachments").EnumerateObject().Select(image => (image.Name, "attachments/" + image.Name, image.Value)));
         if (contents.Files.Count != listed.Count)

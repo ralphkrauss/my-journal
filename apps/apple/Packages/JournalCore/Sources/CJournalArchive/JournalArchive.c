@@ -1,4 +1,5 @@
 #include "JournalArchive.h"
+#include <limits.h>
 #include <stdlib.h>
 #include <zlib.h>
 
@@ -13,9 +14,9 @@ uint32_t journal_crc32(uint32_t crc, const uint8_t *bytes, size_t length) {
     return (uint32_t)value;
 }
 
-int journal_sqlite_enable_defensive(sqlite3 *database) {
-    int enabled = 0;
-    return sqlite3_db_config(database, SQLITE_DBCONFIG_DEFENSIVE, 1, &enabled);
+int journal_sqlite_set_defensive(sqlite3 *database, int enabled) {
+    int current = 0;
+    return sqlite3_db_config(database, SQLITE_DBCONFIG_DEFENSIVE, enabled, &current);
 }
 
 struct journal_inflater {
@@ -44,6 +45,13 @@ void journal_inflater_destroy(journal_inflater *inflater) {
 int journal_inflater_step(
     journal_inflater *inflater, const uint8_t *input, size_t input_length, uint8_t *output,
     size_t output_capacity, size_t *consumed, size_t *produced) {
+    // zlib counts in unsigned int: a larger length would be cut to its low bits and the stream would read or write
+    // the wrong amount.
+    if (input_length > UINT_MAX || output_capacity > UINT_MAX) {
+        *consumed = 0;
+        *produced = 0;
+        return -1;
+    }
     z_stream *stream = &inflater->stream;
     stream->next_in = (Bytef *)input;
     stream->avail_in = (uInt)input_length;

@@ -99,7 +99,7 @@ final class ConformanceContainerTests: XCTestCase {
     /// and nothing else (unlisted entries never reach the disk).
     func testAcceptedCasesExtractExactlyTheListedEntries() throws {
         let corpus = try Conformance.decode(Corpus.self, "archive/v2/container-v2.json")
-        let accepted = corpus.cases.filter { $0.expect == "accept" && $0.parseHeader != true }
+        let accepted = corpus.cases.filter { $0.expect == "accept" && $0.parseHeader != true && $0.manifest != nil }
         XCTAssertGreaterThan(accepted.count, 20)
         for (index, item) in accepted.enumerated() {
             let destination = root.appendingPathComponent("accepted-\(index)")

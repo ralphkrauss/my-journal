@@ -75,6 +75,60 @@ final class ConformanceArchiveDatabaseTests: XCTestCase {
             "name": "foreign-wal", "file": "database/foreign-wal.sqlite", "expect": "damaged",
             "note": "File format versions 2 and 2 (write-ahead logging): not a one-file snapshot.",
         ],
+        [
+            "name": "foreign-small-pages", "file": "database/foreign-small-pages.sqlite", "expect": "accept",
+            "note":
+                "The same library on 512-byte pages: the schema table is a b-tree with interior pages, which a reader that counts its rows by reading the pages must walk.",
+        ],
+        [
+            "name": "foreign-implicit-parent-key", "file": "database/foreign-implicit-parent-key.sqlite",
+            "expect": "accept",
+            "note":
+                "outbox.record references records without naming a column, which means the parent's primary key: the same key as references records (id).",
+        ],
+        [
+            "name": "foreign-virtual-table", "file": "database/foreign-virtual-table.sqlite", "expect": "damaged",
+            "note":
+                "An FTS5 virtual table and its shadow tables. Connecting a virtual table runs the module's code, so it is refused from the schema table, before quick_check or any pragma.",
+        ],
+        [
+            "name": "foreign-generated-column", "file": "database/foreign-generated-column.sqlite",
+            "expect": "damaged",
+            "note":
+                "records has a generated column that PRAGMA table_info leaves out and table_xinfo lists (hidden 2 or 3).",
+        ],
+        [
+            "name": "foreign-check-constraint", "file": "database/foreign-check-constraint.sqlite",
+            "expect": "damaged", "note": "records.revision has a CHECK constraint, which no pragma lists.",
+        ],
+        [
+            "name": "foreign-collate", "file": "database/foreign-collate.sqlite", "expect": "damaged",
+            "note": "records.kind compares as NOCASE.",
+        ],
+        [
+            "name": "foreign-foreign-key-action", "file": "database/foreign-foreign-key-action.sqlite",
+            "expect": "damaged", "note": "outbox.record deletes the row with its record (ON DELETE CASCADE).",
+        ],
+        [
+            "name": "foreign-deferred-foreign-key", "file": "database/foreign-deferred-foreign-key.sqlite",
+            "expect": "damaged", "note": "outbox.record is DEFERRABLE INITIALLY DEFERRED.",
+        ],
+        [
+            "name": "foreign-on-conflict-replace", "file": "database/foreign-on-conflict-replace.sqlite",
+            "expect": "damaged", "note": "outbox.record is UNIQUE ON CONFLICT REPLACE.",
+        ],
+        [
+            "name": "foreign-without-rowid", "file": "database/foreign-without-rowid.sqlite", "expect": "damaged",
+            "note": "settings is a WITHOUT ROWID table.",
+        ],
+        [
+            "name": "foreign-strict", "file": "database/foreign-strict.sqlite", "expect": "damaged",
+            "note": "settings is a STRICT table.",
+        ],
+        [
+            "name": "foreign-no-autoincrement", "file": "database/foreign-no-autoincrement.sqlite",
+            "expect": "damaged", "note": "history.id is not AUTOINCREMENT, so its numbers can be used again.",
+        ],
     ]
 
     // MARK: The structure, as JSON
@@ -94,7 +148,16 @@ final class ConformanceArchiveDatabaseTests: XCTestCase {
                     "columns": index.columns,
                 ]
             }
-            tables[name] = ["columns": columns, "indexes": indexes]
+            let foreignKeys = table.foreignKeys.map { key -> [String: Any] in
+                [
+                    "table": key.table, "from": key.from, "to": key.to ?? NSNull(), "onUpdate": key.onUpdate,
+                    "onDelete": key.onDelete, "match": key.match,
+                ]
+            }
+            tables[name] = [
+                "columns": columns, "indexes": indexes, "foreignKeys": foreignKeys,
+                "autoincrement": table.autoincrement,
+            ]
         }
         return tables
     }
@@ -106,13 +169,13 @@ final class ConformanceArchiveDatabaseTests: XCTestCase {
             structures[String(count)] = Self.describe(try DatabaseStructure.expected(afterMigrations: count))
         }
         return [
-            "corpusVersion": 1,
+            "corpusVersion": 2,
             "purpose":
                 "The structure of the library database after each migration (protocol/archive.md, Database), and databases written by something other than GRDB that a reader accepts or refuses before it opens them. See README.md in this folder.",
             "migrations": migrations,
             "structureAfter": structures,
             "comparison":
-                "Tables, columns (name, declared type in upper case, NOT NULL, default without outer parentheses, primary key position) and indexes (CREATE INDEX name, uniqueness, partial, key columns) are compared; the text of CREATE statements is not. A primary key column counts as NOT NULL. grdb_migrations is compared by its identifier column only. sqlite_sequence is ignored. Triggers, views and any other table or index are refused.",
+                "Tables, columns (name, declared type in upper case, NOT NULL, default without outer parentheses, primary key position), indexes (CREATE INDEX name, uniqueness, partial, key columns), foreign keys (parent table, columns, ON UPDATE, ON DELETE, MATCH; a key that names no parent column means the parent's primary key) and whether the table is AUTOINCREMENT are compared; the text of CREATE statements is not. A primary key column counts as NOT NULL. grdb_migrations is compared by its identifier column only. sqlite_sequence is ignored. Triggers, views, virtual tables, generated or hidden columns, WITHOUT ROWID and STRICT tables, any statement that contains the word CHECK, COLLATE, CONFLICT, DEFERRABLE, GENERATED, AS or VIRTUAL outside quotes and comments, and any other table or index are refused.",
             "cases": Self.cases,
         ]
     }
@@ -128,7 +191,7 @@ final class ConformanceArchiveDatabaseTests: XCTestCase {
 
     // MARK: Inspection before a store exists
 
-    func testEveryDatabaseCaseGivesTheStatedOutcome() throws {
+    func testEveryDatabaseCaseGivesTheStatedOutcome() async throws {
         _ = try fixture()
         let cases = try Conformance.decode(Fixture.self, Self.path).cases
         XCTAssertGreaterThanOrEqual(cases.count, 10)
@@ -136,7 +199,7 @@ final class ConformanceArchiveDatabaseTests: XCTestCase {
             let copy = root.appendingPathComponent(item.name + ".sqlite")
             try FileManager.default.copyItem(at: Conformance.url("archive/v2/" + item.file), to: copy)
             do {
-                try ArchiveDatabaseInspection.inspect(copy)
+                try await ArchiveDatabaseInspection.inspect(copy)
                 XCTAssertEqual(item.expect, "accept", item.name)
             } catch {
                 XCTAssertEqual(ConformanceContainerTests.outcome(of: error), item.expect, "\(item.name): \(error)")
@@ -145,30 +208,35 @@ final class ConformanceArchiveDatabaseTests: XCTestCase {
     }
 
     /// Inspection reads the file and nothing else: it neither switches it to write-ahead logging nor migrates it.
-    func testInspectionLeavesTheDatabaseAsItFoundIt() throws {
+    func testInspectionLeavesTheDatabaseAsItFoundIt() async throws {
         let copy = root.appendingPathComponent("older.sqlite")
         try FileManager.default.copyItem(at: Conformance.url("archive/v2/database/foreign-older.sqlite"), to: copy)
         let before = try Data(contentsOf: copy)
-        try ArchiveDatabaseInspection.inspect(copy)
+        try await ArchiveDatabaseInspection.inspect(copy)
         XCTAssertEqual(try Data(contentsOf: copy), before)
         let siblings = try FileManager.default.contentsOfDirectory(atPath: root.path)
         XCTAssertEqual(siblings, ["older.sqlite"])
     }
 
     /// A hostile database is refused before any migration runs: the trigger in this one would fire on the first write.
-    func testAMalformedFileIsDamagedNotAnError() throws {
+    func testAMalformedFileIsDamagedNotAnError() async throws {
         let junk = root.appendingPathComponent("junk.sqlite")
         try Data(repeating: 0x41, count: 4096).write(to: junk)
-        XCTAssertThrowsError(try ArchiveDatabaseInspection.inspect(junk)) {
-            XCTAssertEqual(ConformanceContainerTests.outcome(of: $0), "damaged")
-        }
+        await assertDamaged(junk)
         var bytes = try Data(contentsOf: Conformance.url("archive/v2/database/foreign.sqlite"))
         // The second page is a table's root page: damage there is not in unused space.
         bytes[4096...4296] = Data(repeating: 0xFF, count: 201)
         let torn = root.appendingPathComponent("torn.sqlite")
         try bytes.write(to: torn)
-        XCTAssertThrowsError(try ArchiveDatabaseInspection.inspect(torn)) {
-            XCTAssertEqual(ConformanceContainerTests.outcome(of: $0), "damaged")
+        await assertDamaged(torn)
+    }
+
+    private func assertDamaged(_ file: URL, line: UInt = #line) async {
+        do {
+            try await ArchiveDatabaseInspection.inspect(file)
+            XCTFail("\(file.lastPathComponent) must be refused", line: line)
+        } catch {
+            XCTAssertEqual(ConformanceContainerTests.outcome(of: error), "damaged", line: line)
         }
     }
 

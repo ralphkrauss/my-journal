@@ -29,6 +29,9 @@ STORED, DEFLATED = 0, 8
 MAX_U32 = 0xFFFFFFFF
 DOS_DATE = 0x0021  # 1980-01-01
 
+# The most JSON values (of every kind) a header may hold; a manifest may hold 400,000 (protocol/archive.md, Limits).
+HEADER_VALUE_LIMIT = 1000
+
 IMAGE_A = "01234567-89ab-4cde-8fab-0123456789ab"
 IMAGE_B = "fedcba98-7654-4321-8fed-cba987654321"
 UNLISTED = "11111111-2222-4333-8444-555555555555"
@@ -638,6 +641,30 @@ def build_structure():
         "The ZIP64 extra field lacks the offset the saturated field asks for.",
         assemble(short, zip64=True, saturate=True),
     )
+    twice = standard_entries()
+    twice[0] = Entry(
+        "journal.sqlite",
+        DATABASE,
+        zip64=True,
+        cextra=struct.pack("<HHQQQ", 1, 24, len(DATABASE), len(DATABASE), 0),
+    )
+    damaged(
+        "zip64-duplicate-extra",
+        "Two ZIP64 extra fields on an entry whose fields are saturated: readers disagree about which one counts.",
+        assemble(twice, zip64=True, saturate=True),
+    )
+    unneeded = standard_entries()
+    unneeded[0] = Entry(
+        "journal.sqlite",
+        DATABASE,
+        cextra=struct.pack("<HHQ", 1, 8, 0) + struct.pack("<HHQ", 1, 8, 1),
+    )
+    case(
+        "zip64-duplicate-extra-not-needed",
+        "accept",
+        "Two ZIP64 extra fields on an entry with no saturated field: the field is not consulted, so it is ignored like any extra field.",
+        assemble(unneeded),
+    )
     damaged(
         "central-extra-past-directory",
         "A central directory entry whose extra field runs past the end of the directory.",
@@ -1042,6 +1069,26 @@ def manifest_text_cases():
     )
     bad("manifest-not-json", "Text that is not JSON.", "{not json")
 
+    def deep(levels):
+        """A manifest with an unknown member nested so that the whole text is `levels` containers deep."""
+        return base[:-1] + ',"x":' + "[" * (levels - 1) + "]" * (levels - 1) + "}"
+
+    case(
+        "manifest-depth-32",
+        "accept",
+        "Containers nested 32 deep in all (the manifest object and 31 arrays): the deepest allowed.",
+        assemble(standard_entries()),
+        manifest_text=deep(32),
+    )
+    bad("manifest-depth-33", "Containers nested 33 deep: one too many.", deep(33))
+    case(
+        "manifest-names-equal-only-by-normalization",
+        "accept",
+        "Unknown members whose names are canonically equivalent (K and the Kelvin sign, composed and decomposed e-acute) but not the same bytes: distinct members, so no repeated name.",
+        assemble(standard_entries()),
+        manifest_text=base[:-1] + ',"K":0,"\\u212a":0,"\\u00e9":0,"e\\u0301":0}',
+    )
+
 
 def header_cases():
     def header_archive(text):
@@ -1107,6 +1154,49 @@ def header_cases():
         "header-manifest-not-base64",
         "The manifest member is not base64.",
         header_json(manifest="not base64 !!"),
+    )
+    envelope_key = good.replace('"wrappedKey"', '"wrapped\\u212aey"')
+    assert envelope_key != good
+    bad(
+        "header-member-name-lookalike",
+        "The wrapped key's member is spelled with a Kelvin sign (U+212A) instead of K: canonically equivalent, but not the member a reader looks for, so recovery has no wrappedKey.",
+        envelope_key,
+    )
+    case(
+        "header-names-equal-only-by-normalization",
+        "accept",
+        "Unknown members whose names are canonically equivalent but not the same bytes (K and the Kelvin sign, composed and decomposed e-acute): distinct members, ignored.",
+        header_archive(good[:-1] + ',"K":0,"\\u212a":0,"\\u00e9":0,"e\\u0301":0}'),
+        files={"journal.sqlite": DATABASE},
+        parse_header=True,
+    )
+
+    def deep_header(levels):
+        return good[:-1] + ',"x":' + "[" * (levels - 1) + "]" * (levels - 1) + "}"
+
+    case(
+        "header-depth-32",
+        "accept",
+        "Containers nested 32 deep in all (the header object and 31 arrays): the deepest allowed.",
+        header_archive(deep_header(32)),
+        files={"journal.sqlite": DATABASE},
+        parse_header=True,
+    )
+    bad("header-depth-33", "Containers nested 33 deep: one too many.", deep_header(33))
+    # The header has 8 values besides the padding member's array and its numbers.
+    padding = HEADER_VALUE_LIMIT - 9
+    case(
+        "header-values-at-limit",
+        "accept",
+        f"Exactly {HEADER_VALUE_LIMIT} JSON values in all (every object, array, string, number and literal counts one): the most a header may hold.",
+        header_archive(good[:-1] + ',"x":[' + ",".join(["0"] * padding) + "]}"),
+        files={"journal.sqlite": DATABASE},
+        parse_header=True,
+    )
+    bad(
+        "header-values-over-limit",
+        f"{HEADER_VALUE_LIMIT + 1} JSON values: one too many.",
+        good[:-1] + ',"x":[' + ",".join(["0"] * (padding + 1)) + "]}",
     )
     damaged(
         "header-newer-archive-version",

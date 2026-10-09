@@ -65,10 +65,82 @@
       "file" : "database/foreign-wal.sqlite",
       "name" : "foreign-wal",
       "note" : "File format versions 2 and 2 (write-ahead logging): not a one-file snapshot."
+    },
+    {
+      "expect" : "accept",
+      "file" : "database/foreign-small-pages.sqlite",
+      "name" : "foreign-small-pages",
+      "note" : "The same library on 512-byte pages: the schema table is a b-tree with interior pages, which a reader that counts its rows by reading the pages must walk."
+    },
+    {
+      "expect" : "accept",
+      "file" : "database/foreign-implicit-parent-key.sqlite",
+      "name" : "foreign-implicit-parent-key",
+      "note" : "outbox.record references records without naming a column, which means the parent's primary key: the same key as references records (id)."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-virtual-table.sqlite",
+      "name" : "foreign-virtual-table",
+      "note" : "An FTS5 virtual table and its shadow tables. Connecting a virtual table runs the module's code, so it is refused from the schema table, before quick_check or any pragma."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-generated-column.sqlite",
+      "name" : "foreign-generated-column",
+      "note" : "records has a generated column that PRAGMA table_info leaves out and table_xinfo lists (hidden 2 or 3)."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-check-constraint.sqlite",
+      "name" : "foreign-check-constraint",
+      "note" : "records.revision has a CHECK constraint, which no pragma lists."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-collate.sqlite",
+      "name" : "foreign-collate",
+      "note" : "records.kind compares as NOCASE."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-foreign-key-action.sqlite",
+      "name" : "foreign-foreign-key-action",
+      "note" : "outbox.record deletes the row with its record (ON DELETE CASCADE)."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-deferred-foreign-key.sqlite",
+      "name" : "foreign-deferred-foreign-key",
+      "note" : "outbox.record is DEFERRABLE INITIALLY DEFERRED."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-on-conflict-replace.sqlite",
+      "name" : "foreign-on-conflict-replace",
+      "note" : "outbox.record is UNIQUE ON CONFLICT REPLACE."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-without-rowid.sqlite",
+      "name" : "foreign-without-rowid",
+      "note" : "settings is a WITHOUT ROWID table."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-strict.sqlite",
+      "name" : "foreign-strict",
+      "note" : "settings is a STRICT table."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-no-autoincrement.sqlite",
+      "name" : "foreign-no-autoincrement",
+      "note" : "history.id is not AUTOINCREMENT, so its numbers can be used again."
     }
   ],
-  "comparison" : "Tables, columns (name, declared type in upper case, NOT NULL, default without outer parentheses, primary key position) and indexes (CREATE INDEX name, uniqueness, partial, key columns) are compared; the text of CREATE statements is not. A primary key column counts as NOT NULL. grdb_migrations is compared by its identifier column only. sqlite_sequence is ignored. Triggers, views and any other table or index are refused.",
-  "corpusVersion" : 1,
+  "comparison" : "Tables, columns (name, declared type in upper case, NOT NULL, default without outer parentheses, primary key position), indexes (CREATE INDEX name, uniqueness, partial, key columns), foreign keys (parent table, columns, ON UPDATE, ON DELETE, MATCH; a key that names no parent column means the parent's primary key) and whether the table is AUTOINCREMENT are compared; the text of CREATE statements is not. A primary key column counts as NOT NULL. grdb_migrations is compared by its identifier column only. sqlite_sequence is ignored. Triggers, views, virtual tables, generated or hidden columns, WITHOUT ROWID and STRICT tables, any statement that contains the word CHECK, COLLATE, CONFLICT, DEFERRABLE, GENERATED, AS or VIRTUAL outside quotes and comments, and any other table or index are refused.",
+  "corpusVersion" : 2,
   "migrations" : [
     "v1",
     "sync-reconciliation",
@@ -80,6 +152,7 @@
   "structureAfter" : {
     "1" : {
       "attachments" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -96,6 +169,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -108,6 +184,7 @@
         ]
       },
       "conflicts" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -145,6 +222,16 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -157,6 +244,7 @@
         ]
       },
       "grdb_migrations" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -165,6 +253,9 @@
             "primaryKey" : 1,
             "type" : "TEXT"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -178,6 +269,7 @@
         ]
       },
       "history" : {
+        "autoincrement" : true,
         "columns" : [
           {
             "default" : null,
@@ -215,11 +307,15 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
 
         ]
       },
       "outbox" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -257,6 +353,16 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -277,6 +383,7 @@
         ]
       },
       "records" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : "1",
@@ -314,6 +421,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -326,6 +436,7 @@
         ]
       },
       "settings" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -341,6 +452,9 @@
             "primaryKey" : 0,
             "type" : "BLOB"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -356,6 +470,7 @@
     },
     "2" : {
       "attachments" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -372,6 +487,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -384,6 +502,7 @@
         ]
       },
       "conflicts" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -421,6 +540,16 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -433,6 +562,7 @@
         ]
       },
       "grdb_migrations" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -441,6 +571,9 @@
             "primaryKey" : 1,
             "type" : "TEXT"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -454,6 +587,7 @@
         ]
       },
       "history" : {
+        "autoincrement" : true,
         "columns" : [
           {
             "default" : null,
@@ -491,11 +625,15 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
 
         ]
       },
       "outbox" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -533,6 +671,16 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -553,6 +701,7 @@
         ]
       },
       "reconcile_heads" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -611,6 +760,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -623,6 +775,7 @@
         ]
       },
       "records" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : "1",
@@ -660,6 +813,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -672,6 +828,7 @@
         ]
       },
       "settings" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -687,6 +844,9 @@
             "primaryKey" : 0,
             "type" : "BLOB"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -702,6 +862,7 @@
     },
     "3" : {
       "attachments" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -718,6 +879,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -730,6 +894,7 @@
         ]
       },
       "conflicts" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -767,6 +932,16 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -779,6 +954,7 @@
         ]
       },
       "grdb_migrations" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -787,6 +963,9 @@
             "primaryKey" : 1,
             "type" : "TEXT"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -800,6 +979,7 @@
         ]
       },
       "history" : {
+        "autoincrement" : true,
         "columns" : [
           {
             "default" : null,
@@ -837,6 +1017,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -849,6 +1032,7 @@
         ]
       },
       "outbox" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -886,6 +1070,16 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -906,6 +1100,7 @@
         ]
       },
       "reconcile_heads" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -964,6 +1159,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -976,6 +1174,7 @@
         ]
       },
       "records" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : "1",
@@ -1013,6 +1212,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1025,6 +1227,7 @@
         ]
       },
       "settings" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1040,6 +1243,9 @@
             "primaryKey" : 0,
             "type" : "BLOB"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -1055,6 +1261,7 @@
     },
     "4" : {
       "attachments" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1071,6 +1278,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1083,6 +1293,7 @@
         ]
       },
       "conflicts" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1120,6 +1331,16 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1132,6 +1353,7 @@
         ]
       },
       "grdb_migrations" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1140,6 +1362,9 @@
             "primaryKey" : 1,
             "type" : "TEXT"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -1153,6 +1378,7 @@
         ]
       },
       "history" : {
+        "autoincrement" : true,
         "columns" : [
           {
             "default" : "0",
@@ -1197,6 +1423,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1209,6 +1438,7 @@
         ]
       },
       "outbox" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1246,6 +1476,16 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1266,6 +1506,7 @@
         ]
       },
       "reconcile_heads" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1324,6 +1565,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1336,6 +1580,7 @@
         ]
       },
       "records" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : "1",
@@ -1373,6 +1618,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1385,6 +1633,7 @@
         ]
       },
       "settings" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1401,6 +1650,9 @@
             "type" : "BLOB"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1415,6 +1667,7 @@
     },
     "5" : {
       "attachments" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1431,6 +1684,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1443,6 +1699,7 @@
         ]
       },
       "conflicts" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1480,6 +1737,16 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1492,6 +1759,7 @@
         ]
       },
       "grdb_migrations" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1500,6 +1768,9 @@
             "primaryKey" : 1,
             "type" : "TEXT"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {
@@ -1513,6 +1784,7 @@
         ]
       },
       "history" : {
+        "autoincrement" : true,
         "columns" : [
           {
             "default" : "0",
@@ -1557,6 +1829,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1569,6 +1844,7 @@
         ]
       },
       "outbox" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1606,6 +1882,16 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+          {
+            "from" : "record",
+            "match" : "NONE",
+            "onDelete" : "NO ACTION",
+            "onUpdate" : "NO ACTION",
+            "table" : "records",
+            "to" : "id"
+          }
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1626,6 +1912,7 @@
         ]
       },
       "reconcile_heads" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1684,6 +1971,9 @@
             "type" : "TEXT"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1696,6 +1986,7 @@
         ]
       },
       "records" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : "1",
@@ -1733,6 +2024,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1745,6 +2039,7 @@
         ]
       },
       "server_versions" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1768,6 +2063,9 @@
             "type" : "INTEGER"
           }
         ],
+        "foreignKeys" : [
+
+        ],
         "indexes" : [
           {
             "columns" : [
@@ -1780,6 +2078,7 @@
         ]
       },
       "settings" : {
+        "autoincrement" : false,
         "columns" : [
           {
             "default" : null,
@@ -1795,6 +2094,9 @@
             "primaryKey" : 0,
             "type" : "BLOB"
           }
+        ],
+        "foreignKeys" : [
+
         ],
         "indexes" : [
           {

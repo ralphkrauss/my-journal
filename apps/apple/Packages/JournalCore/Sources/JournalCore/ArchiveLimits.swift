@@ -25,6 +25,18 @@ enum ArchiveLimits {
     static let spaceReserve: UInt64 = 256 * 1024 * 1024
     /// The number of nested JSON containers a header or manifest may have.
     static let jsonDepth = 32
+    /// The values (of every kind) a header may hold, and a manifest: about three per image, 100,000 images at most.
+    static let headerJSONValues = 1_000
+    static let manifestJSONValues = 400_000
+    /// What the schema table (`sqlite_master`) of an archived database may hold: the library has about 30 objects of
+    /// a few hundred bytes. Checked on the file's pages before SQLite parses the schema (ArchiveSchemaScan). A
+    /// migration that adds objects must keep a library under these, or archives of it can't be read.
+    static let schemaObjects = 64
+    static let schemaBytes: UInt64 = 256 * 1024
+    static let schemaPages = 256
+    /// Wall-clock seconds each step of the database inspection may take once the schema is known to be small.
+    /// `PRAGMA quick_check` reads the whole file, so it is bounded by cancellation, not by a clock.
+    static let inspectionSeconds = 10
     /// ZIP stores times as DOS date and time; every entry is stamped 1980-01-01 00:00:00.
     static let dosDate: UInt16 = 0x0021
 }
@@ -37,6 +49,12 @@ struct ArchiveOptions: Sendable {
     var forceZip64 = false
     /// Free space on the volume that holds a path.
     var availableSpace: @Sendable (URL) throws -> UInt64 = { try ArchiveOptions.systemAvailableSpace(at: $0) }
+    /// How long each step of the database inspection may run before the file is refused as damaged.
+    var inspectionBudget = Duration.seconds(ArchiveLimits.inspectionSeconds)
+    /// Called with each SQL statement the database inspection runs.
+    var inspectionStatements: (@Sendable (String) -> Void)?
+    /// Called after each chunk of a file archive is written to the staging folder, with the bytes written so far.
+    var didExtract: (@Sendable (UInt64) -> Void)?
 
     static let standard = ArchiveOptions()
 
