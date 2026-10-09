@@ -63,7 +63,9 @@ extension InlineTableGrid {
         if case .paragraph = command { return true }
         if let typing = MarkdownEditing.typingCommand(
             command, textIsEmpty: false, selection: selection,
-            typing: cell.typingAttributes, size: textSize)
+            typing: cell.typingAttributes, size: textSize,
+            blockKind: storage.length > 0
+                ? FormattingState.caretKind(storage, at: selection.location, typing: cell.typingAttributes) : nil)
         {
             cell.typingAttributes = typing
             return true
@@ -71,18 +73,14 @@ extension InlineTableGrid {
         let mutation = TableCellFormatting.edit(
             command, text: storage, selection: selection, typing: cell.typingAttributes, size: textSize)
         guard let mutation else { return false }
-        if selection.length == 0, mutation.typingOnly {
-            cell.typingAttributes = mutation.text.attributes(at: 0, effectiveRange: nil)
-        } else {
-            storage.replaceCharacters(in: mutation.range, with: mutation.text)
-            // Formatting is an undo step of its own, apart from the typing around it.
-            #if os(macOS)
-                cell.setSelectedRange(mutation.selection)
-            #else
-                cell.selectedRange = mutation.selection
-            #endif
-            commit(cell, typing: false)
-        }
+        storage.replaceCharacters(in: mutation.range, with: mutation.text)
+        // Formatting is an undo step of its own, apart from the typing around it.
+        #if os(macOS)
+            cell.setSelectedRange(mutation.selection)
+        #else
+            cell.selectedRange = mutation.selection
+        #endif
+        commit(cell, typing: false)
         return true
     }
 }
@@ -92,34 +90,14 @@ extension InlineTableGrid {
         let text: NSAttributedString
         let range: NSRange
         let selection: NSRange
-        var typingOnly = false
     }
     static func edit(
         _ command: EditorCommand, text: NSAttributedString, selection: NSRange,
         typing: [NSAttributedString.Key: Any], size: CGFloat
     ) -> Mutation? {
         switch command {
-        case .bold, .italic, .underline:
-            let selected =
-                selection.length > 0
-                ? text.attributedSubstring(from: selection) : NSAttributedString(string: " ", attributes: typing)
-            let result = NSMutableAttributedString(attributedString: selected)
-            let state = FormattingState(
-                text: selected, range: NSRange(location: 0, length: selected.length), typing: typing)
-            result.enumerateAttributes(in: NSRange(location: 0, length: result.length)) { attributes, range, _ in
-                var updated = attributes
-                switch command {
-                case .underline:
-                    updated[.underlineStyle] = state.underline == .on ? 0 : NSUnderlineStyle.single.rawValue
-                case .bold, .italic:
-                    let font = attributes[.font] as? PlatformFont ?? RichText.font(size: size)
-                    updated[.font] = toggledFont(font, command: command, enabled: isEnabled(command, state: state))
-                default: break
-                }
-                result.setAttributes(updated, range: range)
-            }
-            return Mutation(text: result, range: selection, selection: selection, typingOnly: selection.length == 0)
-        case .strikethrough, .code:
+        case .bold, .italic, .underline, .strikethrough, .code:
+            // The one rule of every inline style, in a cell as in the entry (InlineStyles).
             guard
                 let edit = MarkdownEditing.edit(
                     command, text: text, selection: selection,
@@ -135,25 +113,5 @@ extension InlineTableGrid {
                 text: value, range: selection, selection: NSRange(location: selection.location, length: value.length))
         default: return nil
         }
-    }
-    private static func isEnabled(_ command: EditorCommand, state: FormattingState) -> Bool {
-        if case .bold = command { return state.bold != .on }
-        return state.italic != .on
-    }
-    private static func toggledFont(_ font: PlatformFont, command: EditorCommand, enabled: Bool) -> PlatformFont {
-        #if os(macOS)
-            let trait: NSFontTraitMask
-            if case .bold = command { trait = .boldFontMask } else { trait = .italicFontMask }
-            return enabled
-                ? NSFontManager.shared.convert(font, toHaveTrait: trait)
-                : NSFontManager.shared.convert(font, toNotHaveTrait: trait)
-        #else
-            let trait: UIFontDescriptor.SymbolicTraits
-            if case .bold = command { trait = .traitBold } else { trait = .traitItalic }
-            var traits = font.fontDescriptor.symbolicTraits
-            if enabled { traits.insert(trait) } else { traits.remove(trait) }
-            return UIFont(
-                descriptor: font.fontDescriptor.withSymbolicTraits(traits) ?? font.fontDescriptor, size: font.pointSize)
-        #endif
     }
 }

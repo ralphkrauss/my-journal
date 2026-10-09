@@ -34,7 +34,7 @@ On the Mac the menus are My Journal, File, Edit, Format, View, Window, Help. iPa
 | `find` | Edit ▸ Find ▸ Find… ⌘F (find bar above the entry), Find and Replace… ⇧⌘F, Find Next ⌘G, Find Previous ⇧⌘G, Use Selection for Find ⌘E, Jump to Selection ⌘J | ⌘F, ⇧⌘F (Find and Replace…) | Entry Actions ▸ `library.entryActions.findInEntry` (system find navigator) | Find and Replace… is moved from ⌥⌘F to ⇧⌘F. |
 | `search-entries` | Edit ▸ Search Entries ⌥⌘F (below Find) | ⌥⌘F (iPadOS 17 or later; not offered before) | the list's search field |  |
 | `text-editing-system` | Edit ▸ Spelling and Grammar, Substitutions, Transformations, Speech, Start Dictation, Emoji & Symbols | — | system keyboard settings |  |
-| `format-*` | Format menu | the same, except Table ▸ (Mac only) | Formatting controls in the editor |  |
+| `format-*` | Format menu | the same, including Table ▸ | Formatting controls in the editor |  |
 | `toggle-sidebar` | View ▸ Show Sidebar / Hide Sidebar ⌃⌘S | system | the sidebar button (iPad) |  |
 | `toggle-toolbar` | View ▸ Show Toolbar / Hide Toolbar ⌥⌘T | — | — |  |
 | `show-editor-only` | View ▸ Show Editor Only / Show Sidebar and List ⇧⌘D | — | — |  |
@@ -133,18 +133,18 @@ Behaviour is specified in [screens/entry-editor](../../screens/entry-editor.md),
 | `insert-image` | Format ▸ Insert ▸ Image… (open panel) | — | — (menu: photo library) | Formatting ▸ Insert ▸ Image… |
 | `exit-code-block` | — | Down Arrow at the end of a code block's last line | Down Arrow (*text*) | Formatting ▸ Exit Code Block (only in a code block) |
 
-Format menu order (Mac, iPad): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Add Link… or Edit Link…, Remove Link, Image…), then on the Mac Table ▸.
+Format menu order (Mac, iPad): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Add Link… or Edit Link…, Remove Link, Image…), then Table ▸ (Mac and iPad; iPhone has no menu bar).
 
 ### Table
 
 | id | Mac | iPad, iPhone |
 | --- | --- | --- |
-| `table-add-row` | Format ▸ Table ▸ Add Row Below; cell context menu ▸ Table ▸ | Cell edit menu ▸ Table ▸ |
-| `table-add-column` | Format ▸ Table ▸ Add Column After; cell menu | Cell edit menu ▸ Table ▸ |
-| `table-align-left` / `table-align-center` / `table-align-right` | Cell context menu ▸ Table ▸ Align Left / Align Center / Align Right | Cell edit menu ▸ Table ▸ Alignment ▸ Left / Center / Right |
-| `table-delete-row` | Format ▸ Table ▸ Delete Row; cell menu | Cell edit menu ▸ Table ▸ (destructive) |
-| `table-delete-column` | Format ▸ Table ▸ Delete Column; cell menu | same (destructive) |
-| `table-delete-table` | Format ▸ Table ▸ Delete Table; cell menu | same (destructive) |
+| `table-add-row` | Format ▸ Table ▸ Add Row Below; cell context menu ▸ Table ▸ | iPad: Format ▸ Table ▸ Add Row Below; cell edit menu ▸ Table ▸. iPhone: cell edit menu ▸ Table ▸ |
+| `table-add-column` | Format ▸ Table ▸ Add Column After; cell menu | same |
+| `table-align-left` / `table-align-center` / `table-align-right` | Format ▸ Table ▸ Alignment ▸ Left / Center / Right (the column's alignment checked); cell context menu ▸ Table ▸ Alignment ▸ | same, and cell edit menu ▸ Table ▸ Alignment ▸ |
+| `table-delete-row` | Format ▸ Table ▸ Delete Row; cell menu | same (destructive in the edit menu) |
+| `table-delete-column` | Format ▸ Table ▸ Delete Column; cell menu | same (destructive in the edit menu) |
+| `table-delete-table` | Format ▸ Table ▸ Delete Table; cell menu | same (destructive in the edit menu) |
 | `table-next-cell` / `table-previous-cell` | Tab / Shift-Tab in a cell | Tab / Shift-Tab (*text*) |
 | `table-cell-below` | Return in a cell | Return |
 
@@ -170,7 +170,7 @@ The keys, where they act and their results are in [commands.md](../../commands.m
 
 ### Notes
 
-- iPad menu-bar commands come from the same command definitions as the Mac's, except Format ▸ Table ▸ and the Mac-only View items.
+- iPad menu-bar commands come from the same command definitions as the Mac's, except the Mac-only View items. Format ▸ Table ▸ is one of them (the same list, from `TableMenu`).
 - No two menu-bar commands share a shortcut (`MenuShortcutTests.testMenuBarShortcutsAreUnique`); ⌘= also triggers Zoom In (`MenuShortcutTests.testZoomInAnswersCommandEqualsWithoutShift`).
 - iPhone with a hardware keyboard: whether the iPad menu-bar shortcuts (⇧⌘7, ⇧⌘9, ⇧⌘L, ⌘', ⌘], ⌘[, ⌥⌘C, ⌥⌘U) also work isn't established by any test; only the text view's own shortcuts (*text*) are certain.
 

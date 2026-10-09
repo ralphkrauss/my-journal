@@ -152,6 +152,7 @@
         }
         func textViewDidChangeSelection(_ textView: UITextView) {
             actions?.formattingSelectionChanged()
+            publishAlignment()
         }
         func commit(_ cell: TableCellTextView, typing: Bool = true) {
             guard !updating, cell.markedTextRange == nil, var table = block.table else { return }
@@ -187,31 +188,43 @@
         func textView(_ textView: UITextView, editMenuForTextIn range: NSRange, suggestedActions: [UIMenuElement])
             -> UIMenu?
         {
-            guard let cell = textView as? TableCellTextView else { return nil }
-            return UIMenu(
-                children: suggestedActions + [UIMenu(title: "Table", children: structuralActions(cell.address))])
+            // A read-only entry has no Table menu.
+            guard editable, let cell = textView as? TableCellTextView else { return nil }
+            return UIMenu(children: suggestedActions + [tableMenu(at: cell.address)])
         }
-        private func structuralActions(_ address: TableCellAddress) -> [UIMenuElement] {
-            [
-                UIAction(title: "Add Row Below") { [weak self] _ in self?.changeStructure(.addRow, at: address) },
-                UIAction(title: "Add Column After") { [weak self] _ in self?.changeStructure(.addColumn, at: address) },
-                UIMenu(
-                    title: "Alignment",
-                    children: ["left", "center", "right"].map { alignment in
-                        UIAction(title: alignment.capitalized) { [weak self] _ in
-                            self?.changeStructure(.align(alignment), at: address)
-                        }
-                    }),
-                UIAction(title: "Delete Row", attributes: .destructive) { [weak self] _ in
-                    self?.changeStructure(.deleteRow, at: address)
-                },
-                UIAction(title: "Delete Column", attributes: .destructive) { [weak self] _ in
-                    self?.changeStructure(.deleteColumn, at: address)
-                },
-                UIAction(title: "Delete Table", attributes: .destructive) { [weak self] _ in
-                    self?.changeStructure(.deleteTable, at: address)
-                },
-            ]
+        /// The Table submenu of the edit menu, from the one list every table menu shows (TableMenu).
+        private func tableMenu(at address: TableCellAddress) -> UIMenu {
+            let alignment = TablePresentation.alignment(of: block.table, column: address.column)
+            let groups = TableMenu.groups(alignment: alignment).map { group in
+                UIMenu(options: .displayInline, children: group.map { menuElement($0, address) })
+            }
+            return UIMenu(title: "Table", children: groups)
+        }
+        private func menuElement(_ entry: TableMenu.Entry, _ address: TableCellAddress) -> UIMenuElement {
+            switch entry {
+            case .item(let item):
+                return menuAction(item, address)
+            case .submenu(let title, let items):
+                return UIMenu(title: title, children: items.map { menuAction($0, address) })
+            }
+        }
+        private func menuAction(_ item: TableMenu.Item, _ address: TableCellAddress) -> UIAction {
+            UIAction(
+                title: item.title, attributes: item.isDestructive ? .destructive : [],
+                state: item.isChecked ? .on : .off
+            ) { [weak self] _ in self?.changeStructure(item.action, at: address) }
+        }
+        /// Applies a table action from the menu bar to the cell being edited.
+        func applyToActiveCell(_ action: TableStructureAction) {
+            guard editable, let address = activeCell?.address else { return }
+            changeStructure(action, at: address)
+        }
+        /// Tells Format ▸ Table which alignment is checked: the focused cell's column.
+        func publishAlignment() {
+            let alignment = activeCell.map { TablePresentation.alignment(of: block.table, column: $0.address.column) }
+            DispatchQueue.main.async { [weak actions] in
+                if actions?.tableAlignment != alignment { actions?.tableAlignment = alignment }
+            }
         }
         private func changeStructure(_ action: TableStructureAction, at address: TableCellAddress) {
             activeCell?.unmarkText()
@@ -224,6 +237,7 @@
                     TableCellAddress(
                         row: min(address.row, table.rows.count - 1), column: min(address.column, table.columnCount - 1))
                 )
+                publishAlignment()
             } else {
                 exit?(true)
             }

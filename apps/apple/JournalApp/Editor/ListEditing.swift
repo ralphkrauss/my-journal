@@ -39,7 +39,7 @@ extension RichText {
         .journalOwnEnd, .journalMarker, .attachment, .journalInlineImage, .link, .journalInertLink, .journalLinkTitle,
         .journalRawHTML, .journalImage, .journalTable, .journalStructuredBlock,
     ]
-    private static func inline(_ attributes: [NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any] {
+    static func inline(_ attributes: [NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any] {
         attributes.filter { !paragraphKeys.contains($0.key) && !notContinued.contains($0.key) }
     }
 

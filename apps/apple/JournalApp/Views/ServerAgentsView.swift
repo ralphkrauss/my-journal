@@ -15,7 +15,13 @@ struct ServerAgentsSections: View {
     var body: some View {
         // A loaded list stays while the server can't be reached, as the agents do.
         if model.connection != nil, controller.loaded || controller.phase == .ready, !controller.requests.isEmpty {
-            Section("Requests") { requestRows }
+            Section {
+                requestRows
+            } header: {
+                Text("Requests")
+            } footer: {
+                if let failure = controller.declineFailure { Text(failure) }
+            }
         }
         if model.connection != nil, controller.loaded, !controller.agents.isEmpty {
             Section("Agents") { agentRows }
@@ -564,8 +570,8 @@ struct AllowAgentView: View {
     private func decline() {
         operation?.cancel()
         let request = request ?? summary
-        Task { try? await controller.decline(model, request: request) }
-        announceForAccessibility("Request declined.")
+        // The decline is sent after the sheet closes; "Request declined." is announced once the server has it.
+        try? controller.decline(model, request: request)
         dismiss()
     }
 }

@@ -1,3 +1,4 @@
+import Combine
 import JournalCore
 import SwiftUI
 
@@ -16,8 +17,15 @@ final class ServerAgentsController: ObservableObject {
     }
     @Published private(set) var phase: Phase = .loading
     @Published private(set) var agents: [LibraryAgent] = []
-    /// Requests waiting for the owner, newest first.
+    /// Requests waiting for the owner, newest first, without those being declined.
     @Published private(set) var requests: [AgentRequest] = []
+    /// Shown below the requests when a Don't Allow could not be sent (docs/design/1-1-settings-messages-editor.md §7.2).
+    @Published private(set) var declineFailure: String?
+    private var waiting: [AgentRequest] = []
+    private var declining: Set<UUID> = []
+    private var failedRequest: UUID?
+    private var declines: AgentRequestDeclines?
+    private var declineWatch: Set<AnyCancellable> = []
     @Published private(set) var mcpURL: String?
     /// True once a list was loaded, so a later failure keeps showing it.
     @Published private(set) var loaded = false
@@ -32,6 +40,7 @@ final class ServerAgentsController: ObservableObject {
 
     /// Loads the address and list, unless a load is running.
     func load(_ model: AppModel) async {
+        bind(model.agentDeclines)
         if let loading { return await loading.value }
         let task = Task { await read(model) }
         loading = task
@@ -73,18 +82,34 @@ final class ServerAgentsController: ObservableObject {
     /// Reads the waiting requests. Failures keep the last list; the pane's own load reports them.
     func refreshRequests(_ model: AppModel) async {
         guard !model.locked, phase == .ready, let client = try? model.connectedClient() else { return }
-        guard let waiting = try? await client.agentRequests(), !model.locked else { return }
-        let arrived = Set(waiting.map(\.id)) != Set(requests.map(\.id))
-        requests = waiting
+        bind(model.agentDeclines)
+        guard let listed = try? await client.agentRequests(), !model.locked else { return }
         // A connecting agent turns active once the agent collects its access, and a new request may come from an
         // agent that signed out: the list shows their current state.
-        if arrived || agents.contains(where: { $0.server.state == .pending }) { await load(model) }
+        if receive(waiting: listed) || agents.contains(where: { $0.server.state == .pending }) { await load(model) }
+    }
+    /// Takes the requests the server lists. True when they differ from those shown before.
+    @discardableResult func receive(waiting listed: [AgentRequest]) -> Bool {
+        let arrived = Set(listed.map(\.id)) != Set(waiting.map(\.id))
+        waiting = listed
+        // The request a failed decline named is gone from the server's list: nothing is left to retry.
+        if let failedRequest, !listed.contains(where: { $0.id == failedRequest }) { clearDeclineFailure() }
+        showWaiting()
+        return arrived
+    }
+    private func showWaiting() {
+        let shown = waiting.filter { !declining.contains($0.id) }
+        if shown != requests { requests = shown }
     }
     /// Leaves out a request that ended here (declined for a wrong number), before the next refresh.
-    func forget(_ request: AgentRequest) { requests.removeAll { $0.id == request.id } }
+    func forget(_ request: AgentRequest) {
+        waiting.removeAll { $0.id == request.id }
+        showWaiting()
+    }
     /// A request's details, once the owner opens it.
     func request(_ model: AppModel, id: UUID) async throws -> AgentRequest {
         guard !model.locked else { throw JournalError.locked }
+        if failedRequest == id { clearDeclineFailure() }
         return try await model.connectedClient().agentRequest(id)
     }
     /// Approves a request with the number its page shows. The agent is named after its client, numbered when another
@@ -96,7 +121,7 @@ final class ServerAgentsController: ObservableObject {
         let id = try await publisher.approve(
             request, number: number, name: defaultName(for: request), allJournals: allJournals,
             journalIDs: journalIDs, expiresAt: nil)
-        requests.removeAll { $0.id == request.id }
+        forget(request)
         firstCopies[id] = Task {
             // Switching back to the browser mustn't stall the first upload.
             let activity = UploadActivity()
@@ -108,13 +133,50 @@ final class ServerAgentsController: ObservableObject {
     func reconnect(_ model: AppModel, request: AgentRequest, number: Int, agent: LibraryAgent) async throws {
         guard !model.locked, let publisher = model.agentCopies else { throw JournalError.locked }
         try await publisher.reconnect(request, number: number, agent: agent)
-        requests.removeAll { $0.id == request.id }
+        forget(request)
         await load(model)
     }
-    func decline(_ model: AppModel, request: AgentRequest) async throws {
-        requests.removeAll { $0.id == request.id }
+    /// Don't Allow: the request leaves the list at once and the decline is sent in the background, by the app's own
+    /// owner of declines, so it carries on when this pane goes away. If it fails the request comes back with a message.
+    func decline(_ model: AppModel, request: AgentRequest) throws {
         guard !model.locked, let publisher = model.agentCopies else { throw JournalError.locked }
-        try await publisher.decline(request)
+        decline(request, declines: model.agentDeclines) { try await publisher.decline($0) }
+    }
+    func decline(_ request: AgentRequest, declines: AgentRequestDeclines, send: @escaping AgentRequestDeclines.Send) {
+        bind(declines)
+        declines.decline(request, using: send)
+    }
+    /// Follows the app's declines: which requests are being declined, and how each ended.
+    private func bind(_ declines: AgentRequestDeclines) {
+        guard self.declines !== declines else { return }
+        self.declines = declines
+        declining = declines.inFlight
+        declineWatch = [
+            declines.$inFlight.sink { [weak self] inFlight in
+                self?.declining = inFlight
+                self?.showWaiting()
+            },
+            declines.finished.sink { [weak self] finish in self?.declineFinished(finish) },
+        ]
+        showWaiting()
+    }
+    private func declineFinished(_ finish: AgentRequestDeclines.Finish) {
+        switch finish.outcome {
+        case .declined:
+            waiting.removeAll { $0.id == finish.request.id }
+            clearDeclineFailure()
+            showWaiting()
+        case .failed:
+            let name = ServerAgentText.displayName(finish.request.clientName)
+            failedRequest = finish.request.id
+            declineFailure =
+                "Couldn’t decline the request from \(name). Open it and choose Don’t Allow to try again."
+            if let declineFailure { JournalAccessibility.announce(declineFailure) }
+        }
+    }
+    private func clearDeclineFailure() {
+        failedRequest = nil
+        if declineFailure != nil { declineFailure = nil }
     }
     /// Changes an agent's name, journals or end, and returns it as changed.
     func change(
@@ -147,7 +209,9 @@ final class ServerAgentsController: ObservableObject {
         for task in firstCopies.values { task.cancel() }
         firstCopies = [:]
         agents = []
+        waiting = []
         requests = []
+        clearDeclineFailure()
         loaded = false
         mcpURL = nil
         phase = .loading

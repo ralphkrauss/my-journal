@@ -332,6 +332,50 @@ import UniformTypeIdentifiers
             }
             super.deleteBackward()
         }
+        /// Runs the editor's own command for Bold, Italic or Underline. The system's routes to them, the edit menu's
+        /// B, I and U and the hardware keys UIKit handles itself, call the three responder actions below, and UIKit's
+        /// rule for a mixed selection is not the editor's (docs/design/1-1-settings-messages-editor.md §4.2).
+        var inlineStyleChanged: ((InlineStyle) -> Void)?
+        /// What the editor's Formatting control shows for a style, and whether the command applies to the selection.
+        var inlineStyleStatus: ((InlineStyle) -> (state: FormattingToggle, available: Bool)?)?
+        override func toggleBoldface(_ sender: Any?) {
+            guard let inlineStyleChanged else { return super.toggleBoldface(sender) }
+            inlineStyleChanged(.bold)
+        }
+        override func toggleItalics(_ sender: Any?) {
+            guard let inlineStyleChanged else { return super.toggleItalics(sender) }
+            inlineStyleChanged(.italic)
+        }
+        override func toggleUnderline(_ sender: Any?) {
+            guard let inlineStyleChanged else { return super.toggleUnderline(sender) }
+            inlineStyleChanged(.underline)
+        }
+        private static func inlineStyle(for action: Selector) -> InlineStyle? {
+            switch action {
+            case #selector(UIResponder.toggleBoldface(_:)): return .bold
+            case #selector(UIResponder.toggleItalics(_:)): return .italic
+            case #selector(UIResponder.toggleUnderline(_:)): return .underline
+            default: return nil
+            }
+        }
+        override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+            guard let style = Self.inlineStyle(for: action), let status = inlineStyleStatus?(style) else {
+                return super.canPerformAction(action, withSender: sender)
+            }
+            return super.canPerformAction(action, withSender: sender) && status.available
+        }
+        /// The edit menu shows the same On, Off or Mixed as the Formatting control.
+        override func validate(_ command: UICommand) {
+            super.validate(command)
+            guard let style = Self.inlineStyle(for: command.action), let status = inlineStyleStatus?(style) else {
+                return
+            }
+            switch status.state {
+            case .on: command.state = .on
+            case .mixed: command.state = .mixed
+            case .off: command.state = .off
+            }
+        }
         var keyboardFormatting: ((EditorCommand) -> Void)?
         var keyboardStructure: ((StructuredKeyboard.Key) -> Bool)?
         /// Whether the entry shows its Markdown source, where structural keys keep their usual meaning.

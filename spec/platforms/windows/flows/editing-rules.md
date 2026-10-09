@@ -134,7 +134,7 @@ The editing control, the title control and the keys; the rules themselves follow
 
 | Rules | Windows trigger | Rating | What is needed |
 | --- | --- | --- | --- |
-| F-1, F-3 | Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X, Ctrl+Shift+C | App | On for the whole selection unless every character that can carry it already has it (the control reports a mixed value as undefined); strikethrough and inline code by the first character; each run keeps its other styles and size |
+| F-1, F-3 | Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X, Ctrl+Shift+C | App | On for the whole selection unless every character that can carry it already has it, for all five styles (F-3 is merged into F-1; the control reports a mixed value as undefined, which turns on); each run keeps its other styles and size |
 | F-2 | Bold in a heading | Care | A heading's weight is SemiBold (a weight value), not the Bold effect (a higher weight), so Bold shows Off and is not saved as `**` |
 | F-4 | no selection | Native | Changes only what the next typed text gets, through the collapsed selection's character format; it resets when the caret moves, as expected |
 | F-5 | in a code block | App | Commands disabled |

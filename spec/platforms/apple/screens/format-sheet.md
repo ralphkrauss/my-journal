@@ -73,7 +73,7 @@ The switch between presentations is in `MobileFormattingPresenter.toggle`:
 | --- | --- | --- | --- |
 | `show-formatting` | As in [commands.md](../commands.md): the Mac toolbar's Formatting item (and its overflow item), the Aa button of the reading bar and of the keyboard accessory | None | The entry can be edited (`model.canEdit`) |
 | `close-formatting` | Close button (iPhone panel and iPad popover), Aa again, Formatting again (Mac), Escape | Escape | Surface open |
-| `format-bold`, `format-italic`, `format-underline`, `format-strikethrough`, `format-inline-code` | Inline row | Same as the Format menu (⌘B, ⌘I, ⌘U, ⇧⌘X, ⌥⌘C; see [commands.md](../commands.md)) | Not in a code block |
+| `format-bold`, `format-italic`, `format-underline`, `format-strikethrough`, `format-inline-code` | Inline row | Same as the Format menu (⌘B, ⌘I, ⌘U, ⇧⌘X, ⌥⌘C; see [commands.md](../commands.md)); one rule for all five, so a Mixed toggle turns the style on (F-1) | Not in a code block |
 | `format-paragraph`, `format-heading-1`, `format-heading-6` | Paragraph styles and More Headings | ⌥⌘0, ⌥⌘1 to ⌥⌘6 | Not in a table cell or code block |
 | `format-bulleted-list`, `format-numbered-list`, `format-checklist`, `format-block-quote` | List and quote rows | As in the Format menu | Not in a table cell or code block |
 | `format-mark-checked` | The Mark as Checked / Unchecked row | ⇧⌘U (menu) | Checklist items selected |

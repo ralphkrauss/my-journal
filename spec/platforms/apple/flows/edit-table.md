@@ -11,6 +11,8 @@ sources:
   - apps/apple/JournalApp/Editor/InlineTableGridMac.swift
   - apps/apple/JournalApp/Editor/TableCellFormatting.swift
   - apps/apple/JournalApp/Editor/TablePresentation.swift
+  - apps/apple/JournalApp/Editor/TableMenu.swift
+  - apps/apple/JournalApp/Editor/InlineStyles.swift
   - apps/apple/JournalApp/Editor/NativeTableIntegration.swift
   - apps/apple/JournalApp/Editor/DocumentUndo.swift
   - apps/apple/JournalApp/Editor/JournalWritingView.swift
@@ -38,15 +40,11 @@ A table is not drawn by the entry's text view. The entry's `NSTextView` (Mac) or
 | Grid lines | `TableCanvas` (`NSView`) draws one hairline grid in `separatorColor` behind the cells | `TableCanvas` (`UIView`) draws the same in `UIColor.separator` |
 | Header row | Semibold by paragraph kind `tableHeader`; the stored runs are not bold (`TablePresentation.runs(_:header:)`) | Same. UIKit drops the block kind from typing attributes, so the row decides, not the typed text |
 | Cell padding | 8 by 6 points, no minimum row height | 10 by 10 points, rows at least 44 points tall (touch size) |
-| Structure menu | Appended to the cell's context menu (`menu(for:)`): the standard text items, a separator, then an `NSMenu` titled Table | Added by `textView(_:editMenuForTextIn:suggestedActions:)`: the system's suggested actions plus one `UIMenu` titled Table |
-| Format ▸ Table | `Menu("Table")` in `AppCommands.swift`, `#if os(macOS)` only, disabled unless the entry can be edited and a table cell has focus | None. The iPad menu bar has no Table menu |
+| Structure menu | Appended to the cell's context menu (`menu(for:)`): the standard text items, a separator, then an `NSMenu` titled Table, built from `TableMenu.groups` (`menu(_:)`); none when the entry is read-only | Added by `textView(_:editMenuForTextIn:suggestedActions:)`: the system's suggested actions plus one `UIMenu` titled Table, built from `TableMenu.groups` (an inline `UIMenu` per group, so a divider sits before the Delete items); none when the entry is read-only |
+| Format ▸ Table | `Menu("Table")` in `AppCommands.swift` with `TableMenuContent` (a SwiftUI rendering of `TableMenu.groups`), disabled unless the entry can be edited and a table cell has focus | The same `Menu`, from the same definition, in the iPad menu bar (the `#if os(macOS)` is gone and `EditorActions.tableAction` is wired on iOS too, `InlineTableGrid.applyToActiveCell`). iPhone has no menu bar, so its cell edit menu is the route |
 | Writing controls while a cell has focus | Format popover and toolbar, as for the text | The same writing controls (its own `WritingAccessory` as the cell's `inputAccessoryView`) and the same Format panel as the text (the cell's `inputView` is `formattingInputView`) |
 
-Items of the structure menu, by copy key:
-
-- Mac, a flat list: `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, `editor.table.alignLeft`, `editor.table.alignCenter`, `editor.table.alignRight`, `library.menu.format.table.deleteRow`, `library.menu.format.table.deleteColumn`, `library.menu.format.table.deleteTable`. The submenu title is `library.menu.format.table`.
-- iPhone and iPad: `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, a submenu `editor.table.alignment` with `editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right`, then the three Delete items with `.destructive`. The submenu title is `library.menu.format.table`.
-- Format ▸ Table on the Mac: `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, a divider, `library.menu.format.table.deleteRow`, `library.menu.format.table.deleteColumn`, `library.menu.format.table.deleteTable`. It has no alignment items, as the spec notes (D7).
+The structure commands are one definition, `TableMenu.groups(alignment:)` (`TableMenu.swift`): Add Row Below, Add Column After, an Alignment submenu (Left, Center, Right, with the column's current alignment checked; a column with none shows Left), a divider, then Delete Row, Delete Column and Delete Table (marked destructive). Titles are the text of `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, `editor.table.alignment` with `editor.table.alignment.left`, `editor.table.alignment.center` and `editor.table.alignment.right`, then `library.menu.format.table.deleteRow`, `library.menu.format.table.deleteColumn` and `library.menu.format.table.deleteTable`; the submenu's title is `library.menu.format.table`. Small adapters render it: an `NSMenu` (separator between the groups, a submenu item, `NSMenuItem.state` for the checkmark; the Mac does not colour destructive items), a `UIMenu` (inline groups, `UIAction.state`, `.destructive`) and a SwiftUI `Menu` (`TableMenuContent`: `Divider`, a `Toggle` per alignment for the checkmark, `Button` with `.destructive`). `EditorActions.tableAlignment` carries the focused cell's column alignment to the menu bar; the grid publishes it when the selection moves, after a structure change, and clears it when the cell loses focus.
 
 All structure changes go through `DocumentTable.apply(_:row:column:)` (JournalCore), then `InlineTableGrid.changed` hands the new block to `InlineTables.commit`, which replaces the table's attachment in the text as one undo step. The returned flag says whether a table is left: if not, the table is removed and the caret leaves forward.
 
@@ -60,9 +58,9 @@ Moving between cells (`InlineTableGrid.move`, the same code on both platforms ap
 
 Line breaks: `shouldChangeTextIn` replaces a typed or pasted line break by a space on both platforms (TB-2).
 
-Formatting in a cell: the Format menu and panel call `InlineTableGrid.formatCell` first (`NativeEditor.Coordinator.perform`, `formattingSession`). Bold, Italic, Underline are applied in `TableCellFormatting` (font traits, underline style); Strikethrough, Inline Code and Link reuse `MarkdownEditing` and `LinkInsertion`. Paragraph styles and focus are swallowed (return true) so they do nothing. The Format panel disables its paragraph section when `FormattingState.paragraph == "tableCell"` (`selectedCellStyle`). Edit Link and Remove Link are ignored in a cell.
+Formatting in a cell: the Format menu and panel call `InlineTableGrid.formatCell` first (`NativeEditor.Coordinator.perform`, `formattingSession`). Bold, Italic, Underline, Strikethrough and Inline Code use the same code as the body (`MarkdownEditing.typingCommand` for the next typed text, `MarkdownEditing.edit` over a selection, both through `InlineStyles`, the one rule of F-1); Link reuses `LinkInsertion`. Paragraph styles and focus are swallowed (return true) so they do nothing. The Format panel disables its paragraph section when `FormattingState.paragraph == "tableCell"` (`selectedCellStyle`). Edit Link and Remove Link are ignored in a cell.
 
-States: with `canEdit` false, `InlineTableGrid.editable` is false and `cell.isEditable` is set to it, so cells can be selected and copied. The structure menus are not removed in that state in either grid (`menu(for:)`, `editMenuForTextIn`); the commit is skipped (`InlineTables.commit` returns unless `editable`). This is recorded in Open questions. Source view shows the Markdown text with no grid (the attachment is not made).
+States: with `canEdit` false, `InlineTableGrid.editable` is false and `cell.isEditable` is set to it, so cells can be selected and copied. Neither grid builds a structure menu then (`menu(_:)` and `editMenuForTextIn` return nil / the system's items only), `applyToActiveCell` does nothing, and the commit is skipped (`InlineTables.commit` returns unless `editable`). Source view shows the Markdown text with no grid (the attachment is not made).
 
 Undo: both cell types hand the undo manager to the entry (`sharedUndo`). The cell's own manager is off (`allowsUndo = false` on the Mac, `undoManager` nil on iOS). ⌘Z and ⇧⌘Z are caught by `performKeyEquivalent` (Mac) and `UIKeyCommand` (iOS) and call the entry's `undo()` or `redo()`. Typing in a cell registers one step through `CellTypingUndo` (`DocumentUndo.swift`) that is replaced on each key until another change happens.
 
@@ -81,9 +79,9 @@ Placement and shortcuts are as in [commands.md](../commands.md); the Table rows 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `insert-table` | Format ▸ Insert ▸ Table; Formatting surface; inserts `\|  \|  \|` with a delimiter row and one body row, then `InlineTables.focus` puts the caret in the first header cell | none | The entry is editable and the text has focus or a cell has it |
-| `table-add-row` | Mac: Format ▸ Table, cell context menu. iPhone, iPad: cell edit menu ▸ Table | none | A cell has focus (Mac menu bar: the editor reports a table cell as focused) |
+| `table-add-row` | Mac: Format ▸ Table, cell context menu. iPad: Format ▸ Table, cell edit menu ▸ Table. iPhone: cell edit menu ▸ Table | none | A cell has focus and the entry can be edited (the menu bar: the editor reports a table cell as focused) |
 | `table-add-column` | as `table-add-row` | none | as above |
-| `table-align-left` | Mac: cell context menu only. iPhone, iPad: cell edit menu ▸ Table ▸ Alignment | none | as above |
+| `table-align-left` | Every place the list appears, as Table ▸ Alignment ▸ Left (checked when it is the column's alignment) | none | as above |
 | `table-align-center` | as `table-align-left` | none | as above |
 | `table-align-right` | as `table-align-left` | none | as above |
 | `table-delete-row` | as `table-add-row` | none | as above |
@@ -95,7 +93,7 @@ Placement and shortcuts are as in [commands.md](../commands.md); the Table rows 
 | `undo` | Entry's history | ⌘Z | Cell focused and not composing |
 | `redo` | Entry's history | ⇧⌘Z | as above |
 
-Notes: the inline format commands (`format-bold`, `format-italic`, `format-underline`, `format-strikethrough`, `format-inline-code`) work in a cell through the Format menu and its shortcuts (menu bar on the Mac and iPad) and through the Formatting surface. The cell does not register the text view's own key commands (`KeyboardFormatting`), so whether those keys reach a cell on an iPhone with a hardware keyboard is not verified. `format-paragraph`, the list commands and the heading commands do nothing in a cell. On the Mac, Tab and Return are `NSTextViewDelegate` commands, so Option-Tab or an input method may still behave as the text system decides.
+Notes: the list and its order are the same in all three places (`TableMenu`); the inline format commands (`format-bold`, `format-italic`, `format-underline`, `format-strikethrough`, `format-inline-code`) work in a cell through the Format menu and its shortcuts (menu bar on the Mac and iPad) and through the Formatting surface. The cell does not register the text view's own key commands (`KeyboardFormatting`), so whether those keys reach a cell on an iPhone with a hardware keyboard is not verified. `format-paragraph`, the list commands and the heading commands do nothing in a cell. On the Mac, Tab and Return are `NSTextViewDelegate` commands, so Option-Tab or an input method may still behave as the text system decides.
 
 ## Copy differences
 
@@ -108,14 +106,13 @@ None. The Mac and iPhone/iPad menus use different subsets of the same keys (see 
 - Mac: the scroll view carries `editor.table.accessibilityLabel`, and `canvas.setAccessibilityChildren` lists the cells in row order.
 - Only cells in view exist as elements. Scrolling the grid or the entry creates and removes them.
 - Increase Contrast and Reduce Transparency: the grid lines use the system separator colour, so the system setting applies; nothing else is drawn.
-- Full Keyboard Access and hardware keyboards: Tab, Shift-Tab and Return work as above on iPad; the structure menu has no keyboard shortcut, so with a keyboard it is reached from the cell's edit menu or, on the Mac, Format ▸ Table.
+- Full Keyboard Access and hardware keyboards: Tab, Shift-Tab and Return work as above on iPad; the structure commands have no keyboard shortcut, so with a keyboard they are reached from Format ▸ Table in the menu bar (Mac and iPad), which has the same list as the cell menus.
 - No announcement is made for a structure change; the caret stays in the same row and column (or the nearest one left), and focus moves to that cell.
 
 ## Differences between iPhone, iPad and Mac
 
 - Grid host: iPhone and iPad put the grid beside the text view (in `JournalWritingView`), the Mac inside it. Either way the grid is placed from the text view's layout and moved on every layout change (`layoutChanged` calls `synchronizeTables`). The source does not say why the hosts differ; a port that draws text and cells in one scrolling surface does not need either arrangement.
-- Format ▸ Table exists only on the Mac, since the iPad menu bar has no Table submenu; touch devices reach the same actions from the cell's edit menu.
-- Alignment items are in the cell menu on all devices, but nested under Alignment on iPhone and iPad and flat on the Mac, following each platform's menu conventions.
+- Format ▸ Table is in the Mac and iPad menu bars; iPhone has no menu bar and uses the cell's edit menu. The list, its order, the Alignment submenu and its checkmark are the same everywhere. The Mac does not colour the Delete items; iPhone and iPad mark them destructive.
 - Row padding and minimum height are larger on iPhone and iPad for touch targets.
 - Tab for the next cell needs a hardware keyboard on iPhone and iPad.
 
@@ -137,11 +134,13 @@ View:
 - `apps/apple/JournalApp/Editor/InlineTables.swift`: creates, places and removes grids; replaces the table in the text on a change; moves the caret out of the table.
 - `apps/apple/JournalApp/Editor/TablePresentation.swift`: column and row layout, padding, header style, the attachment.
 - `apps/apple/JournalApp/Editor/TableCellFormatting.swift`: formatting commands inside a cell.
-- `apps/apple/JournalApp/AppCommands.swift`: Format ▸ Insert ▸ Table and Format ▸ Table (Mac).
+- `apps/apple/JournalApp/Editor/TableMenu.swift`: the one list of table commands, and its SwiftUI rendering for Format ▸ Table.
+- `apps/apple/JournalApp/Editor/InlineStyles.swift`: the inline style rule shared with the entry's text.
+- `apps/apple/JournalApp/AppCommands.swift`: Format ▸ Insert ▸ Table and Format ▸ Table (Mac, iPad).
 
 Model:
 
-- `apps/apple/JournalApp/Editor/NativeTableIntegration.swift`: wires `tableAction` for the menu bar (Mac) and `InlineTables` to the editor.
+- `apps/apple/JournalApp/Editor/NativeTableIntegration.swift`: wires `tableAction` for the menu bar (Mac, iPad) and `InlineTables` to the editor.
 - `apps/apple/JournalApp/Editor/DocumentUndo.swift`: `CellTypingUndo`, the one-step typing undo.
 
 Core:
@@ -152,4 +151,4 @@ Tests: `apps/apple/JournalTests/TableEditorTests.swift`.
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), A43: the Table items of the edit menus (iPhone, iPad) and the Mac cell menu are offered while the entry is read-only; the changes are then not saved (`InlineTables.commit` guard) but the grid's own copy of the table is changed (not verified how long it stays so; read from source, not run).
+None open. A43 (the Table items of the edit menus offered while the entry is read-only) is fixed: no menu is built for a read-only entry.

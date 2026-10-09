@@ -197,16 +197,9 @@ struct JournalCommands: Commands {
                 }
             }
         }.disabled(!model.canEdit || !(editor.editing || editor.editingTable))
-        #if os(macOS)
-            Menu("Table") {
-                Button("Add Row Below") { editor.tableAction?(.addRow) }
-                Button("Add Column After") { editor.tableAction?(.addColumn) }
-                Divider()
-                Button("Delete Row") { editor.tableAction?(.deleteRow) }
-                Button("Delete Column") { editor.tableAction?(.deleteColumn) }
-                Button("Delete Table") { editor.tableAction?(.deleteTable) }
-            }.disabled(!model.canEdit || !editor.editingTable)
-        #endif
+        Menu("Table") {
+            TableMenuContent(alignment: editor.tableAlignment) { editor.tableAction?($0) }
+        }.disabled(!model.canEdit || !editor.editingTable)
     }
 }
 

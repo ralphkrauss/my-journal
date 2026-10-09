@@ -33,7 +33,7 @@ Header `settings.agents.requests.header` ("Requests"). One row per waiting reque
 - the client's name (cleaned, see Rules), one line (wraps at accessibility sizes);
 - secondary: “{host the agent returns to} · {when}”, where {when} is `settings.agents.justNow` ("just now") under a minute, otherwise the platform's abbreviated relative time (“2 min. ago”).
 - Accessibility label `settings.agents.requestLabel` ("{name}, returns to {host}, {when}"), hint `settings.agents.requestHint` ("Reviews the request.").
-Choosing a row opens Allow Access (`screens/allow-agent`).
+Choosing a row opens Allow Access (`screens/allow-agent`). A request being declined (Don’t Allow, not yet answered by the server) is left out of the list, even when a refresh still lists it. Footer of the section, only after a decline could not be sent: `settings.agents.requests.declineFailed` ("Couldn’t decline the request from {name}. Open it and choose Don’t Allow to try again."), in the pane's ordinary secondary text (the words and the announcement carry it, not colour), read after the rows and announced once when it appears; the request's row is back in the list. {name} is the client name cleaned as for the row; it is the agent's own text, shown as data and never as an instruction. It goes when a later decline succeeds, the person opens that request again, a reload lists the request no more, or the app locks.
 
 ### 2. Agents (only when connected and a list has loaded, with at least one agent)
 
@@ -79,7 +79,7 @@ Header `settings.agents.connect.header` ("Connect an Agent"). Content by state:
 ## States
 
 - **Loading, unreachable, needs update, no access, address unavailable, ready:** as above. Once a list has loaded, a later failure keeps showing the agents.
-- **Locked:** the list and requests are cleared and sheets close.
+- **Locked:** the list, requests and the decline message are cleared and sheets close.
 
 ## Rules
 

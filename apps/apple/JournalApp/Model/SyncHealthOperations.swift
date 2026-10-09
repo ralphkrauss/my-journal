@@ -146,6 +146,7 @@ extension AppModel {
         guard let previous = connection, !replacingVault else { return }
         try? Keychain.remove(configuration?.connectionKeyID ?? keyAccount + "-connection")
         connection = nil
+        agentDeclines.cancelAll()
         configureSync()
         syncTiming.afterWriting?.cancel()
         syncActivity.pendingItems = 0

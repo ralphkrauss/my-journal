@@ -159,9 +159,12 @@ extension ServerClient {
             body: json(["complete": complete]))
         try Self.checkAgentResponse(status, data: data)
     }
+    /// Declines a request. One the server no longer has (ended, replaced or answered elsewhere) counts as declined:
+    /// there is nothing left to decline or retry. Any other refusal, and any failure to reach the server, throws.
     public func declineAgentRequest(_ id: UUID) async throws {
         let (data, status) = try await request(
             "/v1/agent-requests/\(id.uuidString.lowercased())/decline", method: "POST", body: Data("{}".utf8))
+        if status == 404, Self.problemCode(data) == "agent_request_not_found" { return }
         try Self.checkAgentResponse(status, data: data)
     }
     /// Revokes an agent. One the server doesn't know counts as revoked.

@@ -295,6 +295,8 @@ final class AppModel: ObservableObject {
     var syncEngine: SyncEngine?
     /// Keeps the copies agents read through the sync server current (docs/design/agent-access-server.md).
     private(set) var agentCopies: AgentCopyPublisher?
+    /// Sends the declines of agent requests for as long as the app runs, so they outlive the Settings window.
+    let agentDeclines = AgentRequestDeclines()
     var supersededRemoval: Task<Void, Never>?
     let syncTiming = SyncTiming()
     let directory: URL
@@ -863,6 +865,7 @@ extension AppModel {
         windowUndoManager?.removeAllActions()
         // The connection first: its Last Synced time is forgotten with it.
         connection = nil
+        agentDeclines.cancelAll()
         store = nil
         configureSync()
         configuration = nil

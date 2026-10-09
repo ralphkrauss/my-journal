@@ -53,7 +53,7 @@ Rows are 44 pt tall on the phone and tablet and 30 pt on the computer; menus sho
 
 | Action | Enabled | Result | Stays open? |
 | --- | --- | --- | --- |
-| Bold, Italic, Underline, Strikethrough, Inline Code | Not in a code block | Toggles the style on the current selection, or for the next typed text when nothing is selected (`flows/editing-rules.md` F-1 to F-6). | Yes |
+| Bold, Italic, Underline, Strikethrough, Inline Code | Not in a code block | Turns the style on for the whole selection unless the whole selection already has it, in which case it turns off, so a Mixed toggle turns on; or changes the next typed text when nothing is selected (`flows/editing-rules.md` F-1, F-4, F-6). | Yes |
 | Heading 1–3, Paragraph, Heading 4–6 | Not in a table cell or code block | Restyles every paragraph the selection touches (P-1 to P-6). | No |
 | Mark as Checked / Unchecked | Shown only with checklist items selected | C-1, C-2. | No |
 | Bulleted List, Numbered List, Checklist, Block Quote | Not in a table cell or code block | P-1 to P-6. | No |

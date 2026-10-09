@@ -104,11 +104,11 @@ Commands that act on the open entry or template. View, Edit and Entry Actions co
 | id | Label | Enabled | Rules |
 | --- | --- | --- | --- |
 | `show-formatting` | `library.toolbar.formatting` | Editable | format-sheet |
-| `format-bold` | `library.menu.format.bold` | Editable, not in code | F-1, F-2, F-4 |
+| `format-bold` | `library.menu.format.bold` | Editable, not in code | F-1, F-2, F-4, F-6 |
 | `format-italic` | `library.menu.format.italic` | same | F-1, F-4 |
 | `format-underline` | `library.menu.format.underline` | same | F-1, F-4 |
-| `format-strikethrough` | `library.menu.format.strikethrough` | same | F-3, F-4 |
-| `format-inline-code` | `library.menu.format.inlineCode` | same | F-3, F-4, F-7 |
+| `format-strikethrough` | `library.menu.format.strikethrough` | same | F-1, F-4 |
+| `format-inline-code` | `library.menu.format.inlineCode` | same | F-1, F-4, F-7 |
 | `format-paragraph` | `library.menu.format.paragraph` | Editable; Formatting: not in a cell or code | P-1 to P-6 |
 | `format-heading-1` … `format-heading-6` | `library.menu.format.heading` (1–6) | same | P-1 to P-6 |
 | `format-bulleted-list` | `library.menu.format.bulletedList` | same | P-1 to P-6 |
@@ -126,15 +126,17 @@ Commands that act on the open entry or template. View, Edit and Entry Actions co
 | `insert-image` | `library.menu.format.insert.image` | Editable | `flows/insert-image.md` |
 | `exit-code-block` | `editor.format.exitCodeBlock` | Caret in a code block | BI-4 |
 
-Format menu order (computer, tablet): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Add Link… or Edit Link…, Remove Link, Image…), then on a computer Table ▸.
+Format menu order (computer, tablet): Bold, Italic, Underline, Strikethrough, Inline Code, —, Paragraph, Heading 1–6, —, Bulleted List, Numbered List, Checklist, Mark as Checked/Unchecked, Block Quote, —, Increase Indent, Decrease Indent, —, Insert ▸ (Code Block, Table, Horizontal Rule, —, Add Link… or Edit Link…, Remove Link, Image…), then Table ▸ (computer and tablet; the phone has no menu bar, so its cell edit menu is the route).
 
 ### Table
+
+The table commands are one list in one order on every device: Add Row Below, Add Column After, Alignment ▸ (Left, Center, Right), a divider, Delete Row, Delete Column, Delete Table. The list is the same in the cell menu, in Format ▸ Table (computer and tablet) and in the phone's and tablet's cell edit menu, and is not offered for a read-only entry.
 
 | id | Label | Enabled | Rules |
 | --- | --- | --- | --- |
 | `table-add-row` | `library.menu.format.table.addRow` | A cell is being edited, editable | TB-4 |
 | `table-add-column` | `library.menu.format.table.addColumn` | same | TB-4 |
-| `table-align-left` / `table-align-center` / `table-align-right` | `editor.table.alignLeft` … (computer); `editor.table.alignment` ▸ `editor.table.alignment.left` … (tablet, phone) | same | TB-4 |
+| `table-align-left` / `table-align-center` / `table-align-right` | `editor.table.alignment` ▸ `editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right` (everywhere; the column's current alignment is checked) | same | TB-4 |
 | `table-delete-row` | `library.menu.format.table.deleteRow` | same | TB-4 |
 | `table-delete-column` | `library.menu.format.table.deleteColumn` | same | TB-4 |
 | `table-delete-table` | `library.menu.format.table.deleteTable` | same | TB-4 |

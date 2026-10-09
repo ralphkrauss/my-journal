@@ -419,7 +419,8 @@ enum EntryTextInset {
                 let selection = view.selectedRange()
                 if let typing = MarkdownEditing.typingCommand(
                     command, textIsEmpty: storage.length == 0, selection: selection, typing: view.typingAttributes,
-                    size: parent.fontSize, source: showsSource)
+                    size: parent.fontSize, source: showsSource,
+                    blockKind: caretBlockKind(storage, at: selection.location, typing: view.typingAttributes))
                 {
                     if case .source = command { showsSource.toggle() }
                     view.typingAttributes = typing
@@ -434,7 +435,8 @@ enum EntryTextInset {
                     return
                 }
                 switch command {
-                case .source, .strikethrough, .code, .insert, .linkDialog, .imagePicker, .toggleTask, .indent, .outdent:
+                case .source, .bold, .italic, .underline, .strikethrough, .code, .insert, .linkDialog, .imagePicker,
+                    .toggleTask, .indent, .outdent:
                     return
                 case .editLink(let link, let address, let text):
                     guard let url = LinkAddress.url(address), NSMaxRange(link.range) <= storage.length else { return }
@@ -448,16 +450,6 @@ enum EntryTextInset {
                     view.typingAttributes = LinkEditing.withoutLink(view.typingAttributes)
                     JournalAccessibility.announce("Link removed.")
                 case .focus: view.window?.makeFirstResponder(view)
-                case .bold, .italic, .underline:
-                    if selection.length == 0 {
-                        view.typingAttributes = RichText.toggling(
-                            command, in: view.typingAttributes, size: parent.fontSize)
-                    } else {
-                        replace(
-                            RichText.toggling(command, in: storage.attributedSubstring(from: selection)),
-                            range: selection)
-                        view.setSelectedRange(selection)
-                    }
                 case .paragraph(let kind):
                     let range = (view.string as NSString).paragraphRange(for: selection)
                     let doc = RichText.restyling(
@@ -781,6 +773,8 @@ enum EntryTextInset {
                     guard let self, self.view?.isFirstResponder == true || self.tables?.active != nil else { return }
                     self.perform(command)
                 }
+                view.inlineStyleChanged = { [weak self] style in self?.perform(style.command) }
+                view.inlineStyleStatus = { [weak self] style in self?.inlineStyleStatus(style) }
                 view.keyboardFormatting = { [weak self] command in
                     guard let self else { return }
                     if case .linkDialog = command {
@@ -898,7 +892,8 @@ enum EntryTextInset {
                 let selection = view.selectedRange
                 if let typing = MarkdownEditing.typingCommand(
                     command, textIsEmpty: view.textStorage.length == 0, selection: selection,
-                    typing: view.typingAttributes, size: parent.fontSize, source: showsSource)
+                    typing: view.typingAttributes, size: parent.fontSize, source: showsSource,
+                    blockKind: caretBlockKind(view.textStorage, at: selection.location, typing: view.typingAttributes))
                 {
                     if case .source = command { showsSource.toggle() }
                     view.typingAttributes = typing
@@ -917,7 +912,8 @@ enum EntryTextInset {
                     return
                 }
                 switch command {
-                case .source, .strikethrough, .code, .insert, .linkDialog, .imagePicker, .toggleTask, .indent, .outdent:
+                case .source, .bold, .italic, .underline, .strikethrough, .code, .insert, .linkDialog, .imagePicker,
+                    .toggleTask, .indent, .outdent:
                     return
                 case .editLink(let link, let address, let text):
                     guard let url = LinkAddress.url(address), NSMaxRange(link.range) <= view.textStorage.length
@@ -933,15 +929,6 @@ enum EntryTextInset {
                     view.typingAttributes = LinkEditing.withoutLink(view.typingAttributes)
                     JournalAccessibility.announce("Link removed.")
                 case .focus: view.becomeFirstResponder()
-                case .bold:
-                    view.toggleBoldface(nil)
-                    textViewDidChange(view)
-                case .italic:
-                    view.toggleItalics(nil)
-                    textViewDidChange(view)
-                case .underline:
-                    view.toggleUnderline(nil)
-                    textViewDidChange(view)
                 case .paragraph(let kind):
                     let storage = view.textStorage
                     let range = (storage.string as NSString).paragraphRange(for: selection)

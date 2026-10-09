@@ -178,7 +178,7 @@ Spec: [screens/lock-screen.md](screens/lock-screen.md) (Privacy cover), [screens
 
 Spec: [flows/source-view.md](flows/source-view.md) ("View Preview is disabled ... for an entry whose stored Markdown can only be shown as source"). Code: `Editor/WritingAccessory.swift:74-81`, against `Views/RootView+Toolbar.swift:52-61`.
 
-**A43.** The Table items of the edit menus (iPhone, iPad) and the Mac cell menu are offered while the entry is read-only. The change is not saved (`InlineTables.commit` returns when not editable), but the grid's own copy of the table is changed, and how long that stays on screen was not verified. The spec says a read-only entry has no structure menu. Recommendation: hide or disable the items when the entry is read-only.
+**A43.** The Table items of the edit menus (iPhone, iPad) and the Mac cell menu are offered while the entry is read-only. The change is not saved (`InlineTables.commit` returns when not editable), but the grid's own copy of the table is changed, and how long that stays on screen was not verified. The spec says a read-only entry has no structure menu. Recommendation: hide or disable the items when the entry is read-only. **Resolved in 1.1** (with D7): no Table menu is built for a read-only entry, and Format ▸ Table is disabled.
 
 Spec: [flows/edit-table.md](flows/edit-table.md) ("Read-only entry: ... no structure menu"). Code: `Editor/InlineTables.swift:172-173`, `Editor/TablePresentation.swift`, `Editor/InlineTableGridMac.swift:33-36`.
 
@@ -500,6 +500,8 @@ Spec: [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: the Keep Bot
 
 Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [messages.md](messages.md). Code: `Views/LibraryProblemView.swift`, `Views/DeleteAllPrompt.swift`, `Model/LibraryOperations.swift`.
 
+**C26.** Windows pages still describe the editor as before 1.1 in four places: F-1 and F-3 (`platforms/windows/flows/editing-rules.md`, row F: strikethrough and inline code by the first character; one rule for all five now), N-8 (Return in a heading, D6: split in the middle, a paragraph above at the start, an empty heading becomes a paragraph), the table menus (`platforms/windows/flows/edit-table.md`, D7: one list in one order with the Alignment submenu checked in Format ▸ Table and the cell menu) and the Don’t Allow row of `platforms/windows/flows/allow-agent.md` (D55: the page now says when the decline did not arrive). This change edited only the statements that would otherwise be false; the Windows agent maps the rest (the checkmark control in a `MenuFlyoutSubItem`, whether the rich edit control can run the one rule over a mixed selection, and the announcement of a decline that completes after the dialog has closed). The owner decides each Windows change.
+
 ## D. Product questions for the owner
 
 Behaviour no record decides, or choices for the Windows and Android ports.
@@ -522,15 +524,15 @@ Spec: [flows/change-password.md](flows/change-password.md). Code: `Model/Passwor
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md), [screens/entry-editor.md](screens/entry-editor.md). Code: `Editor/RichText.swift`.
 
-**D5.** Bold, Italic and Underline use a different rule for a mixed selection than Strikethrough and Inline Code (F-1 and F-3): the first turn on unless everything already has them, the others follow the first selected character. One rule would be clearer. **Resolved by owner decision, 2026-10-09:** one rule for all five styles, the one Bold, Italic and Underline use today: a style turns on unless the whole selection already has it. Strikethrough and Inline Code change in 1.1 (design gate).
+**D5.** Bold, Italic and Underline use a different rule for a mixed selection than Strikethrough and Inline Code (F-1 and F-3): the first turn on unless everything already has them, the others follow the first selected character. One rule would be clearer. **Resolved by owner decision, 2026-10-09:** one rule for all five styles, the one Bold, Italic and Underline use today: a style turns on unless the whole selection already has it. Strikethrough and Inline Code change in 1.1 (design gate). **Built in 1.1:** F-1 is the one rule, with one predicate for the shown state and the action (`InlineStyles`), and on iPhone and iPad the system's Bold, Italic and Underline run it too; F-3 is merged into F-1.
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/RichText.swift`, `Editor/FormattingState.swift`.
 
-**D6.** Return in the middle of a heading inserts a line break that carries the heading's style while typing continues as a paragraph; whether the second half ends up a heading or a paragraph depends on what is typed next (N-8). No test or record defines it. **Resolved by owner decision, 2026-10-09:** Return in the middle of a heading splits it into two headings of the same level; Return at the end of a heading starts a paragraph. Built in 1.1 (design gate), with N-8 rewritten to match.
+**D6.** Return in the middle of a heading inserts a line break that carries the heading's style while typing continues as a paragraph; whether the second half ends up a heading or a paragraph depends on what is typed next (N-8). No test or record defines it. **Resolved by owner decision, 2026-10-09:** Return in the middle of a heading splits it into two headings of the same level; Return at the end of a heading starts a paragraph. Built in 1.1 (design gate), with N-8 rewritten to match. **Built in 1.1:** the start-of-heading and empty-heading cases are decided in N-8 (an empty paragraph above; the heading becomes a paragraph).
 
 Spec: [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/RichText.swift`.
 
-**D7.** The table structure menus differ: the Mac's cell menu lists alignment between Add and Delete, Format ▸ Table has no alignment items and orders its items differently, and iPhone and iPad group alignment in a submenu. One list for all three would be simpler. **Resolved by owner decision, 2026-10-09:** one list of table commands, in one order, on every device: add rows, add columns, alignment (a submenu everywhere), then delete row, delete column and delete table. Built in 1.1 (design gate).
+**D7.** The table structure menus differ: the Mac's cell menu lists alignment between Add and Delete, Format ▸ Table has no alignment items and orders its items differently, and iPhone and iPad group alignment in a submenu. One list for all three would be simpler. **Resolved by owner decision, 2026-10-09:** one list of table commands, in one order, on every device: add rows, add columns, alignment (a submenu everywhere), then delete row, delete column and delete table. Built in 1.1 (design gate). **Built in 1.1:** one definition (`TableMenu`) renders the Mac cell menu, Format ▸ Table on the Mac and iPad, and the iPhone and iPad edit menu; the current alignment is checked.
 
 Spec: [flows/edit-table.md](flows/edit-table.md), [flows/editing-rules.md](flows/editing-rules.md). Code: `Editor/TablePresentation.swift`, `AppCommands.swift`.
 
@@ -722,7 +724,7 @@ Spec: [platforms/windows/flows/rating-request.md](platforms/windows/flows/rating
 
 Spec: [platforms/windows/flows/app-lock.md](platforms/windows/flows/app-lock.md), [platforms/windows/platform.md](platforms/windows/platform.md) (13), [flows/app-lock.md](flows/app-lock.md). Code: `Model/AppLockOperations.swift`.
 
-**D55.** When the person chooses Don’t Allow on an agent request and the server does not answer, the request comes back on the next refresh and nothing says the decline did not arrive (the code sends it with `try?`). The spec says the page tells the agent and says nothing about this case. Recommendation: show a short message when the decline fails; the owner decides whether quiet is enough. **Resolved by owner decision, 2026-10-09:** follow the recommendation: when Don't Allow can't reach the server, the page shows a short message and the request stays, so the person can try again. Built in 1.1 (design gate, copy key in copy/en.json).
+**D55.** When the person chooses Don’t Allow on an agent request and the server does not answer, the request comes back on the next refresh and nothing says the decline did not arrive (the code sends it with `try?`). The spec says the page tells the agent and says nothing about this case. Recommendation: show a short message when the decline fails; the owner decides whether quiet is enough. **Resolved by owner decision, 2026-10-09:** follow the recommendation: when Don't Allow can't reach the server, the page shows a short message and the request stays, so the person can try again. Built in 1.1 (design gate, copy key in copy/en.json). **Built in 1.1:** `settings.agents.requests.declineFailed`, shown as the footer of the Requests section; the decline is owned by something that lives as long as the app (flows/allow-agent.md step 8).
 
 Spec: [flows/allow-agent.md](flows/allow-agent.md), [screens/allow-agent.md](screens/allow-agent.md). Code: `Views/ServerAgentsView.swift:564-567`, `Model/ServerAgentsController.swift:114-117`.
 

@@ -78,10 +78,7 @@ enum MarkdownEditing {
                 text: render(inserted.text, size: size), range: whole,
                 selection: NSRange(location: inserted.caret, length: 0))
         }
-        if case .strikethrough = command {
-            return toggle(.strikethroughStyle, text: text, selection: selection, size: size)
-        }
-        if case .code = command { return toggle(.journalCode, text: text, selection: selection, size: size) }
+        if let style = InlineStyle(command) { return toggle(style, text: text, selection: selection, size: size) }
         return nil
     }
     /// Moves the caret to the block after the code block, adding one empty paragraph only at the end.
@@ -150,60 +147,30 @@ enum MarkdownEditing {
         }
         return nil
     }
+    /// `blockKind` is the kind of the block at the caret, which typing attributes don't always carry; it decides
+    /// whether the style can apply there, as it does for the state the controls show (InlineStyles.carries).
     static func typingCommand(
         _ command: EditorCommand, textIsEmpty: Bool, selection: NSRange,
-        typing: [NSAttributedString.Key: Any], size: CGFloat, source: Bool = false
+        typing: [NSAttributedString.Key: Any], size: CGFloat, source: Bool = false, blockKind: String? = nil
     ) -> [NSAttributedString.Key: Any]? {
         if case .source = command, textIsEmpty {
             return source ? RichText.attributes(kind: "paragraph", size: size) : attributes(size: size)
         }
-        guard selection.length == 0, !source else { return nil }
-        let key: NSAttributedString.Key
-        switch command {
-        case .strikethrough: key = .strikethroughStyle
-        case .code: key = .journalCode
-        default: return nil
-        }
-        var result = typing
-        let enabled = (typing[key] as? Int ?? 0) == 0
-        result[key] = enabled ? 1 : 0
-        if key == .journalCode {
-            result[.font] = codeFont(typing[.font] as? PlatformFont, enabled: enabled, size: size)
-            result[.backgroundColor] = enabled ? BlockDecorations.codeFill : nil
-        }
-        return result
+        guard selection.length == 0, !source, let style = InlineStyle(command) else { return nil }
+        var attributes = typing
+        if let blockKind { attributes[.journalKind] = blockKind }
+        guard var toggled = InlineStyles.toggledTyping(style, attributes, size: size) else { return typing }
+        toggled[.journalKind] = typing[.journalKind]
+        return toggled
     }
-    private static func codeFont(_ original: PlatformFont?, enabled: Bool, size: CGFloat) -> PlatformFont {
-        let base =
-            enabled ? PlatformFont.monospacedSystemFont(ofSize: size, weight: .regular) : RichText.font(size: size)
-        guard let original else { return base }
-        #if os(macOS)
-            let traits = NSFontManager.shared.traits(of: original).intersection([.boldFontMask, .italicFontMask])
-            return NSFontManager.shared.convert(base, toHaveTrait: traits)
-        #else
-            let traits = original.fontDescriptor.symbolicTraits.intersection([.traitBold, .traitItalic])
-            return UIFont(descriptor: base.fontDescriptor.withSymbolicTraits(traits) ?? base.fontDescriptor, size: size)
-        #endif
-    }
-    private static func toggle(
-        _ key: NSAttributedString.Key, text: NSAttributedString, selection: NSRange, size: CGFloat
-    ) -> Edit? {
-        guard selection.length > 0 else { return nil }
-        let replacement = NSMutableAttributedString(attributedString: text.attributedSubstring(from: selection))
-        let enabled = (replacement.attribute(key, at: 0, effectiveRange: nil) as? Int ?? 0) == 0
-        replacement.addAttribute(key, value: enabled ? 1 : 0, range: NSRange(location: 0, length: replacement.length))
-        if key == .journalCode {
-            let whole = NSRange(location: 0, length: replacement.length)
-            replacement.enumerateAttribute(.font, in: whole) { value, range, _ in
-                replacement.addAttribute(
-                    .font, value: codeFont(value as? PlatformFont, enabled: enabled, size: size), range: range)
-            }
-            if enabled {
-                replacement.addAttribute(.backgroundColor, value: BlockDecorations.codeFill, range: whole)
-            } else {
-                replacement.removeAttribute(.backgroundColor, range: whole)
-            }
-        }
+    /// The style turns on for the selection unless every character that can carry it has it (InlineStyles).
+    private static func toggle(_ style: InlineStyle, text: NSAttributedString, selection: NSRange, size: CGFloat)
+        -> Edit?
+    {
+        guard selection.length > 0, NSMaxRange(selection) <= text.length,
+            let replacement = InlineStyles.toggled(
+                style, in: text.attributedSubstring(from: selection), size: size)
+        else { return nil }
         return Edit(text: replacement, range: selection, selection: selection)
     }
 }

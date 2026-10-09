@@ -111,6 +111,127 @@ import XCTest
         XCTAssertTrue(fixture.document.text.contains("Before."))
         XCTAssertTrue(fixture.document.text.contains("After."))
     }
+
+    // MARK: One list of table commands (docs/design/1-1-settings-messages-editor.md §6)
+
+    /// A menu as text: groups separated by "|", destructive items marked "!", the checked alignment "*".
+    private func signature(_ groups: [[TableMenu.Entry]]) -> String {
+        groups.map { group in
+            group.map { entry -> String in
+                switch entry {
+                case .item(let item): return (item.isDestructive ? "!" : "") + item.title
+                case .submenu(let title, let items):
+                    return title + "[" + items.map { $0.title + ($0.isChecked ? "*" : "") }.joined(separator: ",") + "]"
+                }
+            }.joined(separator: ",")
+        }.joined(separator: "|")
+    }
+    private func focusedCell(_ harness: EditorHarness, row: Int, column: Int) throws -> (
+        InlineTableGrid, TableCellTextView
+    ) {
+        var table = NSRange()
+        harness.text.enumerateAttribute(.journalTable, in: NSRange(location: 0, length: harness.text.length)) {
+            value, range, stop in
+            if value != nil {
+                table = NSRange(location: range.location, length: 0)
+                stop.pointee = true
+            }
+        }
+        harness.coordinator.tables?.focus(at: table)
+        let grid = try XCTUnwrap(harness.coordinator.tables?.active)
+        grid.focus(TableCellAddress(row: row, column: column))
+        return (grid, try XCTUnwrap(grid.activeCell))
+    }
+    /// The Table menu the cell shows, as text, from the platform's own menu type.
+    private func cellMenuSignature(_ grid: InlineTableGrid, _ cell: TableCellTextView) -> String? {
+        #if os(macOS)
+            guard let menu = cell.tableMenu?() else { return nil }
+            var groups: [[String]] = [[]]
+            for item in menu.items {
+                if item.isSeparatorItem {
+                    groups.append([])
+                } else if let submenu = item.submenu {
+                    let choices = submenu.items.map { $0.title + ($0.state == .on ? "*" : "") }
+                    groups[groups.count - 1].append(item.title + "[" + choices.joined(separator: ",") + "]")
+                } else {
+                    groups[groups.count - 1].append(item.title)
+                }
+            }
+            return groups.map { $0.joined(separator: ",") }.joined(separator: "|")
+        #else
+            guard
+                let menu = grid.textView(
+                    cell, editMenuForTextIn: NSRange(location: 0, length: 0), suggestedActions: []),
+                let table = menu.children.last as? UIMenu
+            else { return nil }
+            return table.children.compactMap { $0 as? UIMenu }.map { group in
+                group.children.map { element -> String in
+                    if let submenu = element as? UIMenu {
+                        let choices = submenu.children.compactMap { $0 as? UIAction }.map {
+                            $0.title + ($0.state == .on ? "*" : "")
+                        }
+                        return submenu.title + "[" + choices.joined(separator: ",") + "]"
+                    }
+                    guard let action = element as? UIAction else { return "?" }
+                    return (action.attributes.contains(.destructive) ? "!" : "") + action.title
+                }.joined(separator: ",")
+            }.joined(separator: "|")
+        #endif
+    }
+
+    func testTheCellMenuIsTheOneListWithTheColumnsAlignmentChecked() throws {
+        XCTAssertEqual(
+            signature(TableMenu.groups(alignment: nil)),
+            "Add Row Below,Add Column After,Alignment[Left*,Center,Right]|!Delete Row,!Delete Column,!Delete Table")
+        XCTAssertEqual(
+            signature(TableMenu.groups(alignment: "right")),
+            "Add Row Below,Add Column After,Alignment[Left,Center,Right*]|!Delete Row,!Delete Column,!Delete Table")
+        let harness = EditorHarness(markdown: "| A | B |\n| --- | :-: |\n| c | d |")
+        defer { harness.close() }
+        let (grid, plain) = try focusedCell(harness, row: 1, column: 0)
+        var expected = signature(TableMenu.groups(alignment: nil))
+        #if os(macOS)
+            // The Mac's destructive items are not coloured, so they are not marked.
+            expected = expected.replacingOccurrences(of: "!", with: "")
+        #endif
+        XCTAssertEqual(cellMenuSignature(grid, plain), expected, "A column with none shows Left checked.")
+        let (_, centered) = try focusedCell(harness, row: 1, column: 1)
+        var centeredExpected = signature(TableMenu.groups(alignment: "center"))
+        #if os(macOS)
+            centeredExpected = centeredExpected.replacingOccurrences(of: "!", with: "")
+        #endif
+        XCTAssertEqual(cellMenuSignature(grid, centered), centeredExpected)
+        // Format ▸ Table checks the same alignment: the focused cell's column.
+        harness.settle()
+        XCTAssertEqual(harness.actions.tableAlignment, "center")
+        _ = try focusedCell(harness, row: 1, column: 0)
+        harness.settle()
+        XCTAssertEqual(harness.actions.tableAlignment, "left")
+    }
+    func testFormatTableAppliesToTheFocusedCellAndOfferedAlignmentsChange() throws {
+        let harness = EditorHarness(markdown: "| A | B |\n| --- | --- |\n| c | d |")
+        defer { harness.close() }
+        _ = try focusedCell(harness, row: 1, column: 0)
+        let action = try XCTUnwrap(harness.actions.tableAction, "The menu bar can reach the table on every device.")
+        action(.align("right"))
+        action(.addColumn)
+        let table = try XCTUnwrap(harness.document.blocks.first { $0.table != nil }?.table)
+        XCTAssertEqual(table.columnCount, 3)
+        XCTAssertEqual(table.alignments[0], "right")
+        harness.settle()
+        XCTAssertEqual(harness.actions.tableAlignment, "right")
+    }
+    func testAReadOnlyEntryOffersNoTableMenu() throws {
+        let harness = EditorHarness(markdown: "| A | B |\n| --- | --- |\n| c | d |")
+        defer { harness.close() }
+        let (grid, cell) = try focusedCell(harness, row: 1, column: 0)
+        XCTAssertNotNil(cellMenuSignature(grid, cell))
+        harness.update { $0.editable = false }
+        XCTAssertNil(cellMenuSignature(grid, cell))
+        let before = harness.document
+        harness.actions.tableAction?(.deleteTable)
+        XCTAssertEqual(harness.document, before, "A read-only entry's table is not changed from the menu bar.")
+    }
 }
 
 @MainActor private final class TableFixture {

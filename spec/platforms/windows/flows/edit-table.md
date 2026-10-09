@@ -25,7 +25,7 @@ Writes in a Markdown (GitHub) table directly in the entry: type in cells, move b
 | Cell being edited | The cell is edited in place with lists, images and paragraph styles disabled; text wraps for display; a cell holds one line, so typed or pasted line breaks become spaces (TB-2) | Typing in a cell is one step in the entry's single history (TB-1, TB-7) |
 | Header row | The first row, SemiBold weight (not the Bold format, TB-5) | |
 | Cell context menu | A context flyout with the standard text commands as primary commands and, after a separator, a secondary sub-menu `library.menu.format.table` ▸ `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, an `editor.table.alignment` sub-menu (`editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right`), `library.menu.format.table.deleteRow`, `library.menu.format.table.deleteColumn`, `library.menu.format.table.deleteTable` | The alignment sub-menu follows [commands.md](../commands.md) and open question D7. Opened by right-click, Shift+F10, the Menu key and touch long-press, at the focused cell |
-| Format ▸ Table | `MenuFlyoutSubItem` of the Format menu with Add row below, Add column after, a separator, Delete row, Delete column, Delete table | Enabled only while a cell is being edited |
+| Format ▸ Table | `MenuFlyoutSubItem` of the Format menu with the same list and order as the cell context menu: Add row below, Add column after, an Alignment sub-menu (the column's alignment checked), a separator, Delete row, Delete column, Delete table | Enabled only while a cell is being edited (D7, built in 1.1; open-questions C26) |
 
 ### Steps
 
@@ -65,7 +65,7 @@ F6 and Shift+F6 leave the table and the editor; Tab never traps (it moves cell t
 
 ## Copy differences
 
-Sentence case on every label: "Add row below", "Add column after", "Delete row", "Delete column", "Delete table", "Align left" ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)). No other differences.
+Sentence case on every label: "Add row below", "Add column after", "Delete row", "Delete column", "Delete table", "Alignment" ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)). No other differences.
 
 ## Accessibility
 

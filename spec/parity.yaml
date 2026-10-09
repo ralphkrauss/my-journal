@@ -426,6 +426,7 @@ entry-body:
   specs: [screens/entry-editor.md, flows/editing-rules.md]
   reference: apple
   apple: shipped
+  apple-notes: "Return in the middle of a heading makes two headings (1.1, N-8)."
   windows: planned
   windows-notes: "The control and the Markdown round trip depend on the editor spike (D30, D31, D32)."
   android: planned
@@ -463,6 +464,7 @@ inline-formatting:
   specs: [screens/format-sheet.md, flows/editing-rules.md, commands.md#editor, screens/entry-editor.md]
   reference: apple
   apple: shipped
+  apple-notes: "One rule for all five styles (1.1, F-1): on unless the whole selection has it, counting only the characters that can carry it. On iPhone and iPad the system's own Bold, Italic and Underline run the same command."
   windows: planned
   android: planned
 
@@ -528,7 +530,7 @@ tables:
   specs: [flows/edit-table.md, flows/editing-rules.md, screens/entry-editor.md, screens/format-sheet.md]
   reference: apple
   apple: shipped
-  apple-notes: "Only the Mac has Format ▸ Table; all platforms have the cell's menu."
+  apple-notes: "One list of commands in one order (TableMenu) in the Mac cell menu, Format ▸ Table on the Mac and iPad, and the iPhone and iPad edit menu, with the current alignment checked; iPhone has no menu bar. A read-only entry has no Table menu (1.1)."
   windows: planned
   windows-notes: "Depends on the editor control spike (D30); tables are fully editable in place, exactly like on the Mac, with no read-only fallback (owner decision, 2026-10-07, D33)."
   android: planned
@@ -1166,6 +1168,7 @@ agent-requests:
   specs: [screens/allow-agent.md, flows/allow-agent.md, screens/settings-agent-access.md]
   reference: apple
   apple: shipped
+  apple-notes: "Don't Allow closes the sheet at once; an app-lifetime owner sends the decline, and the Requests footer says when it could not be sent (1.1, D55)."
   windows: planned
   android: planned
 

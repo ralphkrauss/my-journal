@@ -793,33 +793,21 @@
     "text": "Table",
     "context": "Accessibility label of a table in the entry, which contains its cells."
   },
-  "editor.table.alignCenter": {
-    "text": "Align Center",
-    "context": "Mac: table cell context menu ▸ Table ▸."
-  },
-  "editor.table.alignLeft": {
-    "text": "Align Left",
-    "context": "Mac: table cell context menu ▸ Table ▸, sets the column's alignment."
-  },
-  "editor.table.alignRight": {
-    "text": "Align Right",
-    "context": "Mac: table cell context menu ▸ Table ▸."
-  },
   "editor.table.alignment": {
     "text": "Alignment",
-    "context": "iPhone and iPad: submenu of a table cell's edit menu ▸ Table ▸, holding Left, Center and Right."
+    "context": "Table ▸ Alignment, the submenu holding Left, Center and Right: the cell menus and Format ▸ Table on every device."
   },
   "editor.table.alignment.center": {
     "text": "Center",
-    "context": "iPhone and iPad: table cell edit menu ▸ Table ▸ Alignment ▸."
+    "context": "All devices: Table ▸ Alignment ▸; the column's current alignment is checked."
   },
   "editor.table.alignment.left": {
     "text": "Left",
-    "context": "iPhone and iPad: table cell edit menu ▸ Table ▸ Alignment ▸."
+    "context": "All devices: Table ▸ Alignment ▸; the column's current alignment is checked."
   },
   "editor.table.alignment.right": {
     "text": "Right",
-    "context": "iPhone and iPad: table cell edit menu ▸ Table ▸ Alignment ▸."
+    "context": "All devices: Table ▸ Alignment ▸; the column's current alignment is checked."
   },
   "editor.table.cell.header": {
     "text": "Header, column {column}",
@@ -1423,27 +1411,27 @@
   },
   "library.menu.format.table": {
     "text": "Table",
-    "context": "Mac Format ▸ Table submenu."
+    "context": "The Table submenu: the cell menu on every device, and Format ▸ Table on the Mac and iPad."
   },
   "library.menu.format.table.addColumn": {
     "text": "Add Column After",
-    "context": "Mac Format ▸ Table."
+    "context": "Table menus: the cell menu on every device, and Format ▸ Table on the Mac and iPad."
   },
   "library.menu.format.table.addRow": {
     "text": "Add Row Below",
-    "context": "Mac Format ▸ Table."
+    "context": "Table menus: the cell menu on every device, and Format ▸ Table on the Mac and iPad."
   },
   "library.menu.format.table.deleteColumn": {
     "text": "Delete Column",
-    "context": "Mac Format ▸ Table."
+    "context": "Table menus: the cell menu on every device, and Format ▸ Table on the Mac and iPad."
   },
   "library.menu.format.table.deleteRow": {
     "text": "Delete Row",
-    "context": "Mac Format ▸ Table."
+    "context": "Table menus: the cell menu on every device, and Format ▸ Table on the Mac and iPad."
   },
   "library.menu.format.table.deleteTable": {
     "text": "Delete Table",
-    "context": "Mac Format ▸ Table."
+    "context": "Table menus: the cell menu on every device, and Format ▸ Table on the Mac and iPad."
   },
   "library.menu.format.underline": {
     "text": "Underline",
@@ -3527,6 +3515,10 @@
     "text": "{name}, returns to {host}, {when}",
     "context": "Accessibility label of a request row."
   },
+  "settings.agents.requests.declineFailed": {
+    "text": "Couldn’t decline the request from {name}. Open it and choose Don’t Allow to try again.",
+    "context": "Agent Access ▸ Requests: footer of the section after Don’t Allow could not be sent; the request is back in the list. {name} is the client name cleaned as in the row (the agent’s own text, shown as data)."
+  },
   "settings.agents.requests.header": {
     "text": "Requests",
     "context": "Header of waiting agent requests."
@@ -3592,7 +3584,7 @@
   },
   "settings.allowAgent.declinedAnnouncement": {
     "text": "Request declined.",
-    "context": "Announced after declining, or after a wrong number."
+    "context": "Announced when the server has recorded the decline (the sheet has closed by then), or after a wrong number."
   },
   "settings.allowAgent.dontAllow": {
     "text": "Don’t Allow",

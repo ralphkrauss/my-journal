@@ -39,9 +39,7 @@ extension NativeEditor.Coordinator {
             }
         }
         parent.actions.toggleSource = { [weak self] in self?.perform(.source) }
-        #if os(macOS)
-            parent.actions.tableAction = { [weak self] action in self?.tables?.active?.applyToActiveCell(action) }
-        #endif
+        parent.actions.tableAction = { [weak self] action in self?.tables?.active?.applyToActiveCell(action) }
         if tables == nil {
             tables = InlineTables(host: view, actions: parent.actions) { [weak self] text, range, cell in
                 self?.replace(text, range: range, typingIn: cell.map(AnyHashable.init))
@@ -157,6 +155,30 @@ extension NativeEditor.Coordinator {
             width: max(40, view.bounds.width - 20), loading: parent.loadingImages,
             placeholderColor: ImagePresentation.placeholderColor(in: view), scale: scale, thumbnails: thumbnails)
     }
+    /// The kind of the block at the caret, which decides whether an inline style can apply there (InlineStyles).
+    func caretBlockKind(_ text: NSAttributedString, at location: Int, typing: [NSAttributedString.Key: Any])
+        -> String?
+    {
+        guard text.length > 0, !editingSource else { return nil }
+        return FormattingState.caretKind(text, at: location, typing: typing)
+    }
+    #if os(iOS)
+        /// What the system's Bold, Italic and Underline show and whether they apply (JournalTextView).
+        func inlineStyleStatus(_ style: InlineStyle) -> (state: FormattingToggle, available: Bool)? {
+            guard let view, parent.editable, tables?.active == nil else { return nil }
+            let state = FormattingState(
+                text: view.textStorage, range: view.selectedRange, typing: view.typingAttributes,
+                source: showsSource, size: parent.fontSize)
+            guard !showsSource else { return (state.toggle(for: style), true) }
+            let typing = view.typingAttributes.merging([
+                .journalKind: FormattingState.caretKind(
+                    view.textStorage, at: view.selectedRange.location, typing: view.typingAttributes)
+            ]) { $1 }
+            let available = InlineStyles.canApply(
+                style, in: view.textStorage, range: view.selectedRange, typing: typing)
+            return (state.toggle(for: style), available)
+        }
+    #endif
     func applyMarkdownEdit(_ command: EditorCommand) -> Bool {
         if !editingSource {
             if case .toggleTask = command { return performStructuralKey(.toggleTask) }
@@ -205,7 +227,8 @@ extension NativeEditor.Coordinator {
             : (location < storage.length
                 ? storage.attributes(at: location, effectiveRange: nil)
                 : RichText.attributes(kind: "paragraph", size: parent.fontSize))
-        parent.actions.sourceMode = remainsSource
+        // Published even when unchanged, which would redraw everything observing the editor on every style.
+        if parent.actions.sourceMode != remainsSource { parent.actions.sourceMode = remainsSource }
         #if os(macOS)
             view.window?.makeFirstResponder(view)
         #else

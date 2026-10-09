@@ -44,17 +44,7 @@ struct FormattingState: Equatable {
             // The block comes from the text at the caret; typing attributes only carry pending inline styles.
             kinds = [Self.caretKind(text, at: range.location, typing: typing)]
         }
-        let caretKind = range.length == 0 ? kinds.first : nil
-        // A heading's bold weight is its style, not the Bold format.
-        bold = Self.toggle(
-            samples.map {
-                Self.traits($0).0
-                    && !RichText.boldBlockKinds.contains(caretKind ?? $0[.journalKind] as? String ?? "paragraph")
-            })
-        italic = Self.toggle(samples.map { Self.traits($0).1 })
-        underline = Self.toggle(samples.map { ($0[.underlineStyle] as? Int ?? 0) != 0 })
-        strikethrough = Self.toggle(samples.map { ($0[.strikethroughStyle] as? Int ?? 0) != 0 })
-        code = Self.toggle(samples.map { ($0[.journalCode] as? Int ?? 0) != 0 })
+        readInlineStyles(text, range: range, typing: typing, caretKind: range.length == 0 ? kinds.first : nil)
         paragraph = kinds.count == 1 ? kinds.first : nil
         let tasks = samples.compactMap { attributes -> Bool? in
             let kind = attributes[.journalKind] as? String
@@ -105,6 +95,31 @@ struct FormattingState: Equatable {
         guard !kinds.isDisjoint(with: ListIndentation.kinds) else { return ListIndentation.Availability() }
         return ListIndentation.availability(text, selection: range, size: size)
     }
+    /// The five inline styles, each from the characters that can carry it (InlineStyles.carries), which is also what
+    /// the commands change, so a control that shows Mixed shows On after one press. A caret reads the block's kind
+    /// from the text, since typing attributes only carry pending inline styles.
+    @MainActor private mutating func readInlineStyles(
+        _ text: NSAttributedString, range: NSRange, typing: [NSAttributedString.Key: Any], caretKind: String?
+    ) {
+        func state(_ style: InlineStyle) -> FormattingToggle {
+            guard let caretKind else { return InlineStyles.state(style, in: text, range: range) }
+            return InlineStyles.state(style, typing: typing.merging([.journalKind: caretKind]) { $1 })
+        }
+        bold = state(.bold)
+        italic = state(.italic)
+        underline = state(.underline)
+        strikethrough = state(.strikethrough)
+        code = state(.code)
+    }
+    func toggle(for style: InlineStyle) -> FormattingToggle {
+        switch style {
+        case .bold: return bold
+        case .italic: return italic
+        case .underline: return underline
+        case .strikethrough: return strikethrough
+        case .code: return code
+        }
+    }
     /// In source mode the state comes from the Markdown syntax around the selection.
     private mutating func readSource(_ source: String, range: NSRange) {
         let text = source as NSString
@@ -128,16 +143,6 @@ struct FormattingState: Equatable {
     private static func toggle(_ values: [Bool]) -> FormattingToggle {
         if values.allSatisfy({ $0 }) { return .on }
         return values.contains(true) ? .mixed : .off
-    }
-    private static func traits(_ attributes: [NSAttributedString.Key: Any]) -> (Bool, Bool) {
-        guard let font = attributes[.font] as? PlatformFont else { return (false, false) }
-        #if os(macOS)
-            let traits = NSFontManager.shared.traits(of: font)
-            return (traits.contains(.boldFontMask), traits.contains(.italicFontMask))
-        #else
-            let traits = font.fontDescriptor.symbolicTraits
-            return (traits.contains(.traitBold), traits.contains(.traitItalic))
-        #endif
     }
 }
 

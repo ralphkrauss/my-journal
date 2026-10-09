@@ -137,6 +137,7 @@ struct CellTyping: Hashable {
                 self.actions.forgetDeparted()
             }
             self.actions.editingTable = editing
+            if editing { grid?.publishAlignment() } else { self.actions.tableAlignment = nil }
             if editing, let range = self.range(block.id) { self.select(range) }
         }
         #if os(macOS)

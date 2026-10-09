@@ -70,9 +70,8 @@ final class EditorActions: ObservableObject {
     var toggleSource: (() -> Void)?
     /// Shows the system find navigator for the open entry (iPhone and iPad).
     var findInEntry: (() -> Void)?
-    #if os(macOS)
-        var tableAction: ((TableStructureAction) -> Void)?
-    #endif
+    /// Applies a table command from Format ▸ Table to the cell being edited.
+    var tableAction: ((TableStructureAction) -> Void)?
     var handler: ((EditorCommand) -> Void)?
     var beginFormatting: (() -> ((EditorCommand) -> Void)?)?
     private var formattingHandler: ((EditorCommand) -> Void)?
@@ -167,6 +166,8 @@ final class EditorActions: ObservableObject {
     #endif
     /// True while a table cell has keyboard focus, so table commands can be offered.
     @Published var editingTable = false
+    /// The alignment of the focused table cell's column, whose checkmark Format ▸ Table shows; nil outside a table.
+    @Published var tableAlignment: String?
     @Published var requestImage = false
     /// Whether the caret is on a checked (true) or unchecked (false) task, for Mark as Checked; nil elsewhere.
     @Published var caretTaskChecked: Bool?
@@ -628,10 +629,7 @@ enum RichText {
         let kind = attributes[.journalKind] as? String ?? "paragraph"
         let headings = ["heading", "subheading", "heading3", "heading4", "heading5", "heading6"]
         if headings.contains(kind) {
-            return NewlineAction(
-                range: selection,
-                replacement: NSAttributedString(string: "\n", attributes: self.attributes(kind: kind, size: size)),
-                nextKind: "paragraph")
+            return headingReturn(text, selection: selection, attributes: attributes, kind: kind, size: size)
         }
         guard ListMarkers.itemKinds.contains(kind) else { return nil }
         let empty = content(text, in: line).length == 0

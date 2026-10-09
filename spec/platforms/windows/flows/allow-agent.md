@@ -21,7 +21,7 @@ An agent asks for access from its own app; the person allows it in My Journal by
 | 3 The request appears | In Settings > Agent access > Requests within a few seconds: the page polls every three seconds while visible and the window is active, and when the window is activated, and after the allow dialog closes. When the window is not the one in front (the person is in the agent's app) the request waits until the window is activated; nothing notifies the person, because the app has no notifications in version 1 ([platform.md, 19](../platform.md#19-single-instance-and-activation)) |
 | 4 to 6 Review, number, journals | The allow dialog; digits only; All journals (including ones created later) or Selected journals; a reconnect keeps its journals and end date and needs only the number |
 | 7 Allow | The server checks the number; a wrong number declines the request, one try (`settings.allowAgent.mismatch.title`, `settings.allowAgent.mismatch.message`). A new agent is named after its client, numbered when the name is taken. The dialog closes as soon as the server accepts, then this PC uploads the chosen journals' copy for the agent in the background |
-| 8 Don't allow | Declines; the agent's page tells the agent. No error is shown if the server does not answer; the request reappears and can be declined again |
+| 8 Don't allow | Declines; the agent's page tells the agent. The dialog closes at once; if the decline can't be sent, the Agent access page shows `settings.agents.requests.declineFailed` below the requests and the request stays (open-questions C26) |
 
 ### Windows adds
 

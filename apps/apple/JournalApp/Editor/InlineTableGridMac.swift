@@ -103,7 +103,7 @@
                 let undo = self?.sharedUndo?()
                 if redo { undo?.redo() } else { undo?.undo() }
             }
-            cell.tableMenu = { [weak self] in self?.menu(address) ?? NSMenu() }
+            cell.tableMenu = { [weak self] in self?.menu(address) }
             cell.cancelFormatting = { [weak self] in
                 guard let close = self?.actions?.closeFormatting else { return false }
                 close(true)
@@ -147,6 +147,7 @@
         }
         func textViewDidChangeSelection(_ notification: Notification) {
             actions?.formattingSelectionChanged()
+            publishAlignment()
         }
         func commit(_ cell: TableCellTextView, typing: Bool = true) {
             guard !updating, !cell.hasMarkedText(), var table = block.table else { return }
@@ -191,19 +192,34 @@
             let action: TableStructureAction
             let address: TableCellAddress
         }
-        private func menu(_ address: TableCellAddress) -> NSMenu {
+        /// The Table submenu of a cell's context menu, from the one list every table menu shows (TableMenu). A
+        /// read-only entry has none.
+        private func menu(_ address: TableCellAddress) -> NSMenu? {
+            guard editable else { return nil }
             let menu = NSMenu(title: "Table")
-            let choices: [(String, TableStructureAction)] = [
-                ("Add Row Below", .addRow), ("Add Column After", .addColumn),
-                ("Align Left", .align("left")), ("Align Center", .align("center")), ("Align Right", .align("right")),
-                ("Delete Row", .deleteRow), ("Delete Column", .deleteColumn), ("Delete Table", .deleteTable),
-            ]
-            for (title, action) in choices {
-                let item = menu.addItem(withTitle: title, action: #selector(changeStructure(_:)), keyEquivalent: "")
-                item.target = self
-                item.representedObject = MenuAction(action: action, address: address)
+            let alignment = TablePresentation.alignment(of: block.table, column: address.column)
+            for (index, group) in TableMenu.groups(alignment: alignment).enumerated() {
+                if index > 0 { menu.addItem(.separator()) }
+                for entry in group {
+                    switch entry {
+                    case .item(let item):
+                        menu.addItem(menuItem(item, address))
+                    case .submenu(let title, let items):
+                        let parent = menu.addItem(withTitle: title, action: nil, keyEquivalent: "")
+                        let submenu = NSMenu(title: title)
+                        for item in items { submenu.addItem(menuItem(item, address)) }
+                        parent.submenu = submenu
+                    }
+                }
             }
             return menu
+        }
+        private func menuItem(_ choice: TableMenu.Item, _ address: TableCellAddress) -> NSMenuItem {
+            let item = NSMenuItem(title: choice.title, action: #selector(changeStructure(_:)), keyEquivalent: "")
+            item.target = self
+            item.state = choice.isChecked ? .on : .off
+            item.representedObject = MenuAction(action: choice.action, address: address)
+            return item
         }
         @objc private func changeStructure(_ sender: NSMenuItem) {
             guard let action = sender.representedObject as? MenuAction else { return }
@@ -211,8 +227,15 @@
         }
         /// Applies a table action from the menu bar to the cell being edited.
         func applyToActiveCell(_ action: TableStructureAction) {
-            guard let address = activeCell?.address else { return }
+            guard editable, let address = activeCell?.address else { return }
             apply(action, at: address)
+        }
+        /// Tells Format ▸ Table which alignment is checked: the focused cell's column.
+        func publishAlignment() {
+            let alignment = activeCell.map { TablePresentation.alignment(of: block.table, column: $0.address.column) }
+            DispatchQueue.main.async { [weak actions] in
+                if actions?.tableAlignment != alignment { actions?.tableAlignment = alignment }
+            }
         }
         private func apply(_ action: TableStructureAction, at address: TableCellAddress) {
             activeCell?.unmarkText()
@@ -225,6 +248,7 @@
                     TableCellAddress(
                         row: min(address.row, table.rows.count - 1), column: min(address.column, table.columnCount - 1))
                 )
+                publishAlignment()
             } else {
                 exit?(true)
             }
@@ -257,7 +281,7 @@
         var address = TableCellAddress(row: 0, column: 0)
         var commit: (() -> Void)?
         var history: ((Bool) -> Void)?
-        var tableMenu: (() -> NSMenu)?
+        var tableMenu: (() -> NSMenu?)?
         /// Closes the Formatting popover when it's shown; false when there's none.
         var cancelFormatting: (() -> Bool)?
         /// Escape closes the Formatting popover while the cell keeps focus, unless an input method is composing.

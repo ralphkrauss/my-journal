@@ -47,7 +47,7 @@ Section `common.journals` with an unlabelled single choice (accessibility label 
 | Action | Command | Enabled | Result |
 | --- | --- | --- | --- |
 | Allow | `allow-agent` | Request loaded, two digits, not at the limit, not busy; for a new agent: All Journals, or Selected Journals with at least one journal on this device | Allows; announces `settings.allowAgent.allowedAnnouncement` ("Access allowed."); closes. |
-| Don’t Allow | `decline-agent` | Not while allowing | Declines; announces `settings.allowAgent.declinedAnnouncement` ("Request declined."); closes. |
+| Don’t Allow | `decline-agent` | Not while allowing | Closes at once and sends the decline in the background; `settings.allowAgent.declinedAnnouncement` ("Request declined.") is announced when the server has recorded it, not before. If it can't be sent, the Agent Access page says so (`settings.agents.requests.declineFailed`) and the request stays. |
 
 Return in the number field allows (when enabled); Escape is Don’t Allow on the computer. The sheet can't be swiped away.
 
@@ -56,7 +56,7 @@ Return in the number field allows (when enabled); Escape is Don’t Allow on the
 - **Numbers don't match:** alert `settings.allowAgent.mismatch.title` ("Numbers Don’t Match"), `settings.allowAgent.mismatch.message`, `common.ok` closes the sheet. The request is declined by the server.
 - **Request ended (expired, replaced or already answered):** alert `settings.allowAgent.ended.title` ("Request Ended"), `settings.allowAgent.ended.message`, `common.ok` closes.
 - **Errors under the form:** `settings.allowAgent.limit` (limit reached on the server), `settings.allowAgent.error.tooManyAttempts` ("Too many attempts. Try again in a minute."), `common.couldntReachHost`, `settings.allowAgent.error.failed` ("Couldn’t allow access. Try again."). Each is announced.
-- **Locked:** closes.
+- **Locked:** closes. A decline already sent in the background carries on.
 
 ## Rules
 

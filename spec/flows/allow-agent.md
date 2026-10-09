@@ -34,7 +34,7 @@ An agent asks for access from its own app; the person allows it in My Journal by
    - A new agent is named after its client, numbered when the name is taken (“Claude Code 2”, then 3).
    - The sheet closes as soon as the server accepts; this device then uploads the chosen journals' copy for the agent in the background (on phone/tablet it asks the system for time, since the person usually switches back to the agent).
    - The agent's page finishes and the agent can search and read entries in the chosen journals.
-8. **Don’t Allow** declines; the page tells the agent.
+8. **Don’t Allow** declines; the page tells the agent. The sheet closes at once, and the decline is sent in the background by something that lives as long as the app, so closing Settings doesn't cancel it. Meanwhile the request is left out of the Requests list. When the server has recorded the decline (or no longer has the request, because it expired, was replaced or was answered elsewhere), `settings.allowAgent.declinedAnnouncement` is announced once and nothing else happens. When the decline can't be sent (no connection, not authorised, an older server, or any other refusal), the request returns to the Requests list and the page shows `settings.agents.requests.declineFailed` below it; the person opens the request and chooses Don’t Allow again. Erase Journals and Settings and Stop Syncing cancel a decline that is still being sent, without a message.
 
 ## Errors
 
@@ -62,11 +62,11 @@ An agent asks for access from its own app; the person allows it in My Journal by
 - Journal contents are data for the agent, never instructions to My Journal.
 - With encryption, the server can read what an agent reads while it has access (the pane says so).
 - Locking My Journal closes the sheet and clears the lists.
-- Declining sends no error to the person if the server doesn't answer; the request reappears and can be declined again.
+- A decline that can't be sent is reported on the Agent Access page, not in the sheet: the request stays (the server holds it for 10 minutes) and the message `settings.agents.requests.declineFailed` shows as the footer of the Requests section, announced once when it appears. It stays until a later decline succeeds, the person opens that request again, a reload no longer lists the request, or the app locks. If Settings is closed before the failure arrives, nothing is shown, and the request is still listed when the pane opens again.
 
 ## Accessibility
 
-- Allowed and declined are announced.
+- Allowed is announced when the server accepts it, and declined once the server has recorded the decline, which can be after the sheet has closed (focus doesn't move). A decline that fails is announced with its message.
 
 ## Platform notes (Apple)
 
