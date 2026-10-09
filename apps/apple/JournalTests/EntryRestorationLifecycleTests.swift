@@ -84,6 +84,28 @@ final class EntryRestorationLifecycleTests: XCTestCase {
         XCTAssertEqual(announced, [])
     }
 
+    /// The control said "Restore" because the entry's own journal was in use; another window deleted the journal before
+    /// the tap. The Default Journal wasn't named, so nothing is restored and the entry is not filed there.
+    func testAnOwnJournalDeletedBetweenDrawingAndTappingRefusesInsteadOfFilingTheEntryElsewhere() async throws {
+        let library = try await fixture()
+        let model = library.model
+        try await library.store.save(library.deleted(library.entry))
+        try await model.refresh()
+        let deleted = try XCTUnwrap(model.items.first { $0.id == library.entry.id })
+        XCTAssertEqual(model.restoreOffer(for: deleted)?.title, "Restore")
+        var announced: [String] = []
+        model.announce = { announced.append($0) }
+
+        try await library.store.save(library.deletedJournal(library.work))
+        let restored = await model.restore(deleted)
+        XCTAssertFalse(restored)
+        XCTAssertEqual(model.error, "The journal to restore into is no longer available. Nothing was restored.")
+        XCTAssertEqual(announced, [])
+        let stored = try await library.store.item(library.entry.id)
+        XCTAssertNotNil(stored?.deletedAt, "Nothing was written")
+        XCTAssertEqual(stored?.journalID, library.work.id)
+    }
+
     func testWithNoJournalInUseRestoreIsNotOfferedAndSaysNothingWasRestored() async throws {
         let library = try await fixture()
         let model = library.model

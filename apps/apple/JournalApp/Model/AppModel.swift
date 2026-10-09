@@ -208,6 +208,8 @@ final class AppModel: ObservableObject {
     }
     /// Every record that has a conflict, reviewable or not; the lifecycle of journals and entries follows it.
     var conflictedIDs: Set<UUID> = []
+    /// The conflicted journals and deletions that settle at the next pull, which don't keep a journal out of use.
+    var settlingConflictIDs: Set<UUID> = []
     /// The conflicts that wait for a version of this app that can read them.
     var heldConflictIDs: Set<UUID> = []
     /// A journal or deletion conflict waits for a newer version (Settings ▸ Sync says so).

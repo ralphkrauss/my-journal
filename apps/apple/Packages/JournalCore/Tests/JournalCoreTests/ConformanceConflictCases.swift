@@ -182,6 +182,14 @@ enum ConformanceConflictCases {
         differs("differs-title", "Row 3 (entries and templates that differ): the title.", titled)
         var dated = base
         dated.date = utc("2026-09-21T12:00:00Z")
+        var composed = base
+        composed.title = "Caf\u{E9}"
+        var decomposed = base
+        decomposed.title = "Cafe\u{301}"
+        add(
+            "differs-title-normalization-only",
+            "Titles that are canonically equivalent but not the same code points are different: strings are compared by code points, never normalized.",
+            base, text(composed), text(decomposed))
         differs("differs-date", "The entry date.", dated)
         var moved = base
         moved.journalID = otherJournalID
@@ -240,6 +248,10 @@ enum ConformanceConflictCases {
             baseJournal, text(journal(title: "Alpha")), text(journal(title: "Beta")))
         var withTemplate = baseJournal
         withTemplate.defaultTemplateID = templateRefID
+        add(
+            "journal-renamed-normalization-only",
+            "Row 6: names that differ only in normalization are different names: the other name is noted.", baseJournal,
+            text(journal(title: "Caf\u{E9}")), text(journal(title: "Cafe\u{301}")))
         add(
             "journal-template-only", "Row 6: equal names, different default template: this device's, without a note.",
             baseJournal, text(baseJournal), text(withTemplate))

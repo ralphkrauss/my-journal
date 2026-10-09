@@ -347,7 +347,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
     }
 
     /// Two clients write the same parked entry with different bytes: the one that arrives first wins and a device that
-    /// had not sent its own drops it, without a further copy.
+    /// had not sent its own, and had not edited it since, drops it without a further copy.
     func testAParkedEntryThatAnotherClientAlsoWroteIsReplacedByTheArrivingVersion() async throws {
         let store = try await openStore()
         let home = journal("Home")
@@ -363,13 +363,15 @@ final class StoreConflictResolutionTests: ConflictTestCase {
             return XCTFail("The edit was not parked")
         }
         var theirs = try await stored(store, parkedID)
-        theirs.document = .plain("words, written by another client")
+        // The same words, written with another title wording and time: other bytes, nothing of ours lost.
+        theirs.title = "Draft (saved separately)"
         theirs.modifiedAt = Date(timeIntervalSince1970: 1_800_000_500)
         try await store.recordConflict(try remote(theirs, revision: 1, cursor: 9))
         let later = try await settleAfterPause(store)
         XCTAssertEqual(later.resolved.count, 1)
         let record = try await stored(store, parkedID)
-        XCTAssertEqual(record.document.text, "words, written by another client")
+        XCTAssertEqual(record.title, "Draft (saved separately)")
+        XCTAssertEqual(record.document.text, "words")
         let pending = try await store.pending()
         XCTAssertTrue(pending.isEmpty, "Nothing of the dropped version is sent")
         let state = try await store.keptNotesState()
@@ -653,10 +655,9 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         let cursor = try await store.cursor()
         let recordBefore = try await stored(store, draft.id)
         let pendingBefore = try await store.pending()
-        do {
-            _ = try await settleAfterPause(store)
-            XCTFail("The failure must reach the caller")
-        } catch is DatabaseError {}
+        let failed = try await settleAfterPause(store)
+        XCTAssertTrue(failed.resolved.isEmpty, "The failure stays with that record and doesn't stop the round")
+        XCTAssertEqual(failed.held, 1)
         let recordAfter = try await stored(store, draft.id)
         XCTAssertEqual(recordAfter, recordBefore)
         let cursorAfter = try await store.cursor()

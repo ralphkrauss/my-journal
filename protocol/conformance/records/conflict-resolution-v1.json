@@ -189,6 +189,18 @@
         "row" : 3
       },
       "kind" : "entry",
+      "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Café\"}",
+      "name" : "differs-title-normalization-only",
+      "note" : "Titles that are canonically equivalent but not the same code points are different: strings are compared by code points, never normalized.",
+      "other" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Café\"}",
+      "recordID" : "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+    },
+    {
+      "expected" : {
+        "outcome" : "review",
+        "row" : 3
+      },
+      "kind" : "entry",
       "local" : "{\"date\":\"2026-09-20T12:00:00Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"Morning walk.\\n\",\"metadata\":{\"blockIDs\":[\"0A79AFBF-2CE0-CC6B-02C4-19DF73B6DC26\"],\"imageTypes\":{},\"segmentLengths\":[14]},\"version\":2},\"id\":\"3F2504E0-4F89-41D3-9A0C-0305E82C3301\",\"journalID\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"entry\",\"modifiedAt\":\"2026-09-20T12:30:00Z\",\"title\":\"Morning pages\"}",
       "name" : "differs-date",
       "note" : "The entry date.",
@@ -436,6 +448,23 @@
       "name" : "journal-renamed-on-both",
       "note" : "Row 6: this device's name stays and the other name is noted; the other version is kept in history.",
       "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Beta\"}",
+      "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
+    },
+    {
+      "expected" : {
+        "defaultTemplateID" : null,
+        "deletedAt" : null,
+        "deletedWithJournal" : false,
+        "otherName" : "Café",
+        "outcome" : "journal",
+        "row" : 6,
+        "title" : "Café"
+      },
+      "kind" : "journal",
+      "local" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Café\"}",
+      "name" : "journal-renamed-normalization-only",
+      "note" : "Row 6: names that differ only in normalization are different names: the other name is noted.",
+      "other" : "{\"date\":\"2026-01-02T03:04:05Z\",\"deletedWithJournal\":false,\"document\":{\"markdown\":\"\",\"metadata\":{\"blockIDs\":[],\"imageTypes\":{},\"segmentLengths\":[]},\"version\":2},\"id\":\"6A0B3C1D-2E4F-4A5B-8C6D-7E8F9A0B1C2D\",\"kind\":\"journal\",\"modifiedAt\":\"2026-01-02T03:04:05Z\",\"title\":\"Café\"}",
       "recordID" : "6a0b3c1d-2e4f-4a5b-8c6d-7e8f9a0b1c2d"
     },
     {

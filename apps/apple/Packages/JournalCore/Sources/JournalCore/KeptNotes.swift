@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import GRDB
 
@@ -72,6 +73,8 @@ struct KeptNotesState: Codable, Equatable, Sendable {
     var notes: [KeptNote] = []
     /// The steps of the one-time pass over rows an earlier version left that have run: 1 is journals and markers.
     var passStep = 0
+    /// The rows the pass took when it first ran that are still to be settled; nil once none is, or before it ran.
+    var passRecords: [UUID]?
 
     mutating func add(_ note: KeptNote) {
         notes.append(note)
@@ -87,6 +90,15 @@ struct KeptNotesState: Codable, Equatable, Sendable {
         if copies.count > Self.copyLimit { copies.removeFirst(copies.count - Self.copyLimit) }
     }
     func isAutomaticCopy(_ id: UUID) -> Bool { copies.contains { $0.copyID == id } }
+    /// Whether `id` is a copy this device made and `plaintext`, what it holds now, is exactly what it wrote: nobody has
+    /// edited it since, so replacing or dropping it loses nothing.
+    func isUnchangedAutomaticCopy(_ id: UUID, plaintext: Data) -> Bool {
+        guard let copy = copies.first(where: { $0.copyID == id }) else { return false }
+        return copy.digest == Self.digest(of: plaintext)
+    }
+    static func digest(of plaintext: Data) -> String {
+        SHA256.hash(data: plaintext).map { String(format: "%02x", $0) }.joined()
+    }
 }
 
 /// Reads and writes `kept-notes`, sealed like `library-changes`.

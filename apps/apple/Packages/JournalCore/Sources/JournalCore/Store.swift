@@ -308,7 +308,8 @@ public actor JournalStore {
     func lifecycleSnapshot(_ db: Database) throws -> JournalLifecycleSnapshot {
         let conflicts = try String.fetchAll(db, sql: "SELECT record FROM conflicts")
         return JournalLifecycleSnapshot(
-            items: try items(db), conflictedIDs: Set(conflicts.compactMap(UUID.init(uuidString:))))
+            items: try items(db), conflictedIDs: Set(conflicts.compactMap(UUID.init(uuidString:))),
+            settlingIDs: try settlingConflictIDs(db))
     }
     /// Change only the journal date, preserving newer content and rejecting stale consent.
     public func changeEntryDate(_ entryID: UUID, expectedDate: Date, to date: Date) throws -> JournalItem {

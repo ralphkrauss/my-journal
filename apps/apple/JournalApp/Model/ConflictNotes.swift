@@ -34,6 +34,8 @@ extension AppModel {
     func adoptConflicts(_ rows: [ConflictVersion], held: Set<UUID>) {
         conflictedIDs = Set(rows.map(\.id))
         heldConflictIDs = held
+        // A journal or deletion conflict that settles at the next pull doesn't make its journal unavailable.
+        settlingConflictIDs = Set(rows.filter { !Self.isReviewable($0) && !held.contains($0.id) }.map(\.id))
         let needsUpdate = rows.contains { !Self.isReviewable($0) && held.contains($0.id) }
         if heldChangesNeedUpdate != needsUpdate { heldChangesNeedUpdate = needsUpdate }
         conflicts = rows.filter(Self.isReviewable)
@@ -158,7 +160,8 @@ extension AppModel {
     /// The open entry meets a permanent deletion made elsewhere (docs/design/1-1-conflicts-and-reconnect.md, 3.4).
     /// Its edit was saved as a new entry in Recently Deleted. The draft moves there in memory, with the title and
     /// text it has now, so the next save writes that entry and not the record that is now a deletion, which would
-    /// make a second one. A deleted entry is read-only here: it shows with the notice that says where it is.
+    /// make a second one. A deleted entry is read-only here: it shows with the notice that says where it is. It
+    /// follows only an entry that is still as the settlement saved it.
     func followParkedEntry(_ resolved: [ResolvedConflict]) async {
         guard let open = draft, open.kind != "journal" else { return }
         let parked = resolved.compactMap { settled -> UUID? in
@@ -168,9 +171,15 @@ extension AppModel {
         guard let parkedID = parked, let store else { return }
         // A save of the draft that is still running ends first, so it is not mistaken for a newer edit.
         while let write = draftWrite { _ = await write.task.value }
-        guard !locked, !replacingVault, self.store === store, let current = draft, current.id == open.id,
-            let stored = try? await store.item(parkedID)
-        else { return }
+        guard !locked, !replacingVault, self.store === store, let current = draft, current.id == open.id else {
+            return
+        }
+        // The draft is written onto that entry, so it must still be exactly what the settlement saved: not edited,
+        // deleted for good or changed on another device since. Otherwise the draft stays where it is.
+        guard let stored = try? await store.unchangedParkedEntry(parkedID, for: open.id) else {
+            report(JournalError.conflict, .saving)
+            return
+        }
         var target = stored
         target.title = current.title
         target.document = current.document

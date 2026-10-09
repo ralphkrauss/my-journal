@@ -76,6 +76,63 @@ final class JournalSettingsPreservedTests: ConflictTestCase {
         XCTAssertEqual(importedJournal.defaultTemplateID, importedTemplate.id, "Remapped, not dropped")
     }
 
+    /// The other ways 1.1 writes a journal for another reason: settling a rename against a deletion, numbering a
+    /// taken name (at opening and as an automatic rename that the server accepts) and restoring under a taken name.
+    func testADefaultTemplateSurvivesAMergedDeletionNumberingAnAutomaticRenameAndANumberingRestore() async throws {
+        let templateID = UUID()
+        // Renamed here, deleted on another device: the record is this device's content with the merged deletion.
+        let settling = try await openStore("settling")
+        var work = journal("Work")
+        work.defaultTemplateID = templateID
+        try await settle(work, in: settling)
+        var renamed = work
+        renamed.title = "Work, renamed"
+        try await settling.save(renamed)
+        var deleted = work
+        deleted.title = "Work, deleted"
+        deleted.defaultTemplateID = UUID()
+        deleted.deletedAt = Date(timeIntervalSince1970: 1_750_000_000)
+        try await deliver(deleted, revision: 2, to: settling)
+        _ = try await settleAfterPause(settling)
+        let merged = try await stored(settling, work.id)
+        XCTAssertEqual(merged.deletedAt, deleted.deletedAt)
+        XCTAssertEqual(merged.title, "Work, renamed")
+        XCTAssertEqual(merged.defaultTemplateID, templateID)
+        // Restored under a name another journal took meanwhile: it comes back with a number and its template.
+        try await settling.save(journal("Work, renamed"))
+        let restored = try await settling.restoreJournal(work.id)
+        XCTAssertEqual(restored.title, "Work, renamed 2")
+        XCTAssertEqual(restored.defaultTemplateID, templateID)
+
+        // Two journals with one name: the newer one is numbered, and keeps its template.
+        let opened = try await openStore("numbering")
+        var older = journal("Travel", seconds: 1_000)
+        older.defaultTemplateID = UUID()
+        var newer = journal("travel", seconds: 2_000)
+        newer.defaultTemplateID = templateID
+        try await opened.insertWithoutChecks([older, newer])
+        let count = try await opened.numberDuplicateJournals()
+        XCTAssertEqual(count, 1)
+        let numbered = try await stored(opened, newer.id)
+        XCTAssertEqual(numbered.title, "travel 2")
+        XCTAssertEqual(numbered.defaultTemplateID, templateID)
+
+        // The same numbering as an automatic rename the server accepts.
+        let syncing = try await openStore("automatic")
+        try await deliver(older, revision: 1, to: syncing)
+        try await deliver(newer, revision: 1, to: syncing)
+        let renames = try await syncing.automaticRenames()
+        let rename = try XCTUnwrap(renames.first)
+        let change = rename.change
+        let receipt = RemoteChange(
+            cursor: 9, recordId: change.recordID, revision: change.baseRevision + 1, kind: change.kind,
+            payload: change.payload, deviceId: UUID(), modifiedAt: Date())
+        try await syncing.adoptAutomaticRename(rename, receipt: receipt)
+        let adopted = try await stored(syncing, change.recordID)
+        XCTAssertEqual(adopted.title, "travel 2")
+        XCTAssertEqual(adopted.defaultTemplateID, templateID)
+    }
+
     /// A record with a member this version doesn't know is never rewritten or made editable by a way of writing a
     /// journal: its original bytes stay.
     func testAJournalWithAnUnknownMemberIsNeverRewritten() async throws {

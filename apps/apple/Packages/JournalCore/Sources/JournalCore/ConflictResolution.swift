@@ -74,7 +74,7 @@ public enum ConflictResolution {
             guard lhs.kind == "journal" else { return .review }
             var record = lhs
             (record.deletedAt, record.deletedWithJournal) = deletion(of: lhs, and: rhs)
-            return .journal(record: record, otherName: lhs.title == rhs.title ? nil : rhs.title)
+            return .journal(record: record, otherName: sameText(lhs.title, rhs.title) ? nil : rhs.title)
         }
     }
 
@@ -95,7 +95,7 @@ public enum ConflictResolution {
     public static func sameContent(_ first: ConflictSide, _ second: ConflictSide) -> Bool {
         let lhs = first.item
         let rhs = second.item
-        guard lhs.kind == rhs.kind, lhs.title == rhs.title else { return false }
+        guard lhs.kind == rhs.kind, sameText(lhs.title, rhs.title) else { return false }
         switch lhs.kind {
         case "journal":
             return lhs.defaultTemplateID == rhs.defaultTemplateID
@@ -108,6 +108,12 @@ public enum ConflictResolution {
         default:
             return false
         }
+    }
+    /// Strings are equal when they have the same Unicode scalars. Swift's `==` also equates canonically equivalent
+    /// texts (a composed and a decomposed é), which another client's ordinal comparison does not, and a false "same"
+    /// would lose an edit.
+    static func sameText(_ first: String, _ second: String) -> Bool {
+        first.unicodeScalars.elementsEqual(second.unicodeScalars)
     }
     /// The `document` members of two record plaintexts as JSON values: objects unordered, arrays ordered, strings by
     /// code points. Two devices seal the same content differently, so bytes are never compared.

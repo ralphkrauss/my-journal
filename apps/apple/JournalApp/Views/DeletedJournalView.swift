@@ -13,6 +13,10 @@ struct DeletedJournalView: View {
     private var canRestore: Bool {
         journal.document.isEditable && journal.preservedJSON == nil && !model.conflictedIDs.contains(journal.id)
     }
+    /// Restore waits for a newer version, rather than for a conflict this version settles at its next sync.
+    private var needsNewerVersion: Bool {
+        !journal.document.isEditable || journal.preservedJSON != nil || model.heldConflictIDs.contains(journal.id)
+    }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -24,7 +28,7 @@ struct DeletedJournalView: View {
                 .foregroundStyle(.secondary)
                 if canRestore {
                     restoreControls
-                } else {
+                } else if needsNewerVersion {
                     Text("Update My Journal to restore this journal.")
                     ArchiveExportControls()
                 }

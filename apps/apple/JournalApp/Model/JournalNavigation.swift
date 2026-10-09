@@ -5,7 +5,8 @@ import os
 extension AppModel {
     var lifecycle: JournalLifecycleSnapshot {
         if let cached = lists.lifecycle { return cached }
-        let snapshot = JournalLifecycleSnapshot(items: items, conflictedIDs: conflictedIDs)
+        let snapshot = JournalLifecycleSnapshot(
+            items: items, conflictedIDs: conflictedIDs, settlingIDs: settlingConflictIDs)
         lists.lifecycle = snapshot
         return snapshot
     }

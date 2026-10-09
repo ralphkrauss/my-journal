@@ -46,6 +46,46 @@ final class ConflictNotesTests: XCTestCase {
         XCTAssertEqual(entries.first?.title, "Plans, typed since")
     }
 
+    /// The draft is written onto the saved entry, so the entry must still be what the settlement saved. Edited in
+    /// another window, or deleted for good, it is left alone and the draft stays where it is, with a message.
+    func testTheOpenEntryDoesNotFollowASavedEntryThatChangedOrWasDeletedMeanwhile() async throws {
+        for change in ["edited", "deleted for good"] {
+            let library = try await startedLibrary()
+            let (model, store) = (library.model, library.store)
+            let entry = try await library.entryDeletedPermanentlyElsewhere(title: "Plans", text: "Edited here")
+            try await model.refresh()
+            model.selectedID = entry.id
+            model.draft = model.items.first { $0.id == entry.id }
+            // Writing that isn't saved yet keeps the entry open until it is.
+            model.keepingDraftBase { model.draft?.title = "Plans, typed since" }
+            let settled = try await store.resolveConflicts(at: .local)
+            guard case .deletedAndChanged(let parkedID?) = settled.resolved.first?.result else {
+                return XCTFail("The edit is saved separately")
+            }
+            if change == "edited" {
+                let current = try await store.item(parkedID)
+                var edited = try XCTUnwrap(current)
+                edited.document = .plain("Changed in another window")
+                try await store.save(edited)
+            } else {
+                _ = try await store.permanentlyDelete(try await store.preparePermanentDeletion(parkedID))
+            }
+
+            await model.followResolved(settled.resolved)
+
+            XCTAssertEqual(model.draft?.id, entry.id, "\(change): the draft stays")
+            XCTAssertEqual(model.draft?.title, "Plans, typed since", change)
+            XCTAssertEqual(model.selectedID, entry.id, change)
+            XCTAssertEqual(model.error, JournalError.conflict.errorDescription, change)
+            let stored = try await store.item(parkedID)
+            if change == "edited" {
+                XCTAssertEqual(stored?.document.text, "Changed in another window", "Nothing is written onto it")
+            } else {
+                XCTAssertEqual(stored?.isPermanentlyDeleted, true, change)
+            }
+        }
+    }
+
     // MARK: Changed on Two Devices
 
     func testKeptNotesShowTheThreeKindsAndOpeningMarksTheNoteSeen() async throws {

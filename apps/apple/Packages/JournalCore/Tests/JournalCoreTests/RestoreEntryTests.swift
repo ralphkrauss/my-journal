@@ -126,6 +126,49 @@ final class RestoreEntryTests: ConflictTestCase {
         XCTAssertEqual(pendingAfter, pendingBefore, "Nothing was written")
     }
 
+    /// The control said "Restore" because the entry's own journal was in use; it was deleted before the tap. With no
+    /// journal named besides it, nothing is restored, so the entry is not filed where the control did not say.
+    func testAnOwnJournalDeletedBetweenDrawingTheControlAndTappingRefusesWithoutWriting() async throws {
+        let store = try await openStore()
+        let work = journal("Work")
+        let notes = entry("Notes", text: "inside", journal: work.id)
+        let fallback = journal("Default")
+        for item in [work, notes, fallback] { try await settle(item, in: store) }
+        _ = try await deleted(notes, in: store)
+        try await deleteJournal(work.id, in: store)
+        let before = try await store.items().sorted { $0.id.uuidString < $1.id.uuidString }
+        do {
+            _ = try await store.restoreEntry(notes.id, fallback: nil)
+            XCTFail("The Default Journal was not named")
+        } catch JournalLifecycleError.destinationGone {}
+        let after = try await store.items().sorted { $0.id.uuidString < $1.id.uuidString }
+        XCTAssertEqual(after, before)
+    }
+
+    /// An entry that is not deleted stays exactly as it is, archived or not; a deleted one is stamped by the store's
+    /// clock like every other write.
+    func testRestoreLeavesAnArchivedEntryAloneAndStampsTheStoresClock() async throws {
+        let store = try await openStore()
+        let home = journal("Home")
+        var archived = entry("Archived", text: "kept in its journal", journal: home.id)
+        archived.archivedAt = Date(timeIntervalSince1970: 1_750_000_000)
+        let removed = entry("Removed", text: "in Recently Deleted", journal: home.id)
+        for item in [home, archived, removed] { try await settle(item, in: store) }
+        _ = try await deleted(removed, in: store)
+        let pendingBefore = try await store.pending().map(\.operationId)
+
+        let untouched = try await store.restoreEntry(archived.id, fallback: nil)
+        XCTAssertEqual(untouched.entry.archivedAt, archived.archivedAt)
+        let stored = try await self.stored(store, archived.id)
+        XCTAssertEqual(stored.archivedAt, archived.archivedAt)
+        let pendingAfter = try await store.pending().map(\.operationId)
+        XCTAssertEqual(pendingAfter, pendingBefore, "Nothing was written for it")
+
+        time.withLock { $0 = Date(timeIntervalSince1970: 1_800_000_321) }
+        let restored = try await store.restoreEntry(removed.id, fallback: nil)
+        XCTAssertEqual(restored.entry.modifiedAt, Date(timeIntervalSince1970: 1_800_000_321))
+    }
+
     func testRestoreIsRefusedForANewerVersionOrAConflictAndForAnEntryThatIsNotDeletedWithNoJournal() async throws {
         let store = try await openStore()
         let work = journal("Work")

@@ -355,7 +355,7 @@ A network error is classified as sync classifies it, so one place knows what a n
 | `messages.lifecycle.unsupportedJournal` | Update My Journal to make changes to this journal. | JournalLifecycleError.unsupportedJournal: a journal saved by a newer version. | journal sheets |  |  |
 | `messages.lifecycle.alreadyDeleted` | This journal is already in Recently Deleted. | JournalLifecycleError.alreadyDeleted. | journal sheets |  |  |
 | `messages.lifecycle.alreadyRestored` | This journal has already been restored. | JournalLifecycleError.alreadyRestored. | journal sheets |  |  |
-| `messages.restore.destinationGone` | The journal to restore into is no longer available. Nothing was restored. | Restore of an entry when neither its own journal nor the Default Journal can be used at that moment. | generic alert | common.ok |  |
+| `messages.restore.destinationGone` | The journal to restore into is no longer available. Nothing was restored. | Restore of an entry when the journal the control named, its own or the Default Journal, can't be used at that moment. | generic alert | common.ok |  |
 | `messages.journal.nameTaken` | A journal named “{name}” already exists. | JournalNameError.taken, and the Name Taken alert’s announcement. | Name Taken alert; journal settings |  |  |
 
 ### Unavailable and read-only content

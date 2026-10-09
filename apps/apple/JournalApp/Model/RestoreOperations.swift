@@ -97,7 +97,7 @@ extension AppModel {
             return false
         }
         guard !locked, !replacingVault, let store else { return false }
-        let fallback = defaultJournal?.id
+        let fallback = namedFallback(for: item)
         do {
             var restored: RestoredEntry?
             let refreshed = try await commitMutation({ try await store.restoreEntry(item.id, fallback: fallback) }) {
@@ -116,6 +116,17 @@ extension AppModel {
         } catch {
             report(error, .saving)
             return false
+        }
+    }
+
+    /// The journal the control named when it was drawn, nil when it named the entry's own. The store decides again at
+    /// the tap, so an own journal that went away since refuses, rather than filing the entry in the Default Journal
+    /// the control did not name. Without an offer nothing is named; the store says why it can't restore.
+    private func namedFallback(for item: JournalItem) -> UUID? {
+        guard let offer = restoreOffer(for: item) else { return defaultJournal?.id }
+        switch offer.destination {
+        case .ownJournal: return nil
+        case .journal(let id, _): return id
         }
     }
 

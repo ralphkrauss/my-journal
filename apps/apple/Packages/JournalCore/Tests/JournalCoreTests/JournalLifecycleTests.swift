@@ -163,7 +163,9 @@ final class JournalLifecycleTests: XCTestCase {
                 cursor: 10, recordId: journal.id, revision: 2, kind: "journal",
                 payload: encrypted.base64EncodedString(), deviceId: UUID(), modifiedAt: Date()))
         let snapshot = try await store.lifecycleSnapshot()
-        XCTAssertEqual(snapshot.location(of: entry), .unavailable(.unsupported))
+        // This version settles a rename against a deletion at the next pull, so nothing waits for a newer one; the
+        // journal itself is left alone until then.
+        XCTAssertEqual(snapshot.location(of: entry), .journal)
         do {
             _ = try await store.prepareJournalDeletion(journal.id)
             XCTFail("A journal with a conflict that is still waiting must not be deleted.")

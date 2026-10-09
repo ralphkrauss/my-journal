@@ -54,6 +54,27 @@ final class ConflictResolutionTests: ConflictTestCase {
         XCTAssertEqual(try resolve(journals, withTemplate), .sameContent(record: journals, adoptsOther: true))
     }
 
+    /// Swift's `==` equates a composed and a decomposed é; another client comparing code points does not, and a false
+    /// "same" would lose an edit, so every client compares scalars.
+    func testTextsThatOnlyNormalizeAlikeAreDifferent() throws {
+        let composed = "Caf\u{E9}"
+        let decomposed = "Cafe\u{301}"
+        XCTAssertEqual(composed, decomposed, "Swift's own comparison would say the same")
+        var one = entry(composed, text: "same")
+        var two = one
+        two.title = decomposed
+        XCTAssertEqual(try resolve(one, two), .review)
+        one.document = .plain(composed)
+        two = one
+        two.document = .plain(decomposed)
+        XCTAssertEqual(try resolve(one, two), .review)
+        let work = journal(composed)
+        var renamed = work
+        renamed.title = decomposed
+        guard case .journal(_, let otherName) = try resolve(work, renamed) else { return XCTFail("Not a rename") }
+        XCTAssertEqual(otherName, decomposed, "The other name is noted, as written")
+    }
+
     /// The identity of a block, the length of a segment and the type of an image are in the stored document. A false
     /// "same" would lose an edit and a false "different" only makes a copy, so each of them alone is different.
     func testDocumentsThatDifferOnlyInTheirMetadataAreDifferent() throws {

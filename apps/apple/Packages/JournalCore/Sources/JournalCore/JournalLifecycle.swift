@@ -37,23 +37,30 @@ public enum UnavailableJournal: Equatable, Sendable {
 /// One consistent view of records and conflict identities, shared by all readers.
 public struct JournalLifecycleSnapshot: Sendable {
     public let items: [JournalItem]
+    /// Every record with a conflict. Changing a journal or its entries waits for the conflict to end.
     public let conflictedIDs: Set<UUID>
+    /// The conflicted records this version settles on its own at the next pull. They keep a journal in use and don't
+    /// read as waiting for a newer app (`unusableIDs`).
+    public let settlingIDs: Set<UUID>
     private let parents: [UUID: JournalItem]
 
-    public init(items: [JournalItem], conflictedIDs: Set<UUID> = []) {
+    public init(items: [JournalItem], conflictedIDs: Set<UUID> = [], settlingIDs: Set<UUID> = []) {
         self.items = items.filter { !$0.isPermanentlyDeleted }
         self.conflictedIDs = conflictedIDs
+        self.settlingIDs = settlingIDs
         parents = Dictionary(
             self.items.filter { $0.kind == "journal" }.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
+    /// The conflicted records that keep a journal out of use: a version this app can't read, or an entry to review.
+    private var unusableIDs: Set<UUID> { conflictedIDs.subtracting(settlingIDs) }
     public var liveJournals: [JournalItem] {
-        parents.values.filter { $0.deletedAt == nil && $0.document.isEditable && !conflictedIDs.contains($0.id) }
+        parents.values.filter { $0.deletedAt == nil && $0.document.isEditable && !unusableIDs.contains($0.id) }
     }
     public func location(of entry: JournalItem) -> EntryLocation {
         guard entry.kind == "entry", let journalID = entry.journalID, let parent = parents[journalID] else {
             return .unavailable(.missing)
         }
-        guard parent.document.isEditable, !conflictedIDs.contains(parent.id) else { return .unavailable(.unsupported) }
+        guard parent.document.isEditable, !unusableIDs.contains(parent.id) else { return .unavailable(.unsupported) }
         if parent.deletedAt != nil || entry.deletedAt != nil || entry.deletedWithJournal { return .recentlyDeleted }
         // Archiving is no longer offered; entries archived by earlier versions stay in their journal.
         return .journal

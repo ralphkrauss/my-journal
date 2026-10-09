@@ -2497,7 +2497,7 @@
   },
   "messages.restore.destinationGone": {
     "text": "The journal to restore into is no longer available. Nothing was restored.",
-    "context": "General error alert when neither the entry’s journal nor the Default Journal can be used at the moment Restore is chosen."
+    "context": "General error alert when the journal the control named (the entry’s own, or the Default Journal) can’t be used at the moment Restore is chosen."
   },
   "messages.save.before.goBack": {
     "text": "Your changes aren’t saved yet. Go back to your entry, choose Try Again under Not Saved, then repeat what you were doing.",

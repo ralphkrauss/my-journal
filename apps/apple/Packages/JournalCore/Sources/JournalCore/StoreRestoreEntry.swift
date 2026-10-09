@@ -34,7 +34,8 @@ extension JournalStore {
             let own = try entry.journalID.flatMap { try storedItem(db, uuid: $0) }
             switch try restoreDestination(db, own: own, entryIsDeleted: isDeleted, fallbackID: fallbackID) {
             case .own(let journal):
-                guard isDeleted || entry.archivedAt != nil else {
+                // Nothing of its own is deleted: it is already where it belongs, and an archived one stays archived.
+                guard isDeleted else {
                     return RestoredEntry(entry: entry, journal: journal, returnedToOwnJournal: true)
                 }
                 clearDeletion(of: &entry)
@@ -78,7 +79,7 @@ extension JournalStore {
         entry.deletedAt = nil
         entry.deletedWithJournal = false
         entry.archivedAt = nil
-        entry.modifiedAt = Date()
+        entry.modifiedAt = clock()
     }
 
     private func hasConflictRow(_ db: Database, _ uuid: UUID) throws -> Bool {

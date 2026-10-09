@@ -477,7 +477,8 @@ extension JournalStore {
         let conflicted = try String.fetchAll(
             db, sql: "SELECT record FROM conflicts WHERE record IN (?,?)", arguments: [id(journalID), id(entryID)])
         let snapshot = JournalLifecycleSnapshot(
-            items: [entry, journal], conflictedIDs: Set(conflicted.compactMap(UUID.init(uuidString:))))
+            items: [entry, journal], conflictedIDs: Set(conflicted.compactMap(UUID.init(uuidString:))),
+            settlingIDs: try settlingConflictIDs(db))
         guard snapshot.location(of: entry) == .journal else { throw LibraryError.unavailable }
     }
     /// Journals in use, in the order shown.

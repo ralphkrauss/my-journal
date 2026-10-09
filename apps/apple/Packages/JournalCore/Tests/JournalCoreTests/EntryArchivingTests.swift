@@ -67,7 +67,8 @@ final class EntryArchivingTests: XCTestCase {
         let restored = try await store.item(entry.id)
         XCTAssertEqual(restored?.archivedAt, archived.archivedAt)
         let recovered = try await store.restoreEntry(entry.id, fallback: nil).entry
-        XCTAssertNil(recovered.archivedAt)
+        XCTAssertEqual(
+            recovered.archivedAt, archived.archivedAt, "Restore doesn't unarchive an entry that isn't deleted")
         let retained = try await store.item(sibling.id)
         XCTAssertEqual(retained, archivedSibling)
         var marker = JournalItem.permanentDeletionMarker(for: archived, at: archived.date)
