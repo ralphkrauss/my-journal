@@ -15,7 +15,7 @@ sources:
   - apps/apple/JournalApp/Views/EntryHeaderView.swift
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
-  - apps/apple/JournalApp/Views/TurnOnEncryptionView.swift
+  - apps/apple/JournalApp/Views/EncryptionNotice.swift
   - apps/apple/JournalApp/Editor/JournalWritingView.swift
   - apps/apple/JournalApp/Views/UnlockView.swift
   - docs/design/save-failure-retry.md
@@ -46,7 +46,7 @@ State: `AppModel.saveFailure` (a published Bool, set and cleared only by `flush`
 Writing paused while the library is replaced:
 
 - While the library is being replaced (`replacingVault`), `canEdit` is false, so the editor is read-only and `flush` and `sync` do nothing. The open entry is saved before the replacement starts, or the replacement does not start.
-- Mac only: `ConnectionPauseNotice` and `EncryptionPauseNotice` (`SaveFailureNotice.swift`, `TurnOnEncryptionView.swift`, both `#if os(macOS)`) sit above the editor in `RootView.detail`. Each is an `HStack` of callout text, a spacer and a button on `.quaternary`; at accessibility text sizes (`dynamicTypeSize.isAccessibilitySize`) a `VStack` with the button below. Texts: `messages.writingPaused.connecting`, `messages.writingPaused.connectionFailed` with `messages.writingPaused.showConnection` (opens Settings), `messages.writingPaused.encrypting`, `messages.writingPaused.encryptionUnfinished` with `messages.writingPaused.showProgress`. The model is `AppModel.serverConnectionPause` (`.connecting`, `.waitingForRetry`) and `EncryptionUpgrade.pausesWriting`. The connecting notice waits 1 second so that a quick connection does not flash it (`.task(id:)`).
+- Mac only: `ConnectionPauseNotice` (`SaveFailureNotice.swift`, `#if os(macOS)`) sits above the editor in `RootView.detail`. The encryption notice (`EncryptionNotice` in `Views/EncryptionNotice.swift`) is device-neutral in 1.1: the same view is shown on the Mac above the editor, and on iPhone and iPad above the content of every stacked screen and column, with `messages.writingPaused.encrypting` (or `messages.encryption.unfinished` when unfinished), the status row, Cancel (accessible name `settings.encryption.cancel.accessibilityLabel`) or Try Again and Stop Syncing…. See `screens/encrypt-journals`. It takes the same fade as the connection notice (A45). The connection notice follows. Each notice is an `HStack` of callout text, a spacer and a button on `.quaternary`; at accessibility text sizes (`dynamicTypeSize.isAccessibilitySize`) a `VStack` with the button below. Texts: `messages.writingPaused.connecting`, `messages.writingPaused.connectionFailed` with `messages.writingPaused.showConnection` (opens Settings). The model is `AppModel.serverConnectionPause` (`.connecting`, `.waitingForRetry`) and `EncryptionUpgrade.pausesWriting`. The connecting notice waits 1 second so that a quick connection does not flash it (`.task(id:)`).
 - iPhone and iPad have no such notice: the connection and encryption sheets cover the app.
 - An archive opened while the library is replaced: `RootView.openPendingArchive` sets the generic alert to `messages.writingPaused.updating`.
 
@@ -99,7 +99,7 @@ View:
 - `apps/apple/JournalApp/Views/EntryHeaderView.swift`: the notice's place on iPhone and iPad.
 - `apps/apple/JournalApp/Views/RootView.swift`: the alert, the Mac placement, the archive-while-updating message.
 - `apps/apple/JournalApp/Editor/JournalWritingView.swift`: the header host and the scroll to the notice.
-- `apps/apple/JournalApp/Views/TurnOnEncryptionView.swift`: the Mac encryption pause notice.
+- `apps/apple/JournalApp/Views/EncryptionNotice.swift`: the device-neutral encryption notice (working, failed, unfinished).
 - `apps/apple/JournalApp/Views/UnlockView.swift`, `SyncNowRows.swift`: the locked message and the dimmed Sync Now.
 
 Model:

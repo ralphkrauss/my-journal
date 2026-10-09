@@ -32,7 +32,7 @@
         private var toolbarConfiguration: JournalToolbarConfiguration {
             var configuration = JournalToolbarConfiguration()
             configuration.editorOnly = windowColumns.editorOnly
-            configuration.canCreateJournal = model.isReady && !model.locked
+            configuration.canCreateJournal = model.isReady && !model.locked && !model.writingPausedForEncryption
             let creating = model.isReady && !model.locked && !model.replacingVault
             configuration.canCreateEntry = creating
             configuration.canEdit = model.canEdit
@@ -119,7 +119,10 @@
         /// Journal Actions in the list's toolbar section: New Journal…, and for a journal the actions of its row.
         private func journalActionCatalog() -> [MenuAction] {
             var actions: [MenuAction] = [
-                .command("New Journal…", symbol: "folder.badge.plus", enabled: model.isReady && !model.locked) {
+                .command(
+                    "New Journal…", symbol: "folder.badge.plus",
+                    enabled: model.isReady && !model.locked && !model.writingPausedForEncryption
+                ) {
                     model.newJournalRequested = true
                 }
             ]

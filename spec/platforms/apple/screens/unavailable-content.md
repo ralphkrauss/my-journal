@@ -48,7 +48,7 @@ Maps [screens/unavailable-content.md](../../../screens/unavailable-content.md). 
 
 ### Library that cannot be opened
 
-`RootView.window` (the `Group` in `Views/RootView.swift`) picks one view in this order: `ProgressView("Opening Journal…")` until loaded; `UnlockView` when `model.locked`; `LibraryProblemView(problem:)` when `model.showsLibraryProblem`; the welcome screen without a store; `RecoveryView`; the journals. A problem state is never locked, so no authentication precedes the screen and it shows nothing of the journals or the server.
+`RootView.window` (the `Group` in `Views/RootView.swift`) picks one view in this order: `ProgressView("Opening Journal…")` until loaded; `UnlockView` when `model.locked`; `LibraryProblemView(problem:)` when `model.showsLibraryProblem`; the welcome screen without a store; in 1.1 the journals with the encryption notice (saved marker or run in progress), then Encrypt Your Journals for an unencrypted library (`Model/EncryptionRouting.swift`, `screens/encrypt-journals`); `RecoveryView`; the journals. A problem state is never locked, so no authentication precedes the screen and it shows nothing of the journals or the server.
 
 Model: `AppModel.libraryProblem` (`Model/LibraryProblem.swift`) with four values. `failOpening` classifies a failure at launch or at the first read of the journals: only a newer version is told apart (`newerVersion`), everything else is `cantOpen`; `settingsUnread` is set by `openSavedLibrary` (`Model/LibraryOpening.swift`) when `configuration.json` exists but does not decode; `needsKey` is set by `lockForMissingDeviceKey`. Failing closes the store, the key and the connection, so a problem state never has a live store. `retryOpening` runs the opening again.
 

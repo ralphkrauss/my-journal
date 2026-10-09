@@ -8,9 +8,6 @@ final class SpecStartCaptureTests: SpecCaptureCase {
         try require(app.buttons["Start a Journal"], app: app, timeout: 20)
         try shot(app, "welcome-default")
         app.buttons["Start a Journal"].tap()
-        try require(app.buttons["Use Encryption"], app: app, timeout: 10)
-        try shot(app, "create-library-default")
-        app.buttons["Use Encryption"].tap()
         let password = app.secureTextFields["Master Password"]
         try require(password, app: app, timeout: 10)
         try shot(app, "create-library-password")

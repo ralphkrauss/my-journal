@@ -112,15 +112,14 @@ final class IPadWritingUITests: XCTestCase {
         let shown = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", title), object: field)
         return Waiting.wait(for: shown, timeout: 10) == .completed
     }
-    @MainActor private func launchWithoutEncryption() -> XCUIApplication {
+    @MainActor private func launchWithNewJournal() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         if #available(iOS 17.0, *) { XCUIDevice.shared.appearance = .light }
         app.launch()
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         return app
     }
     /// A journal of `count` short entries named “Row 01” onwards, open in portrait.

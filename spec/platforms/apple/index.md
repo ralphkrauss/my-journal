@@ -15,10 +15,11 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `allow-agent` | screen | `screens/allow-agent.md` | verified | Allow Access (agent request) |
 | `archive-import` | screen | `screens/archive-import.md` | draft | Import Archive (sheet) |
 | `change-date` | screen | `screens/change-date.md` | verified | Change Date (sheet) |
-| `change-password` | screen | `screens/change-password.md` | verified | Change Password |
+| `change-password` | screen | `screens/change-password.md` | draft | Change Password |
 | `conflict-review` | screen | `screens/conflict-review.md` | draft | Review Changes (conflicts) |
 | `connect-to-server` | screen | `screens/connect-to-server.md` | draft | Connect to a Server (sheet and its steps) |
 | `destination-journal` | screen | `screens/destination-journal.md` | draft | New Journal (from Move Entry and Version History) |
+| `encrypt-journals` | screen | `screens/encrypt-journals.md` | draft | Encrypt Your Journals (form, notice, Done sheet) |
 | `entry-conflict` | screen | `screens/entry-conflict.md` | verified | Review Changes (entry or template) |
 | `entry-editor` | screen | `screens/entry-editor.md` | verified | Entry editor |
 | `entry-list` | screen | `screens/entry-list.md` | verified | Entry list (a journal, All Entries, Unavailable Journals) |
@@ -29,27 +30,25 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `link-editor` | screen | `screens/link-editor.md` | draft | Add Link |
 | `lock-screen` | screen | `screens/lock-screen.md` | verified | Lock screen and privacy cover |
 | `move-entry` | screen | `screens/move-entry.md` | verified | Move Entry |
-| `password-check` | screen | `screens/password-check.md` | verified | Check Your Password, and Set New Password |
 | `recently-deleted` | screen | `screens/recently-deleted.md` | verified | Recently Deleted (list, deleted journal, recovery notice, Delete All) |
 | `recovery-key` | screen | `screens/recovery-key.md` | draft | Keep Your Recovery Key (early libraries) |
 | `scan-code` | screen | `screens/scan-code.md` | draft | Scan Code |
 | `search` | screen | `screens/search.md` | verified | Search |
 | `settings-about` | screen | `screens/settings-about.md` | verified | Settings ▸ About, and the Help menu |
 | `settings-agent-access` | screen | `screens/settings-agent-access.md` | verified | Settings ▸ Agent Access |
-| `settings-backup` | screen | `screens/settings-backup.md` | verified | Settings ▸ Backup, and the Export sheets |
+| `settings-backup` | screen | `screens/settings-backup.md` | draft | Settings ▸ Backup, and the Export sheets |
 | `settings-devices` | screen | `screens/settings-devices.md` | verified | Settings ▸ Sync ▸ Devices (a section of Sync) |
 | `settings-erase` | screen | `screens/settings-erase.md` | draft | Erase Journals and Settings (section and alerts) |
 | `settings-general` | screen | `screens/settings-general.md` | verified | Settings ▸ General |
-| `settings-privacy` | screen | `screens/settings-privacy.md` | verified | Settings ▸ Privacy |
+| `settings-privacy` | screen | `screens/settings-privacy.md` | draft | Settings ▸ Privacy |
 | `settings-sync` | screen | `screens/settings-sync.md` | verified | Settings ▸ Sync |
 | `settings` | screen | `screens/settings.md` | draft | Settings |
 | `sync-status` | screen | `screens/sync-status.md` | draft | Sync Status |
 | `template-chooser` | screen | `screens/template-chooser.md` | verified | Template chooser (Choose a Template, Use a Template…) |
 | `templates` | screen | `screens/templates.md` | verified | Templates (collection) |
-| `turn-on-encryption` | screen | `screens/turn-on-encryption.md` | verified | Turn On Encryption (sheet) |
 | `unavailable-content` | screen | `screens/unavailable-content.md` | draft | Unavailable and read-only content |
 | `version-history` | screen | `screens/version-history.md` | verified | Version History (entries and templates) |
-| `welcome` | screen | `screens/welcome.md` | verified | Welcome (first launch) |
+| `welcome` | screen | `screens/welcome.md` | draft | Welcome (first launch) |
 
 ## Flows
 
@@ -59,14 +58,14 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `app-lock` | flow | `flows/app-lock.md` | draft | App Lock |
 | `change-password` | flow | `flows/change-password.md` | draft | Change password |
 | `connect-to-server` | flow | `flows/connect-to-server.md` | draft | Connect to a server |
-| `create-library` | flow | `flows/create-library.md` | verified | Create a library (Start a Journal) |
+| `create-library` | flow | `flows/create-library.md` | draft | Create a library (Start a Journal) |
 | `delete-and-restore` | flow | `flows/delete-and-restore.md` | verified | Delete, restore and delete permanently |
 | `edit-table` | flow | `flows/edit-table.md` | verified | Edit a table |
 | `editing-rules` | flow | `flows/editing-rules.md` | draft | Editing rules |
+| `encrypt-journals` | flow | `flows/encrypt-journals.md` | draft | Encrypt your journals |
 | `erase` | flow | `flows/erase.md` | draft | Erase journals and settings |
-| `export-archive` | flow | `flows/export-archive.md` | verified | Export an archive |
+| `export-archive` | flow | `flows/export-archive.md` | draft | Export an archive |
 | `export-markdown` | flow | `flows/export-markdown.md` | verified | Export journals as Markdown |
-| `forgot-password` | flow | `flows/forgot-password.md` | draft | Forgot password (journals only on this device) |
 | `image-actions` | flow | `flows/image-actions.md` | verified | Act on a picture |
 | `import-archive` | flow | `flows/import-archive.md` | draft | Import an archive (preview, restore or add) |
 | `insert-image` | flow | `flows/insert-image.md` | verified | Insert an image |
@@ -79,9 +78,8 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `save-entry` | flow | `flows/save-entry.md` | draft | Saving an entry |
 | `save-failure` | flow | `flows/save-failure.md` | draft | Save failure and paused writing |
 | `source-view` | flow | `flows/source-view.md` | verified | View Source and View Preview |
-| `stop-syncing` | flow | `flows/stop-syncing.md` | verified | Stop syncing |
+| `stop-syncing` | flow | `flows/stop-syncing.md` | draft | Stop syncing |
 | `sync-recovery` | flow | `flows/sync-recovery.md` | draft | Sync health and recovery |
-| `turn-on-encryption` | flow | `flows/turn-on-encryption.md` | draft | Turn on encryption |
 
 ## Messages
 

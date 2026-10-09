@@ -11,13 +11,30 @@ struct ArchiveControls: View {
         } header: {
             Text("Archive")
         } footer: {
-            Text(ArchiveControls.explanation(model))
+            ArchiveFooter()
         }
     }
     static func explanation(_ model: AppModel) -> String {
         model.configuration?.encrypted == false
             ? "An archive includes readable entries, images and earlier versions. Keep it private."
-            : "An archive is an encrypted copy of your journals, including images and earlier versions. Keep your \(model.configuration?.credentialName.lowercased() ?? "password") separately."
+            : "An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your \(model.configuration?.credentialName.lowercased() ?? "password")."
+    }
+}
+
+/// Under Export Archive: what an archive is and, for a master password, the way to make sure of the password
+/// (Change Password asks for the current one, which checks it; docs/design/1-1-encryption-and-passwords.md §4.2).
+struct ArchiveFooter: View {
+    @EnvironmentObject private var model: AppModel
+    @State private var changingPassword = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(ArchiveControls.explanation(model))
+            if model.configuration?.recovery.formatVersion == 2 {
+                Button("Not sure of your password? Change Password…") { changingPassword = true }
+                    .buttonStyle(.borderless).disabled(model.locked)
+                    .sheet(isPresented: $changingPassword) { ChangePasswordView() }
+            }
+        }
     }
 }
 
@@ -31,7 +48,7 @@ struct ArchiveExportSheet: View {
                 Section {
                     ArchiveExportControls()
                 } footer: {
-                    Text(ArchiveControls.explanation(model))
+                    ArchiveFooter()
                 }
             }
             .formStyle(.grouped).navigationTitle("Export Archive")
@@ -47,38 +64,24 @@ struct ArchiveExportSheet: View {
 struct ArchiveExportControls: View {
     @EnvironmentObject var model: AppModel
     @StateObject private var export = ArchiveExport()
-    /// The one-time password check shown before the first export, and whether the export continues after it.
-    @State private var checkingPassword = false
-    @State private var exportAfterCheck = false
     var body: some View {
         Group {
             // The row keeps its size while preparing: the spinner appears at its trailing end, after a short delay.
             HStack {
-                Button("Export Archive…") {
-                    guard !export.busy, !checkingPassword else { return }
-                    if model.passwordCheckPending {
-                        exportAfterCheck = false
-                        checkingPassword = true
-                    } else {
-                        export.start(with: model)
-                    }
-                }.disabled(export.showsProgress)
+                Button("Export Archive…") { export.start(with: model) }.disabled(export.showsProgress)
                 Spacer(minLength: 0)
                 if export.showsProgress {
                     ProgressView().controlSize(.small).accessibilityLabel("Preparing Archive…")
                 }
             }
             if let error = export.error { Text(error).foregroundStyle(.red).textSelection(.enabled) }
-        }
-        .sheet(
-            isPresented: $checkingPassword,
-            onDismiss: {
-                // The save dialog can only appear once the sheet has gone.
-                if exportAfterCheck, !model.locked { export.start(with: model) }
-                exportAfterCheck = false
+            // After the save dialog saved the archive, until the next export.
+            if export.saved, let message = model.archiveSavedMessage {
+                Text(message).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-        ) {
-            PasswordCheckView { exportAfterCheck = true }
+        }
+        .onValueChange(of: export.saved) { saved in
+            if saved, let message = model.archiveSavedMessage { announceForAccessibility(message) }
         }
         .fileExporter(
             isPresented: $export.presenting, document: export.document, contentType: .journalArchive,
@@ -98,11 +101,13 @@ struct ArchiveExportControls: View {
 }
 
 struct ArchiveImportButton: View {
+    @EnvironmentObject private var model: AppModel
     @State private var choosing = false
     @State private var archive: URL?
     @State private var error: String?
     var body: some View {
         Button("Import Archive…") { choosing = true }
+            .disabled(model.writingPausedForEncryption)
             .fileImporter(isPresented: $choosing, allowedContentTypes: [.journalArchive]) { result in
                 do {
                     archive = try result.get()
@@ -218,6 +223,12 @@ struct ArchiveImportView: View {
                             Text("Imported journals will also sync to your server.").foregroundStyle(.secondary)
                         }
                     }
+                }
+                // A readable archive from an earlier version restores as it is; the window then asks for a master
+                // password to encrypt it (docs/design/1-1-encryption-and-passwords.md §3.5).
+                if model.store == nil, let prepared, (try? prepared.recovery.contentProtection) == .plaintext {
+                    Text("This archive isn’t encrypted. You’ll choose a master password next.")
+                        .foregroundStyle(.secondary)
                 }
                 if let error {
                     // Scrolled to with the same margin above it as at the top of the sheet, clear of the corners.

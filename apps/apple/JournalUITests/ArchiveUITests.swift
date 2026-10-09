@@ -96,8 +96,7 @@ final class ArchiveUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 15))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.openSettings(app)
         app.buttons["Privacy"].tap()
         let appLock = app.switches["Require Face ID"]

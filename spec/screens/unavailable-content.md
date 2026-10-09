@@ -48,7 +48,7 @@ What the app shows when it can't open the library (and what it offers instead of
 
 At launch the app reads its settings, the key from this device's secure store, and the library. If any step fails, or the first read of the journals after opening fails, **nothing of the library stays open** (no store, no key, no connection, no sync) and the window shows the **library problem screen**. It is not the lock screen: it needs no authentication, shows nothing of the journals or the server, and a person who can't unlock learns only that something is wrong. It is also shown when a configuration names a library whose database file is missing; nothing is created for it.
 
-The window shows, in this order: `library.app.loading` with a progress indicator until loading has finished; the lock screen; the library problem screen; the first-launch screen when there is no library; the recovery key; the journals.
+The window shows, in this order: `library.app.loading` with a progress indicator until loading has finished; the lock screen; the library problem screen; the first-launch screen when there is no library; a saved encryption marker or a run in progress (the journals, read-only, with the encryption notice); Encrypt Your Journals for a library that isn't encrypted ([screens/encrypt-journals](encrypt-journals.md)); the recovery key; the journals.
 
 | Problem | When | Screen |
 | --- | --- | --- |

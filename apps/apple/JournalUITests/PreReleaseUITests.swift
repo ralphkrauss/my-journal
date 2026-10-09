@@ -8,7 +8,7 @@ final class PreReleaseUITests: XCTestCase {
 
     /// Item 1: a deleted template is in Recently Deleted, comes back with Restore, and can be deleted permanently.
     @MainActor func testDeletedTemplateRestoresAndDeletesPermanently() throws {
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         defer { app.terminate() }
         // A new library has no templates: the empty Templates list says how to make one.
         NavigationTestSupport.selectCollection("Templates", app: app)
@@ -67,7 +67,7 @@ final class PreReleaseUITests: XCTestCase {
     /// Item 1 in dark appearance and at the largest text size: the Templates section and its footer.
     @MainActor func testRecentlyDeletedTemplateRowsInDarkAndLargestText() throws {
         for (dark, largest) in [(true, false), (false, true)] {
-            let app = launchWithoutEncryption(dark: dark, largestText: largest)
+            let app = launchWithNewJournal(dark: dark, largestText: largest)
             saveTemplates(["Weekly Reflection"], app: app)
             NavigationTestSupport.selectCollection("Templates", app: app)
             let template = app.staticTexts["Weekly Reflection"].firstMatch
@@ -85,7 +85,7 @@ final class PreReleaseUITests: XCTestCase {
     /// Item 2 on a keyboard: the arrow keys move the highlight, which shows the template Return creates. (Escape
     /// can't be sent to a simulator by a UI test; it is handled by the same key commands.)
     @MainActor func testArrowKeysChooseTheTemplateReturnCreates() throws {
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         defer { app.terminate() }
         saveTemplates(["Daily Reflection", "Gratitude"], app: app)
         NavigationTestSupport.selectCollection("Default", app: app)
@@ -108,7 +108,7 @@ final class PreReleaseUITests: XCTestCase {
     /// The template sheet's search field sits fully below its title bar and the sheet's grabber, and stays usable,
     /// in both orientations and with the keyboard shown.
     @MainActor func testTemplatePickerSearchFieldIsFullyVisible() throws {
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         let orientation = XCUIDevice.shared.orientation
         defer {
             app.terminate()
@@ -148,7 +148,7 @@ final class PreReleaseUITests: XCTestCase {
     /// the entry doesn't move and the text being styled stays visible; the rows scroll to every option.
     @MainActor func testFormatSheetShowsEveryOption() throws {
         for dark in [false, true] {
-            let app = launchWithoutEncryption(dark: dark)
+            let app = launchWithNewJournal(dark: dark)
             let body = writeLongEntry(app)
             capture(app, "Before Format" + (dark ? ", dark" : ""))
             let formatting = app.buttons["Formatting"].firstMatch
@@ -192,7 +192,7 @@ final class PreReleaseUITests: XCTestCase {
     /// While the Format panel is open, its commands follow the selection the person makes, and closing it leaves the
     /// caret where they put it, with the keyboard back.
     @MainActor func testFormatPanelFollowsTheSelectionAndKeepsTheCaret() throws {
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
@@ -236,7 +236,7 @@ final class PreReleaseUITests: XCTestCase {
     }
     /// Item 5 at the largest text size: the sheet is as tall as it can be, Close is reachable and the list scrolls.
     @MainActor func testFormatSheetAtTheLargestTextSize() throws {
-        let app = launchWithoutEncryption(dark: false, largestText: true)
+        let app = launchWithNewJournal(dark: false, largestText: true)
         defer { app.terminate() }
         _ = writeLongEntry(app, lines: 3)
         app.buttons["Formatting"].firstMatch.tap()
@@ -263,7 +263,7 @@ final class PreReleaseUITests: XCTestCase {
 
     /// Item 4: Backspace at the start of a task removes the checkbox and keeps the line.
     @MainActor func testBackspaceAtTheStartOfATaskRemovesTheCheckbox() throws {
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
@@ -289,7 +289,7 @@ final class PreReleaseUITests: XCTestCase {
     /// A new list item starts a line, so the keyboard capitalizes its first letter as on any new line. Build 13 kept
     /// hidden marker characters before the caret, and the keyboard stayed lowercase.
     @MainActor func testNewListItemsStartWithACapitalLetter() throws {
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         defer { app.terminate() }
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
@@ -314,7 +314,7 @@ final class PreReleaseUITests: XCTestCase {
     /// entry. The two must not share a shortcut.
     @MainActor func testSearchEntriesAndFindAndReplaceShortcutsOnIPad() throws {
         try XCTSkipUnless(isPad, "Menu bar shortcuts are an iPad feature.")
-        let app = launchWithoutEncryption(dark: false)
+        let app = launchWithNewJournal(dark: false)
         defer { app.terminate() }
         let body = writeLongEntry(app, lines: 2)
         let written = body.value as? String
@@ -339,9 +339,9 @@ final class PreReleaseUITests: XCTestCase {
         capture(app, "Search Entries from the keyboard")
     }
 
-    /// Item 10: before the first archive export the master password is checked once. A wrong one says so; the right
-    /// one continues to the save dialog, and the next export doesn't ask again.
-    @MainActor func testFirstArchiveExportChecksThePasswordOnce() throws {
+    /// Export Archive goes straight to the save dialog, with no password check first; Settings ▸ Backup points to
+    /// Change Password for anyone unsure of their password (docs/design/1-1-encryption-and-passwords.md §4.2).
+    @MainActor func testArchiveExportGoesStraightToSavingAndPointsToChangePassword() throws {
         if #available(iOS 17.0, *) { XCUIDevice.shared.appearance = .light }
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
@@ -355,23 +355,15 @@ final class PreReleaseUITests: XCTestCase {
         app.buttons["Backup"].firstMatch.tap()
         let export = app.buttons["Export Archive…"].firstMatch
         XCTAssertTrue(export.waitToAppear(timeout: 5))
+        let pointer = app.buttons["Not sure of your password? Change Password…"]
+        XCTAssertTrue(pointer.waitToAppear(timeout: 5))
+        capture(app, "Export Archive with the Change Password pointer")
         export.tap()
-        let field = app.secureTextFields["Master Password"]
-        XCTAssertTrue(field.waitToAppear(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Check Your Password"].exists)
-        capture(app, "Check Your Password")
-        field.typeText("Not the fixture password")
-        app.buttons["Check"].tap()
-        XCTAssertTrue(app.staticTexts["Wrong password. Try again."].waitToAppear(timeout: 10))
-        capture(app, "Wrong password")
-        field.tap()
-        field.typeText("Native UI fixture password")
-        app.buttons["Check"].tap()
-        XCTAssertTrue(field.waitToDisappear(timeout: 10))
         // The save dialog, which is closed without saving.
         let saveDialog = app.navigationBars["FullDocumentManagerViewControllerNavigationBar"]
         XCTAssertTrue(saveDialog.waitToAppear(timeout: 15))
-        capture(app, "Save dialog after the check")
+        XCTAssertFalse(app.staticTexts["Check Your Password"].exists, "Nothing asks for the password first.")
+        capture(app, "Save dialog")
         let suggested = app.textFields.matching(NSPredicate(format: "value BEGINSWITH 'Journal Archive '")).firstMatch
         XCTAssertTrue(suggested.waitToAppear(timeout: 5), "The save dialog suggests a readable name.")
         // iPad's save dialog has a close button; iPhone's is a sheet that closes with a swipe.
@@ -385,15 +377,20 @@ final class PreReleaseUITests: XCTestCase {
             saveDialog.swipeDown(velocity: .fast)
         }
         XCTAssertTrue(saveDialog.waitToDisappear(timeout: 10))
-        XCTAssertTrue(export.waitToAppear(timeout: 5))
-        export.tap()
-        // Absence over time: XCTest's own wait, which first looks after a second.
-        XCTAssertFalse(field.waitForExistence(timeout: 5), "The check isn't asked for again.")
+        XCTAssertFalse(
+            app.staticTexts["Archive saved. Keep your master password with it."].exists,
+            "Nothing was saved, so nothing says so.")
+        pointer.tap()
+        let change = app.navigationBars["Change Password"]
+        XCTAssertTrue(change.waitToAppear(timeout: 5))
+        capture(app, "Change Password")
+        change.buttons["Cancel"].tap()
+        XCTAssertTrue(change.waitToDisappear(timeout: 5))
     }
 
     // MARK: - Support
 
-    @MainActor private func launchWithoutEncryption(dark: Bool, largestText: Bool = false) -> XCUIApplication {
+    @MainActor private func launchWithNewJournal(dark: Bool, largestText: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         if largestText {
@@ -403,8 +400,7 @@ final class PreReleaseUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         return app
     }
     /// Templates with the questions of the ones earlier builds started libraries with; a new library has none.

@@ -16,7 +16,7 @@ final class AgentAccessUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
         app.launch()
-        setUpServerWithoutEncryption(address: address, code: setupCode, app: app)
+        setUpServer(address: address, code: setupCode, app: app)
 
         NavigationTestSupport.openSettings(app)
         app.buttons["Agent Access"].tap()
@@ -106,7 +106,8 @@ final class AgentAccessUITests: XCTestCase {
         XCTAssertEqual(revoked, "declined")
     }
 
-    @MainActor private func setUpServerWithoutEncryption(address: String, code: String, app: XCUIApplication) {
+    /// Connect to a Server on a device with no library: the setup code, then Choose a Master Password.
+    @MainActor private func setUpServer(address: String, code: String, app: XCUIApplication) {
         let connect = app.buttons["Connect to a Server…"]
         XCTAssertTrue(connect.waitToAppear(timeout: 15))
         connect.tap()
@@ -120,12 +121,15 @@ final class AgentAccessUITests: XCTestCase {
         app.textFields["Setup Code"].tap()
         app.textFields["Setup Code"].typeText(code)
         setUp.buttons["Continue"].tap()
-        let protect = app.navigationBars["Protect Your Journals"]
-        XCTAssertTrue(protect.waitToAppear(timeout: 10))
-        let plain = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Don’t Encrypt")).firstMatch
-        for _ in 0..<5 where !plain.isHittable { app.swipeUp() }
-        plain.tap()
-        protect.buttons["Set Up"].tap()
+        let choose = app.navigationBars["Choose a Master Password"]
+        XCTAssertTrue(choose.waitToAppear(timeout: 10))
+        let password = app.secureTextFields["Master Password"]
+        password.tap()
+        password.typeText("Agent UI fixture password")
+        let verify = app.secureTextFields["Verify"]
+        verify.tap()
+        verify.typeText("Agent UI fixture password")
+        choose.buttons["Set Up"].tap()
         XCTAssertTrue(app.staticTexts["Server Is Ready"].waitToAppear(timeout: 30))
         app.buttons["Done"].tap()
         XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitToAppear(timeout: 10))

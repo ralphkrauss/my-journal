@@ -67,7 +67,7 @@ Not applicable to the sync itself. The bar, flyout and dialog are mapped in [mes
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `sync-now` | Sync page; Sync status flyout | none | Connected, unlocked, not replacing the journals, no failed save, no sync the person started running |
-| `sync-reconnect` | Sync page bar; Devices page; Privacy page; Agent Access page; Sync status flyout | none | The state calls for it |
+| `sync-reconnect` | Sync page bar; Devices page; Agent Access page; Sync status flyout | none | The state calls for it |
 | `stop-syncing` | Sync page | none | Connected, not replacing the journals |
 | `try-syncing-again` | The recovery notice of an entry whose journal has not arrived | none | The journal is missing and the library syncs |
 | `sync-status` | Title bar, trailing area | none | Sync needs the person |

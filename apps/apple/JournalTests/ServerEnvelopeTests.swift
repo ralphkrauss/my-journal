@@ -10,7 +10,9 @@ import XCTest
 final class ServerEnvelopeTests: XCTestCase {
     private let password = "correct horse battery staple"
 
-    private func model(withEncryptedJournals: Bool) async throws -> AppModel {
+    /// `withEncryptedJournals`: a library with a master password. `unencryptedJournals`: one from an earlier version
+    /// (format 4). Neither: a device with no library.
+    private func model(withEncryptedJournals: Bool, unencryptedJournals: Bool = false) async throws -> AppModel {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Envelope-" + UUID().uuidString)
         let model = AppModel(directory: directory)
         addTeardownBlock { @MainActor in
@@ -21,6 +23,9 @@ final class ServerEnvelopeTests: XCTestCase {
         if withEncryptedJournals {
             await model.start(password: password)
             XCTAssertEqual(model.configuration?.recovery.formatVersion, 2)
+        } else if unencryptedJournals {
+            await model.startLegacyUnencrypted()
+            XCTAssertEqual(model.configuration?.recovery.formatVersion, 4)
         }
         return model
     }
@@ -120,6 +125,25 @@ final class ServerEnvelopeTests: XCTestCase {
         XCTAssertEqual(model.configuration?.recovery.formatVersion, 2)
     }
 
+    /// A device with no library never starts an unencrypted one by joining a server that holds unencrypted data, for
+    /// either unencrypted format (3, with an access password; 4, with none).
+    func testADeviceWithNoLibraryIsRefusedByAServerWithUnencryptedData() async throws {
+        let access = try VaultCrypto.makeRecovery(
+            masterKey: VaultCrypto.generateKey(), phrase: password, formatVersion: 3
+        )
+        .0
+        for envelope in [RecoveryEnvelope.unprotected, access] {
+            let model = try await model(withEncryptedJournals: false)
+            let server = try await server(serving: envelope)
+            let error = await recover(model, from: server, uploadLocal: false, shown: envelope)
+            XCTAssertEqual(error as? ServerConnectionError, .encryptionOff)
+            XCTAssertFalse(server.requests.contains { $0.method == "POST" }, "Nothing was sent to it.")
+            assertPasswordNeverSent(server)
+            XCTAssertNil(model.store)
+            XCTAssertNil(model.configuration)
+        }
+    }
+
     /// The person was asked for a password; the server then answers with an envelope that would send it as is.
     func testServerCannotSwitchToARecoveryCodeAfterAskingForAPassword() async throws {
         let model = try await model(withEncryptedJournals: false)
@@ -134,9 +158,9 @@ final class ServerEnvelopeTests: XCTestCase {
     }
 
     func testOnlyAServerRecoveryCodeIsEverSentAsTyped() async throws {
-        let model = try await model(withEncryptedJournals: false)
+        let model = try await model(withEncryptedJournals: false, unencryptedJournals: true)
         let server = try await server(serving: .unprotected)
-        let error = await recover(model, from: server, uploadLocal: false, shown: .unprotected)
+        let error = await recover(model, from: server, uploadLocal: true, shown: .unprotected)
         XCTAssertEqual(error as? ServerConnectionError, .invalidRecoveryCode)
         XCTAssertFalse(server.requests.contains { $0.method == "POST" })
         assertPasswordNeverSent(server)

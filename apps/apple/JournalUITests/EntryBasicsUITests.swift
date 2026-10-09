@@ -3,9 +3,9 @@ import XCTest
 
 /// Small native details of starting a journal and writing an entry on iPhone.
 final class EntryBasicsUITests: XCTestCase {
-    /// The welcome screen's picture is decoration, and the encrypted step of Start a Journal has the system back button
-    /// where Cancel was, with Create alone on the trailing side.
-    @MainActor func testWelcomeAndEncryptedStartFollowNativeConventions() {
+    /// The welcome screen's picture is decoration, and Start a Journal is one sheet, Choose a Master Password, with
+    /// Cancel and Create in its bar and the first field ready for typing.
+    @MainActor func testWelcomeAndStartFollowNativeConventions() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchEnvironment["JOURNAL_UI_TEST_ID"] = UUID().uuidString
@@ -16,28 +16,27 @@ final class EntryBasicsUITests: XCTestCase {
         XCTAssertFalse(app.images["book.closed"].exists, "VoiceOver would read the symbol's name.")
         capture(app, "Welcome")
         start.tap()
-        let encrypt = app.buttons["Use Encryption"]
-        XCTAssertTrue(encrypt.waitToAppear(timeout: 5))
-        encrypt.tap()
+        let password = app.secureTextFields["Master Password"]
+        XCTAssertTrue(password.waitToAppear(timeout: 5))
+        XCTAssertFalse(app.buttons["Use Encryption"].exists, "There is no choice to make before the password.")
+        XCTAssertFalse(app.buttons["Continue Without Encryption"].exists)
         let bar = app.navigationBars.firstMatch
-        let back = bar.buttons.matching(
-            NSPredicate(format: "identifier == %@ OR label == %@", "BackButton", "Back")
-        ).firstMatch
+        let cancel = bar.buttons["Cancel"]
         let create = bar.buttons["Create"]
-        XCTAssertTrue(back.waitToAppear(timeout: 5))
+        XCTAssertTrue(cancel.waitToAppear(timeout: 5))
         XCTAssertTrue(create.exists)
-        XCTAssertFalse(bar.buttons["Cancel"].exists)
-        XCTAssertLessThan(back.frame.midX, bar.frame.midX)
+        XCTAssertFalse(create.isEnabled, "Create waits for both fields.")
+        XCTAssertLessThan(cancel.frame.midX, bar.frame.midX)
         XCTAssertGreaterThan(create.frame.midX, bar.frame.midX)
         let focused = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: app.secureTextFields["Master Password"])
+            predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: password)
         XCTAssertEqual(Waiting.wait(for: focused, timeout: 3), .completed)
         capture(app, "Choose a Master Password")
-        back.tap()
-        XCTAssertTrue(encrypt.waitToAppear(timeout: 5))
-        XCTAssertTrue(app.navigationBars.firstMatch.buttons["Cancel"].exists)
+        cancel.tap()
+        XCTAssertTrue(start.waitToAppear(timeout: 5))
+        start.tap()
         NavigationTestSupport.createPasswordJournal(app)
-        XCTAssertTrue(encrypt.waitToDisappear(timeout: 15))
+        XCTAssertTrue(password.waitToDisappear(timeout: 15))
     }
 
     /// Tab from a hardware keyboard moves from the title to the text, as Return does; the title never holds a tab.
@@ -49,7 +48,7 @@ final class EntryBasicsUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         NavigationTestSupport.newEntryFromList(app)
         let title = NavigationTestSupport.title(app)
@@ -71,7 +70,7 @@ final class EntryBasicsUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         NavigationTestSupport.newEntryFromList(app)
         XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))
@@ -114,7 +113,7 @@ final class EntryBasicsUITests: XCTestCase {
             defer { app.terminate() }
             XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
             app.buttons["Start a Journal"].tap()
-            app.buttons["Continue Without Encryption"].tap()
+            NavigationTestSupport.finishStartingAJournal(app)
             NavigationTestSupport.selectCollection("Default", app: app)
             NavigationTestSupport.newEntryFromList(app)
             XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))

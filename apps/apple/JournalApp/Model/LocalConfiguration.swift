@@ -27,9 +27,7 @@ struct LocalConfiguration: Codable {
     /// Earlier copies of the library, replaced when connecting to a server or importing an archive. They're removed
     /// once this library has opened (and, when connected, synchronized); an interrupted removal is tried again.
     var supersededLibraries: [SupersededLibrary]?
-    /// The master password has been typed correctly since it was set, so it's known to be the one the person saved.
-    /// Libraries saved before this was added leave it out.
-    var passwordChecked: Bool?
+    // Build 16 to 19 saved `passwordChecked` here; it is no longer used or written, and an old file's value is ignored.
     /// Turning on encryption that hasn't finished (EncryptionOperations.swift).
     var encryptionUpgrade: EncryptionUpgradeMarker?
     /// This Mac stopped syncing with the server earlier Mac builds ran (FormerMacServer.swift); Sync explains it

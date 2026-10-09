@@ -41,7 +41,7 @@ One interface, `IDeviceOwnerAuthenticator`, with three members (the Windows coun
 | DisabledByPolicy, DeviceNotPresent | Cannot | Cannot turn on: footers in [settings-privacy](../screens/settings-privacy.md) | Continues without authentication, as the spec's rule "a device without a passcode continues" | **App Lock pauses**, as above |
 | RetriesExhausted, DeviceBusy, anything else | Failed | Switch returns; nothing said | Nothing happens; nothing said (Add device stays on its confirmation) | `settings.lock.failed` and Use master password when there is a password |
 
-Reasons are the spec's reason keys in their capitalised form: `settings.privacy.appLock.reason.turnOn`, `settings.privacy.appLock.reason.turnOff`, `settings.privacy.appLock.reason.change`, `settings.privacy.appLock.reason.unlock`, `settings.addDevice.authReason`, `settings.backup.markdownReason`, `settings.backup.markdownReasonUnencrypted`, `settings.erase.authReason`, `settings.passwordCheck.authReason`. The reason is the prompt's message.
+Reasons are the spec's reason keys in their capitalised form: `settings.privacy.appLock.reason.turnOn`, `settings.privacy.appLock.reason.turnOff`, `settings.privacy.appLock.reason.change`, `settings.privacy.appLock.reason.unlock`, `settings.addDevice.authReason`, `settings.backup.markdownReason`, `settings.backup.markdownReasonUnencrypted`, `settings.erase.authReason`, `settings.changePassword.authReason`. The reason is the prompt's message.
 
 **Rules of the gate.**
 
@@ -79,7 +79,7 @@ After Win+L and signing in again the app is locked, and the person is asked once
 
 Input to My Journal's own windows resets the timer: key presses and modifier keys, mouse and pen clicks and drags, the wheel and touchpad gestures, touch, pointer movement only while the window is active, opening a menu, edits in the editor (including voice typing with Win+H, dictation and Narrator editing) and choosing another entry. Syncing does not count. Input is observed at the window level (a subclass of the window procedure, or the content island's input sources), never with a global keyboard or mouse hook and never from the system-wide idle time, so other apps do not count either way. A spike checks that popups, flyouts and dialogs report their input. Any input after the time has passed locks instead of acting (the first key or click is consumed).
 
-The time is held while the person's own long action runs: connecting, importing, turning on encryption, exporting, adding a device, merging journals, and while the Windows Security prompt is open. It starts again when the action ends. The clock keeps counting while the PC sleeps (the wall clock decides); changing the setting counts from the moment of the change; a longer time or Never asks first with `settings.privacy.appLock.reason.change`.
+The time is held while the person's own long action runs: connecting, importing, exporting, adding a device, merging journals, and while the Windows Security prompt is open. It starts again when the action ends. The clock keeps counting while the PC sleeps (the wall clock decides); changing the setting counts from the moment of the change; a longer time or Never asks first with `settings.privacy.appLock.reason.change`.
 
 ### Locking
 

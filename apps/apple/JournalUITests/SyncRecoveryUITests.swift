@@ -3,8 +3,8 @@ import XCTest
 
 /// Every action Settings ▸ Sync offers when sync breaks (docs/design/sync-health-and-recovery.md §2), end to end
 /// against a real server that scripts/test-sync-recovery-ui.sh changes when a test asks: removing this device,
-/// restoring a backup, wiping the data folder, stopping it, putting another web server at its address, and turning
-/// on encryption from another device. Each journey ends with a new device downloading every entry exactly once.
+/// restoring a backup, wiping the data folder, stopping it and putting another web server at its address. Each journey ends with a new device downloading every
+/// entry exactly once.
 final class SyncRecoveryUITests: XCTestCase {
     private let password = "Native UI fixture password"
     private var control: URL?
@@ -38,7 +38,7 @@ final class SyncRecoveryUITests: XCTestCase {
         openSyncSettings(app)
         tap(app.buttons["Connect to a Server…"])
         chooseServer(app)
-        try setUpServer(app, password: true)
+        try setUpServer(app)
         XCTAssertTrue(app.staticTexts["Last Synced"].waitToAppear(timeout: 30))
         capture(app, "1 Syncing normally")
 
@@ -86,7 +86,7 @@ final class SyncRecoveryUITests: XCTestCase {
         expectMessage("The server isn’t set up. Your journals are still on this device.", app: app)
         capture(app, "4 The server isn't set up")
         tap(app.buttons["Reconnect…"])
-        try setUpServer(app, password: true)
+        try setUpServer(app)
         expectSynced(app)
 
         // Down, with the last sync two days ago: Try Again once it's back.
@@ -142,35 +142,6 @@ final class SyncRecoveryUITests: XCTestCase {
             password: password)
     }
 
-    /// Reconnect after another device turned on encryption for a library without it.
-    @MainActor func testSignInAfterEncryptionWasTurnedOnElsewhere() async throws {
-        try request("reset")
-        let app = launch(UUID().uuidString)
-        let start = app.buttons["Start a Journal"]
-        XCTAssertTrue(start.waitToAppear(timeout: 15))
-        start.tap()
-        app.buttons["Continue Without Encryption"].tap()
-        writeEntry("Before encryption", app: app)
-        openSyncSettings(app)
-        tap(app.buttons["Connect to a Server…"])
-        chooseServer(app)
-        try setUpServer(app, password: false)
-        XCTAssertTrue(app.staticTexts["Last Synced"].waitToAppear(timeout: 30))
-
-        try request("recovery-code")
-        let code = try String(contentsOf: try file("recovery-code"), encoding: .utf8)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        try await Self.turnOnEncryptionElsewhere(address: address, password: password, recoveryCode: code)
-        tap(app.buttons["Sync Now"])
-        expectMessage("The server now uses encryption or was replaced. Reconnect to keep syncing.", app: app)
-        capture(app, "9 Encryption turned on elsewhere")
-        tap(app.buttons["Reconnect…"])
-        signIn(app)
-        expectSynced(app)
-        app.terminate()
-        try await Self.expectEveryEntryOnce(["Before encryption"], address: address, password: password)
-    }
-
     // MARK: The other device
 
     /// Another device signs in and revokes every other device.
@@ -182,23 +153,6 @@ final class SyncRecoveryUITests: XCTestCase {
         for device in try await owner.devices() where device.id != other.grant.deviceId && !device.revoked {
             try await owner.revoke(device.id)
         }
-    }
-    /// Another device, added with the server's recovery code, turns on encryption as the app does.
-    private static func turnOnEncryptionElsewhere(address: String, password: String, recoveryCode code: String)
-        async throws
-    {
-        let grant = try await ServerClient(address: address).recover(secret: code, deviceName: "Fixture Mac")
-        let client = try ServerClient(address: address, token: grant.token)
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let store = try JournalStore(
-            directory: root.appendingPathComponent("mac"), key: VaultCrypto.generateKey(), protection: .plaintext)
-        try await SyncEngine(store: store, client: client).synchronize()
-        let key = try VaultCrypto.generateKey()
-        let (envelope, secret) = try VaultCrypto.makeRecovery(masterKey: key, phrase: password, formatVersion: 2)
-        _ = try await client.turnOnEncryption(
-            envelope, recoverySecret: secret, currentRecoverySecret: nil, after: store.syncedPosition())
-        try await store.close()
     }
     /// A new device downloads the library: every entry written in the journey is there exactly once, and no journal
     /// or template name repeats.
@@ -252,8 +206,8 @@ final class SyncRecoveryUITests: XCTestCase {
         field.typeText(address)
         app.navigationBars["Connect to a Server"].buttons["Continue"].tap()
     }
-    /// The setup-code step, then the library's password when it has one, through to Server Is Ready.
-    @MainActor private func setUpServer(_ app: XCUIApplication, password usesPassword: Bool) throws {
+    /// The setup-code step, then the library's password, through to Server Is Ready.
+    @MainActor private func setUpServer(_ app: XCUIApplication) throws {
         let setUp = app.navigationBars["Set Up Server"]
         XCTAssertTrue(setUp.waitToAppear(timeout: 15))
         let code = try String(contentsOf: try file("setup-code"), encoding: .utf8)
@@ -261,17 +215,13 @@ final class SyncRecoveryUITests: XCTestCase {
         let field = app.textFields["Setup Code"]
         field.tap()
         field.typeText(code)
-        if usesPassword {
-            setUp.buttons["Continue"].tap()
-            let enter = app.navigationBars["Enter Master Password"]
-            XCTAssertTrue(enter.waitToAppear(timeout: 15))
-            let phrase = app.secureTextFields["Master Password"]
-            phrase.tap()
-            phrase.typeText(password)
-            enter.buttons["Set Up"].tap()
-        } else {
-            setUp.buttons["Set Up"].tap()
-        }
+        setUp.buttons["Continue"].tap()
+        let enter = app.navigationBars["Enter Master Password"]
+        XCTAssertTrue(enter.waitToAppear(timeout: 15))
+        let phrase = app.secureTextFields["Master Password"]
+        phrase.tap()
+        phrase.typeText(password)
+        enter.buttons["Set Up"].tap()
         XCTAssertTrue(app.staticTexts["Server Is Ready"].waitToAppear(timeout: 30))
         app.buttons["Done"].tap()
     }

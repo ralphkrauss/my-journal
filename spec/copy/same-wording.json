@@ -223,6 +223,13 @@
   },
   {
     "keys": [
+      "messages.encryption.announce.turningOn",
+      "settings.encryption.progressLabel"
+    ],
+    "reason": "Announcement when encryption starts versus the accessibility label of the progress."
+  },
+  {
+    "keys": [
       "messages.failure.damagedReading",
       "messages.sync.localDataUnreadable"
     ],
@@ -241,12 +248,5 @@
       "settings.addDevice.title"
     ],
     "reason": "Button versus sheet title."
-  },
-  {
-    "keys": [
-      "settings.connect.protect.choice",
-      "settings.privacy.encryption.header"
-    ],
-    "reason": "Accessibility label versus section header."
   }
 ]

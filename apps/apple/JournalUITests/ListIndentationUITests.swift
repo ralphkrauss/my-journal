@@ -10,8 +10,7 @@ final class ListIndentationUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         app.buttons["New Entry"].firstMatch.tap()
         XCTAssertTrue(NavigationTestSupport.title(app).waitToAppear(timeout: 10))

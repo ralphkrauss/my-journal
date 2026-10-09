@@ -1,3 +1,4 @@
+import JournalCore
 import XCTest
 
 /// Spec screenshots of connecting to a server and what follows. design/spec-screenshots/capture.sh starts two
@@ -37,11 +38,7 @@ final class SpecSyncCaptureTests: SpecCaptureCase {
         try shot(app, "connect-to-server-code-short")
         replaceText(in: codeField, with: code.lowercased().filter { $0 != "-" })
         setUp.buttons["Continue"].tap()
-        let protect = app.navigationBars["Protect Your Journals"]
-        try require(protect, app: app, timeout: 15)
-        try shot(app, "connect-to-server-protect")
-        protect.buttons["Continue"].tap()
-        try require(app.navigationBars["Choose a Master Password"], app: app, timeout: 10)
+        try require(app.navigationBars["Choose a Master Password"], app: app, timeout: 15)
         let password = app.secureTextFields["Master Password"]
         password.tap()
         password.typeText(samplePassword)
@@ -71,35 +68,20 @@ final class SpecSyncCaptureTests: SpecCaptureCase {
         try shot(other, "pair-device-default")
     }
 
-    @MainActor func testSetUpServerWithoutEncryption() throws {
+    /// A server an earlier version set up without encryption: a device with no journals is refused, and says what
+    /// to do (docs/design/1-1-encryption-and-passwords.md §3.6).
+    @MainActor func testServerWithoutEncryptionIsRefused() async throws {
         let (address, code) = try server("PLAIN")
+        _ = try await ServerClient(address: address).initialize(
+            code: code, envelope: .unprotected,
+            recoverySecret: VaultCrypto.random(32).map { String(format: "%02x", $0) }.joined(),
+            deviceName: "Spec Mac")
         let app = try launch(library: emptyLibraryFolder(), unlocking: false)
         try chooseServer(address, app: app)
-        let setUp = app.navigationBars["Set Up Server"]
-        try require(setUp, app: app, timeout: 15)
-        let codeField = app.textFields["Setup Code"]
-        codeField.tap()
-        codeField.typeText(code)
-        setUp.buttons["Continue"].tap()
-        try require(app.navigationBars["Protect Your Journals"], app: app, timeout: 15)
-        let skip = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Don’t Encrypt")).firstMatch
-        for _ in 0..<4 where !skip.isHittable { app.swipeUp() }
-        skip.tap()
-        try shot(app, "connect-to-server-protect-off")
-        app.navigationBars["Protect Your Journals"].buttons["Set Up"].tap()
-        try require(app.staticTexts["Server Is Ready"], app: app, timeout: 40)
-        try tapButton("Done", in: app)
-        // Another device adds itself with a pairing code, as there is no password to sign in with.
-        let other = try launch(library: emptyLibraryFolder(), unlocking: false)
-        try chooseServer(address, app: other)
-        try require(other.navigationBars["Add This Device"], app: other, timeout: 15)
-        try require(other.staticTexts["pairing-code"], app: other, timeout: 10)
-        try shot(other, "connect-to-server-add-this-device")
-        let recovery = other.buttons["Use a Recovery Code Instead…"]
-        for _ in 0..<4 where !recovery.isHittable { other.swipeUp() }
-        recovery.tap()
-        try require(other.navigationBars["Use a Recovery Code"], app: other, timeout: 10)
-        try shot(other, "connect-to-server-recovery-code")
+        try require(
+            app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "doesn’t use encryption")).firstMatch,
+            app: app, timeout: 15)
+        try shot(app, "connect-to-server-encryption-off")
     }
 
     // MARK: - Steps

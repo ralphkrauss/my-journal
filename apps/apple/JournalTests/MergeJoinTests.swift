@@ -121,11 +121,45 @@ final class MergeJoinTests: XCTestCase {
         flow.join(try invite(server))
         try await settle(flow)
         XCTAssertTrue(flow.path.isEmpty)
-        XCTAssertEqual(
-            flow.errorMessage(on: nil),
-            "The journals on this device are encrypted, but \(flow.host) doesn’t use encryption. Turn on encryption in Settings ▸ Privacy on a connected device, then try again."
-        )
+        XCTAssertEqual(flow.errorMessage(on: nil), Self.encryptionOffMessage(flow.host))
         XCTAssertEqual(pairingRequests(server), 0)
+        flow.close()
+    }
+
+    /// One text for every refusal, pointing at the action rather than an update (`messages.connection.encryptionOff`).
+    private static func encryptionOffMessage(_ host: String) -> String {
+        host.prefix(1).uppercased() + host.dropFirst()
+            + " doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption."
+    }
+
+    /// A 1.1 device never starts an unencrypted library: with no library at all, a server that holds unencrypted data
+    /// is refused before anything is sent to it.
+    func testADeviceWithNoLibraryIsRefusedByAServerWithoutEncryptionBeforeAnythingIsSent() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("NoLibrary-" + UUID().uuidString)
+        let model = AppModel(directory: directory)
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+        let server = try await scanServer(encrypted: false)
+        let flow = ConnectionFlow(model: model)
+        flow.join(try invite(server))
+        try await settle(flow)
+        XCTAssertTrue(flow.path.isEmpty)
+        XCTAssertEqual(flow.errorMessage(on: nil), Self.encryptionOffMessage(flow.host))
+        XCTAssertEqual(pairingRequests(server), 0)
+        XCTAssertNil(model.store, "Nothing was created for it.")
+        XCTAssertFalse(server.requests.contains { $0.method != "GET" })
+        flow.close()
+    }
+
+    /// A device whose own library is unencrypted (from an earlier version, and asked to encrypt) keeps 1.0's
+    /// behaviour toward its unencrypted server.
+    func testADeviceWithAnUnencryptedLibraryStillJoinsAServerWithoutEncryption() async throws {
+        let model = try await model(writing: false, encrypted: false)
+        let server = try await scanServer(encrypted: false)
+        let flow = ConnectionFlow(model: model)
+        flow.join(try invite(server))
+        try await settle(flow) { self.pairingRequests(server) > 0 }
+        XCTAssertEqual(pairingRequests(server), 1, "The connected device is asked, as in 1.0.")
+        XCTAssertNotEqual(flow.errorMessage(on: nil), Self.encryptionOffMessage(flow.host))
         flow.close()
     }
 

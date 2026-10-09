@@ -56,7 +56,9 @@ extension AppModel {
     /// one, unless importing would overwrite settings that couldn't be read or replace journals a newer version
     /// wrote, which updating opens.
     var canImportArchive: Bool {
-        guard store == nil, let problem = libraryProblem else { return !locked }
+        guard store == nil, let problem = libraryProblem else {
+            return !locked && !showsEncryptionForm && !writingPausedForEncryption
+        }
         return problem.offersImport && !retryingOpen
     }
 

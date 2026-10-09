@@ -9,6 +9,8 @@ final class FakeJournalServer {
         let method: String
         let path: String
         let body: Data
+        /// The request's Authorization header, or empty.
+        var authorization = ""
     }
     typealias Responder = @Sendable (Request) -> (status: Int, body: Data)
 
@@ -95,8 +97,16 @@ final class FakeJournalServer {
                 guard parts.count == 2, parts[0].lowercased() == "content-length" else { return nil }
                 return Int(parts[1].trimmingCharacters(in: .whitespaces))
             }.first ?? 0
+        let authorization =
+            lines.dropFirst().compactMap { line -> String? in
+                let parts = line.split(separator: ":", maxSplits: 1)
+                guard parts.count == 2, parts[0].lowercased() == "authorization" else { return nil }
+                return parts[1].trimmingCharacters(in: .whitespaces)
+            }.first ?? ""
         let body = buffer[end.upperBound...]
         guard body.count >= length else { return nil }
-        return Request(method: String(start[0]), path: String(start[1]), body: Data(body.prefix(length)))
+        return Request(
+            method: String(start[0]), path: String(start[1]), body: Data(body.prefix(length)),
+            authorization: authorization)
     }
 }

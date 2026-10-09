@@ -1,10 +1,10 @@
 ---
 id: settings-privacy
 title: Settings ▸ Privacy
-features: [encryption-status, turn-on-encryption, change-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
+features: [encryption-status, encrypt-existing-journals, change-password, forgot-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
-  - apps/apple/JournalApp/Views/TurnOnEncryptionView.swift
+  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - apps/apple/JournalApp/Views/ChangePasswordView.swift
   - apps/apple/JournalApp/Views/AppLockSettings.swift
   - apps/apple/JournalApp/Views/InactivityLockSettings.swift
@@ -13,6 +13,7 @@ sources:
   - apps/apple/JournalApp/Model/InactivityLock.swift
   - apps/apple/JournalApp/Model/LocalConfiguration.swift
   - docs/design/enable-encryption.md
+  - docs/design/1-1-encryption-and-passwords.md
   - docs/design/sync-security-2026-09-24.md
   - docs/design/app-lock-system-auth.md
   - docs/design/mac-inactivity-lock-2026-10-03.md
@@ -22,12 +23,11 @@ sources:
 
 ## Purpose
 
-Shows whether the journals are encrypted and offers the next step (turn it on, change the password, or reconnect after it was turned on elsewhere), and controls App Lock.
+Shows whether the journals are encrypted and offers the next step (encrypt the journals of a library made before every library was encrypted, change the password, or reconnect after it was turned on elsewhere), and controls App Lock.
 
 ## Entry points
 
 - Settings ▸ Privacy (`screens/settings`).
-- The computer's journal-window notice Show Progress, while encryption is being turned on, opens this tab with the Turn On Encryption sheet.
 
 ## Content
 
@@ -39,9 +39,9 @@ Header `settings.privacy.encryption.header`.
 
 1. A status line: `settings.privacy.encryption.on` ("Your Journals Are Encrypted") or `settings.privacy.encryption.off` ("Encryption Is Off").
 2. One action, the first that applies:
-   - encrypted, with a master password: `settings.privacy.changePassword` ("Change Password…") → `screens/change-password`. Encrypted libraries from early versions (recovery key) show no action.
+   - encrypted, with a master password: `settings.privacy.changePassword` ("Change Password…") → `screens/change-password` (which also holds Forgot Password?). Encrypted libraries from early versions (recovery key) show no action.
    - not encrypted, and the server's journals are now encrypted (encryption was turned on from another device): `common.reconnect` ("Reconnect…") → Reconnect, straight to signing in (`flows/reconnect-to-server`).
-   - not encrypted: `settings.privacy.encryption.turnOn` ("Turn On Encryption…") → `screens/turn-on-encryption`.
+   - not encrypted: `settings.privacy.encryption.turnOn` ("Turn On Encryption…") → the Encrypt Your Journals form as a sheet with Cancel (`screens/encrypt-journals`). Only a library made before 1.1 can be here, after Not Now: nothing creates an unencrypted library any more.
 3. Footer:
    - encrypted: `settings.privacy.encryption.footerOn` ("Keep your {credential} somewhere safe. It can’t be recovered."), with the credential's name in lower case (master password, recovery key);
    - Reconnect… offered: `messages.encryption.turnedOnElsewhere`;
@@ -69,7 +69,7 @@ Header `settings.privacy.appLock.header`.
 
 | Action | Command | Enabled | Result |
 | --- | --- | --- | --- |
-| Turn On Encryption… | `turn-on-encryption` | Unlocked, and not while the journals are being replaced (except to show a run in progress) | Opens Turn On Encryption (`flows/turn-on-encryption`). |
+| Turn On Encryption… | `turn-on-encryption` | Unlocked, and not while the journals are being replaced (except to show a run in progress) | Opens the Encrypt Your Journals form as a sheet with Cancel (`screens/encrypt-journals`, `flows/encrypt-journals`). |
 | Change Password… | `change-password` | Unlocked | Opens Change Password (`flows/change-password`). |
 | Reconnect… | `sync-reconnect` | Unlocked | Opens Reconnect at signing in. |
 | Require {method} | `toggle-app-lock` | Not while the system is asking; turning on needs authentication to be available; turning off is always possible | Asks for authentication, then saves (`flows/app-lock`). |
@@ -82,7 +82,7 @@ Header `settings.privacy.appLock.header`.
 - **Couldn't save App Lock:** alert `settings.privacy.appLock.error.turnOn` ("Couldn’t Turn On App Lock") or `settings.privacy.appLock.error.turnOff`, message `settings.privacy.appLock.error.message` ("Try again."), button `common.ok`. App Lock stays as it was.
 - **Couldn't save Lock when inactive:** alert `settings.privacy.appLock.inactive.error` ("Couldn’t Change Setting"), message `settings.privacy.appLock.error.message`, button `common.ok`.
 - **No passcode:** the switch is disabled while off; while on (the passcode was removed), it stays enabled so App Lock can be turned off.
-- **Encryption being turned on:** Turn On Encryption… reopens the sheet where the work is.
+- **Encryption being turned on:** the journals show the working notice; Turn On Encryption… shows where the work is.
 - **Locked:** Settings shows only its locked text.
 
 ## Rules
@@ -92,7 +92,7 @@ Header `settings.privacy.appLock.header`.
 - Turning App Lock on or off asks for authentication (`settings.privacy.appLock.reason.turnOn` "Turn on App Lock", `settings.privacy.appLock.reason.turnOff` "Turn off App Lock"). Turning off without a passcode (the passcode was removed) needs none.
 - Lock when inactive: default 30 minutes; stored per library. A longer time or Never weakens App Lock, so it asks for authentication first (`settings.privacy.appLock.reason.change` "Change App Lock settings"); a shorter time doesn't. See `flows/app-lock` for what counts as use.
 - The availability (and so the method name and footer) is read again whenever the pane appears and when the app becomes active, so a passcode set meanwhile is reflected.
-- Change Password is offered only for master-password libraries (the current format). Turn On Encryption is offered only for libraries without encryption. Encryption can't be turned off.
+- Change Password is offered only for master-password libraries (the current format). Turn On Encryption… is offered only for libraries without encryption, which persist for people who chose Continue Without Encryption in an earlier version and chose Not Now; the unencrypted rows (status, footer, Turn On Encryption…, Reconnect…) stay until Not Now is removed in a later release. Encryption can't be turned off.
 
 ## Accessibility
 

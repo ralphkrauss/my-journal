@@ -8,7 +8,7 @@ import SwiftUI
 @MainActor
 final class ConnectionFlow: ObservableObject {
     enum Step: Hashable {
-        case setUpServer, protect, choosePassword, enterPassword, serverReady, signIn, addThisDevice, recoveryCode
+        case setUpServer, choosePassword, enterPassword, serverReady, signIn, addThisDevice, recoveryCode
         /// Merge Journals and, after a scanned code, Finish on Your Other Device
         /// (docs/design/join-with-local-journals.md).
         case merge, finish
@@ -27,7 +27,6 @@ final class ConnectionFlow: ObservableObject {
     @Published private(set) var envelope: RecoveryParameters?
     @Published private(set) var passwordless = false
     @Published var setupCode = "" { didSet { if setupCode != oldValue { fieldErrors[.setupCode] = nil } } }
-    @Published var encrypt = true
     /// A master password chosen for a journal created while setting up the server. Kept while the sheet is open, so
     /// Try Again never asks for it twice.
     @Published var newPassword = "" { didSet { if newPassword != oldValue { clearPasswordErrors() } } }
@@ -141,7 +140,7 @@ final class ConnectionFlow: ObservableObject {
     /// The step after the setup code, or nil when Set Up follows directly.
     var stepAfterSetupCode: Step? {
         if createdJournalHere { return nil }
-        if model.store == nil { return .protect }
+        if model.store == nil { return .choosePassword }
         return needsExistingPassword ? .enterPassword : nil
     }
     /// Setting up from a library protected by a password needs it: the server's recovery secret derives from it.
@@ -182,9 +181,6 @@ final class ConnectionFlow: ObservableObject {
         default: break
         }
     }
-    func continueFromProtect() {
-        if encrypt && !createdJournalHere { advance(to: .choosePassword) } else { setUp() }
-    }
     func setUpWithNewPassword() {
         if !createdJournalHere && newPassword != verifyPassword {
             return fail(.verifyPassword, "The passwords don’t match.")
@@ -204,7 +200,7 @@ final class ConnectionFlow: ObservableObject {
             }
             if model.store == nil {
                 model.error = nil
-                await model.start(password: encrypt ? newPassword : nil, encrypted: encrypt)
+                await model.start(password: newPassword)
                 guard model.store != nil else {
                     error = model.error ?? "Couldn’t create your journal. Try again."
                     return
@@ -676,7 +672,7 @@ final class ConnectionFlow: ObservableObject {
             message = mergeFailure(sent: interrupted.sent)
         case ServerConnectionError.encryptionOff:
             message =
-                "The journals on this device are encrypted, but \(host) doesn’t use encryption. Turn on encryption in Settings ▸ Privacy on a connected device, then try again."
+                ServerConnectionError.encryptionOffMessage(host: host)
         case is URLError:
             canRetryScannedCode = invite != nil
             message =

@@ -9,7 +9,7 @@ final class MobileParityUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         // Going straight back keeps the new entry, even though it's empty (owner decision, 2026-09-30).
         app.buttons["New Entry"].firstMatch.tap()

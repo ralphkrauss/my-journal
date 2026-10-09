@@ -50,7 +50,7 @@ All are inline, non-modal and not closable ([9.1](../platform.md#91-notices)); e
 | Order | Notice | Severity | Message | Action |
 | --- | --- | --- | --- | --- |
 | 1 | Save failure | Error | Title `messages.save.notSaved`; while retrying `messages.save.saving` with an indeterminate `ProgressBar` in the content and the action disabled | `ActionButton` `common.tryAgain` |
-| 2 | Writing paused (library being replaced; the entry is read-only meanwhile) | Informational | `messages.writingPaused.connecting` (only after 1 s), `messages.writingPaused.connectionFailed`, `messages.writingPaused.encrypting`, `messages.writingPaused.encryptionUnfinished` | None: Show Connection and Show Progress are not offered because the flow's dialog is modal over the only window |
+| 2 | Writing paused (library being replaced; the entry is read-only meanwhile) | Informational | `messages.writingPaused.connecting` (only after 1 s), `messages.writingPaused.connectionFailed` | None: Show Connection is not offered because the flow's page is modal over the only window. `messages.writingPaused.encrypting` is never shown: Windows runs no encryption |
 | 3 | Recovery or unavailable | Informational | [recently-deleted](recently-deleted.md), [unavailable-content](unavailable-content.md) | As those files |
 | 4 | Conflict | Warning | `messages.conflict.entryNotice`; the entry stays editable | `ActionButton` `common.reviewChanges`: saves the open writing, refreshes, opens the review page ([screens/entry-conflict](../../../screens/entry-conflict.md)) |
 
@@ -227,8 +227,8 @@ Sentence case on all labels ([platform.md, 12](../platform.md#12-copy-casing-ell
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
-| `messages.writingPaused.connecting`, `messages.writingPaused.connectionFailed`, `messages.writingPaused.encrypting`, `messages.writingPaused.encryptionUnfinished` | … this Mac … | … this PC … | vocabulary (platform.md, 12.3) |
-| `messages.writingPaused.showConnection`, `messages.writingPaused.showProgress` | Show Connection, Show Progress | not shown | removed (the flow's dialog is modal) |
+| `messages.writingPaused.connecting`, `messages.writingPaused.connectionFailed` | … this Mac … | … this PC … | vocabulary (platform.md, 12.3) |
+| `messages.writingPaused.showConnection` | Show Connection | not shown | removed (the flow's page is modal) |
 | `editor.imageDescriptions.intro` | … people using VoiceOver. | … people using Narrator. | vocabulary; see B28 |
 | `editor.imageImport.cause.unavailable` | They may still be downloading from iCloud. Try again later. | They may still be downloading. Try again later. | vocabulary (platform.md, 12.3) |
 | New Windows-only keys for the find bar (proposed names: editor, find group) | none | Find in entry, Replace, Previous match, Next match, Replace, Replace all, "{current} of {total}", No matches, Close find | new strings; see B31 |

@@ -9,7 +9,6 @@ sources:
   - apps/apple/JournalApp/Views/ConnectionView.swift
   - apps/apple/JournalApp/Views/ConnectionSteps.swift
   - apps/apple/JournalApp/Views/MergeJournalsView.swift
-  - apps/apple/JournalApp/Views/TurnOnEncryptionView.swift
   - apps/apple/JournalApp/Views/SaveFailureNotice.swift
   - apps/apple/JournalApp/Model/ConnectionFlow.swift
   - apps/apple/JournalApp/Model/ServerJoining.swift
@@ -25,16 +24,12 @@ screenshots:
   - screenshots/iphone/connect-to-server-add-this-device.png
   - screenshots/iphone/connect-to-server-code-short.png
   - screenshots/iphone/connect-to-server-password.png
-  - screenshots/iphone/connect-to-server-protect-off.png
-  - screenshots/iphone/connect-to-server-protect.png
   - screenshots/iphone/connect-to-server-ready.png
   - screenshots/iphone/connect-to-server-recovery-code.png
   - screenshots/iphone/connect-to-server-setup-code.png
   - screenshots/ipad/connect-to-server-add-this-device.png
   - screenshots/ipad/connect-to-server-code-short.png
   - screenshots/ipad/connect-to-server-password.png
-  - screenshots/ipad/connect-to-server-protect-off.png
-  - screenshots/ipad/connect-to-server-protect.png
   - screenshots/ipad/connect-to-server-ready.png
   - screenshots/ipad/connect-to-server-recovery-code.png
   - screenshots/ipad/connect-to-server-setup-code.png
@@ -74,8 +69,7 @@ The sheet is `ConnectionView` (`Views/ConnectionView.swift`, a thin wrapper arou
 Step titles come from `ConnectionStepView.title`; the primary from `primary`.
 
 - **`.setUpServer`** `settings.connect.setUp.title`. `LabeledContent` host (`settings.connect.server`); a `Section` with header `settings.connect.setUp.code` and a `TextField` (prompt `settings.connect.setUp.codePlaceholder`, `.font(.body.monospaced())`, `headedField`, `.focused($focused, equals: .setupCode)`); iOS `.textInputAutocapitalization(.characters)`, `.keyboardType(.asciiCapable)`. Typing is re-formatted through `CodeEntry.setupCode` by an `onValueChange` that lives on the section header (it writes the formatted code back to the field). Footer: `settings.connect.setUp.footer`, a `Link` `settings.sync.footer.howToSetUp` (`ConnectionStepView.setupGuide`, the guide's `#use-your-own-server` anchor), and, when `stepAfterSetupCode == nil && model.store != nil && !createdJournalHere`, `settings.connect.setUp.upload` (followed by `settings.connect.merge.footerUnencrypted` when `configuration.encrypted == false`). Primary `settings.connect.setUp.setUp` when Set Up follows directly, else `common.continue`; disabled while busy or empty. Field errors: `messages.connection.setupCodeLength`, `messages.connection.setupCodeCharacters`, `messages.connection.setupCodeIncorrect`, `messages.connection.setupCodeRateLimited`.
-- **`.protect`** `common.protectYourJournals`. `intro` (`settings.connect.protect.intro`, secondary, clear row background); a `Picker` with `.pickerStyle(.inline)` on iOS and `.radioGroup` on the Mac, `labelsHidden`, accessibility label `settings.connect.protect.choice`; choices `settings.connect.protect.encrypt` with `settings.connect.protect.encryptDetail`, and `settings.connect.protect.dontEncrypt` with `common.unencryptedWarning`, each a combined element. Disabled while busy or `createdJournalHere`. Primary: `common.tryAgain` when `retrying` (`createdJournalHere && !completed`), else `common.continue` (Encrypt) or `settings.connect.setUp.setUp`.
-- **`.choosePassword`** `common.chooseMasterPassword`. `settings.connect.choosePassword.intro`; `SecureField` or `TextField` (switched by a `Toggle` `common.showPassword`) for `common.masterPassword` and `common.verify`, with `.passwordAutofill(creating: true)` (`.textContentType(.newPassword)`), no autocorrection, Return in the first moves focus to Verify, Return in Verify sets up; footer `settings.password.footer`. The section is disabled while busy or `createdJournalHere`. Primary `settings.connect.setUp.setUp` or `common.tryAgain`; disabled while busy or either field is empty. Verify error `messages.connection.passwordsDontMatch`.
+- **`.choosePassword`** `common.chooseMasterPassword`. Reached directly from the setup code when the device has no library (`stepAfterSetupCode` returns `.choosePassword`; the former `.protect` step, `ConnectionFlow.encrypt` and `continueFromProtect` are gone in 1.1). `settings.connect.choosePassword.intro`; `SecureField` or `TextField` (switched by a `Toggle` `common.showPassword`) for `common.masterPassword` and `common.verify`, with `.passwordAutofill(creating: true)` (`.textContentType(.newPassword)`), no autocorrection, Return in the first moves focus to Verify, Return in Verify sets up; footer `settings.password.footer`. The section is disabled while busy or `createdJournalHere`. Primary `settings.connect.setUp.setUp` or `common.tryAgain`; disabled while busy or either field is empty. Verify error `messages.connection.passwordsDontMatch`.
 - **`.enterPassword`** `settings.connect.signIn.title` with `flow.existingCredentialName`. `settings.connect.enterExisting.intro` (credential lower-cased), `phraseField`, `Toggle` `settings.connect.showCredential`, footer `settings.connect.setUp.upload`. Primary `settings.connect.setUp.setUp`.
 - **`.serverReady`**: no navigation title (`""`). A centred block on a clear row background: `Image(systemName: "checkmark.circle")` at 48 points (accessibility hidden), `settings.connect.ready.title` (`.title2.bold()` with the header trait), `settings.connect.ready.message`; a `Section` with `Button` `settings.connect.ready.addDevice`, which presents `AddDeviceView` ([add-device](add-device.md)) with `.sheet`, and footer `settings.connect.ready.footer` when `configuration.requiresPassword`. Toolbar: only `common.done`.
 - **`.signIn`** `settings.connect.signIn.title` with `flow.credentialName`. Intro: `settings.connect.signIn.introEncrypted` when `model.encryption.offersSignIn`, else `settings.connect.signIn.introRecoveryKey` for a format 1 envelope, else `settings.connect.signIn.intro`. `phraseField` (`SecureField`/`TextField`, `.passwordAutofill()`), `Toggle` `settings.connect.showCredential`; footer `settings.connect.signIn.footerEncrypted` or `settings.connect.download` (`flow.downloadFooter`). A `Section` with `Button` `settings.connect.signIn.useDevice` (pushes `.addThisDevice`; disabled while busy). Primary `settings.connect.signIn.signIn`, or `common.tryAgain` when `flow.mergeInterrupted` and an error is shown. Busy labels: `settings.connect.busy.signingIn`, then `JoinPhase` labels (`settings.connect.busy.checking`, `settings.connect.busy.downloading`, `common.merging`).
@@ -103,7 +97,7 @@ Step titles come from `ConnectionStepView.title`; the primary from `primary`.
 | --- | --- | --- | --- |
 | `connect-check-server` | Continue (page 1); a nearby server row | Return in the address field | address not empty, not busy |
 | `connect-scan-code` | Scan Code row, page 1 (iPhone and iPad with a scanner) | none | camera scanner supported |
-| `connect-set-up` | Set Up or Continue on Set Up Server, Choose a Master Password, Enter {credential}, Protect Your Journals | Return (default button) | code or password not empty, not busy |
+| `connect-set-up` | Set Up or Continue on Set Up Server, Choose a Master Password, Enter {credential} | Return (default button) | code or password not empty, not busy |
 | `connect-sign-in` | Sign In, and Connect on Use a Recovery Code | Return (default button) | field not empty, not busy |
 | `connect-use-device` | Row on Enter {credential} | none | not busy |
 | `connect-copy-code` | Copy Code under the pairing code | none | a code is shown |
@@ -143,7 +137,6 @@ Keyboard: Return in a field submits it (`onSubmit` on the address, setup code, p
 - Scan Code exists only on iPhone and iPad (`ScanCodeView.available`, which needs `DataScannerViewController` support); a Mac cannot scan, and shows its own QR code only as the approving device ([add-device](add-device.md)).
 - Container: a pushed `NavigationStack` in a form sheet (iPhone, iPad) versus a fixed-size sheet over the Settings window (Mac), which also needs the journal window's pause notice because the sheet does not cover writing there.
 - Back versus Cancel: iPhone and iPad swap Cancel for the system back button where going back is allowed; the Mac keeps Cancel on every step, with Back as well where it is allowed.
-- Protect Your Journals uses an inline picker (checkmarks) on iPhone and iPad and radio buttons on the Mac, the platform idiom for a single choice.
 - Heading row on the Mac before macOS 26 (no title bar).
 - Local-network permission: iOS asks on first use; the Mac message points to System Settings. Both targets declare `NSLocalNetworkUsageDescription` and `NSBonjourServices` (`_myjournal._tcp`) in `apps/apple/project.yml`; the camera description is iOS only.
 - The inactivity lock hold (`keepsUnlockedWhile`) has an effect only on the Mac, where an inactivity lock exists.
@@ -158,8 +151,6 @@ iPhone:
 | --- | --- |
 | Set Up Server, empty code field with the XXX-XXX prompt, Continue dimmed | ![iPhone setup code](../screenshots/iphone/connect-to-server-setup-code.png) |
 | Set Up Server, a short code and the field error | ![iPhone short code](../screenshots/iphone/connect-to-server-code-short.png) |
-| Protect Your Journals, Encrypt chosen (Continue) | ![iPhone protect](../screenshots/iphone/connect-to-server-protect.png) |
-| Protect Your Journals, Don’t Encrypt chosen (Set Up) | ![iPhone protect off](../screenshots/iphone/connect-to-server-protect-off.png) |
 | Choose a Master Password, two empty secure fields and Show Password | ![iPhone password](../screenshots/iphone/connect-to-server-password.png) |
 | Server Is Ready with Add Another Device… and the footer | ![iPhone ready](../screenshots/iphone/connect-to-server-ready.png) |
 | Add This Device, a pairing code waiting for approval (Cancel in place of Back) | ![iPhone add this device](../screenshots/iphone/connect-to-server-add-this-device.png) |
@@ -171,8 +162,6 @@ iPad (form sheet):
 | --- | --- |
 | Set Up Server | ![iPad setup code](../screenshots/ipad/connect-to-server-setup-code.png) |
 | Set Up Server, short code error | ![iPad short code](../screenshots/ipad/connect-to-server-code-short.png) |
-| Protect Your Journals, Encrypt | ![iPad protect](../screenshots/ipad/connect-to-server-protect.png) |
-| Protect Your Journals, Don’t Encrypt | ![iPad protect off](../screenshots/ipad/connect-to-server-protect-off.png) |
 | Choose a Master Password | ![iPad password](../screenshots/ipad/connect-to-server-password.png) |
 | Server Is Ready | ![iPad ready](../screenshots/ipad/connect-to-server-ready.png) |
 | Add This Device | ![iPad add this device](../screenshots/ipad/connect-to-server-add-this-device.png) |
@@ -190,13 +179,13 @@ View:
 - `apps/apple/JournalApp/Views/ConnectionView.swift`: the sheet, page 1, nearby servers, the scanner presentation, `connectionStatus` and `announceForAccessibility`.
 - `apps/apple/JournalApp/Views/ConnectionSteps.swift`: every pushed step, toolbar rules, fields, code displays.
 - `apps/apple/JournalApp/Views/MergeJournalsView.swift`: Merge Journals content and summary.
-- `apps/apple/JournalApp/Views/TurnOnEncryptionView.swift`: `ConnectionBusyRow`, and `EncryptionPresentation`, which presents Connect to a Server for Sign In over the journal window.
+- The encryption views (`apps/apple/JournalApp/Views/EncryptJournalsView.swift`, `apps/apple/JournalApp/Views/EncryptionNotice.swift`, `apps/apple/JournalApp/Model/EncryptionRouting.swift`): `ConnectionBusyRow`, and the presenter that opens Connect to a Server for Reconnect… over the journal window (variant C of Encrypt Your Journals).
 - `apps/apple/JournalApp/Views/SaveFailureNotice.swift`: the Mac connection pause notice.
 
 Model:
 - `apps/apple/JournalApp/Model/ConnectionFlow.swift`: steps, pairing polling, errors, focus, announcements, leaving and cancelling.
 - `apps/apple/JournalApp/Model/ServerJoining.swift`: initialising a server, recovering, installing a vault, merge plan, staged copies, `JoinPhase`.
-- `apps/apple/JournalApp/Model/ServerEnvelopeCheck.swift`: refuses a server that cannot take this library's encryption before anything is sent.
+- `apps/apple/JournalApp/Model/ServerEnvelopeCheck.swift`: refuses a server set up without encryption (recovery format 3 or 4) for a device with an encrypted library or none, with `messages.connection.encryptionOff`, before anything is sent; a device with an unencrypted library is not refused.
 - `apps/apple/JournalApp/Model/ServerBrowser.swift`: Bonjour discovery and `ServerAddress.host`.
 
 Core:

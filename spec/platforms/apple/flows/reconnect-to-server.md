@@ -12,7 +12,7 @@ sources:
   - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - apps/apple/JournalApp/Views/ConnectionView.swift
   - apps/apple/JournalApp/Views/ConnectionSteps.swift
-  - apps/apple/JournalApp/Views/TurnOnEncryptionView.swift
+  - apps/apple/JournalApp/Model/EncryptionRouting.swift
   - apps/apple/JournalApp/Views/DevicesSection.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/SyncHealth.swift
   - docs/design/sync-health-and-recovery.md
@@ -30,8 +30,8 @@ There is no reconnect screen. Reconnecting is the ordinary Connect to a Server s
 | Where | Closure | Presented over |
 | --- | --- | --- |
 | Settings ▸ Sync (`SyncNowRows`) | `connect = ConnectionRequest()` | Settings (`.sheet(item:)` in `SettingsView`) |
-| Sync Status (`syncMenu` on iPhone and iPad, the AppKit toolbar menu on the Mac) | `model.encryption.signInRequested = true` | the journal window (`EncryptionPresentation` in `TurnOnEncryptionView.swift`: `.sheet` of `ConnectionView()`; the title is Reconnect when `reconnectsOnConnect`) |
-| Settings ▸ Privacy ▸ Encryption, Turn On Encryption | `Reconnect…` (`common.reconnect`) | Settings, via `EncryptionSettingsSection` and `takeSignInRequest()` |
+| Sync Status (`syncMenu` on iPhone and iPad, the AppKit toolbar menu on the Mac) | `model.encryption.signInRequested = true` | the journal window (the encryption presenter in the 1.1 encryption views, `EncryptionPresentation`: `.sheet` of `ConnectionView()`; the title is Reconnect when `reconnectsOnConnect`) |
+| Settings ▸ Privacy ▸ Encryption; Encrypt Your Journals, variant C | `Reconnect…` (`common.reconnect`) | Settings, via `EncryptionSettingsSection` and `takeSignInRequest()`; the form's primary button in variant C |
 | Settings ▸ Agent Access when the server refuses this device | `controller.connecting = true` | `ServerAgentsPresentation`'s `.sheet` of `ConnectionView()` |
 
 Settings ▸ Sync ▸ Devices has no reconnect button: while the server refuses the device the Devices section is not built, and its list reloads when the Reconnect sheet from the Server section closes ([settings-devices](../screens/settings-devices.md)).
@@ -93,7 +93,7 @@ Model:
 
 View:
 - `apps/apple/JournalApp/Views/ConnectionView.swift`, `apps/apple/JournalApp/Views/ConnectionSteps.swift`: the sheet.
-- `apps/apple/JournalApp/Views/TurnOnEncryptionView.swift`: `EncryptionPresentation`, the Privacy Reconnect… row, `ConnectionBusyRow`.
+- The encryption views (`apps/apple/JournalApp/Views/EncryptJournalsView.swift`, `apps/apple/JournalApp/Model/EncryptionRouting.swift`): `EncryptionPresentation`, the Privacy Reconnect… row, `ConnectionBusyRow`, variant C's primary button.
 - `apps/apple/JournalApp/Views/DevicesSection.swift`: the Devices section, which reloads when a Reconnect sheet closes.
 
 Core:

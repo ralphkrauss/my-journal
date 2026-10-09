@@ -41,7 +41,7 @@ extension SpecMacCapture {
         try await capture(window, "welcome-default")
         tap(window, at: 640, fromTop: 458)
         try await settle(2)
-        try await captureSheet(window, "create-library-default")
+        try await captureSheet(window, "create-library-password")
         window.close()
     }
 

@@ -164,7 +164,7 @@ final class CollectionNavigationUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.showJournals(app)
         let settings = app.buttons["Settings"].firstMatch
         let newJournal = app.buttons["New Journal"].firstMatch

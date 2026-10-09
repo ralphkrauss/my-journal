@@ -1,7 +1,8 @@
 import JournalCore
 import SwiftUI
 
-/// "Change Password…" for libraries protected by a master password; renders nothing otherwise.
+/// "Change Password…" for libraries protected by a master password; renders nothing otherwise. Forgot Password? is in
+/// the sheet (docs/design/1-1-encryption-and-passwords.md §4).
 /// Intended as a row in Settings ▸ Privacy ▸ Encryption.
 struct ChangePasswordButton: View {
     @EnvironmentObject private var model: AppModel
@@ -29,6 +30,8 @@ struct ChangePasswordView: View {
     /// Set when the server has the new password but saving it on this device failed.
     @State private var unsaved: RecoveryEnvelope?
     @State private var retryFailed = false
+    /// The device owner authenticated: the new password is set without the current one (Forgot Password?).
+    @State private var forgotten = false
     @FocusState private var focus: Field?
 
     var body: some View {
@@ -39,13 +42,29 @@ struct ChangePasswordView: View {
                         "Use your new password to recover your journals on a new device. Backups and archives made earlier still use your current password."
                     ).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-                Section {
-                    SecureField("Current Password", text: $current).passwordAutofill()
-                        .focused($focus, equals: .current).submitLabel(.next)
-                        .onSubmit { focus = .new }
-                } footer: {
-                    if failure == .incorrectPassword {
-                        errorLabel(PasswordChangeError.incorrectPassword.localizedDescription)
+                if forgotten {
+                    Section {
+                        Text(
+                            "Your journals are only on this device, so you can set a new password without the current one. Archives you exported before still need the old password."
+                        ).fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Section {
+                        SecureField("Current Password", text: $current).passwordAutofill()
+                            .focused($focus, equals: .current).submitLabel(.next)
+                            .onSubmit { focus = .new }
+                    } footer: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            if failure == .incorrectPassword {
+                                errorLabel(PasswordChangeError.incorrectPassword.localizedDescription)
+                            }
+                            // Only journals that exist only on this device can get a new password without the old
+                            // one, and only after the device owner authenticated.
+                            if model.offersForgotPassword {
+                                Button("Forgot Password?") { forgotPassword() }
+                                    .buttonStyle(.borderless).disabled(busy)
+                            }
+                        }
                     }
                 }
                 Section {
@@ -87,6 +106,9 @@ struct ChangePasswordView: View {
         }
         .interactiveDismissDisabled(busy || unsaved != nil)
         .onAppear { focus = .current }
+        // The authorization lasts one use and is forgotten when the sheet closes.
+        .onDisappear { model.passwordResetAuthorizedAt = nil }
+        .onValueChange(of: model.locked) { if $0, unsaved == nil { dismiss() } }
         #if os(macOS)
             .frame(width: 440)
             .frame(minHeight: 400)
@@ -97,7 +119,7 @@ struct ChangePasswordView: View {
         !confirmation.isEmpty && confirmation != new && (confirmationVisited || confirmation.count >= new.count)
     }
     private var canChange: Bool {
-        !busy && !model.locked && !current.isEmpty && new.count >= VaultCrypto.minimumPasswordLength
+        !busy && !model.locked && (forgotten || !current.isEmpty) && new.count >= VaultCrypto.minimumPasswordLength
             && new == confirmation
     }
     private func errorLabel(_ text: String) -> some View {
@@ -112,12 +134,38 @@ struct ChangePasswordView: View {
         let new = new
         Task {
             defer { busy = false }
+            if forgotten {
+                await setWithoutCurrent(new)
+                return
+            }
             do {
                 let change = try await model.preparePasswordChange(current: current, new: new)
                 unsaved = change.envelope
                 try model.savePasswordChange(change.envelope)
                 finish()
             } catch { show(error) }
+        }
+    }
+    /// Forgot Password?: asks the device's owner to authenticate. Cancelled or failed, nothing changes and nothing is
+    /// said.
+    private func forgotPassword() {
+        Task {
+            guard await model.authorizePasswordReset() else { return }
+            current = ""
+            failure = nil
+            message = nil
+            forgotten = true
+            focus = .new
+            announceForAccessibility("Set a new password for your journals.")
+        }
+    }
+    private func setWithoutCurrent(_ new: String) async {
+        do {
+            try await model.setPasswordWithoutCurrent(new)
+            finish()
+        } catch {
+            message = "Couldn’t set a new password. Your current password still works."
+            announceForAccessibility(message ?? "")
         }
     }
     private func retrySave() {

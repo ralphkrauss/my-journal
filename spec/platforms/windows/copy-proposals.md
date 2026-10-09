@@ -32,7 +32,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.addDevice.scanInstructions` | On your iPhone or iPad, choose Connect to a Server, then Scan Code. If it already has journals, Connect to a Server is in Settings ▸ Sync. | On your iPhone or iPad, select Connect to a server, then Scan code. If it already has journals, Connect to a server is in Settings ▸ Sync. | vocabulary | B26, B27 |
 | `settings.addDevice.codeFooter` | On the new device, choose Connect to a Server, then Add This Device. | On the new device, select Connect to a server, then Add this device. | vocabulary | B26, B27 |
 | `settings.connect.addThisDevice.instructions` | On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then choose Enter Code Instead. | On a connected device, open Settings ▸ Sync ▸ Devices ▸ Add Device, then select Enter code instead. | vocabulary | B26, B27 |
-| `settings.encryption.done.otherDevices` | On each of your other devices, choose Reconnect and enter your master password, or add it from this device. | On each of your other devices, select Reconnect and enter your master password, or add it from this device. | vocabulary | B26, B27 |
 | `settings.sync.stopSyncing.message` | Your journals stay on this device. To sync again later, choose Connect to a Server in Settings ▸ Sync. | Your journals stay on this device. To sync again later, select Connect to a server in Settings ▸ Sync. | vocabulary | B26, B27 |
 | `messages.connection.serverChanged` | This server has changed since you checked it. Choose Continue to check it again. | This server has changed since you checked it. Select Continue to check it again. | vocabulary | B26 |
 | `messages.connection.setUpElsewhere` | This server has just been set up. Choose it again to sign in. | This server has just been set up. Select it again to sign in. | vocabulary | B26 |
@@ -43,8 +42,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `library.moveEntry.renameExplanation` | Journals with the same name can’t be chosen. To move this entry to one of them, rename it in the Journals list first. (Mac: Journals with the same name can’t be chosen. To move this entry to one of them, rename it in the sidebar first.) | Journals with the same name can’t be selected. To move this entry to one of them, rename it in the navigation pane first. (Small layout: “… in the Journals list first.”) | vocabulary | B26, B28 |
 | `messages.writingPaused.connecting` | Writing is paused while this Mac connects to your server. | Writing is paused while this PC connects to your server. | vocabulary | 12.3 |
 | `messages.writingPaused.connectionFailed` | This Mac couldn’t finish connecting to your server. Try again, or cancel to keep writing. | This PC couldn’t finish connecting to your server. Try again, or cancel to keep writing. | vocabulary | 12.3 |
-| `messages.writingPaused.encrypting` | Writing is paused while this Mac encrypts your journals. | Writing is paused while this PC encrypts your journals. | vocabulary | 12.3 |
-| `messages.writingPaused.encryptionUnfinished` | Your journals are encrypted on {host}, but this Mac couldn’t finish. Free up space, then try again. | Your journals are encrypted on {host}, but this PC couldn’t finish. Free up space, then try again. | vocabulary | 12.3 |
 | `messages.save.mac.title` | Couldn’t save changes on this Mac. | Couldn’t save changes on this PC. | vocabulary | 12.3, B39 |
 | `settings.agents.thisMac` | this Mac | this PC | vocabulary | 12.3 |
 | `settings.agents.reach.local` | Only agents running on this Mac, such as Claude Code, can use this address. | Only agents running on this PC, such as Claude Code, can use this address. | vocabulary | 12.3 |
@@ -75,7 +72,7 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.backup.markdownReason` | Export your journals as files that aren’t encrypted (Mac: export your journals as files that aren’t encrypted) | The default form: Export your journals as files that aren’t encrypted | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
 | `settings.backup.markdownReasonUnencrypted` | Export your journals as Markdown files (Mac: export your journals as Markdown files) | The default form: Export your journals as Markdown files | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
 | `settings.addDevice.authReason` | Add “{device}” to your journals (Mac: add “{device}” to your journals) | The default form: Add “{device}” to your journals | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
-| `settings.passwordCheck.authReason` | set a new password for your journals | Set a new password for your journals | vocabulary | B23 |
+| `settings.changePassword.authReason` | Set a new password for your journals (Mac: set a new password for your journals) | The default form: Set a new password for your journals | vocabulary | B23, 12.3: the default (capitalised) form, not the Mac variant |
 | `library.entryActions.deletePermanently` | Delete Permanently… | Delete permanently | ellipsis | 12.2 |
 | `library.menu.file.deleteAll` | Delete All in Recently Deleted… | Delete all in Recently deleted | ellipsis | 12.2 |
 | `library.recentlyDeleted.deleteAll` | Delete All (Mac: Delete All…) | Delete all | ellipsis | 12.2 |
@@ -123,10 +120,9 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `library.deletePermanently.title` | Delete “{name}” Permanently? | Delete “{name}” permanently? | casing | 12.1 |
 | `library.deletePermanently.titleWithEntries` | Delete “{name}” and Its Entries Permanently? | Delete “{name}” and its entries permanently? | casing | 12.1 |
 | `library.menu.help.source` | Source Code on GitHub | Source code on GitHub | casing | 12.1 |
-| `common.protectYourJournals` | Protect Your Journals | Protect your journals | casing | 12.1 |
 | `common.chooseMasterPassword` | Choose a Master Password | Choose a master password | casing | 12.1 |
-| `library.createLibrary.useEncryption` | Use Encryption | Use encryption | casing | 12.1 |
-| `library.createLibrary.continueWithout` | Continue Without Encryption | Continue without encryption | casing | 12.1 |
+| `settings.changePassword.forgot` | Forgot Password? | Forgot password? | casing | 12.1 |
+| `settings.backup.archive.changePassword` | Not sure of your password? Change Password… | Not sure of your password? Change password… | casing | 12.1 |
 | `common.masterPassword` | Master Password | Master password | casing | 12.1 |
 | `common.showPassword` | Show Password | Show password | casing | 12.1 |
 | `library.templateChooser.useTemplate` | Use a Template | Use a template | casing | 12.1 |
@@ -186,7 +182,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.locked` | Unlock My Journal to open Settings. | Not shown: the lock page replaces the window | removed | B30 |
 | `messages.encryption.background` | Encryption stopped because My Journal was in the background. Keep My Journal open and try again. | Not shown: desktop apps are not suspended in the background | removed | B30 |
 | `messages.writingPaused.showConnection` | Show Connection | Not shown: the flow’s dialog is modal | removed | B30 |
-| `messages.writingPaused.showProgress` | Show Progress | Not shown: the flow’s dialog is modal | removed | B30 |
 | `library.templateChooser.title` | Choose a Template | Not shown: the flyout has no title or Cancel | removed | B30 |
 | `library.templateChooser.popoverTitle` | Use a Template… | Not shown: the flyout has no title or Cancel | removed | B30 |
 | `editor.insertImage.chooseFile` | Choose File… | Not shown: the Insert image button opens the picker at once | removed | B30 |

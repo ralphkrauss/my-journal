@@ -11,15 +11,15 @@
 #   <platform>-reason        required for different-by-design and not-applicable
 #   <platform>-notes         optional: where iPhone, iPad and Mac differ, or what a port must watch
 # "apple" covers iPhone, iPad and Mac; the notes say where they differ.
-# Removed features (export-entry, archive-entry, and the 1.1 removals of simplifications H, K, L, M and N) are kept as not-applicable on every platform so nobody rebuilds them.
+# Removed features (export-entry, archive-entry, and the 1.1 removals of simplifications G, H, J, K, L, M and N) are kept as not-applicable on every platform so nobody rebuilds them.
 
 # ======================================================================
 # Library and navigation
 # ======================================================================
 
 launch-states:
-  title: "What the window shows at launch (opening, locked, library problem, welcome, recovery key, journals)"
-  specs: [screens/welcome.md, screens/unavailable-content.md]
+  title: "What the window shows at launch (opening, locked, library problem, welcome, encryption notice or Encrypt Your Journals, recovery key, journals)"
+  specs: [screens/welcome.md, screens/unavailable-content.md, screens/encrypt-journals.md]
   reference: apple
   apple: shipped
   windows: planned
@@ -34,7 +34,7 @@ create-library:
   android: planned
 
 encrypt-library:
-  title: "Protect a new library with a master password (Use Encryption)"
+  title: "Every new library is protected with a master password"
   specs: [flows/create-library.md]
   reference: apple
   apple: shipped
@@ -42,12 +42,15 @@ encrypt-library:
   android: planned
 
 continue-without-encryption:
-  title: "Create a library without encryption, with no master password"
-  specs: [flows/create-library.md]
+  title: "Create a library without encryption, with no master password (Continue Without Encryption, and Don't Encrypt when connecting)"
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by owner decision (simplification G, 1-1-encryption-and-passwords.md, confirmed 2026-10-09): no new unencrypted libraries. Libraries that earlier versions made without encryption persist for their holders, who are asked to encrypt them (encrypt-existing-journals) and may choose Not Now when encryption can't succeed; the unencrypted code stays until Not Now is removed in a later release."
+  windows: not-applicable
+  windows-reason: "Removed feature. Windows never creates a library without encryption."
+  android: not-applicable
+  android-reason: "Removed feature. Android never creates a library without encryption."
 
 connect-from-welcome:
   title: "Connect to a Server… on the welcome screen joins an existing library"
@@ -782,9 +785,9 @@ writing-paused-notice:
   specs: [flows/save-failure.md, screens/entry-editor.md]
   reference: apple
   apple: different-by-design
-  apple-reason: "Mac only. On iPhone and iPad the connection and encryption sheets cover the app, so nothing behind them needs explaining."
+  apple-reason: "The connection notice is Mac only: on iPhone and iPad the connection sheet covers the app, so nothing behind it needs explaining. The encryption notice (Encrypt Your Journals) is device-neutral in 1.1 and shown on every device, because the journals stay visible and read-only while it works."
   windows: planned
-  windows-notes: "Needed wherever the connection or encryption flow runs in a separate window from the journals. Mapping: an Informational bar without the Show Connection and Show Progress actions, because the flow is a modal task page over the only window (strings kept in the catalog; see B30)."
+  windows-notes: "Needed wherever the connection flow runs in a separate window from the journals. Mapping: an Informational bar without the Show Connection action, because the flow is a modal task page over the only window (strings kept in the catalog; see B30). Windows has no encryption notice: it never encrypts an existing library."
   android: not-applicable
   android-reason: "The flows cover the app as on iPhone."
 
@@ -973,7 +976,7 @@ server-discovery:
   android: planned
 
 server-setup:
-  title: "Set up a new server with its 6-character setup code, from a new device (Protect Your Journals) or one with journals"
+  title: "Set up a new server with its 6-character setup code, from a new device (Choose a Master Password) or one with journals"
   specs: [flows/connect-to-server.md, screens/connect-to-server.md]
   reference: apple
   apple: shipped
@@ -1082,13 +1085,16 @@ encryption-status:
   windows: planned
   android: planned
 
-turn-on-encryption:
-  title: "Turn On Encryption for journals without it, on this device and its server, keeping every identity"
-  specs: [screens/turn-on-encryption.md, flows/turn-on-encryption.md, screens/settings-privacy.md]
+encrypt-existing-journals:
+  title: "Encrypt Your Journals: a library made without encryption by an earlier version is encrypted on this device and its server, keeping every identity; Not Now only where encryption can't succeed"
+  specs: [screens/encrypt-journals.md, flows/encrypt-journals.md, screens/settings-privacy.md, flows/import-archive.md]
   reference: apple
   apple: shipped
-  windows: planned
-  android: planned
+  apple-notes: "Form at launch; the Settings entry (Turn On Encryption…) opens it as a sheet with Cancel; the working, failed and unfinished notices are device-neutral. The Apple code lands with 1.1."
+  windows: not-applicable
+  windows-reason: "No earlier unencrypted libraries exist on Windows: it never creates one and never reads the earlier directory archives that could be unencrypted. It refuses a server whose recovery format is 3 or 4 with messages.connection.encryptionOff and has no form, Not Now, Stop Syncing for this purpose or sign-in variant."
+  android: not-applicable
+  android-reason: "No earlier unencrypted libraries exist on Android, for the same reasons as Windows."
 
 change-password:
   title: "Change the master password on the server and this device without re-encrypting"
@@ -1100,15 +1106,18 @@ change-password:
 
 password-check:
   title: "One-time check, before the first archive export, that the master password is the saved one (Not Now continues)"
-  specs: [screens/password-check.md, flows/export-archive.md, screens/settings-backup.md]
+  specs: []
   reference: apple
-  apple: shipped
-  windows: planned
-  android: planned
+  apple: not-applicable
+  apple-reason: "Removed in 1.1 by owner decision (simplification J): folded into Change Password. Typing the current password there is the check; Export Archive points to Change Password and says to keep the password with the archive."
+  windows: not-applicable
+  windows-reason: "Folded into Change Password."
+  android: not-applicable
+  android-reason: "Folded into Change Password."
 
 forgot-password:
-  title: "Set a new master password without the old one, for journals only on this device, after the device owner authenticates"
-  specs: [screens/password-check.md, flows/forgot-password.md]
+  title: "Forgot Password? in Change Password: set a new master password without the old one, for journals only on this device, after the device owner authenticates"
+  specs: [screens/change-password.md, flows/change-password.md]
   reference: apple
   apple: shipped
   windows: planned

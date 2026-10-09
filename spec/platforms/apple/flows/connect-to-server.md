@@ -31,7 +31,7 @@ How the Apple apps carry out the flow of [connect-to-server](../../../flows/conn
 
 ## Controls
 
-The flow is not a view. `ConnectionFlow` (`Model/ConnectionFlow.swift`, `@MainActor final class ... ObservableObject`) is created once per sheet by `ConnectionSheet` (`@StateObject`). Its `path: [Step]` is the `NavigationStack` path, so pushing a step is `path.append(...)` and going back to page 1 is `path = []`; the next step appears only once the work that leads to it succeeded. `Step` has ten cases: `setUpServer`, `protect`, `choosePassword`, `enterPassword`, `serverReady`, `signIn`, `addThisDevice`, `recoveryCode`, `merge`, `finish`.
+The flow is not a view. `ConnectionFlow` (`Model/ConnectionFlow.swift`, `@MainActor final class ... ObservableObject`) is created once per sheet by `ConnectionSheet` (`@StateObject`). Its `path: [Step]` is the `NavigationStack` path, so pushing a step is `path.append(...)` and going back to page 1 is `path = []`; the next step appears only once the work that leads to it succeeded. `Step` has nine cases in 1.1 (`protect` is gone with its choice): `setUpServer`, `choosePassword`, `enterPassword`, `serverReady`, `signIn`, `addThisDevice`, `recoveryCode`, `merge`, `finish`.
 
 State that drives the UI: `busy` (any work), `installing` (setting up, signing in or installing a library; disables Cancel and swipe-to-dismiss), `error` with `errorStep` (an error shows only on the step where it was recorded, `errorMessage(on:)`), `fieldErrors`, `focusRequest`, `invite` (a scanned code), `ticket`, `reveal`, `received`, `confirmed` (pairing), `agreedHost` (merge consent), `createdJournalHere`, `completed`, `finished`. Each long operation is a `Task` held in `operation`; `abandon()` cancels it.
 
@@ -39,10 +39,9 @@ How the pages follow one another, as the code does it:
 
 | From | Trigger | Next |
 | --- | --- | --- |
-| Page 1 | `check()`: `ServerClient.statusOnFirstContact()` (an ephemeral session with `waitsForConnectivity` and 20-second timeouts, so the system's local-network prompt does not fail the request), then `recoveryParameters()` and `checkServerEnvelope`; protocol version must be 1 | server not initialised: `path = [.setUpServer]`, focus the setup code; initialised and `asksToMerge`: `[.merge]`; initialised without a password (`passwordless`): `[.addThisDevice]`; otherwise `[.signIn]`, focus the field |
+| Page 1 | `check()`: `ServerClient.statusOnFirstContact()` (an ephemeral session with `waitsForConnectivity` and 20-second timeouts, so the system's local-network prompt does not fail the request), then `recoveryParameters()` and `checkServerEnvelope` (which now throws `ServerConnectionError.encryptionOff`, shown as `messages.connection.encryptionOff`, for a server whose recovery format is 3 or 4 when the library is encrypted or absent; a device with an unencrypted library is not refused); protocol version must be 1 | server not initialised: `path = [.setUpServer]`, focus the setup code; initialised and `asksToMerge`: `[.merge]`; initialised without a password (`passwordless`): `[.addThisDevice]`; otherwise `[.signIn]`, focus the field |
 | Page 1 | `join(_:)` after the scanner returned a `PairingInvite` | same checks (protocol 1, supports the `pairing-invite` feature, envelope); then `[.merge]` when merging is needed, else `[.finish]` and the pairing request is sent |
-| Set Up Server | `continueFromSetupCode()` validates with `CodeEntry`, then, when the server supports `setupCheckFeature`, checks the code with the server | `stepAfterSetupCode`: `.protect` when the device has no library (`model.store == nil`), `.enterPassword` when its journals have a password and no recovery key is held, else Set Up runs here |
-| Protect Your Journals | `continueFromProtect()` | `.choosePassword` for Encrypt (unless a journal was already created here), else `setUp()` |
+| Set Up Server | `continueFromSetupCode()` validates with `CodeEntry`, then, when the server supports `setupCheckFeature`, checks the code with the server | `stepAfterSetupCode`: `.choosePassword` when the device has no library (`model.store == nil`; no Protect step, no choice of encryption), `.enterPassword` when its journals have a password and no recovery key is held, else Set Up runs here |
 | Choose a Master Password, Enter {credential}, Set Up Server | `setUp()` | on success `completed = true`, `path.append(.serverReady)` |
 | Sign In / Recovery Code | `signIn()` | on success `completed = true`, `finished = true` (the sheet closes). The model may throw `MergeConsentNeeded`; `askToMerge` then pushes `.merge` and Merge resumes `signIn()` |
 | Add This Device | `beginPairing()` then `awaitApproval` polling | check code appears (`reveal`); after Connect (`confirm()`), `finishImport()` installs and sets `finished` |
@@ -92,7 +91,7 @@ None in the flow's own messages (one string per message in `ConnectionFlow.show`
 
 ## Screenshots
 
-None for this page file. The screens of the flow have captures on the screen note ([connect-to-server](../screens/connect-to-server.md)): iPhone and iPad captures of Set Up Server, Protect Your Journals, Choose a Master Password, Server Is Ready, Add This Device, Use a Recovery Code, and (iPad) Enter Master Password. A flow has no screen of its own.
+None for this page file. The screens of the flow have captures on the screen note ([connect-to-server](../screens/connect-to-server.md)): iPhone and iPad captures of Set Up Server, Choose a Master Password, Server Is Ready, Add This Device, Use a Recovery Code, and (iPad) Enter Master Password. A flow has no screen of its own.
 
 ## Source files
 

@@ -20,7 +20,7 @@ sources:
 
 ## Purpose
 
-One place for everything that isn't writing: where new entries go, sync with its server and the devices on that server, encryption and App Lock, backups, agents, and (on phones and tablets) the project's pages and erasing this device.
+One place for everything that isn't writing: where new entries go, sync with its server and the devices on that server, encryption and passwords, App Lock, backups, agents, and (on phones and tablets) the project's pages and erasing this device.
 
 ## Entry points
 
@@ -29,7 +29,6 @@ One place for everything that isn't writing: where new entries go, sync with its
 - **Computer:** the application menu's standard Settings… item and its standard shortcut (`open-settings`). Settings is a separate, standard settings window, not a sheet.
 - From elsewhere, opening Settings at a given pane:
   - Sync Status ▸ Sync Settings… opens Settings at **Sync** (see `screens/sync-status`).
-  - The computer's journal-window notice "Show Progress" (turning on encryption) opens Settings at **Privacy** with the Turn On Encryption sheet on top.
   - The computer's journal-window notice "Show Connection" (connecting) opens Settings at **Sync**, where the Connect to a Server sheet it brings to the front belongs.
 
 ## Content
@@ -73,8 +72,9 @@ There is no About section and no Done button: About is in the Help menu (`screen
 
 - **Locked** (App Lock on and My Journal locked): the whole of Settings shows only `settings.locked`, in secondary text. Locking while Settings is open closes the Settings sheet on phone and tablet (every window's presentations close when the app locks); on the computer the window shows the locked text.
 - **Library problem** (the journals can't be opened, so there is no library to set up): the whole of Settings shows only `settings.libraryProblem`, in secondary text, in place of its panes, on every device ([screens/unavailable-content](unavailable-content.md)). Every sheet closes when a problem appears.
+- **Encrypt Your Journals showing** (a library that isn't encrypted, at launch, before the journals open): the whole of Settings shows only `settings.encryptFirst` ("Choose a master password to encrypt your journals first."), in secondary text, in place of its panes. Once Not Now has been chosen in this launch, or when the form is only a sheet, Settings is normal ([screens/encrypt-journals](encrypt-journals.md)).
 - **No library** (just after Erase Journals and Settings, while Settings closes): Privacy shows nothing; Settings then closes by itself.
-- **Requested pane:** when another screen asks for a pane (Sync Status, Show Progress, Show Connection), Settings opens on that pane. On phone and tablet the pane is pushed on top of the list; on the computer that tab is selected.
+- **Requested pane:** when another screen asks for a pane (Sync Status, Show Connection), Settings opens on that pane. On phone and tablet the pane is pushed on top of the list; on the computer that tab is selected.
 
 ## Rules
 

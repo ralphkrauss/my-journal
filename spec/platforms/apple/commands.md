@@ -238,17 +238,18 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 
 | id | Shortcut | Notes |
 | --- | --- | --- |
-| `turn-on-encryption` | — |  |
-| `encryption-continue` | ↩ |  |
-| `encryption-turn-on` | ↩ |  |
-| `encryption-finish` | — |  |
-| `encryption-cancel` | ⎋ |  |
-| `encryption-done` | — |  |
-| `show-encryption-progress` | — | Mac only. |
-| `change-password` | — |  |
+| `turn-on-encryption` | — | Settings ▸ Privacy button; opens the Encrypt Your Journals form as a sheet. |
+| `encrypt-journals` | ↩ in Verify (the Mac's default button is Encrypt) | The form's primary button; Try Again after an error. |
+| `encrypt-journals-not-now` | — | Plain button under the primary button. |
+| `encrypt-journals-stop-syncing` | — | Plain button under the primary button, and on the unfinished notice. |
+| `encryption-finish` | — | Try Again on the unfinished notice. |
+| `encryption-cancel` | ⎋ | Cancel on the working notice (accessible name “Cancel encryption”) and Cancel of the form as a sheet. |
+| `encryption-done` | ↩, ⎋ | Done sheet. |
+| `change-password` | — | Also the pointer under the archive footer in Settings ▸ Backup and the Export Archive sheet. |
 | `change-password-submit` | ↩ in Confirm |  |
 | `change-password-retry` | — |  |
 | `change-password-cancel` | ⎋ |  |
+| `forgot-password` | — | Borderless button in the Current Password section footer. |
 | `toggle-app-lock` | — |  |
 | `set-inactivity-lock` | — | Mac only. |
 | `unlock-with-device` | ↩ (Mac) | Return on the Mac. |
@@ -263,11 +264,6 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 
 | id | Shortcut | Notes |
 | --- | --- | --- |
-| `password-check` | ↩ |  |
-| `password-check-not-now` | ⎋ |  |
-| `forgot-password` | — |  |
-| `set-new-password` | ↩ |  |
-| `set-new-password-cancel` | ⎋ |  |
 | `archive-open` | ↩ in the field |  |
 | `archive-import` | — |  |
 | `archive-import-cancel` | ⎋ |  |

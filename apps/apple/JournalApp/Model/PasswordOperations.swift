@@ -23,8 +23,6 @@ extension AppModel {
     func savePasswordChange(_ envelope: RecoveryEnvelope) throws {
         let previous = configuration
         configuration?.recovery = envelope
-        // The current password was verified and the new one typed twice.
-        configuration?.passwordChecked = true
         do { try persistConfiguration() } catch {
             configuration = previous
             throw PasswordChangeError.notSavedLocally

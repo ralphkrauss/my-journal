@@ -61,7 +61,7 @@ Flow step by step, with the control and the code behind it. The model type throu
 - The store re-reads the row inside the transaction and throws `JournalError.conflict` if the remote revision or either payload differs from the snapshot the view holds, if either side is permanently deleted (`PermanentDeletionError.permanentlyDeleted`) or not editable (`JournalError.unsupportedFormat`). The view maps `JournalError.conflict` to a refresh, never to a retry.
 - Outcome: `committed = true`, then `model.refresh`, select the resolved entry if nothing else is open, dismiss.
 
-**2b. Unsupported.** `ArchiveExportControls`; the export runs `ArchiveExport` and a `.fileExporter`, after the one-time password check if `model.passwordCheckPending`. See `screens/settings-backup`.
+**2b. Unsupported.** `ArchiveExportControls`; the export runs `ArchiveExport` and a `.fileExporter` (no password check in 1.1). See `screens/settings-backup`.
 
 **3. When something changes meanwhile.** Entry form: `refreshReview` (generation counter, scroll and VoiceOver focus). Locking cancels the running `Task`, clears confirmations, previews and images, and dismisses.
 

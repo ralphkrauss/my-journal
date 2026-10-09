@@ -2,7 +2,7 @@
 id: settings-backup
 title: Settings ▸ Backup and the export dialogs (Windows)
 spec: screens/settings-backup.md
-features: [export-archive, import-archive, export-markdown, password-check]
+features: [export-archive, import-archive, export-markdown, change-password]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/files/using-file-folder-pickers
@@ -27,9 +27,11 @@ Header `settings.backup.archive.header`.
 | Spec element | Control | Notes |
 | --- | --- | --- |
 | Export Archive… | An [action card](settings.md#card-patterns), `Header` `common.exportArchive`, icon Export (EDE1), a standard `Button` `common.exportArchive` in its content. `Description`: while the library exists only on this PC (not syncing), the date of the last export ("Last exported {date}") or "Not exported yet" (D22, new copy), so an uninstall that removes the local data is never a surprise. Trailing a small indeterminate `ProgressBar` (about 80 epx) with `AutomationProperties.Name` `settings.backup.preparingArchive`, shown after 0.3 seconds; the card keeps its size | Pressing again while preparing, or while the picker is open, does nothing. The date is a device-only local setting written when an export completes |
+| Saved message | After a save, in the Export row's description in place of the last-export line until the next export starts: `messages.export.archiveSaved` (credential in lower case), announced with a notification event (`MostRecent`) when it appears | Windows journals are always encrypted, so it always shows |
 | Error line | An `InfoBar` (Error) under the card, `Content` a selectable `TextBlock`; cleared when the next export starts | The messages are the export flow's (`messages.export.archiveFailed`, `messages.export.archiveNoSpace`, `messages.export.archiveSaveFailed`, `messages.save.before.goBack`) |
 | Import Archive… | An action card, `Header` `common.importArchive`, icon Import (E8B5), a standard `Button` `common.importArchive` | Opens the picker, then the Import archive task page ([archive-import](archive-import.md)) |
 | Footer | A `TextBlock` (Caption) under the group: `settings.backup.archive.footerEncrypted` with the credential in lower case, or `settings.backup.archive.footerUnencrypted` | |
+| Change Password pointer | A `HyperlinkButton` under the footer, `settings.backup.archive.changePassword`, opening the [Change Password](change-password.md) dialog | There is no password check before exporting; typing the current password in Change Password is the check, and the dialog's Forgot password? link resets a forgotten one when the journals exist only on this PC |
 
 ### Markdown group
 
@@ -44,9 +46,9 @@ Header `settings.backup.markdown.header`.
 
 ### File menu dialogs
 
-File ▸ Export archive… and File ▸ Export journals as Markdown… open a `ContentDialog` ([Dialog patterns](settings.md#dialog-patterns)): `Title` `settings.backup.exportArchiveSheet.title` or `settings.backup.exportMarkdownSheet.title`; content the same action card, a progress ring (the dialog is modal, so the app is blocked on it), error bar, note bar and footer as the page; Close button `common.done` (Esc closes a dialog). The dialog stays open while the picker is up and closes when the window locks (nothing is left in the temporary folder: [below](#temporary-files)). The Erase dialog's Export archive… button closes that dialog and opens this one ([settings-erase](settings-erase.md)); it does not nest.
+File ▸ Export archive… and File ▸ Export journals as Markdown… open a `ContentDialog` ([Dialog patterns](settings.md#dialog-patterns)): `Title` `settings.backup.exportArchiveSheet.title` or `settings.backup.exportMarkdownSheet.title`; content the same action card, a progress ring (the dialog is modal, so the app is blocked on it), saved message, error bar, note bar, footer and Change Password pointer as the page; Close button `common.done` (Esc closes a dialog). The dialog stays open while the picker is up and closes when the window locks (nothing is left in the temporary folder: [below](#temporary-files)). The Erase dialog's Export archive… button closes that dialog and opens this one ([settings-erase](settings-erase.md)); it does not nest.
 
-**The one-time password check.** When the check is pending, pressing Export archive in the dialog replaces the dialog's content with [Check your password](password-check.md) (a swap, [Dialog patterns, 1](settings.md#dialog-patterns)); when the check is done the dialog's content returns to the export and the picker opens, so the spec's "the save dialog appears only after the check has closed" holds, and a failure shows in the dialog's error bar. From the Backup page the check is its own dialog over the page and the error shows on the page.
+**The Change Password pointer from the dialog.** Choosing it in the File-menu dialog replaces the dialog's content with the Change Password dialog's content (a swap, [Dialog patterns, 1](settings.md#dialog-patterns)); when it closes the export dialog's content returns. From the Backup page it opens the dialog over the page.
 
 ## The pickers
 
@@ -80,6 +82,7 @@ The export is prepared in a new folder under the app's temporary folder, deleted
 | `export-archive` | The button in the action card; File menu | — | Library open; not while one is being prepared or saved |
 | `import-archive` | The button in the action card; File menu | — | Unlocked |
 | `export-markdown` | The button in the action card; File menu | — | Library open and unlocked; not while preparing |
+| `change-password` | The pointer under the archive footer | — | Unlocked |
 | `export-sheet-done` | Close button of the File menu dialogs | `Esc` | Always |
 
 Exports ask Windows Hello first for Markdown when App Lock is on (`settings.backup.markdownReason` for encrypted journals, `settings.backup.markdownReasonUnencrypted` otherwise) through [the authentication gate](settings.md#the-authentication-gate); if it is cancelled nothing happens and nothing is said; a PC without Hello continues. The archive export asks nothing (open-questions D2).

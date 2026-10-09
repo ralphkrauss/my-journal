@@ -211,7 +211,7 @@ final class WritingWorkflowUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         NavigationTestSupport.newEntryFromList(app)
         let title = NavigationTestSupport.title(app)

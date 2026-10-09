@@ -95,7 +95,7 @@ final class HistoryLifecycleTests: XCTestCase {
             try? FileManager.default.removeItem(at: root)
         }
         await model.start()
-        let phrase = try XCTUnwrap(model.recoveryKey)
+        let phrase = AppModel.testPassword
         model.confirmRecovery()
         await model.newEntry()
         let envelope = try XCTUnwrap(model.configuration?.recovery)

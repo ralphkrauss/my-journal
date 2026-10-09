@@ -46,34 +46,24 @@ final class SpecDataCaptureTests: SpecCaptureCase {
         try shot(app, "change-password-default")
     }
 
-    @MainActor func testPasswordCheckBeforeFirstExport() throws {
-        let app = try launch(library: emptyLibraryFolder(), unlocking: false)
-        try tapButton("Start a Journal", in: app, timeout: 20)
-        try tapButton("Use Encryption", in: app)
+    /// The form that asks a library from an earlier version to encrypt before its journals open, and the sheet that
+    /// follows it.
+    @MainActor func testEncryptYourJournals() async throws {
+        let library = emptyLibraryFolder()
+        try await SpecLibraryFixtures.unencryptedLibrary(in: library)
+        let app = try launch(library: library, unlocking: false)
+        try require(app.staticTexts["Encrypt Your Journals"], app: app, timeout: 20)
+        try shot(app, "encrypt-journals-default")
         let password = app.secureTextFields["Master Password"]
         try require(password, app: app, timeout: 10)
         password.tap()
         password.typeText(samplePassword)
+        NavigationTestSupport.dismissKeyboardTips(app)
         let verify = app.secureTextFields["Verify"]
         verify.tap()
         verify.typeText(samplePassword)
-        try tapButton("Create", in: app)
-        try require(app.buttons["New Entry"].firstMatch, app: app, timeout: 30)
-        NavigationTestSupport.openSettings(app)
-        try tapButton("Backup", in: app)
-        try tapButton("Export Archive…", in: app)
-        try shot(app, "password-check-default")
-    }
-
-    @MainActor func testTurnOnEncryption() throws {
-        let app = try launch(library: emptyLibraryFolder(), unlocking: false)
-        try tapButton("Start a Journal", in: app, timeout: 20)
-        try tapButton("Continue Without Encryption", in: app)
-        try require(app.buttons["New Entry"].firstMatch, app: app, timeout: 30)
-        NavigationTestSupport.openSettings(app)
-        try tapButton("Privacy", in: app)
-        try shot(app, "settings-privacy-encryption-off")
-        try tapButton("Turn On Encryption…", in: app)
-        try shot(app, "turn-on-encryption-default")
+        try tapButton("Encrypt journals", in: app)
+        try require(app.staticTexts["Your Journals Are Encrypted"], app: app, timeout: 30)
+        try shot(app, "encrypt-journals-done")
     }
 }

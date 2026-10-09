@@ -25,7 +25,7 @@ When saving the open entry fails, the writing stays on screen and in memory, the
 | Mac only: closing or quitting with an unsaved entry | A `ContentDialog` on window close, Alt+F4 and File ▸ Exit: title `messages.save.mac.title`, content `messages.save.mac.message`, Close `messages.save.mac.keepOpen`; the window stays open | Applies on Windows as the one window: [library-window](../screens/library-window.md). Not offered when there is nothing unsaved |
 | Sign-out, restart or shutdown with an unsaved entry | The app sets a shutdown block reason (`ShutdownBlockReasonCreate`) with `messages.save.mac.title` and `messages.save.mac.message`, and removes it as soon as the entry is saved or the window is closed by the person | Windows lets the person choose to continue shutting down anyway; the app never refuses outright and never blocks without a failed save. Normal saves hold shutdown only for the brief save ([3](../platform.md#3-windows-and-instances)) |
 | The "save first" refusals (`messages.save.before.*` and the others of the spec's table) | Inline in the dialog or page of the operation, else the alert dialog | [messages](../messages.md), Save failures |
-| Writing paused (the library is being replaced) | An Informational `InfoBar` above the title: `messages.writingPaused.connecting` after 1 second, `messages.writingPaused.connectionFailed`, `messages.writingPaused.encrypting`, `messages.writingPaused.encryptionUnfinished`; no action | Show connection and Show progress are not offered: the Connect or Turn on encryption task page is modal over the only window and is the way to leave the state. The editor is read-only meanwhile |
+| Writing paused (the library is being replaced) | An Informational `InfoBar` above the title: `messages.writingPaused.connecting` after 1 second, `messages.writingPaused.connectionFailed`; no action. `messages.writingPaused.encrypting` is never shown: Windows runs no encryption ([flows/encrypt-journals](encrypt-journals.md)) | Show connection is not offered: the Connect task page is modal over the only window and is the way to leave the state. The editor is read-only meanwhile |
 | An archive opened while the library is replaced | The alert dialog with `messages.writingPaused.updating`, Close `common.ok` | |
 | Template suggestion hidden, Change date's Save dimmed, Erase unavailable, rating request not shown, sync paused | As the spec's table | The Sync page says why with `messages.sync.pausedForSaveFailure` |
 
@@ -81,7 +81,7 @@ The keys named `messages.save.mac.*` also serve Windows; their Mac-only name is 
 - **A failure while typing is not a dialog.** The spec shows the alert after every failed attempt, including attempts made by typing. A modal dialog that opens under the caret takes keyboard focus, so the next characters go to the dialog and the writing is not kept by the editor. On Windows the persistent bar and one Narrator notification tell the person, the dialog is kept for failures caused by a deliberate action, and the writing is kept in memory either way (D48).
 - **The notice is above the writing**, not below it.
 - **Shutdown block reason** replaces macOS's refusal to quit; Windows decides, the app only says why it should not.
-- **No Show connection and Show progress buttons**: the dialog is the only way into those flows.
+- **No Show connection button**: the Connect page is the only way into that flow. There is no Show progress button either: Windows runs no encryption.
 
 ## Open questions
 

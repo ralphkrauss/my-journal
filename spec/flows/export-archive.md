@@ -1,16 +1,16 @@
 ---
 id: export-archive
 title: Export an archive
-features: [export-archive, password-check]
+features: [export-archive, change-password]
 sources:
   - apps/apple/JournalApp/Views/ArchiveView.swift
   - apps/apple/JournalApp/Views/ExportView.swift
-  - apps/apple/JournalApp/Views/PasswordCheckView.swift
   - apps/apple/JournalApp/Model/DocumentTransferOperations.swift
-  - apps/apple/JournalApp/Model/PasswordCheckOperations.swift
+  - apps/apple/JournalApp/Views/ChangePasswordView.swift
   - docs/design/archives.md
   - docs/design/export-operation-lifetime.md
   - docs/design/pre-release-ui-2026-09-27.md
+  - docs/design/1-1-encryption-and-passwords.md
 ---
 
 # Export an archive
@@ -27,17 +27,14 @@ Saves one file with everything needed to bring the journals back: entries, journ
 
 1. Export Archive….
 2. **Device authentication** (only when App Lock is on and the journals aren't encrypted, because that archive holds readable entries, images and earlier versions and restoring it needs no password; an archive of encrypted journals needs the recovery credential instead): the device owner authenticates with the reason `settings.backup.archiveReason` ("Export an archive of your journals"). A device without a passcode goes on. Cancelled: nothing happens and nothing is said. Failed (for example biometrics locked out): nothing is exported and `settings.backup.verifyFailed` shows in the place where the export's own errors show. Every way in asks, including the Export Archive… button of the Erase warning.
-3. **One-time password check** (only for master-password journals not on a server whose password hasn't been confirmed): Check Your Password (`screens/password-check`).
-   - Right password: continue.
-   - Not Now: continue; asked again next time.
-   - Wrong: `settings.passwordCheck.wrong`; after a wrong try, Forgot Password? may be offered (`flows/forgot-password`).
-   - The save dialog appears only after the sheet has closed.
-4. **Preparing:** the open entry is saved (if it can't be: `messages.save.before.goBack`); the archive is written to a temporary package. After 0.3 seconds an indicator appears.
-5. **Save dialog:** the system's dialog, suggesting `settings.backup.archiveFilename` ("Journal Archive {yyyy-MM-dd}.journalarchive", the date in the Gregorian calendar, numerals 0–9).
-   - Saved: done; nothing is announced.
+3. **Preparing:** the open entry is saved (if it can't be: `messages.save.before.goBack`); the archive is written to a temporary package. After 0.3 seconds an indicator appears.
+4. **Save dialog:** the system's dialog, suggesting `settings.backup.archiveFilename` ("Journal Archive {yyyy-MM-dd}.journalarchive", the date in the Gregorian calendar, numerals 0–9).
+   - Saved: the Export row shows `messages.export.archiveSaved` ("Archive saved. Keep your {credential} with it.", the credential in lower case: master password or recovery key) until the next export starts, and the message is announced. An archive of journals without encryption has no credential and shows nothing.
    - Cancelled: nothing; not an error.
    - Saving failed: `messages.export.archiveSaveFailed`.
-6. The temporary package is removed when the dialog closes.
+5. The temporary package is removed when the dialog closes.
+
+There is no password check before exporting. A person who isn't sure of their password uses **Not sure of your password? Change Password…** (`settings.backup.archive.changePassword`), shown under the footer in Settings ▸ Backup and in the Export Archive sheet, for master-password journals only. It opens Change Password (`flows/change-password`): typing the current password is the check, a local-only library can reset a forgotten one with Forgot Password?, and an unwanted change is cancelled. Archives made before a change keep the old password.
 
 ## Errors
 

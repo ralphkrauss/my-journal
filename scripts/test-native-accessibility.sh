@@ -31,7 +31,7 @@ if [[ $# -eq 0 ]]; then
     -only-testing:JournalIOSUITests/JournalUITests/testDeleteLastJournalAndRestoreWithoutLosingEntry \
     -only-testing:JournalIOSUITests/JournalUITests/testPairDeviceAndDownloadEncryptedEntry \
     -only-testing:JournalIOSUITests/ConnectionSetupUITests/testSetUpEncryptedServerThenSignInOnAnotherDevice \
-    -only-testing:JournalIOSUITests/ConnectionSetupUITests/testSetUpServerWithoutEncryptionThenAddAnotherDevice \
+    -only-testing:JournalIOSUITests/ConnectionSetupUITests/testANewDeviceIsRefusedByAServerWithoutEncryption \
     -only-testing:JournalIOSUITests/HistoryUITests/testRestoreHistoricalEntryThenReopen \
     -only-testing:JournalIOSUITests/ArchiveUITests/testArchiveWrongKeyRetryRestoreAndReopen \
     -only-testing:JournalIOSUITests/EntryActionsUITests/testFormattingAndDateActionsPreserveWritingAcrossRelaunch \

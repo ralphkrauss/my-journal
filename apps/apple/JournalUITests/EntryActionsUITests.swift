@@ -11,7 +11,7 @@ final class EntryActionsUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         for title in ["First", "Second", "Third"] {
             if app.buttons["Finish Editing"].exists { app.buttons["Finish Editing"].tap() }

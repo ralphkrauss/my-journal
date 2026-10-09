@@ -108,8 +108,7 @@ extension AppModel {
         // Opening the archive needed its password.
         var next = LocalConfiguration(
             recovery: restored.recovery, recoveryConfirmed: true,
-            storageFolder: await restored.store.directory.lastPathComponent,
-            passwordChecked: restored.recovery.formatVersion == 2 ? true : nil)
+            storageFolder: await restored.store.directory.lastPathComponent)
         if let unopened = configuration {
             next.appLock = unopened.appLock
             next.inactivityLockMinutes = unopened.inactivityLockMinutes

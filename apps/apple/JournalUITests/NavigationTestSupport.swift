@@ -2,17 +2,18 @@ import XCTest
 
 @MainActor
 enum NavigationTestSupport {
-    static func createPasswordJournal(_ app: XCUIApplication) {
-        let encrypt = app.buttons["Use Encryption"]
-        XCTAssertTrue(encrypt.waitToAppear(timeout: 10))
-        encrypt.tap()
+    /// Start a Journal is one sheet, Choose a Master Password: with Start a Journal tapped, both fields and Create.
+    static func createPasswordJournal(_ app: XCUIApplication) { finishStartingAJournal(app) }
+
+    /// The Choose a Master Password sheet that Start a Journal opens: both fields, then Create.
+    static func finishStartingAJournal(_ app: XCUIApplication, password text: String = "Native UI fixture password") {
         let password = app.secureTextFields["Master Password"]
         XCTAssertTrue(password.waitToAppear(timeout: 10))
         password.tap()
-        password.typeText("Native UI fixture password")
+        password.typeText(text)
         let verify = app.secureTextFields["Verify"]
         verify.tap()
-        verify.typeText("Native UI fixture password")
+        verify.typeText(text)
         app.buttons["Create"].tap()
     }
 

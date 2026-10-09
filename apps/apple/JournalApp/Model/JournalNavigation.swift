@@ -283,7 +283,9 @@ extension AppModel {
         case .unavailable: return showCollectionImmediately(unavailable: true)
         }
     }
-    var isReady: Bool { store != nil && configuration?.recoveryConfirmed == true }
+    var isReady: Bool {
+        store != nil && configuration?.recoveryConfirmed == true && !showsEncryptionForm
+    }
     var canEdit: Bool {
         guard !locked, !replacingVault, let draft, draft.deletedAt == nil, draft.document.isEditable else {
             return false

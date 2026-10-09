@@ -14,7 +14,7 @@ sources:
 
 ## Purpose
 
-The first screen on a device without a library. It offers three ways in: start a new library here, join an existing one through a server, or start from a backup archive.
+The first screen on a device without a library. It offers three ways in: start a new library here (always encrypted, with a master password), join an existing one through a server, or start from a backup archive.
 
 ## Entry points
 
@@ -27,8 +27,10 @@ What the window shows at launch, in order of precedence (the same rule after eve
 2. A library exists and is locked: the lock screen ([screens/lock-screen](lock-screen.md)).
 3. The library can't be opened, or its settings can't be read, or a newer version wrote it: the library problem screen ([screens/unavailable-content](unavailable-content.md)). An unreadable settings file is never treated as a first launch, and this screen never starts a new library over it.
 4. No library: this screen.
-5. A library from an early build whose recovery key isn't confirmed yet: screens/recovery-key.
-6. Otherwise the library window (screens/library-window).
+5. A saved encryption marker whose server already switched, or an encryption run in progress: the journals, read-only, with the working or unfinished notice ([screens/encrypt-journals](encrypt-journals.md)). It comes before the form so a library whose server already switched is allowed to finish.
+6. A library that isn't encrypted (made by an earlier version, or restored from an unencrypted archive), with no marker and without Not Now chosen in this launch: Encrypt Your Journals, the form ([screens/encrypt-journals](encrypt-journals.md)).
+7. A library from an early build whose recovery key isn't confirmed yet: screens/recovery-key.
+8. Otherwise the library window (screens/library-window).
 
 ## Content
 
@@ -45,11 +47,11 @@ Centered column, scrolling when the text is large:
 
 | Action | Result |
 | --- | --- |
-| `library.welcome.start` | Opens the create-library sheet ([flows/create-library](../flows/create-library.md)). |
+| `library.welcome.start` | Opens the create-library sheet: Choose a Master Password ([flows/create-library](../flows/create-library.md)). |
 | `common.connectToServer` | Opens the connection sheet ([flows/connect-to-server](../flows/connect-to-server.md)). |
 | `common.importArchive` (command `import-archive`) | Opens the system file picker limited to journal archives; the chosen archive opens the import sheet (Settings ▸ Backup, screens/settings-backup). |
 
-Opening a `.journalarchive` file from the system (Files, Finder, Mail) while this screen shows also starts the import.
+Opening a `.journalarchive` file from the system (Files, Finder, Mail) while this screen shows also starts the import. Restoring an archive that isn't encrypted ends in Encrypt Your Journals (`flows/import-archive`).
 
 ## States
 

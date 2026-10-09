@@ -166,7 +166,9 @@ final class DocumentImageLoader: ObservableObject {
 
 extension AppModel {
     func updateImageLoading(retry: Bool = false) {
-        // Only replacing the library clears images; committing an entry action keeps the open entry's images.
-        imageLoader.update(draft, store: store, enabled: !locked && !vaultReplacement, retry: retry)
+        // Only replacing the library clears images; committing an entry action keeps the open entry's images. The
+        // journals stay readable while they are encrypted, so their images stay too.
+        imageLoader.update(
+            draft, store: store, enabled: !locked && (!vaultReplacement || encryption.pausesWriting), retry: retry)
     }
 }

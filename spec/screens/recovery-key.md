@@ -18,7 +18,7 @@ Libraries created by early versions were protected by a generated recovery key i
 
 ## Entry points
 
-- The journal window, when the library is open and unlocked and has a generated recovery key that hasn't been confirmed. The window decides what to show in this order: opening progress, the lock screen, the first-launch screen, this screen, the journals. Current versions create libraries with a master password (or without encryption), so new libraries never show this.
+- The journal window, when the library is open and unlocked and has a generated recovery key that hasn't been confirmed. The window decides what to show in this order: opening progress, the lock screen, the library problem screen, the first-launch screen, the encryption notice or Encrypt Your Journals, this screen, the journals (`screens/welcome`). Current versions create libraries with a master password, so new libraries never show this.
 
 ## Content
 

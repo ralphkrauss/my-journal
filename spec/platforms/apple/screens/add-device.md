@@ -32,7 +32,7 @@ screenshots:
 
 ## Controls
 
-Root: `NavigationStack { Form { ... } .formStyle(.grouped) .navigationTitle("Add Device") }` (`settings.addDevice.title`, inline on iOS). The view is presented with `.sheet` from three places: `DevicesSection` (`.sheet(isPresented:onDismiss:)`), `ConnectionStepView` (the Add Another Device… row of Server Is Ready) and the Turn On Encryption sheet. State is a private `Step` enum plus `@State` (`code`, `busy`, `error`, `notice`, `current`, `replaced`, `expired`, `unreachable`); the server calls are `model.connectedClient()` and `model.approveDevice(_:)` ([settings-devices](settings-devices.md)).
+Root: `NavigationStack { Form { ... } .formStyle(.grouped) .navigationTitle("Add Device") }` (`settings.addDevice.title`, inline on iOS). The view is presented with `.sheet` from three places: `DevicesSection` (`.sheet(isPresented:onDismiss:)`), `ConnectionStepView` (the Add Another Device… row of Server Is Ready) and the Done sheet of Encrypt Your Journals. State is a private `Step` enum plus `@State` (`code`, `busy`, `error`, `notice`, `current`, `replaced`, `expired`, `unreachable`); the server calls are `model.connectedClient()` and `model.approveDevice(_:)` ([settings-devices](settings-devices.md)).
 
 Toolbar: `.cancellationAction` is a `Button(role: .cancel)` titled `common.cancel`, or `settings.addDevice.dontAdd` while a scanned request is being confirmed, hidden in `.finished`, disabled while approving. `.confirmationAction` is the step's primary (below).
 

@@ -10,8 +10,7 @@ final class AboutUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
 
         NavigationTestSupport.openSettings(app)
         let erase = app.buttons["Erase Journals and Settings…"]

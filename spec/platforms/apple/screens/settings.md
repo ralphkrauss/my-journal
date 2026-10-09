@@ -41,7 +41,8 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 **Root (`SettingsView.body`).** A `Group` that shows, in order of precedence:
 1. Locked (`model.locked`): one secondary-coloured `Text`, copy key `settings.locked`, with padding. Nothing else is built.
 2. Library problem screen showing (`model.showsLibraryProblem`): one secondary `Text`, copy key `settings.libraryProblem` ("Settings are available once your journals open."), the spec's library problem state. **Screenshot pending:** settings-library-problem.
-3. Otherwise the shell below.
+3. Encrypt Your Journals showing as the root screen (an unencrypted library at launch, no Not Now yet, no marker): one secondary `Text`, copy key `settings.encryptFirst` ("Choose a master password to encrypt your journals first."), in place of the panes on every device. Once Not Now is chosen, or when the form is only a sheet, Settings is normal.
+4. Otherwise the shell below.
 
 **iPhone and iPad shell.**
 - `NavigationStack(path: $panes)` with a `List` as root. `panes` is `[AppSettingsTab]`; a requested pane is pushed by setting it. The navigation title is `settings.title`, `.navigationBarTitleDisplayMode(.inline)`. The sheet is `.sheet(isPresented: $model.settingsPresented) { SettingsView() }` on `RootView`.
@@ -54,7 +55,7 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 **Mac shell.**
 - A `Settings { SettingsView().environmentObject(model) }` scene in `JournalApp.swift`. The system supplies the My Journal ▸ Settings… item and ⌘, (`open-settings`).
 - `TabView(selection: $model.settingsTab)` whose children carry `.tabItem { Label(title, systemImage:) }`: General `gearshape`, Sync, Privacy, Backup and Agent Access with the same symbols as the iPhone list. The window title is the selected tab's name (standard Settings scene behaviour). Tab titles are the English words in the view.
-- Opening it from code (Sync Status, Show Progress): `SettingsPresenter` (a zero-size `Color.clear` in the journal window's `.background`) watches `model.settingsPresented`, calls `openSettings()` (the `\.openSettings` environment action, macOS 14 and later) and resets the flag; `showSettingsWindow:` is the fallback below macOS 14. The tab to show is set first: `openSyncSettings()` sets `settingsTab = .sync`; the journal window's "Show Connection" notice (`Views/SaveFailureNotice.swift`) sets `.sync`, where the Connect to a Server sheet it brings forward belongs; `EncryptionUpgrade.showProgress()` sets `.privacy` and presents the Turn On Encryption sheet.
+- Opening it from code (Sync Status, Show Connection): `SettingsPresenter` (a zero-size `Color.clear` in the journal window's `.background`) watches `model.settingsPresented`, calls `openSettings()` (the `\.openSettings` environment action, macOS 14 and later) and resets the flag; `showSettingsWindow:` is the fallback below macOS 14. The tab to show is set first: `openSyncSettings()` sets `settingsTab = .sync`; the journal window's "Show Connection" notice (`Views/SaveFailureNotice.swift`) sets `.sync`, where the Connect to a Server sheet it brings forward belongs. There is no Show Progress in 1.1: the encryption notice carries its own progress and Cancel.
 - `model.settingsTab` is an `AppModel` property, so the window reopens on the last selected tab for the life of the process. Its initial value is `.general`.
 
 **Sheets owned by the Settings view on both platforms:** `.sheet(item: $connect, onDismiss:) { ConnectionView() }` (Connect to a Server and Reconnect, opened by the Sync and Privacy panes; its `onDismiss` raises `devicesReload`, which makes the Devices section read its list again; Agent Access has its own sheet) and `.sheet(item: $reviewingConflict) { ConflictReview }`. Locking sets `reviewingConflict` to nil.
@@ -80,7 +81,6 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 | `settings-open-pane` | Mac tab, iPhone and iPad list row | none | always |
 | `settings-done` | iPhone and iPad toolbar, confirming position; none on the Mac | none | always |
 | `sync-status` | its Sync Settings… button opens Settings at Sync | none | when sync needs the person |
-| `show-encryption-progress` | Mac only: opens Settings at Privacy with the Turn On Encryption sheet | none | while encrypting or unfinished |
 
 Keyboard: on iPad with a hardware keyboard, the list is reachable with arrow keys and Full Keyboard Access like any `List`; there is no app-specific shortcut. On the Mac the tabs are the system's Settings tab bar; the page adds no key handling. Escape closes a sheet presented from Settings, not the Settings window itself (sheet default).
 
@@ -128,7 +128,7 @@ View:
 
 Model:
 - `apps/apple/JournalApp/Model/AppModel.swift`: `AppSettingsTab`, `settingsPresented`, `settingsTab`, `settingsRequestedTab`.
-- `apps/apple/JournalApp/Model/SyncHealthOperations.swift`: `openSyncSettings()`. `Model/EncryptionUpgrade.swift`: `showProgress()`.
+- `apps/apple/JournalApp/Model/SyncHealthOperations.swift`: `openSyncSettings()`. `Model/EncryptionUpgrade.swift`: the encryption state (`settings.encryptFirst` replaces the panes while the form is the root screen: `SettingsView` reads it from `Model/EncryptionRouting.swift`).
 
 Design records: `docs/design/owner-decisions-2026-09-25.md`, `ios-delete-all-and-settings-2026-10-03.md`, `erase-device-2026-10-04.md`, `about-and-ratings-2026-10-05.md`, `client-only-mac-lists-markdown-2026-10-05.md`.
 

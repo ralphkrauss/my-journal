@@ -90,6 +90,10 @@ Describe behaviour as people see it, in neutral words:
 - **Different wording for one situation:** if two keys word the same situation differently, keep both and record it in `open-questions.md`, section B; don't pick one silently.
 - **The catalog:** one JSON object, keys sorted. Each entry is `"key": {"text": "…", "context": "where and when it appears"}`. Plurals and variants put their object in `text`. Prefix references such as `messages.sync.action.*` in a spec file mean "all keys under this prefix".
 
+## Master passwords
+
+Every screen that chooses a master password asks twice (Master Password and Verify), uses new-password fields, and checks only that the two match; there is no minimum length, so the note under the fields and the Done line carry the safety weight. The screens are Start a Journal, Connect to a Server's Choose a Master Password, Encrypt Your Journals, Change Password's new fields and the new fields after Forgot Password?. Existing passwords of any length keep working everywhere. Whether the system offers and saves a strong password for an app with no associated web domain is unverified, so no screen promises it ([open-questions.md](open-questions.md), D61). The owner's decisions are open question C8 (2026-09-29, 2026-10-09). Windows and Android follow this rule.
+
 ## Command ids
 
 Command ids are kebab-case (`new-entry`, `format-bold`, `delete-all-recently-deleted`) and defined once, in the first column of a table headed `id` in `commands.md`. A table in a screen or flow may have a `Command` column that names them; the checker rejects an unknown id. A row for several related ids lists them together (`undo`, `redo`); `format-*` and `window-*` stand for the groups named in their rows.

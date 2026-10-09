@@ -55,7 +55,13 @@ final class ServerRefusalTests: XCTestCase {
     func testAWrongServerRecoveryCodeIsExplained() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Refusal-" + UUID().uuidString)
         let model = AppModel(directory: directory)
-        addTeardownBlock { @MainActor in try? FileManager.default.removeItem(at: directory) }
+        // A server without encryption is joined only by a device whose own library is unencrypted (from 1.0).
+        await model.startLegacyUnencrypted()
+        addTeardownBlock { @MainActor in
+            try? await model.store?.close()
+            if let account = model.configuration?.keyID { try? Keychain.remove(account) }
+            try? FileManager.default.removeItem(at: directory)
+        }
         let envelope = try JournalCoding.encoder().encode(RecoveryEnvelope.unprotected)
         let refusal = problem(401, "invalid_recovery_secret")
         let server = try await FakeJournalServer { request in
@@ -63,7 +69,7 @@ final class ServerRefusalTests: XCTestCase {
         }
         let failure = await error {
             try await model.recoverServer(
-                address: server.address, phrase: String(repeating: "a", count: 64), uploadLocal: false,
+                address: server.address, phrase: String(repeating: "a", count: 64), uploadLocal: true,
                 shown: RecoveryParameters(.unprotected))
         }
         XCTAssertEqual(failure as? ServerConnectionError, .invalidRecoveryCode)

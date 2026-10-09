@@ -6,19 +6,17 @@ struct NewVault: Sendable {
     let key: Data
     let recovery: RecoveryEnvelope
     let journalID: UUID
-    let legacyPhrase: String?
     let folder: String
 
-    static func prepare(in directory: URL, password: String?, encrypted: Bool) async throws -> NewVault {
-        if encrypted, let password, password.count < VaultCrypto.minimumPasswordLength {
+    /// A new library is always encrypted, with a master password the person chose (docs/design/
+    /// 1-1-encryption-and-passwords.md §3.3). Libraries without encryption exist only from earlier versions.
+    static func prepare(in directory: URL, password: String) async throws -> NewVault {
+        guard password.count >= VaultCrypto.minimumPasswordLength else {
             throw JournalError.server("Enter a master password.")
         }
         let key = try VaultCrypto.generateKey()
-        let phrase = encrypted ? try password ?? VaultCrypto.recoveryPhrase() : ""
-        let version = password == nil ? 1 : (encrypted ? 2 : 3)
         let envelope = try await Task.detached {
-            encrypted
-                ? try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase, formatVersion: version).0 : .unprotected
+            try VaultCrypto.makeRecovery(masterKey: key, phrase: password, formatVersion: 2).0
         }.value
         let folder = "vault-" + UUID().uuidString.lowercased()
         let path = directory.appendingPathComponent(folder)
@@ -29,9 +27,7 @@ struct NewVault: Sendable {
             let journal = JournalItem(kind: "journal", title: "Default")
             // No templates: a new library has only what the person makes (no-built-in-templates-2026-10-04.md).
             try await storage.save(journal)
-            return NewVault(
-                store: storage, key: key, recovery: envelope, journalID: journal.id,
-                legacyPhrase: encrypted && password == nil ? phrase : nil, folder: folder)
+            return NewVault(store: storage, key: key, recovery: envelope, journalID: journal.id, folder: folder)
         } catch {
             try? await staged?.close()
             try? FileManager.default.removeItem(at: path)

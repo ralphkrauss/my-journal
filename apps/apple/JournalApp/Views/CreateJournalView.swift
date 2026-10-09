@@ -1,6 +1,8 @@
 import JournalCore
 import SwiftUI
 
+/// Start a Journal: one sheet, Choose a Master Password (docs/design/1-1-encryption-and-passwords.md §3.3). A new
+/// library is always encrypted.
 struct CreateJournalView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
@@ -8,69 +10,36 @@ struct CreateJournalView: View {
     @State private var verify = ""
     /// Why Create didn't continue, shown under the fields.
     @State private var problem: String?
-    @State private var choosingPassword = false
     @State private var revealed = false
     @State private var busy = false
-    /// The field to focus next; the password fields take it, since a pushed step has focus of its own.
+    /// The field to focus next; the first field takes it when the sheet appears.
     @State private var focusRequest: MasterPasswordFields.Field?
 
     var body: some View {
         NavigationStack {
-            #if os(iOS)
-                // The password step is pushed, with the system back button and swipe back, as in Connect.
-                step(choosingPassword: false)
-                    .navigationDestination(isPresented: $choosingPassword) {
-                        step(choosingPassword: true).navigationBarBackButtonHidden(busy)
-                    }
-            #else
-                step(choosingPassword: choosingPassword)
-            #endif
-        }
-        .interactiveDismissDisabled(busy)
-        #if os(macOS)
-            .frame(width: 520, height: choosingPassword ? 580 : 420)
-        #endif
-    }
-    private func step(choosingPassword: Bool) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                Image(systemName: choosingPassword ? "key" : "lock.shield")
-                    .font(.largeTitle).foregroundStyle(.secondary).accessibilityHidden(true)
-                Text(choosingPassword ? "Choose a Master Password" : "Protect Your Journals")
-                    .font(.title2.bold())
-                Text(
-                    "Encryption protects your stored writing. Use your master password to restore a backup or recover your journals."
-                )
-                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                if choosingPassword {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    Image(systemName: "key")
+                        .font(.largeTitle).foregroundStyle(.secondary).accessibilityHidden(true)
+                    Text("Choose a Master Password").font(.title2.bold()).accessibilityAddTraits(.isHeader)
+                    Text(
+                        "Encryption protects your stored writing. Use your master password to restore a backup or recover your journals."
+                    )
+                    .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     MasterPasswordFields(
                         password: $password, verify: $verify, problem: $problem, revealed: $revealed,
                         focusRequest: $focusRequest
-                    ) { if canCreate { createEncrypted() } }
+                    ) { if canCreate { create() } }
                     Text(
                         "Save this password in your password manager. If you lose it and access to your devices, you won’t be able to restore your journals. Keep a backup, too."
                     )
-                    .font(.callout).foregroundStyle(.secondary)
-                } else {
-                    Button("Use Encryption") {
-                        self.choosingPassword = true
-                        focusRequest = .password
-                    }.buttonStyle(.borderedProminent).controlSize(.large)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Button("Continue Without Encryption") { create(encrypted: false) }
-                            .buttonStyle(.plain).foregroundStyle(.tint)
-                        Text("Anyone with access to your files, server, or backups can read your journals.")
-                            .font(.callout).foregroundStyle(.secondary)
-                    }
-                }
-                if let error = model.error { Text(error).foregroundStyle(.red) }
-                if busy { ProgressView("Creating…") }
-            }.padding(28).frame(maxWidth: 480, alignment: .leading).frame(maxWidth: .infinity)
-        }.disabled(busy)
-            .navigationTitle("")
-            .toolbar {
-                // On iPhone and iPad the password step has the system back button in Cancel's place.
-                if !choosingPassword || !Self.pushesPasswordStep {
+                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    if let error = model.error { Text(error).foregroundStyle(.red) }
+                    if busy { ProgressView("Creating…") }
+                }.padding(28).frame(maxWidth: 480, alignment: .leading).frame(maxWidth: .infinity)
+            }.disabled(busy)
+                .navigationTitle("")
+                .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", role: .cancel) {
                             password = ""
@@ -78,38 +47,31 @@ struct CreateJournalView: View {
                             dismiss()
                         }.disabled(busy)
                     }
-                }
-                if choosingPassword {
-                    if !Self.pushesPasswordStep {
-                        ToolbarItem { Button("Back") { self.choosingPassword = false }.disabled(busy) }
-                    }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Create") { createEncrypted() }.disabled(!canCreate)
+                        Button("Create") { create() }.disabled(!canCreate)
                     }
                 }
-            }
+        }
+        .interactiveDismissDisabled(busy)
+        .onAppear { focusRequest = .password }
+        #if os(macOS)
+            .frame(width: 520, height: 580)
+        #endif
     }
-    #if os(iOS)
-        private static let pushesPasswordStep = true
-    #else
-        private static let pushesPasswordStep = false
-    #endif
     private var canCreate: Bool { !busy && !password.isEmpty && !verify.isEmpty }
     /// The fields are compared on Create, with the reason under them.
-    private func createEncrypted() {
+    private func create() {
         guard password == verify else {
             problem = "The passwords don’t match."
             focusRequest = .verify
             announceForAccessibility("The passwords don’t match.")
             return
         }
-        create(encrypted: true)
-    }
-    private func create(encrypted: Bool) {
         busy = true
         model.error = nil
+        let chosen = password
         Task {
-            await model.start(password: encrypted ? password : nil, encrypted: encrypted)
+            await model.start(password: chosen)
             busy = false
             if model.error == nil, model.store != nil {
                 password = ""

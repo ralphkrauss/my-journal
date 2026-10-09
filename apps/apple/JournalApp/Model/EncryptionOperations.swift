@@ -24,65 +24,157 @@ enum EncryptionFailure: Error, Equatable {
     case serverChanged
 }
 
-/// What the app is doing while it turns on encryption.
+/// What the app is doing while it encrypts the journals.
 enum EncryptionPhase: Equatable {
-    case checking, syncing, encrypting(Double), updatingServer
+    case syncing, encrypting(Double), updatingServer
+}
+
+/// What the form's check of the server found (docs/design/1-1-encryption-and-passwords.md §3.4, variants).
+enum EncryptionCheck: Equatable {
+    /// The library has no server.
+    case local
+    /// The server doesn't use encryption yet and can switch.
+    case synced
+    /// The server already uses encryption: this device signs in.
+    case signIn
+    /// The library can't be encrypted now.
+    case failed(EncryptionFailure)
+}
+
+/// What an unfinished encryption ended as when the person stopped syncing.
+enum EncryptionAdoption: Equatable {
+    /// The server had switched or couldn't say: the verified encrypted copy is this device's library now.
+    case adopted
+    /// The server had not switched: the library stayed as it was and the copy was discarded.
+    case keptOriginal
+}
+
+/// The key and envelope an encryption will use, made before the journals pause.
+struct EncryptionPlan: Sendable {
+    let key: Data
+    let envelope: RecoveryEnvelope
+    let secret: String
+    let currentSecret: String?
+}
+
+/// Runs `work` and gives up after `seconds` (nil), so a server that never answers can't hold anything.
+func withTimeLimit<Value: Sendable>(
+    _ seconds: TimeInterval, _ work: @escaping @Sendable () async -> Value
+) async -> Value? {
+    await withTaskGroup(of: Value?.self) { group in
+        group.addTask { await work() }
+        group.addTask {
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            return nil
+        }
+        let first = await group.next()
+        group.cancelAll()
+        return first.flatMap { $0 }
+    }
+}
+
+private enum ServerInspection: Sendable {
+    case ready, encrypted, outdated, noAccess, unreachable
 }
 
 extension AppModel {
-    /// Checks what Continue on the first step checks: free space and, when synced, that the server can do this and
-    /// this device still has access.
-    func checkEncryptionReadiness() async throws {
-        guard !locked, !replacingVault, let store, configuration?.encrypted == false else {
-            throw EncryptionFailure.failed
+    /// The form's check (docs/design/1-1-encryption-and-passwords.md §3.4): a library with no server can be
+    /// encrypted at once; with a server, its public encryption details say whether this device signs in (it already
+    /// uses encryption), and otherwise that this device still has access, that it can switch, and that there is
+    /// room for the copy. Bounded: a server that doesn't answer is "unreachable".
+    func checkEncryptionReadiness() async -> EncryptionCheck {
+        guard !locked, !replacingVault, let store, configuration?.encrypted == false else { return .failed(.failed) }
+        guard let connection else { return .local }
+        let address = connection.address
+        let token = connection.token
+        let found = await withTimeLimit(serverQuestionSeconds) {
+            await Self.inspectServer(address: address, token: token)
         }
-        try await requireSpace(for: store)
-        guard let connection else { return }
-        let client = try ServerClient(address: connection.address, token: connection.token)
-        do {
-            guard try await client.status().supports(ServerClient.encryptionUpgradeFeature) else {
-                throw EncryptionFailure.serverOutdated
-            }
-            _ = try await client.devices()
-        } catch JournalError.unauthorized {
-            throw await lostAccess(connection)
-        } catch let failure as EncryptionFailure {
-            throw failure
-        } catch {
-            throw EncryptionFailure.unreachable
+        switch found {
+        case .encrypted?: return .signIn
+        case .outdated?: return .failed(.serverOutdated)
+        case .noAccess?: return .failed(.accessLost)
+        case .unreachable?, nil: return .failed(.unreachable)
+        case .ready?:
+            do { try await requireSpace(for: store) } catch let failure as EncryptionFailure {
+                return .failed(failure)
+            } catch { return .failed(.failed) }
+            return .synced
         }
     }
 
-    /// Turns on encryption with `password`. `current` is the access password of a library that has one. `report`
-    /// follows what's happening. Cancelling before the server is asked leaves the library unchanged.
+    private nonisolated static func inspectServer(address: String, token: String) async -> ServerInspection {
+        do {
+            let parameters = try await ServerClient(address: address).recoveryParameters()
+            if [1, 2].contains(parameters.formatVersion) { return .encrypted }
+            let client = try ServerClient(address: address, token: token)
+            guard try await client.status().supports(ServerClient.encryptionUpgradeFeature) else { return .outdated }
+            _ = try await client.devices()
+            return .ready
+        } catch JournalError.unauthorized {
+            return .noAccess
+        } catch {
+            return .unreachable
+        }
+    }
+
+    /// Encrypts the journals with `password`. `current` is the access password of a synced library that has one.
+    /// `report` follows what's happening. Cancelling before the server is asked leaves the library unchanged.
     func turnOnEncryption(
         password: String, current: String?, report: @escaping @MainActor @Sendable (EncryptionPhase) -> Void
     ) async throws {
+        let plan = try await prepareEncryption(password: password, current: current)
+        try await runEncryption(plan, report: report)
+    }
+
+    /// Everything that can be refused before the journals pause: the access password, the new key and envelope, the
+    /// open entry saved, and room for the copy.
+    func prepareEncryption(password: String, current: String?) async throws -> EncryptionPlan {
         guard !locked, !replacingVault, let configuration, !configuration.encrypted, let source = store,
             let oldKey = masterKey
         else { throw EncryptionFailure.failed }
         let currentSecret = try await verifyAccessPassword(current, envelope: configuration.recovery, key: oldKey)
-        guard await finishPendingSave() else { throw EncryptionFailure.failed }
         let key = try VaultCrypto.generateKey()
         let made = try await Task.detached {
             try VaultCrypto.makeRecovery(masterKey: key, phrase: password, formatVersion: 2)
         }.value
-        for attempt in 1...2 {
-            try Task.checkCancellation()
-            if connection != nil {
-                report(.syncing)
-                try await synchronizeBeforeEncrypting()
+        try Task.checkCancellation()
+        guard await finishPendingSave() else { throw EncryptionFailure.failed }
+        try await requireSpace(for: source)
+        return EncryptionPlan(key: key, envelope: made.0, secret: made.1, currentSecret: currentSecret)
+    }
+
+    /// Pauses writing at once, receives what the server has, and encrypts. The journals stay readable throughout.
+    func runEncryption(
+        _ plan: EncryptionPlan, report: @escaping @MainActor @Sendable (EncryptionPhase) -> Void
+    ) async throws {
+        guard !locked, !replacingVault, let source = store, configuration?.encrypted == false else {
+            throw EncryptionFailure.failed
+        }
+        pauseWriting(true)
+        do {
+            for attempt in 1...2 {
+                try Task.checkCancellation()
+                if connection != nil {
+                    report(.syncing)
+                    try await synchronizeBeforeEncrypting()
+                }
+                do {
+                    try await encrypt(
+                        source, key: plan.key, envelope: plan.envelope, secret: plan.secret,
+                        currentSecret: plan.currentSecret, report: report)
+                    return
+                } catch EncryptionFailure.serverChanged where attempt == 1 {
+                    // Another device wrote meanwhile: read it, then make the copy again, once.
+                    continue
+                } catch EncryptionFailure.serverChanged {
+                    throw EncryptionFailure.stillSyncing
+                }
             }
-            do {
-                try await encrypt(
-                    source, key: key, envelope: made.0, secret: made.1, currentSecret: currentSecret, report: report)
-                return
-            } catch EncryptionFailure.serverChanged where attempt == 1 {
-                // Another device wrote meanwhile: read it, then make the copy again, once.
-                continue
-            } catch EncryptionFailure.serverChanged {
-                throw EncryptionFailure.stillSyncing
-            }
+        } catch {
+            // Only an unfinished switch keeps writing paused; every other end gives the journals back.
+            if error as? EncryptionFailure != .unfinished { pauseWriting(false) }
+            throw error
         }
     }
 
@@ -90,7 +182,8 @@ extension AppModel {
     private func verifyAccessPassword(_ current: String?, envelope: RecoveryEnvelope, key: Data) async throws
         -> String?
     {
-        guard envelope.formatVersion == 3 else { return nil }
+        // A library from before libraries without encryption has an access password that only a server checks.
+        guard envelope.formatVersion == 3, connection != nil else { return nil }
         let phrase = current ?? ""
         let opened = try? await Task.detached { try VaultCrypto.recover(envelope, phrase: phrase) }.value
         guard let opened, opened.0 == key else { throw EncryptionFailure.incorrectPassword }
@@ -197,9 +290,11 @@ extension AppModel {
             case .incorrectPassword: throw EncryptionFailure.incorrectPassword
             case .alreadyEncrypted: throw EncryptionFailure.turnedOnElsewhere
             case .failed:
-                guard try await serverAdopted(marker, address: connection.address) else {
-                    throw EncryptionFailure.failed
+                // The server may have switched anyway: only its envelope says.
+                guard let adopted = await serverAdoptionIfAnswered(marker, address: connection.address) else {
+                    throw EncryptionFailure.unfinished
                 }
+                guard adopted else { throw EncryptionFailure.failed }
             }
         } catch is ServerRateLimited {
             throw EncryptionFailure.rateLimited
@@ -207,17 +302,22 @@ extension AppModel {
             throw await lostAccess(connection)
         } catch {
             // The request may have arrived: only the server's envelope says.
-            guard let adopted = try? await serverAdopted(marker, address: connection.address) else {
+            guard let adopted = await serverAdoptionIfAnswered(marker, address: connection.address) else {
                 throw EncryptionFailure.unfinished
             }
             guard adopted else { throw EncryptionFailure.unreachable }
         }
     }
 
-    /// Whether the server has the envelope this device sent: the same salt and wrapped key.
-    private func serverAdopted(_ marker: EncryptionUpgradeMarker, address: String) async throws -> Bool {
-        let parameters = try await ServerClient(address: address).recoveryParameters()
-        return parameters.formatVersion == 2 && parameters.salt == marker.recovery.salt
+    /// Whether the server has the envelope this device sent (the same salt), asked with a time limit: nil when the
+    /// server didn't answer in time or at all.
+    private func serverAdoptionIfAnswered(_ marker: EncryptionUpgradeMarker, address: String) async -> Bool? {
+        let salt = marker.recovery.salt
+        let answer = await withTimeLimit(serverQuestionSeconds) { () -> Bool? in
+            guard let parameters = try? await ServerClient(address: address).recoveryParameters() else { return nil }
+            return parameters.formatVersion == 2 && parameters.salt == salt
+        }
+        return answer.flatMap { $0 }
     }
 
     /// Switches to the encrypted copy with one configuration write, as connecting to a server does. The previous
@@ -228,7 +328,6 @@ extension AppModel {
         var next = previous
         next.recovery = marker.recovery
         next.recoveryConfirmed = true
-        next.passwordChecked = true
         next.storageFolder = marker.storageFolder
         next.keyID = marker.keyID
         next.encryptionUpgrade = nil
@@ -274,7 +373,8 @@ extension AppModel {
     var encryptionUnfinished: Bool { configuration?.encryptionUpgrade?.contactingServer == true }
 
     /// Finishes a switch the server may have made: with the server's new envelope, this device opens its encrypted
-    /// copy; with the old one, the copy is removed and nothing changed. Writing stays paused until it's known.
+    /// copy; with the old one, the copy is removed and nothing changed. Writing stays paused until it's known. A
+    /// server that doesn't answer in time leaves the state unfinished, where Try Again and Stop Syncing are offered.
     func finishInterruptedEncryption() async throws {
         guard let marker = configuration?.encryptionUpgrade, marker.contactingServer else { return }
         guard let connection else {
@@ -282,15 +382,19 @@ extension AppModel {
             return
         }
         pauseWriting(true)
-        let adopted: Bool
-        do { adopted = try await serverAdopted(marker, address: connection.address) } catch {
+        guard let adopted = await serverAdoptionIfAnswered(marker, address: connection.address) else {
             throw EncryptionFailure.unfinished
         }
         guard adopted else {
             await discardEncryptionCopy(nil, marker: marker)
             return
         }
-        // As when turning on encryption, no synchronization of the unencrypted library runs while it's replaced.
+        try await openEncryptedCopy(marker)
+    }
+
+    /// Opens the staged encrypted copy in place of the unencrypted library. As when turning on encryption, no
+    /// synchronization of the unencrypted library runs while it's replaced.
+    private func openEncryptedCopy(_ marker: EncryptionUpgradeMarker) async throws {
         let previous = store
         do { try await previous?.holdSynchronization() } catch { throw EncryptionFailure.unfinished }
         do {
@@ -306,11 +410,36 @@ extension AppModel {
         }
     }
 
+    /// Stop Syncing on the unfinished notice (docs/design/1-1-encryption-and-passwords.md §3.4). Both local copies are
+    /// complete and verified by now, so this is not `stopSyncing` (which refuses while the library is being
+    /// replaced). One bounded question first: if the server had not switched, nothing was lost and no adoption is
+    /// needed, so the original library stays and the copy is discarded; if it had switched, or can't say, the
+    /// verified encrypted copy becomes this device's library. Either way the connection is then removed.
+    func stopSyncingAfterUnfinishedEncryption() async throws -> EncryptionAdoption {
+        guard let marker = configuration?.encryptionUpgrade, marker.contactingServer else {
+            throw EncryptionFailure.failed
+        }
+        pauseWriting(true)
+        let answer: Bool?
+        if let connection {
+            answer = await serverAdoptionIfAnswered(marker, address: connection.address)
+        } else {
+            answer = false
+        }
+        if answer == false {
+            await discardEncryptionCopy(nil, marker: marker)
+            stopSyncing()
+            return .keptOriginal
+        }
+        try await openEncryptedCopy(marker)
+        stopSyncing()
+        return .adopted
+    }
+
     /// Stops with the space still needed when the copy won't fit.
     private func requireSpace(for store: JournalStore) async throws {
         let needed = try await store.reencryptionSize() + 50 * 1024 * 1024
-        let values = try? directory.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
-        guard let available = values?.volumeAvailableCapacityForImportantUsage, available < needed else { return }
+        guard let available = availableStorage(directory), available < needed else { return }
         throw EncryptionFailure.notEnoughSpace(needed - available)
     }
 

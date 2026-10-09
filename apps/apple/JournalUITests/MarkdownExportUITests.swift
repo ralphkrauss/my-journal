@@ -10,8 +10,7 @@ final class MarkdownExportUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        XCTAssertTrue(app.buttons["Continue Without Encryption"].waitToAppear(timeout: 5))
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         let newEntry = app.buttons["New Entry"].firstMatch
         XCTAssertTrue(newEntry.waitToAppear(timeout: 10))
         newEntry.tap()

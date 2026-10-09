@@ -1,7 +1,7 @@
 ---
 id: settings-backup
 title: Settings ▸ Backup, and the Export sheets
-features: [export-archive, import-archive, export-markdown, password-check]
+features: [export-archive, import-archive, export-markdown, change-password]
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
   - apps/apple/JournalApp/Views/ArchiveView.swift
@@ -10,6 +10,7 @@ sources:
   - apps/apple/JournalApp/Model/DocumentTransferOperations.swift
   - apps/apple/JournalApp/Model/MarkdownExportOperations.swift
   - docs/design/archives.md
+  - docs/design/1-1-encryption-and-passwords.md
   - docs/design/archive-actions-accessibility.md
   - docs/design/export-operation-lifetime.md
   - docs/design/owner-decisions-2026-09-25.md
@@ -35,9 +36,10 @@ Makes a complete, private copy of the journals that can be imported later (an ar
 
 Header `settings.backup.archive.header` ("Archive").
 1. A button `common.exportArchive` ("Export Archive…"). While the archive is being prepared for longer than 0.3 seconds, a small activity indicator appears at the row's end (accessibility label `settings.backup.preparingArchive` "Preparing Archive…"); the row keeps its size.
-2. An error line in red, selectable, when the last export failed.
+2. An error line in red, selectable, when the last export failed. After a save, in the same place and until the next export starts: `messages.export.archiveSaved` ("Archive saved. Keep your {credential} with it.", credential in lower case), announced when it appears. Journals without encryption show nothing.
 3. A button `common.importArchive` ("Import Archive…").
-- Footer: `settings.backup.archive.footerEncrypted` ("An archive is an encrypted copy of your journals, including images and earlier versions. Keep your {credential} separately.", credential in lower case) or, for journals without encryption, `settings.backup.archive.footerUnencrypted` ("An archive includes readable entries, images and earlier versions. Keep it private.").
+- Footer: `settings.backup.archive.footerEncrypted` ("An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your {credential}.", credential in lower case) or, for journals without encryption, `settings.backup.archive.footerUnencrypted` ("An archive includes readable entries, images and earlier versions. Keep it private.").
+- Under the footer, for master-password journals only: a borderless button `settings.backup.archive.changePassword` ("Not sure of your password? Change Password…"), which opens Change Password (`screens/change-password`). There is no password check before exporting; typing the current password in Change Password is the check, and a local-only library can reset a forgotten password there.
 
 ### 2. Markdown section
 
@@ -49,7 +51,7 @@ Header `settings.backup.markdown.header` ("Markdown").
 
 ### Export Archive sheet (File menu, and from Erase)
 
-A sheet titled `settings.backup.exportArchiveSheet.title` ("Export Archive") with the same Export Archive… button, indicator and error line, the archive footer, and a cancel-position button `common.done` that closes it. Closes when the app locks.
+A sheet titled `settings.backup.exportArchiveSheet.title` ("Export Archive") with the same Export Archive… button, indicator, error line and saved message, the archive footer, the Change Password pointer, and a cancel-position button `common.done` that closes it. Closes when the app locks.
 
 ### Export as Markdown sheet (File menu)
 
@@ -61,6 +63,7 @@ A sheet titled `settings.backup.exportMarkdownSheet.title` ("Export as Markdown"
 | --- | --- | --- | --- |
 | Export Archive… | `export-archive` | Library open and unlocked; not while one is being prepared or saved | `flows/export-archive`. |
 | Import Archive… | `import-archive` | Unlocked | File picker for journal archives; then `screens/archive-import`. A picker failure shows the alert `settings.backup.openFailed` ("Couldn’t Open Archive") with the system's message and `common.ok`. |
+| Not sure of your password? Change Password… | `change-password` | Master-password journals, unlocked | Opens Change Password. |
 | Export as Markdown… | `export-markdown` | Library open and unlocked; not while preparing | `flows/export-markdown`. |
 | Done (sheets) | `export-sheet-done` | Always | Closes the sheet. |
 

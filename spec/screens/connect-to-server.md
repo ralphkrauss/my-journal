@@ -6,7 +6,7 @@ sources:
   - apps/apple/JournalApp/Views/ConnectionView.swift
   - apps/apple/JournalApp/Views/ConnectionSteps.swift
   - apps/apple/JournalApp/Views/MergeJournalsView.swift
-  - apps/apple/JournalApp/Views/TurnOnEncryptionView.swift
+  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - apps/apple/JournalApp/Views/SaveFailureNotice.swift
   - apps/apple/JournalApp/Model/ConnectionFlow.swift
   - apps/apple/JournalApp/Model/ServerJoining.swift
@@ -18,6 +18,7 @@ sources:
   - docs/design/join-with-local-journals.md
   - docs/design/sync-health-and-recovery.md
   - docs/design/sync-security-2026-09-24.md
+  - docs/design/1-1-encryption-and-passwords.md
 ---
 
 # Connect to a Server
@@ -47,7 +48,7 @@ The sheet is a navigation stack: the first page chooses a server; each later ste
 - Toolbar: a cancel button and the step's primary (confirming) button, described per page.
   - Cancel (`common.cancel`) is disabled while installing (connecting, setting up, signing in).
   - Phone/tablet: Back is shown where going back is allowed; Cancel is shown only where Back isn't. Computer: Cancel is always shown (Back is available as well where allowed).
-  - Back isn't allowed while working, on Server Is Ready and Finish, or on Protect Your Journals and Choose a Master Password once a journal was created in this sheet.
+  - Back isn't allowed while working, on Server Is Ready and Finish, or on Choose a Master Password once a journal was created in this sheet.
 
 ### Page 1: Choose a server
 
@@ -76,23 +77,12 @@ Title `settings.connect.setUp.title`. Shown when the chosen server isn't set up 
 - Primary: `settings.connect.setUp.setUp` ("Set Up") when Set Up follows directly, otherwise `common.continue`. Disabled while working or when the code is empty. Return does the same.
 - Field errors: `messages.connection.setupCodeLength`, `messages.connection.setupCodeCharacters`, `messages.connection.setupCodeIncorrect`, `messages.connection.setupCodeRateLimited`.
 
-### Step: Protect Your Journals
-
-Title `common.protectYourJournals`. Only when this device has no journals yet (a server is being set up from a new device).
-
-1. Intro (secondary text, no background): `settings.connect.protect.intro`.
-2. A single choice, without a visible label (accessibility label `settings.connect.protect.choice` "Encryption"):
-   - `settings.connect.protect.encrypt` ("Encrypt") with detail `settings.connect.protect.encryptDetail` — the default;
-   - `settings.connect.protect.dontEncrypt` ("Don’t Encrypt") with detail `common.unencryptedWarning`.
-   The choice is disabled while working and once a journal was created in this sheet.
-- Primary: `common.tryAgain` after a journal was created here and the server failed; otherwise `common.continue` (Encrypt) or `settings.connect.setUp.setUp` (Don’t Encrypt).
-
 ### Step: Choose a Master Password
 
-Title `common.chooseMasterPassword`. After Encrypt.
+Title `common.chooseMasterPassword`. Only when this device has no journals yet (a server is being set up from a new device): there is no Protect step and no choice of whether to encrypt, because every new library is encrypted. The page after the setup code is this one.
 
 1. Intro: `settings.connect.choosePassword.intro` ("…before they’re sent to {host}.").
-2. Fields: `common.masterPassword` ("Master Password"), then `common.verify` ("Verify"); password-manager suggestions for a new password; no autocorrection. A switch `common.showPassword` ("Show Password") shows both as plain text. Return in the first moves to Verify; Return in Verify sets up.
+2. Fields: `common.masterPassword` ("Master Password"), then `common.verify` ("Verify"), both new-password fields (`spec/README.md`, Master passwords: two fields, they must match, no minimum length); no autocorrection. A switch `common.showPassword` ("Show Password") shows both as plain text. Return in the first moves to Verify; Return in Verify sets up.
 3. Footer: `settings.password.footer`.
 - The fields are disabled while working and once a journal was created here (Try Again reuses the same password).
 - Primary: `settings.connect.setUp.setUp`, or `common.tryAgain` after a journal was created here; disabled while working or when either field is empty.
@@ -220,6 +210,7 @@ While the computer connects to a server from the Settings window, the journal wi
 ## Rules
 
 - Searching for nearby servers runs only while page 1 is shown, unlocked and without a scanned code.
+- **Servers without encryption.** A device with an encrypted library, or with no library, never sets up, joins or keeps a server whose recovery format is 3 or 4 (set up without encryption): the check on page 1, pairing and the scanned-code check refuse it with `messages.connection.encryptionOff` and nothing is sent. A device with an unencrypted library (one that chose Not Now in Encrypt Your Journals) keeps the earlier behaviour toward its own unencrypted server, including Add This Device and Use a Recovery Code for a server without encryption; the Encrypt Your Journals form then encrypts the server ([flows/encrypt-journals](../flows/encrypt-journals.md)). Those steps and their keys stay until Not Now is removed in a later release.
 - Nearby servers are suggestions only: the address is checked exactly as a typed one. Only HTTPS announcements are listed, one row per address.
 - The setup code field formats as the person types: letters are upper-cased, spaces and dashes are removed and the hyphen is inserted after three characters (`XXX-XXX`); the code is never submitted automatically.
 - Field errors clear when the field changes. The two password fields' errors clear together.

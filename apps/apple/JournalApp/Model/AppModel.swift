@@ -37,6 +37,14 @@ final class AppModel: ObservableObject {
     var preferences = UserDefaults.standard
     /// Lists the Keychain's accounts for Erase; replaced by tests.
     var keychainListing: () throws -> [String] = { try Keychain.accounts() }
+    /// How long the encryption form's check and the unfinished state's questions to the server may take; tests set it
+    /// shorter.
+    var serverQuestionSeconds: TimeInterval = 10
+    /// The bytes free for important use on the volume that holds `directory`; tests replace it.
+    var availableStorage: (URL) -> Int64? = {
+        (try? $0.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]))?
+            .volumeAvailableCapacityForImportantUsage
+    }
     /// The library is being replaced (connecting, pairing or importing); this starts a new vault session.
     /// Set while connecting (ServerJoining.swift) or importing replaces the library.
     @Published var vaultReplacement = false {
@@ -393,14 +401,14 @@ final class AppModel: ObservableObject {
         "master-" + SHA256.hash(data: Data(directory.path.utf8)).map { String(format: "%02x", $0) }.joined()
     }
     var configURL: URL { directory.appendingPathComponent("configuration.json") }
-    func start(password: String? = nil, encrypted: Bool = true) async {
+    func start(password: String) async {
         // Starting a journal overwrites the configuration; not while the one there couldn't be read or opened.
         guard configuration == nil, !starting, libraryProblem == nil else { return }
         starting = true
         defer { starting = false }
         var staged: NewVault?
         do {
-            let created = try await NewVault.prepare(in: directory, password: password, encrypted: encrypted)
+            let created = try await NewVault.prepare(in: directory, password: password)
             staged = created
             // The key's name is saved with the library, never derived from where the library is stored: an iOS
             // app's container path can change with an update.
@@ -409,8 +417,8 @@ final class AppModel: ObservableObject {
             // The connection's name too, so the library never finds an older library's connection by the
             // path-derived name (docs/design/erase-device-2026-10-04.md §5).
             configuration = LocalConfiguration(
-                recovery: created.recovery, recoveryConfirmed: password != nil || !encrypted,
-                storageFolder: created.folder, keyID: account, connectionKeyID: account + "-connection")
+                recovery: created.recovery, recoveryConfirmed: true, storageFolder: created.folder, keyID: account,
+                connectionKeyID: account + "-connection")
             do { try persistConfiguration() } catch {
                 configuration = nil
                 try? Keychain.remove(account)
@@ -419,7 +427,6 @@ final class AppModel: ObservableObject {
             masterKey = created.key
             store = created.store
             selectedJournalID = created.journalID
-            recoveryKey = created.legacyPhrase
             try await refresh()
         } catch {
             if configuration == nil { await staged?.discard() }
@@ -704,7 +711,9 @@ final class AppModel: ObservableObject {
             // Any synchronization that ran does what one the watcher asked for would.
             if finished.outcome != .declined { syncTiming.watcherSyncDue = false }
         }
-        guard !locked, !replacingVault, !saveFailure, let store, let syncEngine else { return false }
+        // Nothing reaches a server while an unencrypted library waits for the person's decision to encrypt.
+        guard !locked, !replacingVault, !saveFailure, !encryptionHoldsSynchronization, let store, let syncEngine
+        else { return false }
         // The floor between requests counts from every synchronization, not only the loop's.
         handleWatcher(.syncStarted)
         var report: SyncReport?
@@ -818,7 +827,6 @@ final class AppModel: ObservableObject {
             // App Lock stays on: the device's authentication can't be forgotten the way a PIN could.
             configuration?.pinRetiredNotice = nil
             unlockState.problem = false
-            if result.1.formatVersion == 2 { configuration?.passwordChecked = true }
             try persistConfiguration()
             locked = false
             error = nil
@@ -913,7 +921,7 @@ extension AppModel {
         firstReadPending = false
         saveFailure = false
         syncActivity.pendingItems = 0
-        encryption.turnedOnElsewhere = false
+        encryption.reset()
         retryGrant = nil
         agreedMergeHost = nil
         mergeSending = false

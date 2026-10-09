@@ -233,17 +233,18 @@ Every command in Settings and the flows it opens. Commands that live on other su
 
 | id | Name (copy key) | Enabled when | What it does |
 | --- | --- | --- | --- |
-| `turn-on-encryption` | `settings.privacy.encryption.turnOn` | journals not encrypted, unlocked, not replacing the journals | Opens Turn On Encryption (`flows/turn-on-encryption`). |
-| `encryption-continue` | `common.continue` / `common.tryAgain` | not working | Checks space and the server; next step. |
-| `encryption-turn-on` | `settings.encryption.turnOn` | new password typed twice (and current access password if asked) | Encrypts. |
+| `turn-on-encryption` | `settings.privacy.encryption.turnOn` | journals not encrypted, unlocked, not replacing the journals (except to show a run in progress) | Opens the Encrypt Your Journals form as a sheet with Cancel (`screens/encrypt-journals`, `flows/encrypt-journals`). |
+| `encrypt-journals` | `library.encrypt.action` / `common.tryAgain` | the check passed; new password typed twice (and current access password if asked); not working | Encrypts. |
+| `encrypt-journals-not-now` | `library.encrypt.notNow` | only where the form can't succeed or has failed (`screens/encrypt-journals`, Exits) | Opens the journals as before this version; the form returns at the next launch. |
+| `encrypt-journals-stop-syncing` | `settings.sync.stopSyncing` | no access, server too old, access password wrong or limited; also on the unfinished notice | Confirmation, then stops syncing and encrypts locally; on the unfinished notice adopts the encrypted copy (`flows/stop-syncing`). |
 | `encryption-finish` | `common.tryAgain` | unfinished | Finishes after the server switched. |
-| `encryption-cancel` | `common.cancel` | before the server is updated | Stops; nothing changes. |
-| `encryption-done` | `common.done` | encrypted | Closes. |
-| `show-encryption-progress` | `messages.writingPaused.showProgress` | computer, while encrypting or unfinished | Opens Settings ▸ Privacy with the sheet. |
-| `change-password` | `settings.privacy.changePassword` | master-password journals, unlocked | Opens Change Password (`flows/change-password`). |
+| `encryption-cancel` | `common.cancel` | the working notice, before the server is updated; the form as a sheet, always | Notice: stops the work, nothing changes, shows the plain form again. Sheet: closes it. |
+| `encryption-done` | `common.done` | encrypted | Closes the Done sheet. |
+| `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the archive footer) | master-password journals, unlocked | Opens Change Password (`flows/change-password`). |
 | `change-password-submit` | `settings.changePassword.change` | all fields filled, new matches confirm | Changes the password. |
 | `change-password-retry` | `common.tryAgain` | the server changed, this device didn't save | Saves on this device again. |
 | `change-password-cancel` | `common.cancel` | not working; while a local save is pending, only after Try Again failed | Closes without changing anything. |
+| `forgot-password` | `settings.changePassword.forgot` | in the Change Password sheet: journals only on this device, not being replaced, unlocked, owner authentication available; not working | Authenticates the owner (`settings.changePassword.authReason`), then replaces the Current Password section with the forgot form (`flows/change-password`). |
 | `toggle-app-lock` | `settings.privacy.appLock.require` | not while asking; on needs authentication available | Authenticates, then turns App Lock on or off (`flows/app-lock`). |
 | `set-inactivity-lock` | `settings.privacy.appLock.inactive` | computer, App Lock on | Sets Lock when inactive; longer or Never authenticates first. |
 | `unlock-with-device` | `settings.lock.unlockWith` | locked, not asking | Asks the system to authenticate. |
@@ -258,11 +259,6 @@ Every command in Settings and the flows it opens. Commands that live on other su
 
 | id | Name (copy key) | Enabled when | What it does |
 | --- | --- | --- | --- |
-| `password-check` | `settings.passwordCheck.check` | password typed | Checks the master password; the export continues. |
-| `password-check-not-now` | `settings.passwordCheck.notNow` | not checking | Continues the export without checking. |
-| `forgot-password` | `settings.passwordCheck.forgot` | after a wrong password; journals only on this device; owner authentication available | `flows/forgot-password`. |
-| `set-new-password` | `settings.passwordCheck.setNew.set` | both fields match | Sets the new password; the export continues. |
-| `set-new-password-cancel` | `common.cancel` | not saving | Back to Check Your Password. |
 | `archive-open` | `common.continue` | password typed (or none needed), not busy | Opens and previews the archive. |
 | `archive-import` | `settings.archiveImport.restore` / `settings.archiveImport.importAsNew` | previewed, not busy | Imports. |
 | `archive-import-cancel` | `common.cancel` | not importing | Discards and closes. |

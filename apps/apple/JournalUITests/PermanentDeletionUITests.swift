@@ -58,7 +58,7 @@ final class PermanentDeletionUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Default", app: app)
         for title in ["Kept", "Other"] {
             if app.buttons["Finish Editing"].exists { app.buttons["Finish Editing"].tap() }
@@ -96,7 +96,7 @@ final class PermanentDeletionUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.showJournals(app)
         app.buttons["New Journal"].tap()
         let create = app.alerts["New Journal"]
@@ -145,7 +145,7 @@ final class PermanentDeletionUITests: XCTestCase {
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["Start a Journal"].waitToAppear(timeout: 10))
         app.buttons["Start a Journal"].tap()
-        app.buttons["Continue Without Encryption"].tap()
+        NavigationTestSupport.finishStartingAJournal(app)
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         XCTAssertTrue(app.staticTexts["No Deleted Items"].waitToAppear(timeout: 5))
         let deleteAll = app.navigationBars.buttons["Delete All"]

@@ -13,7 +13,7 @@ Where every command in [commands.md](../../commands.md) appears in the Windows a
 | app | Anywhere in the library window. No two app or editor shortcuts may be the same |
 | editor | Only while the editor (or a table cell) has focus; may not repeat an app or editor shortcut |
 | list | Only in a focused list, the navigation pane or the search box; may repeat across list rows, never an app or editor shortcut |
-| dialog | Inside a dialog, a flyout, a task page (Connect, Turn on encryption, Import archive) or the lock page |
+| dialog | Inside a dialog, a flyout, a task page (Connect, Import archive) or the lock page |
 | system | Supplied by Windows; listed for completeness |
 | — | No shortcut |
 
@@ -175,7 +175,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 | --- | --- | --- | --- | --- | --- |
 | `connect-to-server` | `common.connectToServer` | Accent button in the Sync, Devices and Agent access pages when not connected; first-launch page | — | — | Opens the Connect task page. |
 | `sync-now` | `messages.sync.action.syncNow` / `common.tryAgain` / `messages.sync.action.checkAgain` | The `ActionButton` of the Sync page's bar when a bar shows, otherwise a button in the server card (never both, D49); the Sync status flyout | — | — | "Syncing…" with a small indeterminate `ProgressBar` (or the text alone) for at least half a second: the page stays usable, so it is not a ring ([11](platform.md#11-progress-and-announcements)). |
-| `sync-reconnect` | `common.reconnect` | The state's action in an `InfoBar` or card on the Sync, Privacy and Agent access pages | — | — |  |
+| `sync-reconnect` | `common.reconnect` | The state's action in an `InfoBar` or card on the Sync and Agent access pages | — | — |  |
 | `stop-syncing` | `settings.sync.stopSyncing` | A card with a Stop syncing button in its own group on the Sync page | — | — | No ellipsis; confirmation dialog with no default button. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` | Hyperlink in the card description | — | — |  |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Not offered | — | — | Mac-only state. |
@@ -223,14 +223,14 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `turn-on-encryption` | `settings.privacy.encryption.turnOn` | Button in the Privacy page | — | — | Opens the Turn on encryption task page. |
-| `encryption-continue` | `common.continue` / `common.tryAgain` | Task page: primary button | `Enter` | dialog |  |
-| `encryption-turn-on` | `settings.encryption.turnOn` | Task page: primary button | `Enter` | dialog |  |
-| `encryption-finish` | `common.tryAgain` | Task page: primary button | — | — |  |
-| `encryption-cancel` | `common.cancel` | Task page: Cancel button | — | — | Esc is not bound. Closing the window follows the one rule in [3](platform.md#3-windows-and-instances). |
-| `encryption-done` | `common.done` | Task page: Done button, default | `Enter` | dialog |  |
-| `show-encryption-progress` | `messages.writingPaused.showProgress` | Not offered | — | — | The task page is modal over the only window. |
-| `change-password` | `settings.privacy.changePassword` | Button in the Privacy page | — | — | Opens the dialog. |
+| `turn-on-encryption` | `settings.privacy.encryption.turnOn` | Not offered | — | — | Windows has no unencrypted libraries, so Settings ▸ Privacy never shows Encryption Is Off or this button ([screens/encrypt-journals](screens/encrypt-journals.md)). |
+| `encrypt-journals` | `library.encrypt.action` / `common.tryAgain` | Not offered | — | — | Windows never shows the Encrypt Your Journals form: it has no unencrypted libraries and never creates one ([flows/encrypt-journals](flows/encrypt-journals.md)). |
+| `encrypt-journals-not-now` | `library.encrypt.notNow` | Not offered | — | — | Same reason: there is no form to leave. |
+| `encrypt-journals-stop-syncing` | `settings.sync.stopSyncing` | Not offered | — | — | Same reason: no encrypting without a master password on this PC. A server whose recovery format is 3 or 4 is refused instead (`messages.connection.encryptionOff`, [screens/connect-to-server](screens/connect-to-server.md)). |
+| `encryption-finish` | `common.tryAgain` | Not offered | — | — | No encryption run exists on Windows. |
+| `encryption-cancel` | `common.cancel` | Not offered | — | — | No encryption run exists on Windows. |
+| `encryption-done` | `common.done` | Not offered | — | — | No Done step exists on Windows. |
+| `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the Export Archive footer) | Button in the Privacy page; link button in the Export Archive card | — | — | Opens the dialog ([flows/change-password](flows/change-password.md)). |
 | `change-password-submit` | `settings.changePassword.change` | Dialog: primary button | `Enter` | dialog | Enter in the last field. |
 | `change-password-retry` | `common.tryAgain` | Dialog: button | — | — |  |
 | `change-password-cancel` | `common.cancel` | Dialog: close button | `Esc` | dialog |  |
@@ -248,11 +248,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `password-check` | `settings.passwordCheck.check` | Dialog: primary button | `Enter` | dialog |  |
-| `password-check-not-now` | `settings.passwordCheck.notNow` | Dialog: close button | `Esc` | dialog |  |
-| `forgot-password` | `settings.passwordCheck.forgot` | Dialog: link button | — | — | Offered only when Windows Hello is available; asks for it first. |
-| `set-new-password` | `settings.passwordCheck.setNew.set` | Dialog: primary button | `Enter` | dialog |  |
-| `set-new-password-cancel` | `common.cancel` | Dialog: close button | `Esc` | dialog |  |
+| `forgot-password` | `settings.changePassword.forgot` | Change Password dialog: link button under Current password | — | — | Offered only when Windows Hello is available and the journals exist only on this PC; asks for Windows Hello first (`settings.changePassword.authReason`). |
 | `archive-open` | `common.continue` | Task page: primary button | `Enter` | dialog | Enter in the password field. |
 | `archive-import` | `settings.archiveImport.restore` / `settings.archiveImport.importAsNew` | Task page: primary button | — | — |  |
 | `archive-import-cancel` | `common.cancel` | Task page: Cancel button | — | — | Esc is not bound. |

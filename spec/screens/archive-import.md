@@ -36,13 +36,14 @@ A sheet that scrolls, about 480 × 420 points, with padding.
   2. `settings.archiveImport.entries` ("{count} entries in journals", plural).
   3. `settings.archiveImport.recentlyDeleted` ("{count} in Recently Deleted"), secondary.
   4. When there are any: `settings.archiveImport.unavailable` ("{count} in Unavailable") and `settings.archiveImport.unavailableNote`, secondary.
-  5. When this device already has journals: `settings.archiveImport.kept`, or `settings.archiveImport.keptNumbered` when an imported journal's name is already used (here or by another imported journal); and when connected, `settings.archiveImport.willSync` ("Imported journals will also sync to your server.").
+  5. When the archive isn't encrypted and this device has no journals: `settings.archiveImport.unencryptedNote` ("This archive isn’t encrypted. You’ll choose a master password next."), in secondary text above the buttons. Nothing else is asked. Only archives made by an earlier version can be unencrypted; this version exports encrypted archives only.
+  6. When this device already has journals: `settings.archiveImport.kept`, or `settings.archiveImport.keptNumbered` when an imported journal's name is already used (here or by another imported journal); and when connected, `settings.archiveImport.willSync` ("Imported journals will also sync to your server.").
 - **Error:** in red, selectable, below the content; the sheet scrolls to it.
 - **Buttons** (side by side: Cancel, then the progress, then the primary at the trailing end; stacked at accessibility text sizes with progress, primary, Cancel):
   - `common.cancel`, disabled while importing;
   - progress: `settings.archiveImport.opening` ("Opening Archive…") or `settings.archiveImport.importing` ("Importing Journals…");
   - primary, prominent: `common.continue` (before opening), `settings.archiveImport.restore` ("Restore Journals", no journals on this device) or `settings.archiveImport.importAsNew` ("Import as New Journals"). Enabled when not busy and (opened, or no password needed, or a password typed).
-- **Done:** heading `settings.archiveImport.imported` ("Journals Imported") or `settings.archiveImport.restored` ("Journals Restored"); after a restore, `settings.archiveImport.setUpSync` ("You can set up sync in Settings."); a prominent `common.done`.
+- **Done:** heading `settings.archiveImport.imported` ("Journals Imported") or `settings.archiveImport.restored` ("Journals Restored"); after a restore, `settings.archiveImport.setUpSync` ("You can set up sync in Settings."); a prominent `common.done`. After restoring an archive that isn't encrypted, closing Done leaves the window on Encrypt Your Journals (`screens/encrypt-journals`), which asks for a master password.
 
 ## Actions
 
@@ -70,8 +71,8 @@ A sheet that scrolls, about 480 × 420 points, with padding.
 - The opened copy lives apart from the journals until imported; cancelling, closing or locking discards it.
 - The sheet can't be dismissed while importing; the computer doesn't lock for inactivity while opening or importing.
 - The password is cleared from the field once the archive opens.
-- Restoring makes the archive's library this device's library, with the archive's password; the password then counts as checked.
-- Importing adds the archive's journals as separate new journals; existing journals are kept; same names get a number (“Default 2”).
+- Restoring makes the archive's library this device's library, with the archive's password. An unencrypted archive is installed as it is (identities kept) and then encrypted by `screens/encrypt-journals`; between the two the library is the archive's copy on this device and nothing was sent anywhere.
+- Importing adds the archive's journals as separate new journals; existing journals are kept; same names get a number (“Default 2”). Into an encrypted library the imported journals are encrypted with that library's key; into an unencrypted one (after Not Now) they stay readable until Encrypt Your Journals runs. No note is shown for that case.
 
 ## Accessibility
 

@@ -57,7 +57,6 @@ struct ConnectionStepView: View {
     private var title: String {
         switch step {
         case .setUpServer: return "Set Up Server"
-        case .protect: return "Protect Your Journals"
         case .choosePassword: return "Choose a Master Password"
         case .enterPassword: return "Enter \(flow.existingCredentialName)"
         case .serverReady: return "Server Is Ready"
@@ -73,7 +72,6 @@ struct ConnectionStepView: View {
     @ViewBuilder private var content: some View {
         switch step {
         case .setUpServer: setUpServer
-        case .protect: protect
         case .choosePassword: choosePassword
         case .enterPassword: enterPassword
         case .serverReady: serverReady
@@ -92,7 +90,7 @@ struct ConnectionStepView: View {
     /// Back never reaches a choice that's already made: while working, or once a journal was created here.
     private var canGoBack: Bool {
         if flow.busy || step == .serverReady || step == .finish { return false }
-        return !(flow.createdJournalHere && [.protect, .choosePassword].contains(step))
+        return !(flow.createdJournalHere && step == .choosePassword)
     }
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         if step == .serverReady {
@@ -117,9 +115,6 @@ struct ConnectionStepView: View {
         case .setUpServer:
             Button(flow.stepAfterSetupCode == nil ? "Set Up" : "Continue") { flow.continueFromSetupCode() }
                 .disabled(flow.busy || flow.setupCode.isEmpty)
-        case .protect:
-            Button(retrying ? "Try Again" : flow.encrypt ? "Continue" : "Set Up") { flow.continueFromProtect() }
-                .disabled(flow.busy)
         case .choosePassword:
             Button(retrying ? "Try Again" : "Set Up") { flow.setUpWithNewPassword() }
                 .disabled(flow.busy || flow.newPassword.isEmpty || flow.verifyPassword.isEmpty)
@@ -203,32 +198,6 @@ struct ConnectionStepView: View {
         let upload = "The journals on this device will be uploaded to \(flow.host)."
         return model.configuration?.encrypted == false
             ? upload + " They aren’t encrypted, so anyone with access to the server can read them." : upload
-    }
-    @ViewBuilder private var protect: some View {
-        intro(
-            "Encryption protects your journals before they leave this device. You can also turn it on later in Settings."
-        )
-        Section {
-            Picker("Encryption", selection: $flow.encrypt) {
-                choice("Encrypt", detail: "Recommended. Only your devices can read your journals.").tag(true)
-                choice(
-                    "Don’t Encrypt",
-                    detail: "Anyone with access to your files, server, or backups can read your journals."
-                ).tag(false)
-            }
-            #if os(macOS)
-                .pickerStyle(.radioGroup)
-            #else
-                .pickerStyle(.inline)
-            #endif
-            .labelsHidden().disabled(flow.busy || flow.createdJournalHere)
-        }
-    }
-    private func choice(_ title: String, detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-            Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-        }.padding(.vertical, 2).accessibilityElement(children: .combine)
     }
     @ViewBuilder private var choosePassword: some View {
         intro("Your master password encrypts your journals on this device before they’re sent to \(flow.host).")

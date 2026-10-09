@@ -2,7 +2,7 @@
 id: settings-privacy
 title: Settings ▸ Privacy (Windows)
 spec: screens/settings-privacy.md
-features: [encryption-status, turn-on-encryption, change-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
+features: [encryption-status, encrypt-existing-journals, change-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/uwp/api/windows.security.credentials.ui.userconsentverifier
@@ -24,11 +24,11 @@ Header `settings.privacy.encryption.header`. One `SettingsCard`:
 
 | Part | Content |
 | --- | --- |
-| `Header` | `settings.privacy.encryption.on` (icon ShieldLock F5B4) or `settings.privacy.encryption.off` (no icon) |
-| `Description` | Encrypted: `settings.privacy.encryption.footerOn`, the credential's name in lower case. Sign in offered: `messages.encryption.turnedOnElsewhere`. Not encrypted: `common.unencryptedWarning` |
-| Trailing `Button`, the first that applies | Encrypted with a master password: `settings.privacy.changePassword` ([change-password](change-password.md)). Not encrypted and the server's journals are now encrypted: `common.reconnect`, accent (opens the Connect task page at signing in: [flows/reconnect-to-server](../../../flows/reconnect-to-server.md)). Not encrypted: `settings.privacy.encryption.turnOn` ([turn-on-encryption](turn-on-encryption.md)). Libraries from early versions (recovery key) show no button |
+| `Header` | `settings.privacy.encryption.on` (icon ShieldLock F5B4) |
+| `Description` | `settings.privacy.encryption.footerOn`, the credential's name in lower case |
+| Trailing `Button` | `settings.privacy.changePassword` ([change-password](change-password.md)). Libraries from early versions (recovery key) show no button |
 
-While encryption is being turned on, `settings.privacy.encryption.turnOn` reopens the task page where the work is; the page is the only place the work shows ([flows/turn-on-encryption](../flows/turn-on-encryption.md)). Not enabled while the library is being replaced, except to show a run in progress.
+Windows libraries are always encrypted, so the card never shows Encryption Is Off (`settings.privacy.encryption.off`), `common.unencryptedWarning`, the Reconnect button and `messages.encryption.turnedOnElsewhere` that go with it, or Turn On Encryption… (`settings.privacy.encryption.turnOn`). There is no Encrypt Your Journals task page on Windows ([screens/encrypt-journals](encrypt-journals.md)).
 
 ### App lock group
 
@@ -72,9 +72,8 @@ A failed save of App Lock or of Lock when inactive shows `ContentDialog` with th
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `turn-on-encryption` | Button in the encryption card | — | Unlocked; not while the library is being replaced (except to show a run) |
+| `turn-on-encryption` | Not offered | — | No unencrypted library exists on Windows |
 | `change-password` | Button in the encryption card | — | Unlocked |
-| `sync-reconnect` | Accent Sign in… button | — | Unlocked |
 | `toggle-app-lock` | Switch in the expander header | — | Not while Windows Hello is being asked; turning on needs Windows Hello available; turning off is always possible |
 | `set-inactivity-lock` | Combo box in the expander | — | App Lock on; not while Windows Hello is being asked |
 | `lock-my-journal` | Action card; File menu | `Ctrl+L` (as in commands.md) | App Lock on |
@@ -83,7 +82,7 @@ Turning App Lock on or off asks Windows Hello with `settings.privacy.appLock.rea
 
 ## Copy differences
 
-Sentence case applies ("App lock", "Lock when inactive", "Your journals are encrypted", "Encryption is off"). Beyond that:
+Sentence case applies ("App lock", "Lock when inactive", "Your journals are encrypted"). Beyond that:
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
@@ -110,6 +109,7 @@ Sentence case applies ("App lock", "Lock when inactive", "Your journals are encr
 
 ## Different by design
 
+- **No Encryption Is Off state and no Turn On Encryption….** Apple shows them for libraries made before 1.1 without encryption; Windows has no such libraries ([flows/encrypt-journals](../flows/encrypt-journals.md)).
 - **Windows Hello only.** Apple offers Face ID, Touch ID, Optic ID, the device passcode or the login password, and an app PIN was retired. Windows offers the one system prompt, Windows Hello (face, fingerprint or PIN), and a PC account with no Hello set up cannot turn App Lock on ([platform.md, 13](../platform.md#13-device-authentication-and-app-lock), D25). The footer says how to set Hello up and links to the Settings page.
 - **Lock when inactive and the sleep and screen-lock triggers** exist on Windows as on the Mac, since a PC is a computer.
 - **Footer states.** Windows has a policy-disabled state of its own, and an App Lock that pauses when Hello cannot be used (D42).

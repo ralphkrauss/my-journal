@@ -29,7 +29,7 @@ final class ArchiveLifecycleTests: XCTestCase {
             try await destination.store?.close()
         }
         await source.start()
-        let phrase = try XCTUnwrap(source.recoveryKey)
+        let phrase = AppModel.testPassword
         source.confirmRecovery()
         let archive = try await source.prepareArchive()
         await destination.start()
@@ -85,7 +85,7 @@ final class ArchiveLifecycleTests: XCTestCase {
             try await destination.store?.close()
         }
         await source.start()
-        let phrase = try XCTUnwrap(source.recoveryKey)
+        let phrase = AppModel.testPassword
         source.confirmRecovery()
         let sourceStore = try XCTUnwrap(source.store)
         let journalID = try XCTUnwrap(source.journals.first?.id)

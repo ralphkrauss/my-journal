@@ -40,17 +40,18 @@ Every way a device starts syncing: setting up a new server, joining a server wit
 Choose a server ──► check it
    │ (scan a code) ───────────────────────────────────────────► [has journals?] ─ yes ─► Merge Journals ─► Finish on Your Other Device
    │                                                                     └ no ─────────────────────────► Finish on Your Other Device
-   ├─ not set up ─► Set Up Server ─┬─ no library ─► Protect Your Journals ─┬─ Encrypt ─► Choose a Master Password ─► (set up) ─► Server Is Ready
-   │                               │                                       └ Don't Encrypt ─► (set up) ─► Server Is Ready
+   ├─ not set up ─► Set Up Server ─┬─ no library ─► Choose a Master Password ─► (set up) ─► Server Is Ready
    │                               ├─ library with password ─► Enter Master Password ─► (set up) ─► Server Is Ready
    │                               └─ library without password ─► (set up) ─► Server Is Ready
    └─ set up ─► [has journals?] ─ yes ─► Merge Journals ─┐
                                 └ no ────────────────────┤
                                                          ├─ server has a credential ─► Enter {credential} ─► (sign in) ─► done
                                                          │                              └ Use a Connected Device Instead… ─► Add This Device ─► (Connect) ─► done
-                                                         └─ server without encryption ─► Add This Device ─► (Connect) ─► done
+                                                         └─ server without encryption (only a device with an unencrypted library) ─► Add This Device ─► (Connect) ─► done
                                                                                           └ Use a Recovery Code Instead… ─► Use a Recovery Code ─► (Connect) ─► done
 ```
+
+A device with an encrypted library, or with no library, is refused by a server without encryption before any other step (see Servers without encryption in Rules).
 
 ## Steps
 
@@ -69,9 +70,9 @@ Choose a server ──► check it
 | --- | --- |
 | Server not set up | Set Up Server; focus on the setup code. |
 | Set up, and this device has journals not yet agreed to merge with this server | Merge Journals. |
-| Set up, without encryption | Add This Device. |
+| Set up, without encryption, and this device's library is encrypted or this device has none | Error `messages.connection.encryptionOff` on page 1; nothing is sent. |
+| Set up, without encryption, and this device's library is unencrypted (it chose Not Now) | Add This Device. |
 | Set up, with a credential | Enter {credential} (sign in); focus on the field. |
-| This device's journals are encrypted and the server is set up without encryption | Error `messages.connection.encryptionOffOnHost` on page 1; nothing is sent. |
 | The server speaks a newer protocol | Error `messages.connection.updateApp` ("Update My Journal to connect to this server."). |
 | The address isn't a valid HTTPS address | Error `messages.error.invalidAddress`. |
 | The address answers, but not as a My Journal server | Error `messages.connection.notJournalServer`. |
@@ -89,7 +90,7 @@ The scanner reads only My Journal codes (`MYJOURNAL1.` followed by the encoded d
 
 After a code is read:
 1. Page 1 shows the code's server host with `settings.connect.busy.checking`.
-2. The server is checked: it must speak this protocol (`messages.connection.updateApp`), be set up and support scanned codes (`messages.connection.serverNeedsUpdateForDevices`), and must not refuse this device's encryption (`messages.connection.encryptionOffOnHost`).
+2. The server is checked: it must speak this protocol (`messages.connection.updateApp`), be set up and support scanned codes (`messages.connection.serverNeedsUpdateForDevices`), and must not be a server without encryption for a device with an encrypted library or none (`messages.connection.encryptionOff`).
 3. If this device has journals not yet agreed for this server: **Merge Journals** (no pairing request is sent before Merge).
 4. Otherwise (or after Merge): **Finish on Your Other Device**. A pairing request naming the code is sent; this device waits for approval (`settings.connect.waitingForApproval`).
 5. The connected device that showed the code approves (`flows/pair-device`). No check code is compared: the code named the connected device's key, and an approval from any other key is refused.
@@ -117,26 +118,23 @@ Checking the code as typed (no request):
 - not 6 characters (after removing spaces and dashes): field error `messages.connection.setupCodeLength`, unless it's an 8-character code from an older server that can't check codes, which is accepted;
 - characters outside the setup code alphabet (letters and digits 2–9, without I or O; also 0 and 1): field error `messages.connection.setupCodeCharacters`.
 
-Then, if another step follows (Protect Your Journals or Enter Master Password) and the server can check codes, the code is checked with the server first (`settings.connect.busy.checking`):
+Then, if another step follows (Choose a Master Password or Enter Master Password) and the server can check codes, the code is checked with the server first (`settings.connect.busy.checking`):
 - wrong code: field error `messages.connection.setupCodeIncorrect`;
 - too many wrong codes: field error `messages.connection.setupCodeRateLimited`;
 - the server has no setup code (it was used or never made): error `messages.server.noSetupCode`;
 - other failures: step 1's table.
 
 Which step follows:
-- this device has no library: **Protect Your Journals**;
+- this device has no library: **Choose a Master Password** (there is no Protect step and no choice of encryption: every new library is encrypted);
 - this device's journals have a password (and aren't an early library waiting to confirm its recovery key): **Enter {credential}**, focus on the field;
 - otherwise (journals without a password): Set Up runs directly from this step.
 
-### 4. Protect Your Journals and Choose a Master Password (device without journals)
+### 4. Choose a Master Password (device without journals)
 
-1. Protect Your Journals: Encrypt (default) or Don’t Encrypt.
-   - Encrypt → Continue → Choose a Master Password (focus on Master Password).
-   - Don’t Encrypt → Set Up.
-2. Choose a Master Password: Master Password and Verify. If they differ: field error `messages.connection.passwordsDontMatch` on Verify. Any non-empty password is accepted.
-3. Set Up (busy `settings.connect.busy.settingUp`):
-   1. A journal is created on this device first, encrypted with the password, or without encryption. If that fails: error `messages.connection.createFailed`, or the creation's own message (for example `messages.password.enterMaster`).
-   2. From then on, the choice and the password can't change in this sheet; Back is no longer available on these two steps; the primary button becomes Try Again.
+1. Master Password and Verify, both new-password fields. If they differ: field error `messages.connection.passwordsDontMatch` on Verify. Any non-empty password is accepted (`spec/README.md`, Master passwords). Focus is on Master Password.
+2. Set Up (busy `settings.connect.busy.settingUp`):
+   1. An encrypted journal is created on this device first, with the password. If that fails: error `messages.connection.createFailed`, or the creation's own message (for example `messages.password.enterMaster`).
+   2. From then on, the password can't change in this sheet; Back is no longer available on this step; the primary button becomes Try Again.
    3. The server is set up with the code (step 6).
 
 ### 5. Enter {credential} (device with journals that have a password)
@@ -231,7 +229,7 @@ The server's administrator can make a one-time recovery code. The person types i
 
 Install failures:
 - the server changed since it was checked: back to page 1 (Continue checks again) with `messages.connection.serverChanged`;
-- the server doesn't use encryption and this device's journals are encrypted: `messages.connection.encryptionOff`;
+- the server doesn't use encryption and this device's library is encrypted or this device has none: `messages.connection.encryptionOff`;
 - merging stopped part way: `messages.connection.mergeFailed` / `messages.connection.mergeFailedSent`;
 - no library: `messages.connection.finishFailed`;
 - a copy waits for Try Again (writing stays paused until it's used or the sheet is left): `messages.connection.finishFailedRetry`;
@@ -249,9 +247,18 @@ These messages exist for states the flow is designed to prevent; a client must s
 - `messages.error.unauthorized` ("This device no longer has access."), when the server refuses this device's credential during a step;
 - `messages.error.invalidSetupCode` ("That setup code isn’t valid. Check it and try again."), a fallback for a refused setup code outside Set Up Server.
 
+## Servers without encryption
+
+Version 1.1 never creates a library without encryption, so a server whose recovery format is 3 or 4 (set up without encryption by an earlier version) can no longer be used to start a new device:
+
+- **Refused:** by a device with an encrypted library, and by a device with no library (a device being set up from the first-launch screen). One text: `messages.connection.encryptionOff`.
+- **Kept as it was:** by a device whose library is unencrypted. Nothing about joining changes for it.
+- **The route for people with only a server without encryption:** (1) any device that still has the journals, on the earlier version or this one: Turn On Encryption (earlier version) or Encrypt (this version) there, which encrypts the server and revokes the others; then new devices join normally. (2) No device left, but an archive from an earlier version: restore it on the new device (Encrypt Your Journals then encrypts it) and set up a new server; the old server is abandoned. (3) A server without encryption and nothing else: not supported in this version ([open-questions.md](../open-questions.md), D62).
+- Windows and Android refuse such servers the same way; they have no way to join one.
+
 ## Rules
 
-- **Nothing is sent before consent.** A device with journals sends no sign-in, pairing request or scanned-code request to a server before Merge on Merge Journals for that server. An encrypted device is refused by a server without encryption before any request.
+- **Nothing is sent before consent.** A device with journals sends no sign-in, pairing request or scanned-code request to a server before Merge on Merge Journals for that server. A device with an encrypted library, or with none, is refused by a server without encryption before any request, with the one text `messages.connection.encryptionOff` ("{host} doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption.") on page 1, for a typed or nearby address, for a scanned code and when finishing a pairing. A device whose library is unencrypted (Not Now) keeps the earlier behaviour toward its own unencrypted server; its Encrypt Your Journals form encrypts the server ([flows/encrypt-journals](encrypt-journals.md)).
 - **Never lost:** a failed join leaves this device's library exactly as it was; a staged copy is discarded when the sheet is left, and writing continues.
 - **Retries never duplicate:** merging again derives the same identities.
 - **Unused access is given up:** access granted by a pairing or recovery code but never used is revoked when the sheet is left (best effort; otherwise the device appears in Devices, where it can be revoked).

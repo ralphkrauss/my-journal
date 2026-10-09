@@ -148,6 +148,8 @@ final class EntryListTests: XCTestCase {
             let model = AppModel(directory: root)
             model.store = store
             model.configuration = LocalConfiguration(recovery: .unprotected, recoveryConfirmed: true)
+            // Not asked to encrypt: the window shows the list.
+            model.encryption.notNow()
             model.loaded = true
             try await model.refresh()
             model.showingAllEntries = true

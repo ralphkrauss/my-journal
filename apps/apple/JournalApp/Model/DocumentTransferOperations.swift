@@ -3,10 +3,13 @@ import Foundation
 import JournalCore
 
 extension AppModel {
-    func validateVaultSession(_ session: UUID) throws {
+    /// `readingWhileEncrypting`: an export only reads, so it also runs while the journals are being encrypted (they
+    /// stay readable and exportable then).
+    func validateVaultSession(_ session: UUID, readingWhileEncrypting: Bool = false) throws {
         try Task.checkCancellation()
         // The lock screen of a missing device key offers Import Archive….
-        guard session == vaultSessionID, !locked || libraryProblem == .needsKey, !replacingVault else {
+        let paused = replacingVault && !(readingWhileEncrypting && encryption.pausesWriting)
+        guard session == vaultSessionID, !locked || libraryProblem == .needsKey, !paused else {
             throw CancellationError()
         }
     }
@@ -46,24 +49,31 @@ extension AppModel {
 }
 
 extension AppModel {
+    /// `messages.export.archiveSaved`: after an encrypted archive was saved, the password it needs. A readable
+    /// archive needs none.
+    var archiveSavedMessage: String? {
+        guard let configuration, configuration.encrypted else { return nil }
+        return "Archive saved. Keep your \(configuration.credentialName.lowercased()) with it."
+    }
+
     func prepareArchive() async throws -> URL {
         let session = vaultSessionID
-        try validateVaultSession(session)
+        try validateVaultSession(session, readingWhileEncrypting: true)
         guard let store, let configuration, let masterKey else { throw JournalError.locked }
         let destination = directory.appendingPathComponent("export-" + UUID().uuidString + ".journalarchive")
         var created = false
         do {
             let saved = await finishPendingSave()
-            try validateVaultSession(session)
+            try validateVaultSession(session, readingWhileEncrypting: true)
             guard saved else { throw JournalError.saveRequired }
             try await VaultArchive.export(
                 store: store, recovery: configuration.recovery, key: masterKey, to: destination)
             created = true
-            try validateVaultSession(session)
+            try validateVaultSession(session, readingWhileEncrypting: true)
             return destination
         } catch {
             if created { try? FileManager.default.removeItem(at: destination) }
-            try validateVaultSession(session)
+            try validateVaultSession(session, readingWhileEncrypting: true)
             throw error
         }
     }
@@ -81,6 +91,8 @@ extension AppModel {
     /// Shown only when preparing takes a noticeable time, so a small library doesn't flash a progress state.
     @Published private(set) var showsProgress = false
     @Published var error: String?
+    /// The save dialog saved the archive; the Export row says to keep the password with it until the next export.
+    @Published private(set) var saved = false
     /// Bound to the save dialog. A cancelled dialog doesn't report back, so its package is removed when the next
     /// export starts or the controls go away, never while the dialog may still be writing it.
     @Published var presenting = false
@@ -99,6 +111,7 @@ extension AppModel {
         guard !busy else { return }
         discard()
         error = nil
+        saved = false
         let session = model.vaultSessionID
         operation = Task { await prepare(model, session: session) }
     }
@@ -110,8 +123,10 @@ extension AppModel {
 
     /// The save dialog's result. Cancelling isn't a failure.
     func finish(_ result: Result<URL, Error>) {
-        if case .failure(let failure) = result, (failure as? CocoaError)?.code != .userCancelled {
-            error = Self.saveFailure
+        switch result {
+        case .success: saved = true
+        case .failure(let failure):
+            if (failure as? CocoaError)?.code != .userCancelled { error = Self.saveFailure }
         }
         discard()
     }
@@ -170,9 +185,10 @@ extension AppModel {
         }
         let filename = JournalFile.archiveFilename()
         do {
-            try model.validateVaultSession(session)
+            try model.validateVaultSession(session, readingWhileEncrypting: true)
             let url = try await model.prepareArchive()
-            guard !Task.isCancelled, (try? model.validateVaultSession(session)) != nil else {
+            guard !Task.isCancelled, (try? model.validateVaultSession(session, readingWhileEncrypting: true)) != nil
+            else {
                 try? FileManager.default.removeItem(at: url)
                 return
             }
@@ -180,7 +196,8 @@ extension AppModel {
             document = JournalFile(package: url, filename: filename)
             presenting = true
         } catch {
-            guard !Task.isCancelled, !(error is CancellationError), (try? model.validateVaultSession(session)) != nil
+            guard !Task.isCancelled, !(error is CancellationError),
+                (try? model.validateVaultSession(session, readingWhileEncrypting: true)) != nil
             else { return }
             self.error = Self.message(for: error)
         }

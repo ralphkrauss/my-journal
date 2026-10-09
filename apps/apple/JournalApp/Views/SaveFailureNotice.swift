@@ -57,7 +57,7 @@ struct SaveFailureNotice: View {
         @State private var shown: ServerConnectionPause?
 
         var body: some View {
-            EncryptionPauseNotice(upgrade: model.encryption)
+            EncryptionNotice(upgrade: model.encryption)
             Group {
                 if let shown {
                     // As the conflict notice: side by side, stacked at accessibility text sizes.

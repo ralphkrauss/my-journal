@@ -1,3 +1,4 @@
+import JournalCore
 import XCTest
 
 /// Setting up a new server from the app, one step at a time (docs/design/connection-onboarding.md), and joining it
@@ -30,11 +31,6 @@ final class ConnectionSetupUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, formatted(code))
         attachScreen(app, name: "Setup code formatted")
         setUp.buttons["Continue"].tap()
-
-        let protect = app.navigationBars["Protect Your Journals"]
-        XCTAssertTrue(protect.waitToAppear(timeout: 10))
-        attachScreen(app, name: "Protect your journals")
-        protect.buttons["Continue"].tap()
 
         let choose = app.navigationBars["Choose a Master Password"]
         XCTAssertTrue(choose.waitToAppear(timeout: 10))
@@ -84,44 +80,27 @@ final class ConnectionSetupUITests: XCTestCase {
         other.terminate()
     }
 
-    @MainActor func testSetUpServerWithoutEncryptionThenAddAnotherDevice() throws {
+    /// A server whose journals are not encrypted (set up by an earlier version) is never joined by a device that has
+    /// no journals: the refusal says what to do, and nothing is created or sent.
+    @MainActor func testANewDeviceIsRefusedByAServerWithoutEncryption() async throws {
         let (address, code) = try server("PLAIN")
+        // An earlier version's device sets the server up without a password.
+        _ = try await ServerClient(address: address).initialize(
+            code: code, envelope: .unprotected,
+            recoverySecret: VaultCrypto.random(32).map { String(format: "%02x", $0) }
+                .joined(), deviceName: "Fixture Mac")
         let app = launchFresh()
         chooseServer(address, app: app)
-        let setUp = app.navigationBars["Set Up Server"]
-        XCTAssertTrue(setUp.waitToAppear(timeout: 10))
-        let field = app.textFields["Setup Code"]
-        field.tap()
-        field.typeText(code)
-        setUp.buttons["Continue"].tap()
-        let protect = app.navigationBars["Protect Your Journals"]
-        XCTAssertTrue(protect.waitToAppear(timeout: 10))
-        reveal(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Don’t Encrypt")).firstMatch, in: app)
-            .tap()
-        attachScreen(app, name: "Don't encrypt")
-        // No password follows, so the button says what happens next.
-        protect.buttons["Set Up"].tap()
-        XCTAssertTrue(app.staticTexts["Server Is Ready"].waitToAppear(timeout: 30))
-        XCTAssertFalse(
-            app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "You can also sign in")).firstMatch
-                .exists)
-        app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["New Entry"].firstMatch.waitToAppear(timeout: 10))
+        // The app names the server by its host and port.
+        let host = address.replacingOccurrences(of: "http://", with: "")
+        let refusal =
+            host.prefix(1).uppercased() + host.dropFirst()
+            + " doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption."
+        XCTAssertTrue(app.staticTexts[refusal].waitToAppear(timeout: 10))
+        attachScreen(app, name: "A server without encryption is refused")
+        XCTAssertFalse(app.navigationBars["Add This Device"].exists)
+        XCTAssertFalse(app.navigationBars["Choose a Master Password"].exists)
         app.terminate()
-
-        // Without a password, another device is added with a code or a recovery code.
-        let other = launchFresh()
-        chooseServer(address, app: other)
-        let add = other.navigationBars["Add This Device"]
-        XCTAssertTrue(add.waitToAppear(timeout: 10))
-        XCTAssertTrue(other.staticTexts["pairing-code"].waitToAppear(timeout: 10))
-        attachScreen(other, name: "Add this device to a server without encryption")
-        reveal(other.buttons["Use a Recovery Code Instead…"], in: other).tap()
-        XCTAssertTrue(other.navigationBars["Use a Recovery Code"].waitToAppear(timeout: 10))
-        other.navigationBars["Use a Recovery Code"].buttons.element(boundBy: 0).tap()
-        // Back on Add This Device, a new code replaces the withdrawn one.
-        XCTAssertTrue(other.staticTexts["pairing-code"].waitToAppear(timeout: 10))
-        other.terminate()
     }
 
     // MARK: Support

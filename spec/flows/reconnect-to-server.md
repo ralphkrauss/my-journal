@@ -9,11 +9,11 @@ sources:
   - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - apps/apple/JournalApp/Views/ConnectionView.swift
   - apps/apple/JournalApp/Views/ConnectionSteps.swift
-  - apps/apple/JournalApp/Views/TurnOnEncryptionView.swift
   - apps/apple/JournalApp/Views/DevicesSection.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/SyncHealth.swift
   - docs/design/sync-health-and-recovery.md
   - docs/design/1-1-conflicts-and-reconnect.md
+  - docs/design/1-1-encryption-and-passwords.md
 ---
 
 # Reconnect after the server changed
@@ -30,7 +30,7 @@ The state's single action, **Reconnect…** (`common.reconnect`, command `sync-r
 - the server was restored or replaced and doesn't recognise this device, or this device's access was removed (revoked, or its credential no longer works);
 - the server now uses encryption, or was replaced by an encrypted one.
 
-Also: Settings ▸ Agent Access shows Reconnect… with `settings.agents.connect.noAccess` when the server refuses this device; Settings ▸ Privacy ▸ Encryption shows Reconnect… with the footer `messages.encryption.turnedOnElsewhere` in the last state; Turn On Encryption shows Reconnect… when it finds encryption was turned on elsewhere ([flows/turn-on-encryption](turn-on-encryption.md)). Settings ▸ Sync ▸ Devices has no reconnect button: while the server refuses this device the Devices section is absent.
+Also: Settings ▸ Agent Access shows Reconnect… with `settings.agents.connect.noAccess` when the server refuses this device; Settings ▸ Privacy ▸ Encryption shows Reconnect… with the footer `messages.encryption.turnedOnElsewhere` in the last state; Encrypt Your Journals shows Reconnect… as its primary button in variant C, when the server already uses encryption (another device turned it on, or the server was replaced), and when it finds encryption was turned on elsewhere while it works ([flows/encrypt-journals](encrypt-journals.md)). Settings ▸ Sync ▸ Devices has no reconnect button: while the server refuses this device the Devices section is absent.
 
 ## Steps
 
@@ -40,14 +40,14 @@ Also: Settings ▸ Agent Access shows Reconnect… with `settings.agents.connect
 ### Server was reset
 
 1. The server isn't set up, so the flow goes straight to the setup-code step. A setup code from the server is always required: the person types the new one.
-2. If this device's journals have a password: Enter {credential} (the server's recovery secret is derived from it). Otherwise Set Up runs directly.
+2. If this device's journals have a password: Enter {credential} (the server's recovery secret is derived from it). Otherwise (an unencrypted library that chose Not Now) Set Up runs directly.
 3. Setting Up…: the server is set up from this device: its journals are uploaded as they are, with their identities and encryption, and the library keeps its password. Server Is Ready. Other devices then use Reconnect….
 4. The old connection's keychain item is removed once the new one is saved. The new server identity makes the first sync compare everything, so the whole library is sent and every image checked.
 5. If another device set the server up meanwhile: `messages.connection.setUpElsewhere`, and the flow returns to the address. Continuing then takes the path below.
 
 ### Server restored or replaced, or access removed
 
-1. The server is set up, so this device signs in: Enter {credential} (Sign In), or for a server without encryption Add This Device / Use a Recovery Code; Use a Connected Device Instead… is also available.
+1. The server is set up, so this device signs in: Enter {credential} (Sign In), or, for a server without encryption and a device whose library is unencrypted, Add This Device / Use a Recovery Code; Use a Connected Device Instead… is also available. A device with an encrypted library is refused by a server without encryption with `messages.connection.encryptionOff`.
 2. On access:
    - if the server holds this same library (it holds a record this library synced before, or is empty, and for an encrypted server the same key): this device continues by identity, keeping its pending changes; nothing is merged. Identical records are adopted, different ones become changes to review, missing ones are sent;
    - if the server holds another library: **Merge Journals** appears before anything is sent ("Merge only if {host} is your server."). Merge continues; Cancel leaves everything as it was.
@@ -56,7 +56,7 @@ Also: Settings ▸ Agent Access shows Reconnect… with `settings.agents.connect
 ### Encryption turned on elsewhere
 
 1. The sign-in step reads `settings.connect.signIn.introEncrypted` ("The server now uses encryption. Enter its master password.") with footer `settings.connect.signIn.footerEncrypted` ("The journals on this device will be encrypted too. Changes that haven’t synced are kept.").
-2. Sign In: this device's journals are encrypted with the server's key, keeping their identities and unsynced changes; the busy row shows encryption progress (`settings.encryption.progress`).
+2. Sign In: this device's journals are encrypted with the server's key, keeping their identities and unsynced changes; the busy row shows encryption progress (`settings.encryption.progress`). When the sheet was opened from the Encrypt Your Journals form (variant C), the form gives way to the journals when this finishes, and Not Now on the form is the way back without signing in.
 3. The sheet closes; sync resumes. Pending changes are sent; any that conflict are shown for review. A replaced server is a different library and takes Merge Journals instead; encryption turned on elsewhere is the same library and re-encrypts this one with the server's key.
 
 ## Errors
