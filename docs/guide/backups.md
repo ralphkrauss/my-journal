@@ -1,6 +1,8 @@
 # Backups
 
-An archive is a copy of all your journals in one file: entries, templates, images, earlier versions and Recently Deleted. With encryption on, it’s encrypted and opens only with your master password. Without encryption, anyone with the file can read it.
+An archive is a copy of all your journals in one file: entries, templates, images, earlier versions and Recently Deleted. It’s encrypted and opens only with your master password, so you can attach it to a message, send it by AirDrop or copy it to an external drive as it is.
+
+An archive needs encrypted journals. If yours were created without encryption and are not encrypted yet, My Journal offers to encrypt them when it opens; the archive is available after that.
 
 An archive doesn’t include your server connection, your devices, App Lock or agent access. Set those up again after a restore.
 
@@ -9,12 +11,15 @@ Your server is not a backup: it can fail or lose data too. Export an archive reg
 ## Export an archive
 
 1. Choose Settings > Backup > **Export Archive…**. On the Mac, you can also choose File > **Export Archive…**.
-2. The first time, if your journals are only on this device, My Journal asks you to enter your master password, to make sure it’s the one you saved. Choose **Check**, or **Not Now** to skip it this time.
-3. Choose where to save the archive.
+2. Choose where to save the archive.
 
-If App Lock is on and your journals aren’t encrypted, My Journal first asks you to confirm with your device’s authentication, because the archive holds readable entries.
+If you’re not sure of your master password, choose **Not sure of your password? Change Password…** under the button first: typing the current password there checks it.
 
 Keep your master password separate from your archives. An archive opens only with the password you had when you exported it, even if you change your password later.
+
+Exporting needs room for the archive on the device first, and on the place you save it to. If either is too full, My Journal says so and saves nothing.
+
+Archives made by My Journal 1.0 were folders. 1.1 still opens them. But 1.0 can’t open the single file that 1.1 saves, so update My Journal on every device before you move an archive between them.
 
 ## Restore journals on a new device
 

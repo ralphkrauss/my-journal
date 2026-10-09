@@ -18,8 +18,26 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     GENERATE_INFOPLIST_FILE: YES
     CODE_SIGN_STYLE: Automatic
+targetTemplates:
+  # The archive's file type, declared once for both apps. The identifier and the extension are a public contract and
+  # also appear in JournalApp/Model/ArchiveFileType.swift (docs/design/1-1-archive-v2.md, 6.2).
+  ArchiveFileType:
+    info:
+      properties:
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: org.privatejournal.archive
+            UTTypeDescription: Journal Archive
+            UTTypeConformsTo: [com.apple.package]
+            UTTypeTagSpecification:
+              public.filename-extension: journalarchive
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Journal Archive
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.privatejournal.archive]
 targets:
   JournalMac:
+    templates: [ArchiveFileType]
     type: application
     platform: macOS
     info:
@@ -33,17 +51,6 @@ targets:
         CFBundleDisplayName: My Journal
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        UTExportedTypeDeclarations:
-          - UTTypeIdentifier: org.privatejournal.archive
-            UTTypeDescription: Journal Archive
-            UTTypeConformsTo: [com.apple.package]
-            UTTypeTagSpecification:
-              public.filename-extension: journalarchive
-        CFBundleDocumentTypes:
-          - CFBundleTypeName: Journal Archive
-            CFBundleTypeRole: Viewer
-            LSHandlerRank: Owner
-            LSItemContentTypes: [org.privatejournal.archive]
     sources:
       - JournalApp
       # The first sandboxed launch moves an existing library into the app's container.
@@ -66,6 +73,7 @@ targets:
         JOURNAL_MAC_ENTITLEMENTS: Signing/JournalMac.entitlements
         CODE_SIGN_ENTITLEMENTS: $(JOURNAL_MAC_ENTITLEMENTS)
   JournalIOS:
+    templates: [ArchiveFileType]
     type: application
     platform: iOS
     info:
@@ -93,17 +101,6 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         LSSupportsOpeningDocumentsInPlace: true
-        UTExportedTypeDeclarations:
-          - UTTypeIdentifier: org.privatejournal.archive
-            UTTypeDescription: Journal Archive
-            UTTypeConformsTo: [com.apple.package]
-            UTTypeTagSpecification:
-              public.filename-extension: journalarchive
-        CFBundleDocumentTypes:
-          - CFBundleTypeName: Journal Archive
-            CFBundleTypeRole: Viewer
-            LSHandlerRank: Owner
-            LSItemContentTypes: [org.privatejournal.archive]
     sources: [JournalApp]
     dependencies:
       - package: JournalCore

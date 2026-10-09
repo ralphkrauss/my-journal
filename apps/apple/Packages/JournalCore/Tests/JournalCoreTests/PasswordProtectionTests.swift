@@ -47,7 +47,7 @@ final class PasswordProtectionTests: XCTestCase {
         let synced = try await target.item(entry.id)
         XCTAssertEqual(synced?.title, entry.title)
         let archive = root.appendingPathComponent("backup.journalarchive")
-        try await VaultArchive.export(store: source, recovery: envelope, key: key, to: archive)
+        try await DirectoryArchiveFixture.write(store: source, recovery: envelope, key: key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: password)
         let protection = await restored.store.protection

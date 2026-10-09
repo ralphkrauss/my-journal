@@ -318,7 +318,7 @@ final class LibrarySyncTests: XCTestCase {
         let phrase = try VaultCrypto.recoveryPhrase()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase)
         let archive = root.appendingPathComponent("unknown.journalarchive")
-        try await VaultArchive.export(store: mac, recovery: recovery.0, key: key, to: archive)
+        try await VaultArchive.exportFile(store: mac, recovery: recovery.0, key: key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         addTeardownBlock { try? await restored.store.close() }
@@ -346,7 +346,7 @@ final class LibrarySyncTests: XCTestCase {
         let phrase = try VaultCrypto.recoveryPhrase()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase)
         let archive = root.appendingPathComponent("pins.journalarchive")
-        try await VaultArchive.export(store: mac, recovery: recovery.0, key: key, to: archive)
+        try await VaultArchive.exportFile(store: mac, recovery: recovery.0, key: key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         addTeardownBlock { try? await restored.store.close() }

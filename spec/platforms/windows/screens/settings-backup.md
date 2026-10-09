@@ -14,7 +14,7 @@ sources:
 
 Archive export and import, Markdown export, and the two File-menu dialogs. Behaviour and copy keys are the spec's [Settings ▸ Backup](../../../screens/settings-backup.md); the steps of each export are the flows [export-archive](../../../flows/export-archive.md) and [export-markdown](../../../flows/export-markdown.md). The shell and patterns are in [settings](settings.md#card-patterns); picker rules are [platform.md, 16](../platform.md#16-files-and-pickers).
 
-**What this page decides about pickers.** The spec's archive is a directory package, and a file save picker cannot make a directory ([protocol/archive.md](../../../../protocol/archive.md)). The draft default of D29 (the review's recommendation) is one file on every platform, so this page maps the file route: `FileSavePicker` and `FileOpenPicker`. The folder route is the fallback if the owner declines the protocol change, with a completeness check in the import ([flows/import-archive](../flows/import-archive.md)). Everything else on the page is independent of the choice.
+**What this page decides about pickers.** The archive is one file ([protocol/archive.md](../../../../protocol/archive.md)), so this page maps the file route: `FileSavePicker` and `FileOpenPicker`. Only the Markdown export, which is many files, uses a folder picker. Everything else on the page is independent of that.
 
 ## Controls
 
@@ -54,10 +54,9 @@ File ▸ Export archive… and File ▸ Export journals as Markdown… open a `C
 
 | Task | Picker | Details |
 | --- | --- | --- |
-| Export archive (one file, D29) | `FileSavePicker` of the Windows App SDK (`Microsoft.Windows.Storage.Pickers`, created with the library window's `WindowId`), `SuggestedFileName` `settings.backup.archiveFilename`, one file type choice "My Journal archive" (`.journalarchive`), `SuggestedStartLocation` Documents | The system's own Save button; the picker asks before replacing. It creates an empty file and the app writes into it; if the write fails or is cancelled, the empty or partial file the app created is removed. The suggested name's date is the fixed form `yyyy-MM-dd` in the Gregorian calendar with digits 0 to 9, not the regional format ([platform.md, 31](../platform.md#31-dates-time-zones-and-formats)) |
+| Export archive (one file) | `FileSavePicker` of the Windows App SDK (`Microsoft.Windows.Storage.Pickers`, created with the library window's `WindowId`), `SuggestedFileName` `settings.backup.archiveFilename`, one file type choice "My Journal archive" (`.journalarchive`), `SuggestedStartLocation` Documents | The system's own Save button; the picker asks before replacing. It creates an empty file and the app writes into it; if the write fails or is cancelled, the empty or partial file the app created is removed. The suggested name's date is the fixed form `yyyy-MM-dd` in the Gregorian calendar with digits 0 to 9, not the regional format ([platform.md, 31](../platform.md#31-dates-time-zones-and-formats)) |
 | Export as Markdown | `FolderPicker`; the app creates `settings.backup.markdownFolderName` inside the chosen folder, adding " (2)", " (3)"… when the name exists and never replacing or merging | The picker's commit button is the Windows-only string of B36 ("Save here"). The file names inside the folder follow the export mapping's Windows-safe rules (platform.md, 16) |
-| Import archive (one file, D29) | `FileOpenPicker` filtered to `.journalarchive`, start in Documents | The system's own Open button. A file that is not an archive, or whose manifest and hashes do not match, reaches the import page's own error (`settings.archiveImport.error.damaged`) |
-| Folder route (fallback if D29 is declined) | `FolderPicker` for export (the app creates the archive folder, adding " (2)" when the name exists) and for import (the person selects the archive's folder; the import verifies every file against the manifest's hashes before showing the preview) | Needs the Windows-only strings of B36 ("Select archive", "Save here", "This folder isn’t a My Journal archive.") |
+| Import archive (one file) | `FileOpenPicker` filtered to `.journalarchive`, start in Documents | The system's own Open button. A file that is not an archive, or whose manifest and hashes do not match, reaches the import page's own error (`settings.archiveImport.error.damaged`) |
 
 Rules for all of them: the picker is created with the window's `WindowId` (Windows App SDK 1.8 or later; earlier versions use `InitializeWithWindow`), which also works if the app were ever elevated. The app reads and writes only what was picked ([platform.md, 16](../platform.md#16-files-and-pickers)). Names the app proposes (`settings.backup.archiveFilename`, `settings.backup.markdownFolderName`) contain none of the characters Windows forbids in a name (`< > : " / \ | ? *`) or any reserved device name, and do not end in a dot or space; the date in them is why they are fixed text. A picker result is checked for being writable before the work starts; a path that is too long, read-only or on a disconnected drive shows the flow's save-failed message, not a system exception. A cancelled picker is not an error and says nothing.
 
@@ -109,10 +108,10 @@ Sentence case applies ("Export archive…", "Export as Markdown…", "Archive", 
 
 ## Different by design
 
-- **The archive is one file with the Open and Save pickers** (draft default of D29): Apple saves a package with a document exporter; a Windows picker cannot create a directory package and Explorer shows it as a folder. The Markdown export, which is many files, uses a folder picker.
+- **The archive is one file with the Open and Save pickers**: Apple saves it with a document exporter; a Windows picker saves a file the same way. The Markdown export, which is many files, uses a folder picker.
 - **A dialog for the File-menu exports.** Apple shows a sheet on the journal window; the Windows dialog is the same size of task and gives the progress, error and note somewhere to show without opening Settings.
 - **A last-export line** while the library exists only on this PC, because uninstalling the package removes its local data (D22).
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): D29 (the archive as one file), D22 (uninstall and last export), B36 (folder picker strings for Markdown).
+Recorded in [open-questions.md](../../../open-questions.md): D22 (uninstall and last export), B36 (folder picker strings for Markdown).

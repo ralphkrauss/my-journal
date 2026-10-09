@@ -33,7 +33,7 @@ import XCTest
         try await waitUntil { export.presenting || export.error != nil }
 
         XCTAssertNil(export.error)
-        let folder = try XCTUnwrap(export.document?.package)
+        let folder = try XCTUnwrap(export.document?.staged)
         XCTAssertEqual(try staged(), [folder.lastPathComponent], "One folder for repeated presses")
         XCTAssertEqual(try folder.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup, true)
         XCTAssertEqual(export.document?.filename, MarkdownExport.folderName())

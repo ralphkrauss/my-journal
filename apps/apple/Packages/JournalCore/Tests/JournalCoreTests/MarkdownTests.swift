@@ -171,7 +171,7 @@ final class MarkdownTests: XCTestCase {
         let entry = JournalItem(kind: "entry", title: "Readable", document: .plain("Keep my words"))
         try await store.save(entry)
         let archive = root.appendingPathComponent("copy.journalarchive")
-        try await VaultArchive.export(store: store, recovery: .unprotected, key: key, to: archive)
+        try await DirectoryArchiveFixture.write(store: store, recovery: .unprotected, key: key, to: archive)
         XCTAssertFalse(try VaultArchive.requiresPassword(at: archive))
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restore"), phrase: "")

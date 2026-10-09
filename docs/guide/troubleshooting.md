@@ -5,7 +5,7 @@
 Your master password can’t be recovered, and your server can’t reset it: it never receives the password.
 
 - **You still have a device with your journals.** Keep using it; it opens without the password. If you sync, you can also add devices by [pairing](devices.md#add-a-device), which doesn’t need the password.
-- **Your journals are only on this device.** The first time you choose Export Archive…, My Journal asks you to check your password. If you enter a wrong one, choose **Forgot Password?**. After you confirm it’s you with Face ID, Touch ID, or your passcode or Mac login password, you can set a new password. Archives you exported before still need the old one.
+- **Your journals are only on this device.** Choose Settings > Privacy > **Change Password…**, then **Forgot Password?**. After you confirm it’s you with Face ID, Touch ID, or your passcode or Mac login password, you can set a new password. Archives you exported before still need the old one.
 - **Otherwise,** you can’t open encrypted archives, recover your journals on a new device, or change the password without the current one.
 
 Save your password in a password manager so this doesn’t happen again.
@@ -134,6 +134,14 @@ Unavailable Journals appears in the sidebar when some entries can’t be shown i
 - **If you don’t sync:** [export an archive](backups.md#export-an-archive) on the old device, copy the file to the new one, and choose **Import Archive…** on its first screen.
 
 Then turn on App Lock and set up agent access again; they aren’t copied. Check that your journals arrived before you [erase the old device](#delete-your-data), and [revoke its access](devices.md#remove-a-device) if you don’t erase it.
+
+## An archive won’t open
+
+- **“Update My Journal to open this archive.”** The archive was made by a newer version. Update My Journal on this device.
+- **“Couldn’t open this archive…”** from a device that still runs 1.0: 1.0 can’t open the single-file archives that 1.1 saves. Update My Journal on this device first. The folder archives that 1.0 saved still open in 1.1.
+- **“This archive is incomplete or damaged.”** The file was cut short or changed, for example by a download that stopped. Copy or download it again. A file that was unpacked with an archive tool is no longer an archive; use the original file.
+- **“Couldn’t open this archive. Check that the file is available and your device has enough space.”** The file may still be downloading from iCloud Drive or another service, or the device is too full. Opening an archive needs about twice its size free, plus 256 MB.
+- **“There isn’t enough space to export the archive.”** Exporting needs room for the archive on the device (the database, the images and 256 MB), and on the place you save it to. Free up space, or save to another place. Nothing is saved when this appears.
 
 ## Delete your data
 

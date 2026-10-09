@@ -173,7 +173,7 @@ final class ArchiveLifecycleTests: XCTestCase {
         await model.start()
         model.confirmRecovery()
         // What iPhone and iPad leave behind when an earlier dialog was cancelled.
-        let leftover = dialogFolder.appendingPathComponent(JournalFile.archiveFilename())
+        let leftover = dialogFolder.appendingPathComponent(ArchiveFileType.filename())
         try FileManager.default.createDirectory(at: leftover, withIntermediateDirectories: true)
         let packages = {
             try FileManager.default.contentsOfDirectory(atPath: model.directory.path).filter {
@@ -189,7 +189,7 @@ final class ArchiveLifecycleTests: XCTestCase {
 
         XCTAssertTrue(export.presenting)
         XCTAssertNil(export.error)
-        let package = try XCTUnwrap(export.document?.package)
+        let package = try XCTUnwrap(export.document?.staged)
         XCTAssertEqual(try packages(), [package.lastPathComponent])
         XCTAssertFalse(FileManager.default.fileExists(atPath: leftover.path))
 
@@ -200,8 +200,8 @@ final class ArchiveLifecycleTests: XCTestCase {
         await export.finishPreparing()
         XCTAssertTrue(export.presenting)
         XCTAssertNil(export.error)
-        XCTAssertEqual(try packages(), [try XCTUnwrap(export.document?.package?.lastPathComponent)])
-        XCTAssertNotEqual(export.document?.package, package)
+        XCTAssertEqual(try packages(), [try XCTUnwrap(export.document?.staged?.lastPathComponent)])
+        XCTAssertNotEqual(export.document?.staged, package)
         XCTAssertFalse(FileManager.default.fileExists(atPath: leftover.path))
 
         let systemFailure = CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: leftover.path])
@@ -235,9 +235,11 @@ final class ArchiveLifecycleTests: XCTestCase {
         return (model, owner, ArchiveExport(dialogFolder: root.appendingPathComponent("dialog")))
     }
 
-    /// An archive of a library without encryption holds everything readable and restores without a password, so
-    /// with App Lock on the device's authentication comes first. A cancel is silent; a failure is said.
-    func testExportingAReadableArchiveAsksForTheDevicesAuthenticationWhenAppLockIsOn() async throws {
+    /// The readable-archive authentication stays while an unencrypted library can exist. With App Lock on, the device's
+    /// authentication comes first: a cancel is silent and a failure is said. (A library without encryption has no file
+    /// archive to write: the step after the authentication reports that the export failed. Whether that is the right
+    /// outcome is open question D66.)
+    func testExportingFromAnUnencryptedLibraryAsksForTheDevicesAuthenticationWhenAppLockIsOn() async throws {
         let (model, owner, export) = try await libraryWithAppLock(encrypted: false, appLock: true)
         let before = owner.requests
 
@@ -254,25 +256,30 @@ final class ArchiveLifecycleTests: XCTestCase {
         await export.finishPreparing()
         XCTAssertNil(export.document)
         XCTAssertEqual(export.error, "Couldn’t verify it’s you. Try again.")
-
-        owner.outcome = .success
-        export.start(with: model)
-        await export.finishPreparing()
-        XCTAssertNil(export.error)
-        XCTAssertTrue(export.presenting)
-        XCTAssertNotNil(export.document)
     }
 
-    /// An encrypted archive needs the recovery credential, and without App Lock there is nothing to ask.
-    func testExportingNeedsNoAuthenticationForAnEncryptedLibraryOrWithoutAppLock() async throws {
-        for (encrypted, appLock) in [(true, true), (false, false)] {
-            let (model, owner, export) = try await libraryWithAppLock(encrypted: encrypted, appLock: appLock)
+    /// A library without encryption can't be archived as a file, and nothing is left behind or presented.
+    func testAnUnencryptedLibraryHasNoFileArchiveAndLeavesNothingBehind() async throws {
+        let (model, _, export) = try await libraryWithAppLock(encrypted: false, appLock: false)
+        export.start(with: model)
+        await export.finishPreparing()
+        XCTAssertNil(export.document)
+        XCTAssertFalse(export.presenting)
+        XCTAssertEqual(export.error, "Couldn’t export the archive. Try again.")
+        let names = try FileManager.default.contentsOfDirectory(atPath: model.directory.path)
+        XCTAssertFalse(names.contains { $0.hasPrefix("export-") })
+    }
+
+    /// An encrypted archive needs the recovery credential, and asks for no authentication whatever App Lock says.
+    func testExportingNeedsNoAuthenticationForAnEncryptedLibrary() async throws {
+        for appLock in [true, false] {
+            let (model, owner, export) = try await libraryWithAppLock(encrypted: true, appLock: appLock)
             let before = owner.requests
             owner.outcome = .failed
             export.start(with: model)
             await export.finishPreparing()
-            XCTAssertEqual(owner.requests, before, "encrypted: \(encrypted), App Lock: \(appLock)")
-            XCTAssertTrue(export.presenting, "encrypted: \(encrypted), App Lock: \(appLock)")
+            XCTAssertEqual(owner.requests, before, "App Lock: \(appLock)")
+            XCTAssertTrue(export.presenting, "App Lock: \(appLock)")
             XCTAssertNil(export.error)
         }
     }

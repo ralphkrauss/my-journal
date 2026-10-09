@@ -66,7 +66,7 @@ import-archive-from-welcome:
   reference: apple
   apple: shipped
   windows: planned
-  windows-notes: "Same file route as import-archive (D29, the review's draft default): the Open picker, a double-click through a `.journalarchive` association, and a dropped file; the Import archive task page."
+  windows-notes: "Same file route as import-archive: the Open picker, a double-click through a `.journalarchive` association, and a dropped file; the Import archive task page."
   android: planned
 
 three-column-layout:
@@ -1205,7 +1205,8 @@ export-archive:
   reference: apple
   apple: shipped
   windows: planned
-  windows-notes: "Mapping follows the one-file route (D29, the review's draft default, needing a protocol change): FileSavePicker with the suggested name. The folder route is the fallback."
+  apple-notes: "Writes one file, a ZIP container with a sealed manifest (protocol/archive.md, File archive), staged in the app's data folder and handed to the system save dialog. Only libraries with a password have one: a library that is still unencrypted (Not Now) has none to write (open question D66)."
+  windows-notes: "FileSavePicker with one file type and the suggested name; the app writes the file archive of protocol/archive.md with System.IO.Compression.ZipArchive over a temporary file, then copies it to the picked file."
   android: planned
 
 import-archive:
@@ -1214,8 +1215,20 @@ import-archive:
   reference: apple
   apple: shipped
   windows: planned
-  windows-notes: "Mapping follows the one-file route (D29, the review's draft default): FileOpenPicker, a `.journalarchive` file association and a dropped file start the import. The folder route is the fallback, with a completeness check."
+  apple-notes: "Reads a file archive, and the folder that My Journal 1.0 wrote (archive-directory-read). The kind is told by what the picked item is, never by its name."
+  windows-notes: "FileOpenPicker, a `.journalarchive` file association and a dropped file start the import. A file that is not an archive is damaged (`settings.archiveImport.error.damaged`); Windows never reads the 1.0 folder."
   android: planned
+
+archive-directory-read:
+  title: "Import Archive still reads the folder archive that My Journal 1.0 wrote, including unencrypted ones"
+  specs: [flows/import-archive.md]
+  reference: apple
+  apple: shipped
+  apple-notes: "The same Import Archive route; the picked item is a folder instead of a file (protocol/archive.md, Directory archive). A readable one restores as it is and the window then shows Encrypt Your Journals."
+  windows: not-applicable
+  windows-reason: "Windows never wrote the directory archive, so it has none to read; it reads and writes the file archive only."
+  android: not-applicable
+  android-reason: "Android never wrote the directory archive, so it has none to read; it reads and writes the file archive only."
 
 export-markdown:
   title: "Export as Markdown — the journals and images as Markdown files in a folder (protocol/markdown-export.md)"

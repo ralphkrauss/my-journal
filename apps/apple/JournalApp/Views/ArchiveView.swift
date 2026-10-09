@@ -84,8 +84,8 @@ struct ArchiveExportControls: View {
             if saved, let message = model.archiveSavedMessage { announceForAccessibility(message) }
         }
         .fileExporter(
-            isPresented: $export.presenting, document: export.document, contentType: .journalArchive,
-            defaultFilename: export.document?.filename ?? JournalFile.archiveFilename()
+            isPresented: $export.presenting, document: export.document, contentType: ArchiveFileType.journalArchive,
+            defaultFilename: export.document?.filename ?? ArchiveFileType.filename()
         ) { result in
             export.finish(result)
         }
@@ -108,7 +108,7 @@ struct ArchiveImportButton: View {
     var body: some View {
         Button("Import Archive…") { choosing = true }
             .disabled(model.writingPausedForEncryption)
-            .fileImporter(isPresented: $choosing, allowedContentTypes: [.journalArchive]) { result in
+            .fileImporter(isPresented: $choosing, allowedContentTypes: ArchiveFileType.importTypes) { result in
                 do {
                     archive = try result.get()
                 } catch { self.error = ArchiveImportView.couldntOpen }

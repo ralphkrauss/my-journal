@@ -85,8 +85,8 @@ The title and message are unchanged. The ellipses stay: each opens a page or pic
 - **Three buttons, not a link and a plain action.** Apple's secondary action is a link styled in the accent colour; on Windows a hyperlink navigates and a button acts, so all three are buttons, the one primary action accented.
 - **No pane, no recovery-key step.** The page has no navigation pane because there is nothing to navigate to, and the early-build recovery key state does not exist on Windows.
 - **No menu bar here.** The Mac keeps its menu bar with most items disabled; Windows shows the title bar's More button instead, with Settings, Help and Exit.
-- **Dropping an archive file onto the window**, or opening one from Explorer, starts the import from here through the `.journalarchive` file association ([import-archive](../flows/import-archive.md), D29).
+- **Dropping an archive file onto the window**, or opening one from Explorer, starts the import from here through the `.journalarchive` file association ([import-archive](../flows/import-archive.md)).
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): D29 (the archive as one file), D20 (menu bar hidden on first-run and lock pages).
+Recorded in [open-questions.md](../../../open-questions.md): D20 (menu bar hidden on first-run and lock pages).

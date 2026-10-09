@@ -14,8 +14,9 @@ extension AppModel {
     func start() async { await start(password: Self.testPassword) }
 
     /// `encrypted: false` makes the library 1.0's "Continue Without Encryption" made (format 4), as a library whose
-    /// person chose Not Now: the paths that stay while Not Now exists (sync with its server, readable archives and
-    /// exports) behave as they did. Otherwise a master password library.
+    /// person chose Not Now: the paths that stay while Not Now exists (sync with its server, Markdown export) behave as
+    /// they did. An archive of it can't be written: a file archive holds only encrypted libraries. Otherwise a master
+    /// password library.
     func start(encrypted: Bool) async { await start(password: nil, encrypted: encrypted) }
 
     func start(password: String?, encrypted: Bool) async {

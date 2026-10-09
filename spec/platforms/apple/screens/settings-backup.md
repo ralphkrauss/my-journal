@@ -45,7 +45,7 @@ The pane body (`SettingsView.pane(.backup)`) is a `Form` with `.formStyle(.group
 - `MarkdownExportControls`: the same row with `Button` `settings.backup.exportMarkdown`, disabled while preparing or when `model.store == nil`; indicator label `settings.backup.preparingFiles`; a red selectable error `Text` (`messages.export.markdownFailed`, `messages.export.markdownNoSpace`, `messages.export.markdownSaveFailed`, `messages.save.before.goBack`); a secondary selectable note `Text` after a successful save that left something out (`settings.backup.markdownNote.*`). Error and note changes are announced with `JournalAccessibility.announce`.
 - Footer `settings.backup.markdown.footer` (encrypted journals) or `settings.backup.markdown.footerUnencrypted`.
 
-**Save dialogs.** Both exports end in SwiftUI `.fileExporter`: for the archive `contentType: .journalArchive` (a package type, `org.privatejournal.archive`, extension `journalarchive`) with a document `JournalFile(package:filename:)` and default name `settings.backup.archiveFilename`; for Markdown `contentType: .folder` with the folder name `settings.backup.markdownFolderName`. The dialogs are the system's: the Files browser sheet on iPhone and iPad, a save panel sheet on the Mac. The prepared package or folder is a temporary copy removed when the dialog closes (`discard()`), and at the next launch by `ArchiveExportLeftovers.removeAtLaunch` if the app quit meanwhile.
+**Save dialogs.** Both exports end in SwiftUI `.fileExporter`: for the archive `contentType: ArchiveFileType.journalArchive` (`org.privatejournal.archive`, extension `journalarchive`) with a document `JournalFile(staged:filename:)`, whose `FileWrapper` refers to the staged regular file, and default name `settings.backup.archiveFilename`; for Markdown `contentType: .folder` with the folder name `settings.backup.markdownFolderName`. The dialogs are the system's: the Files browser sheet on iPhone and iPad, a save panel sheet on the Mac. The prepared archive file or Markdown folder is a temporary copy removed when the dialog closes (`discard()`), and at the next launch by `ArchiveExportLeftovers.removeAtLaunch` if the app quit meanwhile.
 
 **No password check (1.1).** Export Archive goes straight to preparing; the sheet `PasswordCheckView`, `passwordCheckPending` and its two commands are gone. Typing the current password in Change Password is the check, and Forgot Password? there resets a forgotten password for a local-only library.
 
@@ -91,8 +91,8 @@ Keyboard: Return and Escape follow the standard default and cancel actions in th
 ## Differences between iPhone, iPad and Mac
 
 - Entry points: Settings only on iPhone; Settings and the File menu on iPad with a keyboard and the Mac, because only those have a menu bar. The File-menu sheets exist for the same reason: a menu item needs a surface to hold the button, the indicator and the error.
-- Save dialog: Files sheet on iOS, save panel sheet on the Mac, both from `.fileExporter`; iPhone and iPad suggest the package's own name and leave a copy under that name in the temporary folder when cancelled, which `ArchiveExport` removes before the next export.
-- On the Mac the inactivity lock is held off while a package is prepared (`keepsUnlockedWhile`); iOS has no inactivity lock.
+- Save dialog: Files sheet on iOS, save panel sheet on the Mac, both from `.fileExporter`; iPhone and iPad suggest the file's own name and leave a copy under that name in the temporary folder when cancelled, which `ArchiveExport` removes before the next export.
+- On the Mac the inactivity lock is held off while an archive is prepared (`keepsUnlockedWhile`); iOS has no inactivity lock.
 - Mac tab height has a 440-point minimum for sheets; iOS lets the system size sheets.
 
 ## Screenshots

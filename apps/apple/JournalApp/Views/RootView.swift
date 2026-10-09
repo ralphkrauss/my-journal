@@ -131,7 +131,8 @@ struct RootView: View {
         // The menu may have asked while no window was open; this window answers it when it appears.
         .onAppear(perform: presentRequestedNewJournal)
         .onAppear { model.windowUndoManager = undoManager }
-        .fileImporter(isPresented: $model.archiveImportRequested, allowedContentTypes: [.journalArchive]) { result in
+        .fileImporter(isPresented: $model.archiveImportRequested, allowedContentTypes: ArchiveFileType.importTypes) {
+            result in
             // A choice made as the app locked, or while the journals are being replaced, isn't imported.
             guard !model.lockBlocksImport, !model.replacingVault, case .success(let url) = result else { return }
             archiveToImport = url
@@ -202,7 +203,7 @@ struct RootView: View {
             editor.endFormatting()
         }
         .onOpenURL { url in
-            guard url.isFileURL, url.pathExtension.lowercased() == "journalarchive" else { return }
+            guard ArchiveFileType.isArchive(url) else { return }
             pendingArchive = url
             openPendingArchive()
         }

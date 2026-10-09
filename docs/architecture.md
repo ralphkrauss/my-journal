@@ -68,7 +68,7 @@ The apps are only clients. None of them includes or starts a server: the server 
 
 ## Backups
 
-Export Archive writes a `.journalarchive` package: a SQLite snapshot plus the original image files, with an authenticated inventory for encrypted libraries. Import Archive restores into an empty device or adds the journals to an existing library. See [archive format](../protocol/archive.md). Server backups are separate and are made with `--backup`.
+Export Archive writes a `.journalarchive` file: one ZIP container holding a SQLite snapshot plus the original image files and a header with a sealed inventory, for libraries with a password. Import Archive restores into an empty device or adds the journals to an existing library, and also reads the folder that version 1.0 wrote. `ArchiveFileType` (`JournalApp/Model/ArchiveFileType.swift`) and `project.yml` hold the file type's identifier and extension. See [archive format](../protocol/archive.md). Server backups are separate and are made with `--backup`.
 
 ## Agent access
 

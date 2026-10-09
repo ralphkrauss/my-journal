@@ -36,7 +36,7 @@ A sheet that scrolls, about 480 × 420 points, with padding.
   2. `settings.archiveImport.entries` ("{count} entries in journals", plural).
   3. `settings.archiveImport.recentlyDeleted` ("{count} in Recently Deleted"), secondary.
   4. When there are any: `settings.archiveImport.unavailable` ("{count} in Unavailable") and `settings.archiveImport.unavailableNote`, secondary.
-  5. When the archive isn't encrypted and this device has no journals: `settings.archiveImport.unencryptedNote` ("This archive isn’t encrypted. You’ll choose a master password next."), in secondary text above the buttons. Nothing else is asked. Only archives made by an earlier version can be unencrypted; this version exports encrypted archives only.
+  5. When the archive isn't encrypted and this device has no journals: `settings.archiveImport.unencryptedNote` ("This archive isn’t encrypted. You’ll choose a master password next."), in secondary text above the buttons. Nothing else is asked. Only a folder archive made by version 1.0 or earlier can be unencrypted; this version writes encrypted file archives only.
   6. When this device already has journals: `settings.archiveImport.kept`, or `settings.archiveImport.keptNumbered` when an imported journal's name is already used (here or by another imported journal); and when connected, `settings.archiveImport.willSync` ("Imported journals will also sync to your server.").
 - **Error:** in red, selectable, below the content; the sheet scrolls to it.
 - **Buttons** (side by side: Cancel, then the progress, then the primary at the trailing end; stacked at accessibility text sizes with progress, primary, Cancel):

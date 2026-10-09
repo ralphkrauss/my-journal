@@ -207,6 +207,4 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | settings ▸ privacy.appLock.openSignInOptions (new; area settings) | none | Open Sign-in options | new | B32, D25 |
 | settings ▸ privacy.capture.title (new; area settings) | none | Hide from screenshots and screen sharing | new | B33, D28 |
 | settings ▸ privacy.capture.description (new; area settings) | none | My Journal appears blank in screenshots, screen recordings and screen sharing, and Windows Recall doesn’t save it. | new | B33, D28 |
-| settings ▸ archive.pickerSelect (new; area settings; folder fallback only) | none | Select archive | new | B36, D29 (only if the archive stays a folder) |
 | settings ▸ backup.pickerSave (new; area settings) | none | Save here | new | B36 (the Markdown export's folder picker; the archive uses the system's Save button) |
-| settings ▸ archiveImport.error.notAnArchive (new; area settings; folder fallback only) | none | This folder isn’t a My Journal archive. | new | B36, D29 (only if the archive stays a folder) |

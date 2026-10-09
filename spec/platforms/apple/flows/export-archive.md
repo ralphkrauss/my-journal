@@ -10,6 +10,7 @@ sources:
   - apps/apple/JournalApp/Views/ExportView.swift
   - apps/apple/JournalApp/Views/ChangePasswordView.swift
   - apps/apple/JournalApp/Model/DocumentTransferOperations.swift
+  - apps/apple/JournalApp/Model/ArchiveFileType.swift
   - apps/apple/JournalApp/Model/ForgotPasswordOperations.swift
   - apps/apple/JournalApp/AppCommands.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/Archive.swift
@@ -34,13 +35,13 @@ Entry points: the Export Archive… button of Settings ▸ Backup (all devices),
 Steps, with the code that does each:
 1. **Button press** (`common.exportArchive`). Ignored when `export.busy` (preparing or the save dialog open); otherwise `export.start(with: model)`. There is no password check in 1.1: the sheet `PasswordCheckView`, `passwordCheckPending` and `passwordChecked` writes are gone.
 2. **The pointer.** Under the footer of `ArchiveControls` and `ArchiveExportSheet`, for master-password libraries, a borderless `Button` `settings.backup.archive.changePassword` presents `ChangePasswordView` (command `change-password`). Typing the current password there is the check, and a local-only library can reset a forgotten one with Forgot Password? (`ForgotPasswordOperations.swift` keeps the eligibility and the five-minute authorization).
-3. **Preparing** (`ArchiveExport.prepare`). If App Lock is on and the library is not encrypted, the device owner authenticates first (see `settings-backup`). A 0.3 second timer then shows the small indicator (`settings.backup.preparingArchive`). `model.prepareArchive()` awaits `finishPendingSave()`; if the open entry cannot be saved it throws the message `messages.save.before.goBack`; otherwise `VaultArchive.export(store:recovery:key:to:)` writes a package `export-<uuid>.journalarchive` into the app's data folder. Locking or a new vault session (connecting, importing) cancels it and removes the package.
-4. **Save dialog**: `.fileExporter(isPresented: $export.presenting, document: JournalFile, contentType: .journalArchive, defaultFilename:)`. The suggested name is `settings.backup.archiveFilename` with the date formatted `yyyy-MM-dd` in the POSIX locale (digits 0 to 9, Gregorian). `JournalFile.fileWrapper` hands the system the package with that preferred name. A cancelled dialog is `CocoaError.userCancelled` and is not an error; any other failure sets `messages.export.archiveSaveFailed`. Success sets the saved message `messages.export.archiveSaved` (lower-case credential; none for an unencrypted library) until the next export starts.
-5. **Clean-up**: `discard()` removes the package and the dialog's leftover copy `Journal Archive <date>.journalarchive` in the temporary folder when the dialog closes; `ArchiveExportLeftovers.removeAtLaunch` removes anything left by a quit, matching only the app's own names and never following or removing a symbolic link: package folders (written by 1.0) and regular files named `export-<uuid>.journalarchive` in the data folder, the dialog's `Journal Archive <date>.journalarchive` folders and files and the export's database copy `export-<uuid>.sqlite` in the temporary folder.
+3. **Preparing** (`ArchiveExport.prepare`). If App Lock is on and the library is not encrypted, the device owner authenticates first (see `settings-backup`). A 0.3 second timer then shows the small indicator (`settings.backup.preparingArchive`). `model.prepareArchive()` awaits `finishPendingSave()`; if the open entry cannot be saved it throws the message `messages.save.before.goBack`; otherwise `VaultArchive.exportFile(store:recovery:key:to:)` writes the file archive `export-<uuid>.journalarchive` (a regular file) into the app's data folder after checking that the volume has the database, the images and 256 MiB free (`ArchiveError.notEnoughSpace` otherwise). It writes only for a library with a password: a library that is not encrypted ends with `messages.export.archiveFailed` (open question D66). Locking or a new vault session (connecting, importing) cancels it and removes the file.
+4. **Save dialog**: `.fileExporter(isPresented: $export.presenting, document: JournalFile, contentType: ArchiveFileType.journalArchive, defaultFilename:)`. The suggested name is `settings.backup.archiveFilename` with the date formatted `yyyy-MM-dd` in the POSIX locale (digits 0 to 9, Gregorian). `JournalFile.fileWrapper` hands the system a wrapper that refers to the staged file, with that preferred name, so the archive is not held in memory; the system copies it to the chosen place (a clone on the same volume, a real copy to iCloud Drive or another volume). A cancelled dialog is `CocoaError.userCancelled` and is not an error; a failure that says the volume is full (`ArchiveExport.isOutOfSpace`) sets `messages.export.archiveNoSpace`, and any other failure sets `messages.export.archiveSaveFailed`. Success sets the saved message `messages.export.archiveSaved` (lower-case credential; none for an unencrypted library) until the next export starts.
+5. **Clean-up**: `discard()` removes the staged file and the dialog's leftover copy `Journal Archive <date>.journalarchive` in the temporary folder when the dialog closes; `ArchiveExportLeftovers.removeAtLaunch` removes anything left by a quit, matching only the app's own names and never following or removing a symbolic link: folders named like a staged archive (written by 1.0) and regular files named `export-<uuid>.journalarchive` in the data folder, the dialog's `Journal Archive <date>.journalarchive` folders and files and the export's database copy `export-<uuid>.sqlite` in the temporary folder.
 
-Errors (red, selectable `Text` under the button, cleared when the next export starts): `messages.save.before.goBack` (thrown as `JournalError.saveRequired`), `messages.export.archiveNoSpace` (`NSFileWriteOutOfSpaceError` or `ENOSPC`), `messages.export.archiveFailed` (anything else), `messages.export.archiveSaveFailed` (dialog result). A failed device authentication shows `settings.backup.verifyFailed` ("Couldn’t verify it’s you. Try again.").
+Errors (red, selectable `Text` under the button, cleared when the next export starts): `messages.save.before.goBack` (thrown as `JournalError.saveRequired`), `messages.export.archiveNoSpace` (`ArchiveError.notEnoughSpace`, `NSFileWriteOutOfSpaceError` or `ENOSPC`, from preparing or from the save dialog), `messages.export.archiveFailed` (anything else), `messages.export.archiveSaveFailed` (dialog result). A failed device authentication shows `settings.backup.verifyFailed` ("Couldn’t verify it’s you. Try again.").
 
-Models: `AppModel`, `ArchiveExport`, `JournalFile`.
+Models: `AppModel`, `ArchiveExport`, `JournalFile`, `ArchiveFileType`.
 
 ## Layout
 
@@ -70,9 +71,9 @@ The authentication reason for an unencrypted library's archive (when App Lock is
 
 ## Differences between iPhone, iPad and Mac
 
-- Dialog: Files browser on iOS (the exported package keeps a copy under its suggested name in the temporary folder until `discard()`), save panel on the Mac.
+- Dialog: Files browser on iOS (the exported file keeps a copy under its suggested name in the temporary folder until `discard()`), save panel on the Mac.
 - Menu entry: File menu on the Mac and an iPad with a hardware keyboard only; iPhone reaches the flow from Settings.
-- The Mac keeps the app unlocked while the package is being prepared (`keepsUnlockedWhile`); iOS has no inactivity lock.
+- The Mac keeps the app unlocked while the archive is being prepared (`keepsUnlockedWhile`); iOS has no inactivity lock.
 - The Change Password sheet the pointer opens is 440 points wide on the Mac; on iOS the system sizes it.
 
 ## Screenshots

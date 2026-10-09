@@ -226,7 +226,7 @@ final class LibraryProblemTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Source-" + UUID().uuidString)
         let source = AppModel(directory: directory)
         source.preferences = UserDefaults(suiteName: "Source-" + UUID().uuidString) ?? .standard
-        await source.start(encrypted: false)
+        await source.start()
         let account = source.configuration?.keyID
         let archive = try await source.prepareArchive()
         addTeardownBlock { @MainActor in
@@ -247,7 +247,7 @@ final class LibraryProblemTests: XCTestCase {
             XCTAssertEqual(model.libraryProblem, problem)
             XCTAssertEqual(model.canImportArchive, problem.offersImport, "\(problem)")
             let file = try Data(contentsOf: fixture.configurationURL)
-            let restored = try await model.inspectArchive(archive, phrase: "")
+            let restored = try await model.inspectArchive(archive, phrase: AppModel.testPassword)
             do {
                 try await model.installArchive(restored)
                 XCTAssertTrue(problem.offersImport, "\(problem) was replaced")

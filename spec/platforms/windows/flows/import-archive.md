@@ -16,15 +16,15 @@ Brings journals back from an archive, safely: nothing changes until the person h
 
 ## What an archive is on Windows
 
-The spec says an archive is **one file**, and the protocol carries it as a **directory package** named `….journalarchive` (an `archive.json`, a `journal.sqlite` and an `attachments` folder, in [protocol/archive.md](../../../../protocol/archive.md)). Apple's file system treats such a package as one document. Windows does not: Explorer shows a folder, a folder cannot be chosen with a file picker, a save picker cannot create one, and a file type association applies to files. A folder is also easy to copy partly, to sync half-way through OneDrive and to break with path-length limits, and nothing stops a half-copied folder from looking valid. **The draft default of D29 (the review's recommendation) is a protocol change: one file on every platform**, a ZIP container (or an equivalent single-file package) with the manifest, a content hash and the same checks. This mapping follows that default and says what it needs; the protocol change is the owner's decision because the protocol is shared by every platform.
+An archive is **one file**, the file archive of [protocol/archive.md](../../../../protocol/archive.md): a ZIP container with `journal.sqlite`, one entry for each image and an `archive.json` that holds the recovery envelope and a sealed manifest of hashes. Windows reads and writes this kind only. The folder that My Journal 1.0 wrote (a directory archive) is an Apple-only legacy: a folder is not an archive here, and the Open picker cannot choose one.
 
-**Fallback if the owner declines.** The folder route: `FolderPicker` in both directions, no file association, a dropped folder starts the import, and a completeness check before the preview: the manifest lists every file with its hash and the import verifies all of them, so a half-copied folder cannot look valid; a folder that fails gets `settings.archiveImport.error.damaged`, or the Windows-only string of B36 when it is not an archive at all.
+A .NET `ZipArchive` materializes every entry when it is opened and checks neither CRC-32, duplicate names, overlap nor sizes against the manifest, so the reader does the protocol's work itself: it reads the end record first, refuses a central directory above 64 MiB or 300,000 entries before opening a library, asks for the password after the header is read and before anything proportional to the library, streams each listed entry once while hashing it, and inspects the extracted database by structure before it is opened as a library (the rules and limits are in the protocol, and `protocol/conformance/archive/v2/` has cases for each). A file that is not an archive, or does not match, is `settings.archiveImport.error.damaged`; an `archiveVersion` above 2 is `settings.archiveImport.error.newerVersion`; a wrong password is `settings.archiveImport.error.wrongPassword`; a file that cannot be read, or too little room for the staged copy (twice the listed sizes and 256 MiB), is `settings.archiveImport.error.couldntOpen`.
 
 ## Controls
 
 | Spec element | Windows control | Notes |
 | --- | --- | --- |
-| Choose the archive | A `FileOpenPicker` (the Windows App SDK picker with the window's id, [16](../platform.md#16-files-and-pickers)) filtered to `.journalarchive` ("My Journal archive"), started in Documents; the system's own Open button | The app reads only what the person picked and never browses elsewhere. It checks the manifest and the content hash before it shows anything; a file that is not an archive or does not match says `settings.archiveImport.error.damaged` on the task page |
+| Choose the archive | A `FileOpenPicker` (the Windows App SDK picker with the window's id, [16](../platform.md#16-files-and-pickers)) filtered to `.journalarchive` ("My Journal archive"), started in Documents; the system's own Open button | The app reads only what the person picked and never browses elsewhere. It checks the container, the manifest and every hash before it shows anything; a file that is not an archive or does not match says `settings.archiveImport.error.damaged` on the task page |
 | The picker fails | A `ContentDialog` titled `settings.backup.openFailed`, content the system's message, Close `common.ok` | The error alert of the spec, with its own title kept because it names the failure ([8.1](../platform.md#81-rules)) |
 | Opened from the system | Double-clicking a `.journalarchive` file in Explorer starts the import through the file association in the package manifest ("My Journal archive"); dropping the file onto the window does the same, and the drop target's caption is `common.importArchive`. A path given on the command line is handled the same way | The first instance receives the File activation ([platform.md, 19](../platform.md#19-single-instance-and-activation)) |
 | Opened while locked | The path (not any content) is held and the import starts after unlocking | Nothing of the archive is read while locked |
@@ -64,7 +64,7 @@ Not applicable to the flow; the picker is the system's and the page is mapped in
 
 ## Copy differences
 
-Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): "Import archive…" (the ellipsis stays: it opens a picker), `settings.backup.openFailed` reads "Couldn’t open archive". No Windows-only picker strings are needed on the file route: the system supplies the Open button, and a file that is not an archive uses `settings.archiveImport.error.damaged`. (The folder fallback needs "Select archive" and "This folder isn’t a My Journal archive.", B36.)
+Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): "Import archive…" (the ellipsis stays: it opens a picker), `settings.backup.openFailed` reads "Couldn’t open archive". No Windows-only picker strings are needed: the system supplies the Open button, and a file that is not an archive uses `settings.archiveImport.error.damaged`.
 
 ## Accessibility
 
@@ -74,10 +74,10 @@ Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-voca
 
 ## Different by design
 
-- **A file picker and a file association for an archive that is one file** (D29, the review's recommendation, which needs a protocol change). Apple opens a directory package as one document; Windows needs a real file for the Open picker, drag and drop of one object and a double-click.
+- **A file picker and a file association for an archive that is one file.** Apple opened the 1.0 folder as one document and opens the 1.1 file the same way; Windows needs a real file for the Open picker, drag and drop of one object and a double-click, and never reads the 1.0 folder.
 - **The queue instead of "forgotten in the background".** A request that cannot show yet waits, because a Windows window is not suspended.
 - **Dropping is an extra route**, not the only one.
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): D29 (the archive as one file; B36 for the folder fallback).
+Recorded in [open-questions.md](../../../open-questions.md): D29 (the archive as one file, settled for 1.1).

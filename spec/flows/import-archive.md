@@ -1,11 +1,12 @@
 ---
 id: import-archive
 title: Import an archive (preview, restore or add)
-features: [import-archive]
+features: [import-archive, archive-directory-read]
 sources:
   - apps/apple/JournalApp/Views/ArchiveView.swift
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Model/DocumentTransferOperations.swift
+  - apps/apple/JournalApp/Model/ArchiveFileType.swift
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/ContentImport.swift
   - apps/apple/JournalApp/Model/ArchiveInstalling.swift
@@ -28,7 +29,7 @@ Brings journals back from an archive, safely: nothing changes until the person h
 
 ## Steps
 
-1. Choose the archive in the system's file picker (or open it from the system).
+1. Choose the archive in the system's file picker (or open it from the system). It is one file; an archive that My Journal 1.0 saved is a folder, and it is accepted too. Which it is depends on what was picked, never on its name.
    - The picker fails: alert `settings.backup.openFailed` with the system's message.
    - Opened from the system while locked: waits until unlocked; while the journals are being replaced: `messages.writingPaused.updating`; if the app goes to the background before it can show, it's forgotten.
 2. **Import Archive** opens (`screens/archive-import`).

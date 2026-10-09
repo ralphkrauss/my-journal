@@ -125,7 +125,7 @@ final class PermanentDeletionMarkerTests: XCTestCase {
         let phrase = "marker archive recovery fixture"
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
         let archive = root.appendingPathComponent("deletion.journalarchive")
-        try await VaultArchive.export(store: store, recovery: recovery, key: key, to: archive)
+        try await VaultArchive.exportFile(store: store, recovery: recovery, key: key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         let destination = try JournalStore(

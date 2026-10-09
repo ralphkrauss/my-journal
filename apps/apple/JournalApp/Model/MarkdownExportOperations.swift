@@ -89,7 +89,7 @@ extension AppModel {
     private func discard() {
         summary = nil
         guard let document else { return }
-        if let package = document.package { try? FileManager.default.removeItem(at: package) }
+        if let staged = document.staged { try? FileManager.default.removeItem(at: staged) }
         if let filename = document.filename { removeDialogCopy(named: filename) }
         self.document = nil
     }
@@ -124,7 +124,7 @@ extension AppModel {
             }
             removeDialogCopy(named: filename)
             self.summary = summary
-            document = JournalFile(package: folder, filename: filename)
+            document = JournalFile(staged: folder, filename: filename)
             presenting = true
         } catch {
             guard !Task.isCancelled, !(error is CancellationError),

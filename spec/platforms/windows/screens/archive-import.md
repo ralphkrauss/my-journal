@@ -77,4 +77,4 @@ Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-voca
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): D29 (the archive as one file), D51 (update link), B38 (update link wording).
+Recorded in [open-questions.md](../../../open-questions.md): D51 (update link), B38 (update link wording).

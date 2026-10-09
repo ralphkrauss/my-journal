@@ -12,7 +12,7 @@ final class ArchiveHistoryTests: XCTestCase {
         let phrase = "orphan history recovery fixture"
         let recovery = try VaultCrypto.makeRecovery(masterKey: fixture.key, phrase: phrase).0
         let archive = root.appendingPathComponent("history.journalarchive")
-        try await VaultArchive.export(store: source, recovery: recovery, key: fixture.key, to: archive)
+        try await VaultArchive.exportFile(store: source, recovery: recovery, key: fixture.key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         let originalHistory = try await restored.store.history(for: fixture.item.id)

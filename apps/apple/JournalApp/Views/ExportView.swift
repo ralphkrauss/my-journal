@@ -2,34 +2,33 @@ import JournalCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-extension UTType {
-    static let journalArchive = UTType(exportedAs: "org.privatejournal.archive", conformingTo: .package)
-}
-
+/// What the save dialog writes: bytes in memory (a recovery key), or a staged item already on disk. An archive is a
+/// staged regular file and a Markdown export a staged folder. The wrapper refers to the staged item, so a large
+/// archive is never held in memory.
 struct JournalFile: FileDocument {
-    static var readableContentTypes: [UTType] { [.data, .journalArchive] }
+    static var readableContentTypes: [UTType] { [.data] + ArchiveFileType.importTypes }
     let bytes: Data?
-    let package: URL?
-    /// The name a package is saved under. iPhone and iPad suggest the package's own name, not the default one.
+    let staged: URL?
+    /// The name a staged item is saved under. iPhone and iPad suggest the item's own name, not the default one.
     let filename: String?
     init(bytes: Data) {
         self.bytes = bytes
-        package = nil
+        staged = nil
         filename = nil
     }
-    init(package: URL, filename: String) {
+    init(staged: URL, filename: String) {
         bytes = nil
-        self.package = package
+        self.staged = staged
         self.filename = filename
     }
     init(configuration: ReadConfiguration) throws {
         bytes = configuration.file.regularFileContents
-        package = nil
+        staged = nil
         filename = nil
     }
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        if let package {
-            let wrapper = try FileWrapper(url: package, options: [])
+        if let staged {
+            let wrapper = try FileWrapper(url: staged, options: [])
             if let filename {
                 wrapper.filename = filename
                 wrapper.preferredFilename = filename
@@ -38,13 +37,6 @@ struct JournalFile: FileDocument {
         }
         guard let bytes else { throw JournalError.invalidData }
         return FileWrapper(regularFileWithContents: bytes)
-    }
-    /// "Journal Archive 2026-09-27.journalarchive": the date tells backups apart, as in a screenshot's name.
-    static func archiveFilename(on date: Date = Date()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd"
-        return "Journal Archive \(formatter.string(from: date)).journalarchive"
     }
 }
 

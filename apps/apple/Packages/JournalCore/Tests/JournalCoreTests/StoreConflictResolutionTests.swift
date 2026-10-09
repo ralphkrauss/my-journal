@@ -782,7 +782,7 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         let phrase = "kept notes archive fixture"
         let recovery = try VaultCrypto.makeRecovery(masterKey: newKey, phrase: phrase).0
         let archive = root.appendingPathComponent("notes.journalarchive")
-        try await VaultArchive.export(store: encrypted, recovery: recovery, key: newKey, to: archive)
+        try await VaultArchive.exportFile(store: encrypted, recovery: recovery, key: newKey, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         addTeardownBlock { try? await restored.store.close() }

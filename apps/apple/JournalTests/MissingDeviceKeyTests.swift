@@ -87,7 +87,7 @@ final class MissingDeviceKeyTests: XCTestCase {
             try? FileManager.default.removeItem(at: source.directory)
             if let account = source.configuration?.keyID { try? Keychain.remove(account) }
         }
-        await source.start(encrypted: false)
+        await source.start()
         await source.newEntry()
         let entry = try XCTUnwrap(source.draft)
         let archive = try await source.prepareArchive()
@@ -100,7 +100,7 @@ final class MissingDeviceKeyTests: XCTestCase {
         XCTAssertTrue(model.locked)
         XCTAssertTrue(model.canImportArchive, "The lock screen of a missing key offers Import Archive….")
 
-        let restored = try await model.inspectArchive(archive, phrase: "")
+        let restored = try await model.inspectArchive(archive, phrase: AppModel.testPassword)
         try await model.installArchive(restored)
         await model.discardImportedCopy(restored)
         await model.supersededRemoval?.value

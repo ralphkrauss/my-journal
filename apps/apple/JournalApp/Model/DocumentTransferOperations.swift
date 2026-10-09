@@ -60,13 +60,14 @@ extension AppModel {
         let session = vaultSessionID
         try validateVaultSession(session, readingWhileEncrypting: true)
         guard let store, let configuration, let masterKey else { throw JournalError.locked }
-        let destination = directory.appendingPathComponent("export-" + UUID().uuidString + ".journalarchive")
+        let destination = directory.appendingPathComponent(ArchiveFileType.stagedFilename())
         var created = false
         do {
             let saved = await finishPendingSave()
             try validateVaultSession(session, readingWhileEncrypting: true)
             guard saved else { throw JournalError.saveRequired }
-            try await VaultArchive.export(
+            // The writer removes what it created when it fails; only a finished archive is this function's to remove.
+            try await VaultArchive.exportFile(
                 store: store, recovery: configuration.recovery, key: masterKey, to: destination)
             created = true
             try validateVaultSession(session, readingWhileEncrypting: true)
@@ -79,11 +80,12 @@ extension AppModel {
     }
 }
 
-/// One archive export at a time: prepares a package, hands it to the save dialog, and removes it once the dialog
+/// One archive export at a time: prepares an archive file, hands it to the save dialog, and removes it once the dialog
 /// closes. Presses while an archive is being prepared or the dialog is open do nothing.
 @MainActor final class ArchiveExport: ObservableObject {
     static let progressDelay = Duration.milliseconds(300)
     static let saveFailure = "Couldn’t save the archive. Try again, or choose another location."
+    static let noSpace = "There isn’t enough space to export the archive. Free up space, then try again."
     /// Said when the device's authentication, asked for before an export, failed rather than was cancelled.
     static let verificationFailure = "Couldn’t verify it’s you. Try again."
 
@@ -93,7 +95,7 @@ extension AppModel {
     @Published var error: String?
     /// The save dialog saved the archive; the Export row says to keep the password with it until the next export.
     @Published private(set) var saved = false
-    /// Bound to the save dialog. A cancelled dialog doesn't report back, so its package is removed when the next
+    /// Bound to the save dialog. A cancelled dialog doesn't report back, so its staged file is removed when the next
     /// export starts or the controls go away, never while the dialog may still be writing it.
     @Published var presenting = false
     private var operation: Task<Void, Never>?
@@ -126,7 +128,9 @@ extension AppModel {
         switch result {
         case .success: saved = true
         case .failure(let failure):
-            if (failure as? CocoaError)?.code != .userCancelled { error = Self.saveFailure }
+            if (failure as? CocoaError)?.code != .userCancelled {
+                error = Self.isOutOfSpace(failure) ? Self.noSpace : Self.saveFailure
+            }
         }
         discard()
     }
@@ -138,23 +142,27 @@ extension AppModel {
         discard()
     }
 
-    /// Removes the prepared package and the save dialog's leftover copy of it.
+    /// Removes the staged archive and the save dialog's leftover copy of it.
     private func discard() {
         guard let document else { return }
-        if let package = document.package { try? FileManager.default.removeItem(at: package) }
+        if let staged = document.staged { try? FileManager.default.removeItem(at: staged) }
         if let filename = document.filename { removeDialogCopy(named: filename) }
         self.document = nil
     }
 
-    static func message(for failure: Error) -> String {
+    /// Whether a failure says the volume is full: the writer's own check (`ArchiveError.notEnoughSpace`, before
+    /// anything is written) or the system running out of room while writing or while the save dialog copies the file.
+    static func isOutOfSpace(_ failure: Error) -> Bool {
+        if (failure as? ArchiveError) == .notEnoughSpace { return true }
         let code = (failure as NSError).code
         let domain = (failure as NSError).domain
-        if case JournalError.server(let message) = failure { return message }
-        if (domain == NSCocoaErrorDomain && code == NSFileWriteOutOfSpaceError)
+        return (domain == NSCocoaErrorDomain && code == NSFileWriteOutOfSpaceError)
             || (domain == NSPOSIXErrorDomain && code == Int(ENOSPC))
-        {
-            return "There isn’t enough space to export the archive. Free up space, then try again."
-        }
+    }
+
+    static func message(for failure: Error) -> String {
+        if case JournalError.server(let message) = failure { return message }
+        if isOutOfSpace(failure) { return noSpace }
         return "Couldn’t export the archive. Try again."
     }
 
@@ -183,7 +191,7 @@ extension AppModel {
             progress.cancel()
             showsProgress = false
         }
-        let filename = JournalFile.archiveFilename()
+        let filename = ArchiveFileType.filename()
         do {
             try model.validateVaultSession(session, readingWhileEncrypting: true)
             let url = try await model.prepareArchive()
@@ -193,7 +201,7 @@ extension AppModel {
                 return
             }
             removeDialogCopy(named: filename)
-            document = JournalFile(package: url, filename: filename)
+            document = JournalFile(staged: url, filename: filename)
             presenting = true
         } catch {
             guard !Task.isCancelled, !(error is CancellationError),
@@ -210,11 +218,11 @@ extension AppModel {
 }
 
 /// Removes what an export or a restore left behind when the save dialog was cancelled or the app quit meanwhile:
-/// - in the data folder, the staged archive `export-<UUID>.journalarchive` (a file; a package, a folder, from earlier
-///   builds), Markdown folders named `markdown-<UUID>`, and, when the library folders are known, a restore's staging
-///   folder `import-<UUID>` that no configuration names;
-/// - in the app's own temporary folder, the save dialog's `Journal Archive <yyyy-MM-dd>.journalarchive` and
-///   `Journal Markdown <yyyy-MM-dd>` copies, and the export's database copy `export-<UUID>.sqlite`.
+/// - in the data folder, the staged archive `export-<UUID>.journalarchive` (a file; a folder, from 1.0), Markdown
+///   folders named `markdown-<UUID>`, and, when the library folders are known, a restore's staging folder
+///   `import-<UUID>` that no configuration names;
+/// - in the app's own temporary folder, the save dialog's `Journal Archive <yyyy-MM-dd>.journalarchive` (a file; a
+///   folder, from 1.0) and `Journal Markdown <yyyy-MM-dd>` copies, and the export's database copy `export-<UUID>.sqlite`.
 /// Links are never followed or removed, and nothing else is touched.
 enum ArchiveExportLeftovers {
     @MainActor private static var removed = false
@@ -256,8 +264,9 @@ enum ArchiveExportLeftovers {
     }
 
     static func isStagedArchive(_ name: String) -> Bool {
-        guard name.hasPrefix("export-"), name.hasSuffix(".journalarchive") else { return false }
-        let identifier = name.dropFirst("export-".count).dropLast(".journalarchive".count)
+        let suffix = "." + ArchiveFileType.filenameExtension
+        guard name.hasPrefix("export-"), name.hasSuffix(suffix) else { return false }
+        let identifier = name.dropFirst("export-".count).dropLast(suffix.count)
         return UUID(uuidString: String(identifier)) != nil
     }
 
@@ -269,8 +278,9 @@ enum ArchiveExportLeftovers {
     }
 
     static func isDialogArchive(_ name: String) -> Bool {
-        guard name.hasPrefix("Journal Archive "), name.hasSuffix(".journalarchive") else { return false }
-        return isDate(name.dropFirst("Journal Archive ".count).dropLast(".journalarchive".count))
+        let suffix = "." + ArchiveFileType.filenameExtension
+        guard name.hasPrefix("Journal Archive "), name.hasSuffix(suffix) else { return false }
+        return isDate(name.dropFirst("Journal Archive ".count).dropLast(suffix.count))
     }
 
     /// The copy of the database an archive export makes in the temporary folder (`FileArchive.export`).

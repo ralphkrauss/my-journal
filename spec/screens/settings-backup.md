@@ -81,6 +81,7 @@ A sheet titled `settings.backup.exportMarkdownSheet.title` ("Export as Markdown"
 - Leaving the pane or sheet while preparing cancels the export; while the save dialog is open it stays.
 - The computer doesn't lock for inactivity while an export is being prepared (it may while the save dialog waits).
 - Temporary copies are removed after the dialog closes, and at the next launch if the app quit meanwhile.
+- A not enough space failure on export (`messages.export.archiveNoSpace`) means the archive was not saved; so does `messages.export.archiveSaveFailed`.
 
 ## Accessibility
 
@@ -90,7 +91,7 @@ A sheet titled `settings.backup.exportMarkdownSheet.title` ("Export as Markdown"
 ## Platform notes (Apple)
 
 - iPhone and iPad: Settings ▸ Backup only (and the iPad's File menu with a keyboard). Mac: the Backup tab and the File menu.
-- The save dialogs are the system's (file exporter); the archive is a package type (`.journalarchive`), the Markdown export a folder.
+- The save dialogs are the system's (file exporter); the archive is a file (`.journalarchive`, a ZIP container), the Markdown export a folder.
 
 ## Open questions
 

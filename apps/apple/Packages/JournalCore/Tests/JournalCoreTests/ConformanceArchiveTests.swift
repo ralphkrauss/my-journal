@@ -4,9 +4,12 @@ import XCTest
 
 @testable import JournalCore
 
-/// protocol/conformance/archive/v1: a small library as Export Archive writes it, once with a master password and once
-/// without (protocol/archive.md). Restoring them, reading the database and the manifest directly, and the damage a
-/// reader must refuse are checked here; the server's tests read the same files with .NET and SQLite.
+/// protocol/conformance/archive/v1: a small library as My Journal 1.0 wrote it, a directory archive, once with a master
+/// password and once without (protocol/archive.md). Restoring them, reading the database and the manifest directly, and
+/// the damage a reader must refuse are checked here; the server's tests read the same files with .NET and SQLite.
+///
+/// The fixtures are read-only. The app no longer writes a directory archive, so nothing can regenerate them: the
+/// committed files are the 1.0 writer's own output, which is what makes them worth testing against.
 final class ConformanceArchiveTests: XCTestCase {
     private static let base = "archive/v1"
     private let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -22,70 +25,10 @@ final class ConformanceArchiveTests: XCTestCase {
 
     private struct Corpus: Decodable {
         struct Recovery: Decodable {
-            struct Wrapped: Decodable {
-                let envelope: RecoveryEnvelopeText
-            }
             let password: String
             let vaultKey: Data
-            let envelopes: [Wrapped]
         }
         let recovery: Recovery
-    }
-    private struct RecoveryEnvelopeText: Decodable {
-        let salt: String
-        let wrappedKey: String
-        let iterations: Int
-        let formatVersion: Int
-        var envelope: RecoveryEnvelope {
-            RecoveryEnvelope(salt: salt, wrappedKey: wrappedKey, iterations: iterations, formatVersion: formatVersion)
-        }
-    }
-
-    // MARK: Generation
-
-    /// The library both archives hold: records as the Apple app writes them, one with an image, one made on this
-    /// device and not yet sent, an earlier version, and the library record that holds pins.
-    private func populate(_ store: JournalStore) async throws {
-        let cases = ConformanceRecordCases.all
-        for name in ["journal-with-default-template", "template", "entry-markdown"] {
-            let record = try XCTUnwrap(cases.first { $0.name == name })
-            let id = try XCTUnwrap(UUID(uuidString: record.id))
-            try await store.insertSynchronized(Data(record.plaintext.utf8), id: id, kind: record.kind)
-        }
-        let image = try XCTUnwrap(UUID(uuidString: ConformanceRecordCases.imageID))
-        _ = try await store.addAttachment(ConformanceExportLibrary.png, id: image)
-        let entryID = try XCTUnwrap(UUID(uuidString: ConformanceRecordCases.entryID))
-        let stored = try await store.item(entryID)
-        let earlier = try XCTUnwrap(stored)
-        try await store.keepInHistory(earlier)
-        let journal = try XCTUnwrap(UUID(uuidString: ConformanceRecordCases.journalID))
-        let offline = JournalItem(
-            id: UUID(uuidString: "5E1F0C2E-3B4D-4E6F-8A9B-0C1D2E3F4A5B") ?? UUID(), kind: "entry", journalID: journal,
-            title: "Written offline", document: JournalDocument(markdown: "Not sent to a server yet.\n"),
-            date: (try? JournalCoding.date(from: "2026-10-01T08:00:00Z")) ?? Date())
-        try await store.save(offline)
-        try await store.setLibraryValues([
-            "pinned/" + ConformanceRecordCases.entryID.lowercased(): .bool(true),
-            "journal-rank/" + ConformanceRecordCases.journalID.lowercased(): .string("V"),
-        ])
-    }
-
-    private func generate(_ corpus: Corpus) async throws {
-        let manager = FileManager.default
-        for (name, protection) in [("encrypted", ContentProtection.encrypted), ("plaintext", .plaintext)] {
-            let destination = Conformance.url("\(Self.base)/\(name)")
-            try? manager.removeItem(at: destination)
-            try manager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-            let key = protection == .encrypted ? corpus.recovery.vaultKey : try VaultCrypto.generateKey()
-            let store = try JournalStore(
-                directory: root.appendingPathComponent("source-" + name), key: key, protection: protection)
-            try await populate(store)
-            let recovery =
-                protection == .encrypted
-                ? try XCTUnwrap(corpus.recovery.envelopes.first).envelope.envelope : .unprotected
-            try await VaultArchive.export(store: store, recovery: recovery, key: key, to: destination)
-            try await store.close()
-        }
     }
 
     // MARK: Reading the database directly, as another client does
@@ -167,7 +110,7 @@ final class ConformanceArchiveTests: XCTestCase {
         return try XCTUnwrap(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
     }
 
-    private func generated(_ corpus: Corpus) throws -> [String: Any] {
+    private func described(_ corpus: Corpus) throws -> [String: Any] {
         var archives: [String: Any] = [:]
         for (name, protection) in [("encrypted", ContentProtection.encrypted), ("plaintext", .plaintext)] {
             let directory = Conformance.url("\(Self.base)/\(name)")
@@ -184,80 +127,23 @@ final class ConformanceArchiveTests: XCTestCase {
         return archives
     }
 
-    private func inputs(_ corpus: Corpus) -> [String: Any] {
-        [
-            "corpusVersion": 1,
-            "purpose":
-                "A small library as Export Archive writes it, with a master password (encrypted/) and without (plaintext/): what is in the package and the database once decrypted (protocol/archive.md). The encrypted archive uses the format 2 envelope, password and vault key of crypto/encryption-v2.json. See README.md in this folder.",
-            "passwordSource": "crypto/encryption-v2.json, recovery.password",
-            "mutations": Self.mutations,
-        ]
-    }
-
-    /// Damage and clutter applied to a copy of encrypted/, and whether a reader must then refuse it. Offsets are
-    /// bytes from the start of the file; a flipped byte has its lowest bit inverted.
-    private static let image = "attachments/01234567-89ab-4cde-8fab-0123456789ab"
-    private static var mutations: [[String: Any]] {
-        [
-            [
-                "name": "database-changed", "note": "A byte of the database differs from the manifest's hash.",
-                "ops": [["op": "flipByte", "file": "journal.sqlite", "offset": 40000]], "result": "refused",
-            ],
-            [
-                "name": "image-changed", "note": "A byte of an image differs from the manifest's hash.",
-                "ops": [["op": "flipByte", "file": image, "offset": 20]], "result": "refused",
-            ],
-            [
-                "name": "image-missing", "note": "A file the manifest lists is gone.",
-                "ops": [["op": "delete", "file": image]], "result": "refused",
-            ],
-            [
-                "name": "header-version-mismatch", "note": "Header version 2 on an envelope that needs a password.",
-                "ops": [["op": "setHeaderVersion", "version": 2]], "result": "refused",
-            ],
-            [
-                "name": "system-file-in-attachments",
-                "note": "Copying between volumes adds dot files, which are ignored.",
-                "ops": [
-                    ["op": "add", "file": "attachments/.DS_Store", "text": ""],
-                    [
-                        "op": "add", "file": "attachments/._01234567-89ab-4cde-8fab-0123456789ab",
-                        "text": "resource fork",
-                    ],
-                ],
-                "result": "restores",
-            ],
-            [
-                "name": "other-top-level-file", "note": "Other top-level files are ignored.",
-                "ops": [["op": "add", "file": "Thumbs.db", "text": "thumbnails"]], "result": "restores",
-            ],
-        ]
-    }
-
     // MARK: Checks
 
     private func corpus() throws -> Corpus { try Conformance.decode(Corpus.self, "crypto/encryption-v2.json") }
 
-    private func expected() async throws -> [String: Any] {
-        let corpus = try corpus()
-        if Conformance.regenerating {
-            try await generate(corpus)
-            var fixture = inputs(corpus)
-            fixture["archives"] = try generated(corpus)
-            try Conformance.write(fixture, to: "\(Self.base)/expected.json")
-        }
-        return try Conformance.object("\(Self.base)/expected.json")
+    private func expected() throws -> [String: Any] {
+        try Conformance.object("\(Self.base)/expected.json")
     }
 
     func testTheArchivesHoldWhatTheFixtureSays() async throws {
-        let fixture = try await expected()
+        let fixture = try expected()
         let corpus = try corpus()
         let archives = try XCTUnwrap(fixture["archives"] as? [String: Any])
-        XCTAssertTrue(try Conformance.same(try generated(corpus), archives))
+        XCTAssertTrue(try Conformance.same(try described(corpus), archives))
     }
 
     func testTheEncryptedArchiveRestoresWithItsPasswordOnly() async throws {
-        let fixture = try await expected()
+        let fixture = try expected()
         let encrypted = try XCTUnwrap((fixture["archives"] as? [String: Any])?["encrypted"] as? [String: Any])
         let password = try XCTUnwrap(encrypted["password"] as? String)
         let source = Conformance.url("\(Self.base)/encrypted")
@@ -306,7 +192,7 @@ final class ConformanceArchiveTests: XCTestCase {
 
     /// A reader refuses damaged packages and ignores clutter, as the fixture's mutations say.
     func testDamageIsRefusedAndClutterIsIgnored() async throws {
-        let fixture = try await expected()
+        let fixture = try expected()
         let encrypted = try XCTUnwrap((fixture["archives"] as? [String: Any])?["encrypted"] as? [String: Any])
         let password = try XCTUnwrap(encrypted["password"] as? String)
         let mutations = try XCTUnwrap(fixture["mutations"] as? [[String: Any]])
@@ -328,7 +214,6 @@ final class ConformanceArchiveTests: XCTestCase {
     }
 
     func testThePlaintextArchiveRestoresWithoutAPassword() async throws {
-        _ = try await expected()
         let source = Conformance.url("\(Self.base)/plaintext")
         XCTAssertFalse(try VaultArchive.requiresPassword(at: source))
         let restored = try await VaultArchive.restore(

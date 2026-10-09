@@ -12,7 +12,7 @@ final class ImportLifecycleTests: XCTestCase {
         let phrase = try VaultCrypto.recoveryPhrase()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
         let archive = root.appendingPathComponent("copy.journalarchive")
-        try await VaultArchive.export(store: source, recovery: recovery, key: key, to: archive)
+        try await VaultArchive.exportFile(store: source, recovery: recovery, key: key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         let summary = ArchiveSummary(snapshot: try await restored.store.lifecycleSnapshot())

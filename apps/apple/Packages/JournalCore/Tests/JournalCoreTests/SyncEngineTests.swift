@@ -247,7 +247,7 @@ final class SyncEngineTests: XCTestCase {
         let downloaded = try await mac.attachment(photoID)
         XCTAssertEqual(downloaded, photo)
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: VaultCrypto.recoveryPhrase()).0
-        try await VaultArchive.export(
+        try await VaultArchive.exportFile(
             store: mac, recovery: recovery, key: key, to: root.appendingPathComponent("backup.journalarchive"))
     }
 
