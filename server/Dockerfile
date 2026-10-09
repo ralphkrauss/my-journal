@@ -11,7 +11,7 @@ RUN dotnet restore server/src/Journal.Api/Journal.Api.csproj --locked-mode
 COPY server/src/Journal.Api/ server/src/Journal.Api/
 RUN dotnet publish server/src/Journal.Api/Journal.Api.csproj -c Release --no-restore -o /out /p:UseAppHost=false "/p:Version=$JOURNAL_VERSION"
 # mcr.microsoft.com/dotnet/aspnet:10.0.12
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.12@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.12@sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4
 WORKDIR /app
 COPY --from=build /out .
 # The same license and notices as the server packages.
