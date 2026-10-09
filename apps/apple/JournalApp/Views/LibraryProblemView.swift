@@ -67,12 +67,12 @@ struct LibraryProblemView: View {
         switch problem {
         case .newerVersion:
             return [
-                "These journals were saved by a newer version of My Journal. Update My Journal in the App Store or TestFlight to open them."
+                "These journals were saved by a newer version of My Journal. Update My Journal to open them."
             ]
         case .settingsUnread:
             return [
                 "My Journal can’t read the settings saved on this device. Nothing has been removed.",
-                "If you recently used a newer version of My Journal, update it. Then try again. If this keeps happening, restart your \(device).",
+                "If a newer version of My Journal saved these settings, update My Journal, then try again. If this keeps happening, restart your \(device).",
             ]
         default:
             return [

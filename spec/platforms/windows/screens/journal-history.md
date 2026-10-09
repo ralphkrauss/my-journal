@@ -48,7 +48,7 @@ A default template is named by its title or `library.entryList.untitledTemplate`
 | Reload history | After a failed load or `messages.history.versionUnavailable` |
 | The journal changed after the comparison opened | The dialog closes and the page shows `messages.history.journalChanged` in its bar; the person opens Restore settings again |
 | Settings already the same | `messages.history.settingsInUse` as an Informational bar; the page stays and its controls are disabled (completed) |
-| Open entry could not be saved first | `messages.save.before.restoreJournalSettings` in the page's bar |
+| Open entry could not be saved first | `messages.save.before.goBack` in the page's bar |
 | Locked | The lock page replaces the window; the page, the dialog, the versions and the errors are released |
 
 ## Layout at each window width

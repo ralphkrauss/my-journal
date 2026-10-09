@@ -8,7 +8,7 @@ extension AppModel {
         try requireJournalsOpen()
         guard !locked, !replacingVault else { throw JournalError.locked }
         try await checkReconnection(address: address)
-        guard await finishPendingSave() else { throw JournalError.server("Save your changes before connecting.") }
+        guard await finishPendingSave() else { throw JournalError.saveRequired }
         if store != nil && !uploadLocal {
             throw JournalError.server("Choose whether to upload your local journals before connecting.")
         }
@@ -71,7 +71,7 @@ extension AppModel {
     ) async throws {
         try requireJournalsOpen()
         guard !locked else { throw JournalError.locked }
-        guard await flush() else { throw JournalError.server("Save your changes before connecting.") }
+        guard await flush() else { throw JournalError.saveRequired }
         if store != nil && !uploadLocal && !(replacingEmptyLibrary && nothingWritten) {
             throw JournalError.server("Choose whether to upload your local journals before connecting.")
         }
@@ -178,7 +178,7 @@ extension AppModel {
             try requireJournalsOpen()
             guard !locked else { throw JournalError.locked }
             try await checkReconnection(address: address)
-            guard await flush() else { throw JournalError.server("Save your changes before connecting.") }
+            guard await flush() else { throw JournalError.saveRequired }
             if store != nil && !uploadLocal && !(replacingEmptyLibrary && nothingWritten) {
                 throw JournalError.server("Choose whether to upload your local journals before connecting.")
             }

@@ -60,7 +60,7 @@ A sheet that scrolls, about 480 × 420 points, with padding.
   - newer format: `settings.archiveImport.error.newerVersion` ("Update My Journal to open this archive.");
   - incomplete or damaged: `settings.archiveImport.error.damaged`;
   - anything else (file not available, no space): `settings.archiveImport.error.couldntOpen`.
-- **Import errors:** the error's own message, for example `messages.save.before.importArchive`, `messages.import.archiveNeedsUpdate`, `messages.error.locked`.
+- **Import errors:** the error's own message, for example `messages.save.before.goBack`, `messages.import.archiveNeedsUpdate`, `messages.error.locked`.
 - **Imported but not shown:** the app's error alert with `messages.refresh.imported`; the import isn't offered again.
 - **Locked:** closes; the opened copy is discarded.
 - **Library being replaced** when an archive file is opened from the system: the app's error alert with `messages.writingPaused.updating` instead of the sheet.

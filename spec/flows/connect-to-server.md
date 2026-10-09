@@ -146,7 +146,7 @@ The person types the password (or early recovery key) of the journals on this de
 ### 6. Setting up the server
 
 Busy `settings.connect.busy.settingUp`. The device:
-1. saves the open entry (if it can't: `messages.connection.saveBeforeConnecting`);
+1. saves the open entry (if it can't: `messages.save.before.goBack`);
 2. checks it isn't already connected to this server (`messages.connection.alreadyConnected`) or connected to another server (`messages.connection.reconnectSameServer`);
 3. sends the setup code with this library's recovery information (derived from the password; the password itself is never sent) and its device name;
 4. receives this device's access and saves the connection;
@@ -176,7 +176,7 @@ Before anything is sent from a device that has journals, Merge Journals names th
 ### 8. Sign in with the credential
 
 Busy `settings.connect.busy.signingIn`, then the joining phases.
-1. Saves the open entry (`messages.connection.saveBeforeConnecting`).
+1. Saves the open entry (`messages.save.before.goBack`).
 2. Checks the server's encryption details are those seen when it was chosen; otherwise back to page 1 with `messages.connection.serverChanged`.
 3. Derives the recovery secret from the typed credential and asks the server for access.
 4. Installs (step 9).
@@ -222,7 +222,7 @@ The server's administrator can make a one-time recovery code. The person types i
 
 ### 11. Installing (all ways of joining)
 
-1. Saves the open entry (`messages.connection.saveBeforeConnecting`); refuses if another connection is being set up (`messages.connection.alreadyConnecting`).
+1. Saves the open entry (`messages.save.before.goBack`); refuses if another connection is being set up (`messages.connection.alreadyConnecting`).
 2. A library with nothing written is replaced by the server's journals (they download). A library with journals:
    - if the server holds this same library (same encryption key, or the server already has this library's records): continues with it by identity;
    - otherwise: makes a new copy with everything the server has, merges this device's journals into it (same-name journals combine unless an agent reads the server's journal; then a number is added), and sends them. Phases: `settings.connect.busy.checking`, `settings.connect.busy.downloading`, `common.merging`.

@@ -9,10 +9,6 @@ extension AppModel {
         lists.lifecycle = snapshot
         return snapshot
     }
-    /// Journals not in Recently Deleted, in the order the sidebar lists them (journal-order.md).
-    var journalRecords: [JournalItem] {
-        JournalRanks.arranged(items.filter { $0.kind == "journal" && $0.deletedAt == nil }, ranks: library.ranks)
-    }
     /// Journals in use, in the person's order: by rank, then the others by name.
     var journals: [JournalItem] {
         if let cached = lists.journals { return cached }

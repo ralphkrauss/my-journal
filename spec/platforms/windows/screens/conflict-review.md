@@ -80,7 +80,7 @@ In the Sync page, a group headed `messages.conflict.settingsSection` (a sub-head
 
 ### The unsupported review
 
-`messages.conflict.updateToReview` as text, then `common.exportArchive` as a `Button`: the archive export of Settings ▸ Backup including its one-time password check ([export-archive](../flows/export-archive.md)), run from this page; its errors show in an Error `InfoBar`, and `messages.save.before.exportArchiveForConflict` while a save has failed. Nothing can be resolved; both versions stay. Where the message says to update, a "Get updates" link opens the Microsoft Store's updates page (D51).
+`messages.conflict.updateToReview` as text, then `common.exportArchive` as a `Button`: the archive export of Settings ▸ Backup including its one-time password check ([export-archive](../flows/export-archive.md)), run from this page; its errors show in an Error `InfoBar`, and `messages.save.before.goBack` while a save has failed. Nothing can be resolved; both versions stay. Where the message says to update, a "Get updates" link opens the Microsoft Store's updates page (D51).
 
 ## Layout at each window width
 

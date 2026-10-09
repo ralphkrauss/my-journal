@@ -103,7 +103,7 @@ private struct DeleteAllPrompt: ViewModifier {
     }
     private func report(_ failure: Error) {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
-        model.error = failure.shown(.saving)
+        model.report(failure, .saving)
     }
 }
 
@@ -175,7 +175,10 @@ struct DeleteAllCopy {
         let reason: String
         switch held.allSatisfy({ $0 == first }) ? first : .other {
         case .review: reason = one ? "has changes that need review" : "have changes that need review"
-        case .newerVersion: reason = one ? "needs a newer version of My Journal" : "need a newer version of My Journal"
+        case .newerVersion:
+            return one
+                ? "1 item was saved by a newer version and stays in Recently Deleted. Update My Journal to delete it."
+                : "\(held.count) items were saved by a newer version and stay in Recently Deleted. Update My Journal to delete them."
         case .other: reason = "can’t be deleted yet"
         }
         return "\(items) \(reason) and will stay in Recently Deleted."

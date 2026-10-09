@@ -49,9 +49,18 @@ import XCTest
         let moved = await model.moveJournal(work.id, to: 0, undoManager: nil)
         XCTAssertTrue(moved)
         XCTAssertEqual(model.journals.map(\.title), ["Work", "Archive", "Default"])
-        XCTAssertEqual(model.journalRecords.map(\.title), ["Work", "Archive", "Default"])
         await model.createJournal("Zero")
         XCTAssertEqual(model.journals.last?.title, "Zero", "Once arranged, a new journal goes to the end")
+    }
+
+    /// A library record from a newer version can't be changed, and trying again won't help: the failure says to update.
+    func testAPinOrMoveThatFailsBecauseTheLibraryIsFromANewerVersionSaysToUpdate() {
+        let pinFailure = "Couldn’t pin the entry."
+        XCTAssertEqual(
+            AppModel.libraryFailure(LibraryError.newerVersion, fallback: pinFailure),
+            "Update My Journal to use pinned entries and journal order.")
+        XCTAssertEqual(AppModel.libraryFailure(LibraryError.unavailable, fallback: pinFailure), pinFailure)
+        XCTAssertEqual(AppModel.libraryFailure(CocoaError(.fileWriteUnknown), fallback: pinFailure), pinFailure)
     }
 
     /// Edit ▸ Undo Pin Entry unpins and Redo Pin Entry pins again, as often as asked; the same for Move Journal. The

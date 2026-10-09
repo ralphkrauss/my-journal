@@ -135,7 +135,7 @@ extension AppModel {
     func restoreTemplate(_ id: UUID) async {
         guard !locked, !replacingVault else { return }
         guard await finishPendingSave() else {
-            error = "Save your changes before restoring this template."
+            report(JournalError.saveRequired, .saving)
             return
         }
         guard !locked, !replacingVault, let store else { return }

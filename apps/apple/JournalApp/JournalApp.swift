@@ -35,7 +35,6 @@ struct JournalApp: App {
                         PrivacyCover.shared.watch(model)
                     #endif
                     await model.load()
-                    model.reviewRequests.noteLaunch()
                     await ArchiveExportLeftovers.removeAtLaunch(dataDirectory: model.directory)
                     #if os(macOS)
                         model.startInactivityLock()

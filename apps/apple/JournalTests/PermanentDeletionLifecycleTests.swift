@@ -322,8 +322,9 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
         XCTAssertEqual(journal.title, "Delete “Work” and Its Entries Permanently?")
         XCTAssertEqual(
             journal.message,
-            "Its 3 entries are deleted too. 1 item needs a newer version of My Journal and will stay in Recently "
-                + "Deleted. You can’t undo this. Copies may remain in archives, backups, and server history.")
+            "Its 3 entries are deleted too. 1 item was saved by a newer version and stays in Recently Deleted. "
+                + "Update My Journal to delete it. You can’t undo this. Copies may remain in archives, backups, and "
+                + "server history.")
         XCTAssertEqual(
             DeleteAllCopy.heldSentence([.review, .newerVersion]),
             "2 items can’t be deleted yet and will stay in Recently Deleted.")

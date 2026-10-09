@@ -14,9 +14,7 @@ struct DevicesView: View {
     @State private var failedRevoke: ServerDevice?
     var body: some View {
         Form {
-            if model.locked {
-                Text("Unlock My Journal to view Devices.")
-            } else if model.connection == nil {
+            if model.connection == nil {
                 Text("Connect to a server to add your other devices.").foregroundStyle(.secondary)
                 Button("Connect to a Server…") { connect = true }
             } else {

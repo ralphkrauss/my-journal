@@ -37,7 +37,7 @@ The spec's table applies as written. Windows presentation of the notable rows:
 
 | State | Windows |
 | --- | --- |
-| Open entry could not be saved first | Opening: the page does not open and the alert dialog explains. Restoring: `messages.save.before.restoreVersion` in the page's error bar; the chosen version and journal are kept |
+| Open entry could not be saved first | Opening: the page does not open and the alert dialog explains. Restoring: `messages.save.before.goBack` in the page's error bar; the chosen version and journal are kept |
 | Version gone | `messages.history.versionUnavailable` with Reload history |
 | Journal gone | `messages.history.chooseJournal` in the bar; the journal picker clears; also when the chosen journal disappears while the page is open |
 | Journal has changes to review | `messages.lifecycle.needsReview` with Review changes |

@@ -13,9 +13,9 @@ sources:
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/JournalApp/Model/JournalNavigation.swift
   - apps/apple/JournalApp/Model/AppLockOperations.swift
-  - apps/apple/JournalApp/Model/SyncHealthOperations.swift
   - apps/apple/JournalApp/Model/EraseOperations.swift
   - apps/apple/JournalTests/ReviewRequestTests.swift
+  - docs/design/1-1-settings-messages-editor.md
   - docs/design/about-and-ratings-2026-10-05.md
 ---
 
@@ -27,14 +27,14 @@ How the spec's [Asking for a rating](../../../flows/rating-request.md) is built.
 
 - The system's request: `@Environment(\.requestReview)` (`RequestReviewAction`, StoreKit). `ReviewRequestPresenter` is a `ViewModifier` applied to the root view of the `WindowGroup` in `JournalApp.swift`; on appear it stores `{ requestReview() }` as `ReviewRequests.present`, so the prompt is requested from the window that is in front, on all three devices.
 - The decision is made by `ReviewRequests` (`ReviewRequestTiming.swift`), one per `AppModel` (`model.reviewRequests`), together with `ReviewRequestRules.allow` and `ReviewUsage` (`ReviewRequest.swift`).
-- Storage: `ReviewUsageStore.preferences()`, one JSON value in the app's `UserDefaults` under `ReviewRequestUsage`: `firstUse`, `writingDays`, `lastWritingDay` (a local calendar day key such as "2026-10-5", so a day counts once), `lastRequestVersion`, `lastRequest`. No journal content. `noteLaunch()` creates it on the first launch (`JournalApp.swift`, after `model.load()`). Erase Journals and Settings removes the key (`EraseOperations.swift`) and calls `reset()`.
-- Rules (`ReviewRequestRules.allow`): a usage record exists; no problem this session; at least 7 days since `firstUse`; `writingDays` at least 4; `lastRequestVersion` differs from `CFBundleShortVersionString`; at least 120 days since `lastRequest`. The check that the build came from the App Store is separate and asynchronous: `AppTransaction.shared` must be `.verified` with `environment == .production`, so TestFlight and development builds never ask.
+- Storage: `ReviewUsageStore.preferences()`, one JSON value in the app's `UserDefaults` under `ReviewRequestUsage`: `writingDays`, `lastWritingDay` (a local calendar day key such as "2026-10-5", so a day counts once) and `lastRequest`. No journal content. The record is created at the first saved edit (`ReviewUsageStore.current()`). A record written by 1.0 also holds `firstUse` and `lastRequestVersion`; decoding ignores them, so its `writingDays` and `lastRequest` still count. Erase Journals and Settings removes the key (`EraseOperations.swift`) and calls `reset()`.
+- Rules (`ReviewRequestRules.allow`): a usage record exists; no problem this session; `writingDays` at least 5; at least 120 days since `lastRequest`. The check that the build came from the App Store is separate and asynchronous: `AppTransaction.shared` must be `.verified` with `environment == .production`, so TestFlight and development builds never ask.
 - Counting writing days: `noteEdit(entry:)` runs in `AppModel.updateDraft`, which only the editor's own edits reach (title and body), and remembers the edited entry. `noteSaved(entry:)` runs when `AppModel.flush` has stored the draft and records today if the saved entry is the edited one.
-- The moment: `AppModel.applySelection` (all selection changes: choosing another entry, going back to the list on iPhone, which first saves and then deselects) calls `selectionChanged(leaving:)` with the entry that was left, only when it is a live entry in a live journal (not deleted, moved or recovered). If the person edited that entry, a `Task` waits 2 seconds, then `askIfStillPaused` checks that nothing called `interrupt()` meanwhile (`activity` counter), that `AppModel.reviewMomentIsClear` holds, that the rules allow it and the build is from the store, then checks the moment again, calls `present()` and records the version and the date, whether or not the system shows anything.
+- The moment: `AppModel.applySelection` (all selection changes: choosing another entry, going back to the list on iPhone, which first saves and then deselects) calls `selectionChanged(leaving:)` with the entry that was left, only when it is a live entry in a live journal (not deleted, moved or recovered). If the person edited that entry, a `Task` waits 2 seconds, then `askIfStillPaused` checks that nothing called `interrupt()` meanwhile (`activity` counter), that `AppModel.reviewMomentIsClear` holds, that the rules allow it and the build is from the store, then checks the moment again, calls `present()` and records the date, whether or not the system shows anything.
 - Interruptions call `interrupt()`, which bumps the counter and cancels the task: another edit, a new entry (`newEntry`), a lock (`noteLocked`, which also forgets the edited entry), the app resigning active (`applicationResignedActive`), another selection change. Sheets and panels are not events: they are tested at the end of the wait by `reviewMomentIsClear`.
-- Problems: `noteProblem()` sets `problemThisSession` until the next launch (or `reset()` after an erase) and interrupts. It is called when `model.error` is set, `saveFailure` becomes true, `conflicts` is not empty, `syncLongWait` becomes true (changes have waited more than a day while sync fails), and `recordSyncHealth` gets a state of any kind except `temporary` (offline, unreachable, unavailable and `localDataUnavailable` are `temporary`).
-- Clear moment (`reviewMomentIsClear`): unlocked, app active, no device authentication request in front, library open and ready; not replacing the library, erasing, connecting, creating an entry, deleting all, or opening journals; no failed save, error or conflict; none of these presented: Settings, Journals, the template chooser, the archive and Markdown export sheets, an archive import request or a New Journal request; the selected entry is not a new empty entry (`draft.title.isEmpty` and an empty body). Then the window test, which differs by platform (below).
-- Tests: `ReviewRequests.forApp(hostsTests:)` returns a store of nil in unit-test hosts and UI-test runs, so tests never ask; a debug build with `JOURNAL_UI_TEST_REVIEW=eligible` starts with an in-memory record that meets the rules. `ReviewRequestTests` cover the rules, writing days, the single request and the problem cases.
+- Problems: `noteProblem()` sets `problemThisSession` until the next launch (or `reset()` after an erase) and interrupts. It is called when `model.error` is set, `saveFailure` becomes true and `conflicts` is not empty; nothing about sync calls it. A sync problem is read live instead: `reviewStateIsClear` requires `!showsSyncStatus` (a sync state that needs the person, or sync failing for more than a day while changes wait).
+- Clear moment (`reviewMomentIsClear`, which is `reviewStateIsClear` plus the window test): unlocked, app active, no device authentication request in front, library open and ready; not replacing the library, erasing, connecting, creating an entry, deleting all, or opening journals; no failed save, error or conflict; Sync Status not showing; none of these presented: Settings, the template chooser, the archive and Markdown export sheets, an archive import request or a New Journal request; the selected entry is not a new empty entry (`draft.title.isEmpty` and an empty body). Then the window test, which differs by platform (below).
+- Tests: `ReviewRequests.forApp(hostsTests:)` returns a store of nil in unit-test hosts and UI-test runs, so tests never ask; a debug build with `JOURNAL_UI_TEST_REVIEW=eligible` starts with an in-memory record that meets the rules. `ReviewRequestTests` cover the rules, a record written by 1.0, writing days, the single request, the problem cases and a sync problem that blocks the moment only while Sync Status shows it.
 
 ## Layout
 
@@ -70,15 +70,15 @@ None. The rating prompt is the system's own UI and a simulator shows no rating p
 View:
 
 - `apps/apple/JournalApp/Views/ReviewRequestPresenter.swift`: gives the model the window's `requestReview`.
-- `apps/apple/JournalApp/JournalApp.swift`: applies the modifier and calls `noteLaunch`.
+- `apps/apple/JournalApp/JournalApp.swift`: applies the modifier.
 
 Model:
 
 - `apps/apple/JournalApp/Model/ReviewRequestTiming.swift`: `ReviewRequests` (the moment, interruptions, the store check), `reviewMomentIsClear` and `ReviewMoment`.
 - `apps/apple/JournalApp/Model/ReviewRequest.swift`: `ReviewUsage`, the rules and the preferences store.
-- `apps/apple/JournalApp/Model/AppModel.swift`: `noteEdit`, `noteSaved` and `noteProblem` calls (`updateDraft`, `flush`, the `error`, `saveFailure`, `conflicts` and `syncLongWait` observers).
+- `apps/apple/JournalApp/Model/AppModel.swift`: `noteEdit`, `noteSaved` and `noteProblem` calls (`updateDraft`, `flush`, the `error`, `saveFailure` and `conflicts` observers).
 - `apps/apple/JournalApp/Model/JournalNavigation.swift`: `applySelection` starts the moment.
-- `apps/apple/JournalApp/Model/SyncHealthOperations.swift`, `AppLockOperations.swift`, `EraseOperations.swift`: sync problems, resigning active, and the erase.
+- `apps/apple/JournalApp/Model/SyncHealthOperations.swift` (`showsSyncStatus`), `AppLockOperations.swift`, `EraseOperations.swift`: the sync status read by the moment, resigning active, and the erase.
 
 Core: none; nothing is shared with JournalCore.
 
@@ -86,4 +86,4 @@ Design record: `docs/design/about-and-ratings-2026-10-05.md` (section 3). Tests:
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), C24: sync health `localDataUnavailable` also counts as quiet (the spec lists offline, unreachable and unavailable), and the spec's "no text field has focus" is checked at the end of the two seconds, together with sheets, not as an interruption.
+See [open-questions.md](../../../open-questions.md), C24. The spec's "no text field has focus" is checked at the end of the two seconds, together with sheets, not as an interruption.

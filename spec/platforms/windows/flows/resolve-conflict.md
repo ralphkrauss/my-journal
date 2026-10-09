@@ -18,8 +18,8 @@ Conflicting edits are never overwritten silently: both versions are kept until t
 | Spec step | Windows realisation | Notes |
 | --- | --- | --- |
 | 1. Open the review | Review changes is a page ([conflict-review](../screens/conflict-review.md)). Choosing `review-changes` first awaits the open entry's save, then navigates; the back stack remembers the entry, the list position and the pane choice | If the save fails the page does not open and the alert dialog shows ([save-failure](save-failure.md)). The form is decided from the current versions when the page renders, so a review opened from a stale signal shows the right form or `messages.conflict.resolved` |
-| 2a. Entry or template: Keep both; Keep version | Buttons on the page; the keep-one choice has a confirmation `ContentDialog` | [entry-conflict](../screens/entry-conflict.md). Keep both first saves the pending writing (`messages.save.before.resolveEntryConflict` inline in the page's error bar if it fails) |
-| 2b. Journal: Keep version | A button and a confirmation dialog; the open entry is saved first (`messages.save.before.reviewChanges`) | |
+| 2a. Entry or template: Keep both; Keep version | Buttons on the page; the keep-one choice has a confirmation `ContentDialog` | [entry-conflict](../screens/entry-conflict.md). Keep both first saves the pending writing (`messages.save.before.goBack` inline in the page's error bar if it fails) |
+| 2b. Journal: Keep version | A button and a confirmation dialog; the open entry is saved first (`messages.save.before.goBack`) | |
 | 2c. Deletion: Keep entry…, Keep entry as copy…, Keep template, Keep journal, Keep deletion | Buttons; the journal chooser is a deeper level of the page; Keep deletion has the destructive dialog | The review is prepared first, with `common.pleaseWait`; the open entry is saved first |
 | 2d. Unsupported | Text and an Export archive button | |
 | 3. When something changes meanwhile | The rows below | |

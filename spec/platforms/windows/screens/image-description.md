@@ -31,7 +31,7 @@ A page in the window's content area, replacing the library panes and returning t
 
 ### States, as in the spec
 
-Loading a preview: `editor.image.loading`. Image missing: `editor.imageDescriptions.imageUnavailable`. Saving: `editor.imageDescriptions.saving`. Reloading: `editor.imageDescriptions.loadingImages`. The entry is no longer describable (deleted, moved out, conflict, read-only): fields stay and Done is disabled, `editor.imageDescriptions.noLongerAvailable`. The entry changed: `messages.entry.imagesChanged`. Unavailable: `messages.entry.unavailableForEditing`. The entry's own writing is not saved: `messages.save.before.imageDescriptions` (Reload and Try again hidden; Copy stays). Saved but not shown: `editor.imageDescriptions.savedNotShown`. Images editable only as Markdown source: `messages.image.descriptionsNeedSource`.
+Loading a preview: `editor.image.loading`. Image missing: `editor.imageDescriptions.imageUnavailable`. Saving: `editor.imageDescriptions.saving`. Reloading: `editor.imageDescriptions.loadingImages`. The entry is no longer describable (deleted, moved out, conflict, read-only): fields stay and Done is disabled, `editor.imageDescriptions.noLongerAvailable`. The entry changed: `messages.entry.imagesChanged`. Unavailable: `messages.entry.unavailableForEditing`. The entry's own writing is not saved: `messages.save.before.goBack` (Reload and Try again hidden; Copy stays). Saved but not shown: `editor.imageDescriptions.savedNotShown`. Images editable only as Markdown source: `messages.image.descriptionsNeedSource`.
 
 ### Actions
 

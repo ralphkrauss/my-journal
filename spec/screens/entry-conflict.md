@@ -47,7 +47,7 @@ Scrolling content:
 | Action | Enabled | Result |
 | --- | --- | --- |
 | Switch version | Not busy | Shows the other version; images load for it. |
-| Keep Both | Not busy | First saves the open writing (failure: `messages.save.before.resolveEntryConflict`). Keeps both versions as separate entries (or templates), each where it is with its date. The sheet closes and the entry opens as it's now stored. |
+| Keep Both | Not busy | First saves the open writing (failure: `messages.save.before.goBack`). Keeps both versions as separate entries (or templates), each where it is with its date. The sheet closes and the entry opens as it's now stored. |
 | Keep One Version ▸ Keep Version from This Device… / Other Device… | Not busy | Confirmation dialog `messages.conflict.keepOne.title`, message: for the other device's version, what will happen to the entry (`messages.conflict.outcome.entry.*` or `messages.conflict.outcome.template.*`: move, archive, date change) followed by `messages.conflict.keepOne.history`; for this device's version only `messages.conflict.keepOne.history`. Buttons `messages.conflict.keepVersion` and Cancel. Then as Keep Both, keeping only that version. |
 | Try Again | After a failed refresh, or after a commit whose reload failed | Refreshes the review, or reloads the resolved entry. |
 | Cancel / Done | Not busy | Closes; nothing changes (Cancel) or the result stays (Done). |

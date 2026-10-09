@@ -176,7 +176,7 @@ struct EntryConflictReview: View {
             do {
                 guard valid(store, session: session) else { return }
                 guard await model.finishPendingSave() else {
-                    throw JournalError.server("Your latest changes couldn’t be saved. Try again.")
+                    throw JournalError.saveRequired
                 }
                 guard valid(store, session: session) else { return }
                 try await store.resolve(request.conflict, choice: request.choice)

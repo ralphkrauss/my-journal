@@ -29,11 +29,10 @@ screenshots:
 
 Local `@State` holds everything: `devices: [ServerDevice]`, `loading`, `busy`, `error`, `unauthorized`, `add`, `connect`, `revoking`, `failedRevoke`. The server is reached through `AppModel.connectedClient()` (`Model/DeviceOperations.swift`), whose `devices()` and `revoke(_:)` calls are the only network use. The list is reloaded by `.task { await load() }` (when the pane appears) and by the Add Device sheet's `onDismiss`.
 
-The `Form` shows exactly one of three bodies:
+The `Form` shows exactly one of two bodies. While the app is locked `SettingsView` shows only `settings.locked`, so the view never builds a body for that state:
 
-1. **Locked** (`model.locked`): a plain `Text` `settings.devices.locked`.
-2. **Not connected** (`model.connection == nil`): `Text` `settings.devices.notConnected` in secondary style, then `Button` `common.connectToServer`, which sets `connect = true` and opens `ConnectionView` with `.sheet(isPresented:)` ([connect-to-server](connect-to-server.md)).
-3. **Connected**, in order:
+1. **Not connected** (`model.connection == nil`): `Text` `settings.devices.notConnected` in secondary style, then `Button` `common.connectToServer`, which sets `connect = true` and opens `ConnectionView` with `.sheet(isPresented:)` ([connect-to-server](connect-to-server.md)).
+2. **Connected**, in order:
    1. While `loading`: `ProgressView("Loading Devices…")` (`settings.devices.loading`), a labelled spinner as the first row. It also shows during a reload while the previous list stays visible.
    2. `ForEach(devices.filter { !$0.revoked })`: one `Section` per device, in the order the server returned.
       - A `VStack(alignment: .leading, spacing: 3)` with the name, then (subheadline, secondary) `common.thisDevice` for the device whose id equals `model.connection?.deviceID`, then the added line from `DeviceDescriptions.added(_:)`. The stack uses `fixedSize(horizontal: false, vertical: true)` and `.accessibilityElement(children: .combine)`, so it is one element that wraps.

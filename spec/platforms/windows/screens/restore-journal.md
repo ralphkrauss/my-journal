@@ -42,8 +42,8 @@ Opening saves the open entry and checks the journal (and entry); until the check
 | Busy | Everything disabled; not dismissable |
 | Missing journal | `library.restoreJournal.unavailableLocal`, or `common.journalNotArrived` with `common.trySyncingAgain` when the library syncs; and Export archive |
 | Changes to review | `messages.lifecycle.needsReview` with Review changes |
-| Already restored | The journal is shown and the dialog says `messages.lifecycle.alreadyRestored` (Close becomes Done), or `messages.save.before.openRestoredJournal` when the open entry cannot be saved; Restore entry then offers Review entry (`messages.restore.alreadyRestored`), which shows the entry where it is now |
-| Errors | `messages.lifecycle.changedContinue` (then Try again and a new explicit Restore), `messages.save.before.restoreJournal`, `messages.save.before.restoreEntry`, `messages.save.before.reviewEntry`, `messages.lifecycle.unsupportedJournal`, `messages.restore.changed`, `messages.restore.unavailable`, `messages.error.unsupportedFormat`, `messages.lifecycle.missingJournal`, `messages.lifecycle.alreadyDeleted` — all in the dialog's error bar |
+| Already restored | The journal is shown and the dialog says `messages.lifecycle.alreadyRestored` (Close becomes Done), or `messages.save.before.goBack` when the open entry cannot be saved; Restore entry then offers Review entry (`messages.restore.alreadyRestored`), which shows the entry where it is now |
+| Errors | `messages.lifecycle.changedContinue` (then Try again and a new explicit Restore), `messages.save.before.goBack`, `messages.lifecycle.unsupportedJournal`, `messages.restore.changed`, `messages.restore.unavailable`, `messages.error.unsupportedFormat`, `messages.lifecycle.missingJournal`, `messages.lifecycle.alreadyDeleted` — all in the dialog's error bar |
 | Stored but not shown | `messages.refresh.journalRestored` or `library.restoreEntry.displayFailed` in the error bar; Close becomes Done; restoring is not offered again |
 | Locked | The dialog hides and nothing is restored if it had not started |
 

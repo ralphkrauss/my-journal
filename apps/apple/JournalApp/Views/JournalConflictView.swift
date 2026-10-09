@@ -127,7 +127,7 @@ struct JournalMetadataConflictReview: View {
                         Text("Update My Journal to review these changes.").foregroundStyle(.secondary)
                         ArchiveExportControls()
                         if model.saveFailure {
-                            Text("Save your entry before exporting the archive.")
+                            Text(JournalError.saveRequired.shown(.saving))
                                 .foregroundStyle(.secondary)
                         }
                     }

@@ -96,7 +96,7 @@ New Entry in this journal starts from the chosen template; Blank Entry means an 
 1. The open entry is saved and the deletion is checked first.
 2. Alert `library.deleteJournal.title` (with the journal's name), message `library.deleteJournal.noEntries` or `library.deleteJournal.message` (count of its entries on this device), buttons `common.delete` (destructive) and `common.cancel`.
 3. **Delete:** the row leaves the list at once (animated unless Reduce Motion). The journal and its entries move to Recently Deleted, and another journal is shown. Nothing else is said.
-4. A journal (or one of its entries) with changes to review isn't deleted: a standard alert titled `messages.deleteConflict.title` with the journal's name, message `messages.deleteConflict.journal`, and buttons `common.reviewChanges` (opens the review) and `common.cancel`. Other failures, in the general error alert: `messages.generic.journalDeleteNeedsUpdate`, `messages.save.before.deleteJournal`, `messages.lifecycle.changed`, `messages.refresh.journalDeletedView`. A journal already deleted elsewhere is ignored quietly.
+4. A journal (or one of its entries) with changes to review isn't deleted: a standard alert titled `messages.deleteConflict.title` with the journal's name, message `messages.deleteConflict.journal`, and buttons `common.reviewChanges` (opens the review) and `common.cancel`. Other failures, in the general error alert: `messages.generic.journalDeleteNeedsUpdate`, `messages.save.before.tryAgain`, `messages.lifecycle.changed`, `messages.refresh.journalDeletedView`. A journal already deleted elsewhere is ignored quietly.
 
 See [flows/delete-and-restore](../flows/delete-and-restore.md) for restoring.
 
@@ -105,7 +105,7 @@ See [flows/delete-and-restore](../flows/delete-and-restore.md) for restoring.
 - **Mac:** drag a journal row up or down within the Journals section; an insertion line shows where it lands. Escape cancels. The selection stays.
 - **iPhone and iPad:** **Edit** (`library.toolbar.edit`) turns on edit mode; drag a row's reorder handle. Outside edit mode, touch and hold a row, then move it to drag. With a pointer on iPad, press and drag.
 - **VoiceOver (iPhone and iPad):** each journal row has the actions `library.journals.moveUp` (not on the first) and `library.journals.moveDown` (not on the last).
-- The new order is saved on drop, shown at once, synced to other devices, and announced: `messages.announce.journalMovedAbove` or `messages.announce.journalMovedBelow`. Undo and Redo (Edit ▸ Undo Move Journal, `library.journals.undoMove`) move it back. If saving fails: error alert `messages.generic.moveJournalFailed` and the previous order returns.
+- The new order is saved on drop, shown at once, synced to other devices, and announced: `messages.announce.journalMovedAbove` or `messages.announce.journalMovedBelow`. Undo and Redo (Edit ▸ Undo Move Journal, `library.journals.undoMove`) move it back. If saving fails: error alert `messages.generic.moveJournalFailed` (`messages.library.needsUpdate` when the library record is from a newer version) and the previous order returns.
 - All Entries, Templates, Recently Deleted, Unavailable Journals and Settings never move.
 
 ### Edit mode (iPhone and iPad)

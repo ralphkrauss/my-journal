@@ -65,8 +65,6 @@ Sentence case: `messages.save.notSaved` is "Not saved"; "Try again". Beyond that
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
 | `messages.save.mac.title` | Couldn’t save changes on this Mac. | Couldn’t save changes on this PC. | vocabulary (platform.md, 12.3) |
-| `messages.save.before.changeDate` | … Close this sheet … | … Close this dialog … | vocabulary (platform.md, 12.3) |
-| `messages.save.before.imageDescriptions` | … close this view … | … go back … | vocabulary ([messages](../messages.md)) |
 
 The keys named `messages.save.mac.*` also serve Windows; their Mac-only name is a spec naming question, not a copy change.
 

@@ -46,7 +46,7 @@ Brings journals back from an archive, safely: nothing changes until the person h
 
 | When | Message |
 | --- | --- |
-| The open entry can't be saved first | `messages.save.before.importArchive` |
+| The open entry can't be saved first | `messages.save.before.goBack` |
 | The archive has items from a newer version and journals exist here | `messages.import.archiveNeedsUpdate` |
 | Locked meanwhile | `messages.error.locked` |
 | Imported, but the journals can't be shown | `messages.refresh.imported` (app error alert; the import stands) |

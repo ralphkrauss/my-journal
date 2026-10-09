@@ -55,7 +55,7 @@ extension AppModel {
         do {
             let saved = await finishPendingSave()
             try validateVaultSession(session)
-            guard saved else { throw JournalError.server("Save your changes before exporting an archive.") }
+            guard saved else { throw JournalError.saveRequired }
             try await VaultArchive.export(
                 store: store, recovery: configuration.recovery, key: masterKey, to: destination)
             created = true

@@ -67,7 +67,7 @@ Scrolling content:
 | Version in a newer format | `editor.history.updateToRestore` and Export Archive… |
 | No journals (entries) | `editor.history.createJournalFirst` |
 | Restoring | `editor.history.restoring` (Done and the controls disabled; can't swipe to dismiss) |
-| Open entry couldn't be saved first | `messages.save.before.restoreVersion` |
+| Open entry couldn't be saved first | `messages.save.before.goBack` |
 | Version gone | `messages.history.versionUnavailable`, with Reload History |
 | Journal gone | `messages.history.chooseJournal` (also when a chosen journal disappears while the sheet is open) |
 | Journal has changes to review | `messages.lifecycle.needsReview`, with Review Changes |

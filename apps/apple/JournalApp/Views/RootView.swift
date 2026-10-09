@@ -27,7 +27,6 @@ struct RootView: View {
     #endif
     @State var newJournal = false
     @State var createAfterJournal = false
-    @State private var managedJournal: JournalItem?
     @State private var journalName = ""
     @State private var journalNameTaken: String?
     @State private var templateName = ""
@@ -108,14 +107,15 @@ struct RootView: View {
         .alert(
             "My Journal",
             isPresented: Binding(
-                get: { model.error != nil && !model.locked && !creatingLibrary }, set: { if !$0 { model.error = nil } })
+                get: { model.alertText != nil && !model.locked && !creatingLibrary },
+                set: { if !$0 { model.dismissAlert() } })
         ) {
             if model.saveFailure {
                 Button("Try Again") { Task { _ = await model.flush(announcing: .always) } }
             }
-            Button("OK", role: .cancel) { model.error = nil }
+            Button("OK", role: .cancel) { model.dismissAlert() }
         } message: {
-            Text(model.error ?? "")
+            Text(model.alertText ?? "")
         }
         .alert("New Journal", isPresented: $newJournal) {
             TextField("Name", text: $journalName)
@@ -166,12 +166,10 @@ struct RootView: View {
         #endif
         .sheet(isPresented: $editor.requestLink) { LinkEditorView().environmentObject(editor) }
         .sheet(isPresented: $creatingLibrary) { CreateJournalView() }
-        .sheet(item: $managedJournal) { JournalsSheet(journalID: $0.id) }
         .sheet(isPresented: $model.templateChooserPresented) {
             // File ▸ New Entry from Template…: outside a journal, the sheet asks which journal.
             TemplateChooserView(journalID: model.newEntryJournal?.id, choosesJournal: !showsJournal)
         }
-        .sheet(isPresented: $model.journalsPresented) { JournalsSheet() }
         .background {
             if let session = imageInsertion {
                 ImagePickerPresenter(
@@ -261,8 +259,6 @@ struct RootView: View {
         imageDescriptionsEntry = nil
         connect = false
         model.settingsPresented = false
-        model.journalsPresented = false
-        managedJournal = nil
         model.templateChooserPresented = false
         newJournal = false
         journalNameTaken = nil

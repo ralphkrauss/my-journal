@@ -22,7 +22,7 @@ extension AppModel {
     }
     func changeEntryDate(_ entryID: UUID, expectedDate: Date, to date: Date) async throws {
         guard !locked, !replacingVault, draft?.id == entryID, canEdit else { throw EntryDateError.unavailable }
-        guard await entryAutosaveSettled() else { throw EntryDateError.saveRequired }
+        guard await entryAutosaveSettled() else { throw JournalError.saveRequired }
         try Task.checkCancellation()
         guard !locked, !replacingVault, draft?.id == entryID, let store else { throw EntryDateError.unavailable }
         let refreshed = try await commitMutation({

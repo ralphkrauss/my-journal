@@ -52,7 +52,7 @@ Maps [screens/move-entry.md](../../../screens/move-entry.md). One view, `MoveEnt
 
 There is no empty-state beyond item 1, no loading state (journals are local) and no offline state.
 
-**Errors** (set by `showError`, which also posts an accessibility announcement): a conflict (`JournalLifecycleError.conflict`) refreshes the model, remembers the record in `conflictToReview` and shows `messages.lifecycle.needsReview`; the selected journal disappearing or becoming ambiguous clears the selection and shows `common.journalGone` (`onValueChange(of: selectableIDs)`); an unsaved open entry shows `common.saveBeforeMoveEntry`; anything else shows `error.shown(.saving)`. A move that was stored but cannot be shown is the generic alert with `common.entryMovedNotDisplayed` (set by `commitEntryMove` after the sheet's `dismiss()`).
+**Errors** (set by `showError`, which also posts an accessibility announcement): a conflict (`JournalLifecycleError.conflict`) refreshes the model, remembers the record in `conflictToReview` and shows `messages.lifecycle.needsReview`; the selected journal disappearing or becoming ambiguous clears the selection and shows `common.journalGone` (`onValueChange(of: selectableIDs)`); an unsaved open entry shows `messages.save.before.goBack`; anything else shows `error.shown(.saving)`. A move that was stored but cannot be shown is the generic alert with `common.entryMovedNotDisplayed` (set by `commitEntryMove` after the sheet's `dismiss()`).
 
 **Closing without a move.** The sheet closes by itself, cancelling the task, when the app locks or when another entry becomes the open draft (`onValueChange(of: model.draft?.id)`).
 

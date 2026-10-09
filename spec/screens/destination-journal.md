@@ -40,7 +40,7 @@ A small sheet over the sheet that opened it (computer: 320–420 pt wide, 200–
 ## States
 
 - Busy: fields and buttons disabled; can't swipe to dismiss.
-- Open entry couldn't be saved: `common.saveBeforeCreateJournal`.
+- Open entry couldn't be saved: `messages.save.before.goBack`.
 - Created but not shown: `library.recoveryJournal.created`; the button becomes Done.
 - Locked, or (from Move Entry) another entry opened: the sheet closes and the work is cancelled.
 - Errors are announced to VoiceOver.

@@ -1196,7 +1196,7 @@ rate-app:
   android: planned
 
 rating-request:
-  title: "The platform's rating prompt, at a pause after editing, for store installs after a week and four writing days, at most once per version and every 120 days"
+  title: "The platform's rating prompt, at a pause after editing, for store installs after five writing days and at least 120 days apart"
   specs: [flows/rating-request.md]
   reference: apple
   apple: shipped

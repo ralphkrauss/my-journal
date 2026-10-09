@@ -32,7 +32,7 @@ Save is disabled while saving and while the entry has a failed save.
 ## States
 
 - **Busy:** controls disabled; not dismissable.
-- **Errors:** `messages.entry.dateChanged`, `messages.save.before.changeDate`, `messages.entry.unavailableForEditing`.
+- **Errors:** `messages.entry.dateChanged`, `messages.save.before.goBack`, `messages.entry.unavailableForEditing`.
 - **Stored but not shown:** error alert `messages.refresh.dateSaved`.
 - **Another entry opened, or locked:** the sheet closes.
 

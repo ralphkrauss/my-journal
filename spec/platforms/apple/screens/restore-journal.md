@@ -29,9 +29,9 @@ Maps [screens/restore-journal.md](../../../screens/restore-journal.md). One Swif
 
 ## Controls
 
-`JournalLifecycleView(journalID:restoring:restoringEntryID:)`. With `restoringEntryID` set it is Restore Entry, otherwise Restore Journal. It is presented with a plain `.sheet` from two places: `DeletedJournalView` (`.sheet(isPresented:)`, from `library.recentlyDeleted.restoreJournal`, command `restore-journal`) and `EntryRecoveryNotice` (`.sheet(item:)`, from `library.recoveryNotice.restoreWithJournal`, command `restore-with-journal`; the sheet receives the entry's journal id and the entry id). The view has no detents.
+`JournalLifecycleView(journalID:restoringEntryID:)`. With `restoringEntryID` set it is Restore Entry, otherwise Restore Journal. It is presented with a plain `.sheet` from two places: `DeletedJournalView` (`.sheet(isPresented:)`, from `library.recentlyDeleted.restoreJournal`, command `restore-journal`) and `EntryRecoveryNotice` (`.sheet(item:)`, from `library.recoveryNotice.restoreWithJournal`, command `restore-with-journal`; the sheet receives the entry's journal id and the entry id). The view has no detents.
 
-State is kept in the view (`@State`): `plan` and `entryPlan` (what the check returned: `JournalDeletionPlan` is for the unused delete form, `EntryRestorationPlan` is the entry, its journal and the counts), `journal`, `prepared`, `loaded`, `busy`, `completed`, `error`, `conflictID`, `entryIssue`. The model calls are `AppModel.refresh`, `prepareEntryRestoration`, `restoreJournal`, `restoreEntryAndJournal`, `reviewRestoredEntry` and `sync`; JournalCore does the work in `JournalLifecycle.swift` and `EntryRestoration.swift`.
+State is kept in the view (`@State`): `entryPlan` (what the check returned for Restore Entry: `EntryRestorationPlan`, the entry, its journal and the counts), `journal`, `prepared`, `loaded`, `busy`, `completed`, `error`, `conflictID`, `entryIssue`. The model calls are `AppModel.refresh`, `prepareEntryRestoration`, `restoreJournal`, `restoreEntryAndJournal`, `reviewRestoredEntry` and `sync`; JournalCore does the work in `JournalLifecycle.swift` and `EntryRestoration.swift`.
 
 Chrome:
 - Title: `library.restoreJournal.title` or `library.restoreEntry.title`.
@@ -47,7 +47,7 @@ Content, in a `ScrollView` and a left-aligned `VStack(spacing: 18)` with 24 poin
 5. `common.restoredAsRenamed` when `AppModel.restoredName(of:)` finds another journal in use with the same name.
 6. The error, plain secondary `Text` (not red) with `.textSelection(.enabled)`.
 7. `ProgressView("Please Wait…")` (`common.pleaseWait`) while `busy`.
-8. The confirming Button, shown only once `prepared` is true and the sheet is not `completed`: label `library.restoreJournal.title` or `common.restore`; default plain style with `.foregroundStyle(Color.accentColor)`; multi-line left-aligned label; `accessibilityIdentifier("confirm-journal-lifecycle")`; no key shortcut. It commits what the check captured (`plan` is not recomputed), so a changed journal ends in an error and a new explicit press.
+8. The confirming Button, shown only once `prepared` is true and the sheet is not `completed`: label `library.restoreJournal.title` or `common.restore`; default plain style with `.foregroundStyle(Color.accentColor)`; multi-line left-aligned label; `accessibilityIdentifier("confirm-journal-lifecycle")`; no key shortcut. It commits what the check captured (`entryPlan` is not recomputed), so a changed journal ends in an error and a new explicit press.
 9. Recovery actions (plain Buttons):
    - `common.tryAgain`, when the check failed, no issue is classified and the journal is editable or unknown (`prepare()` again);
    - Restore Entry failures (`entryIssue`): `library.restoreJournal.reviewEntry` when the journal was already restored (`reviewRestoredEntry`, then the sheet closes), `common.trySyncingAgain` when the journal is missing and `model.connection` exists (`sync()` then `prepare()` again), and the export control;
@@ -55,7 +55,7 @@ Content, in a `ScrollView` and a left-aligned `VStack(spacing: 18)` with 24 poin
    - `ArchiveExportControls` (a plain "Export Archive…" Button with an inline error and progress, `Views/ArchiveView.swift`; command `export-archive`) for content from a newer version and for a missing journal;
    - a missing journal in Restore Journal: `library.restoreJournal.unavailableLocal` (no server) or `common.journalNotArrived` with `common.trySyncingAgain` (with a server).
 
-Busy and error states: while `busy` every control is disabled, the close button too. Messages are `failure.shown(.saving)` (`FailureMessage`), except `messages.lifecycle.changedContinue` and the two "already restored" texts, which `handle(_:)` sets itself. Messages for the open entry that cannot be saved first come from `AppModel` (`messages.save.before.restoreJournal`, `messages.save.before.restoreEntry`, `messages.save.before.reviewEntry`). After a stored restore that cannot be shown the sheet sets the error to `messages.refresh.journalRestored` or `library.restoreEntry.displayFailed`, marks itself `completed` (button becomes Done) and offers no second restore.
+Busy and error states: while `busy` every control is disabled, the close button too. Messages are `failure.shown(.saving)` (`FailureMessage`), except `messages.lifecycle.changedContinue` and the two "already restored" texts, which `handle(_:)` sets itself. Messages for the open entry that cannot be saved first come from `AppModel` (`messages.save.before.goBack`). After a stored restore that cannot be shown the sheet sets the error to `messages.refresh.journalRestored` or `library.restoreEntry.displayFailed`, marks itself `completed` (button becomes Done) and offers no second restore.
 
 Success: `AppModel.restoreJournal` selects the journal with no entry open (`showingTrash` off, `persistSelection`) and calls `store.placeJournalAtEnd`, which gives the journal a place at the end only if journals were arranged and it has no rank yet; `restoreEntryAndJournal` selects the journal and opens the entry. Then `dismiss()`.
 
@@ -96,7 +96,6 @@ None. The text is the same on all devices; the spec's `restoredAsRenamed` and jo
 
 - Cancel and Done are at the top left on iPhone and iPad (the navigation bar's cancellation slot) and at the bottom left on the Mac, where a sheet has no navigation bar and puts its buttons in a bar below the content (sheet conventions: [platform.md](../platform.md#9-sheets-popovers-and-notices)).
 - iPad shows a centered card and iPhone a large sheet, because that is how a plain `.sheet` is presented at each width; the app sets no detents.
-- The view also contains a Delete Journal form (`restoring == false`). Nothing opens it any more (see [open-questions.md](../../../open-questions.md), C3), so no device shows it.
 
 ## Screenshots
 
@@ -119,4 +118,4 @@ Design records: `docs/design/journal-lifecycle-ui.md`, `docs/design/journal-name
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), C3 (the unused Delete Journal form).
+None.

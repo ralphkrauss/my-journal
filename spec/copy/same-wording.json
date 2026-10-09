@@ -202,6 +202,13 @@
   },
   {
     "keys": [
+      "library.problem.newerVersion.message",
+      "messages.error.newerVersion"
+    ],
+    "reason": "The alert or paragraph for the same state, on the update screen and elsewhere; another platform adds its update link to the screen's paragraph."
+  },
+  {
+    "keys": [
       "library.toolbar.settings",
       "settings.title"
     ],

@@ -46,7 +46,7 @@ extension AppModel {
     private func deletionStoreAfterSaving() async throws -> JournalStore {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your entry before reviewing these changes.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store else { throw JournalError.locked }

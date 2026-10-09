@@ -80,7 +80,7 @@ private struct JournalDeletionPrompt: ViewModifier {
         case JournalLifecycleError.alreadyDeleted, JournalLifecycleError.missingJournal:
             return
         default:
-            model.error = failure.shown(.saving)
+            model.report(failure, .saving)
         }
     }
 }

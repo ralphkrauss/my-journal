@@ -28,7 +28,7 @@ Content, in both:
 | --- | --- | --- |
 | Title | `library.newJournal.title` | |
 | Name field | `TextBox`, `Header` `common.name`, focused when the step appears, selected text none | Editing the name clears the error |
-| Error | `InfoBar`, Severity Error, not closable (a taken name is not here: it is the name field's own error, `messages.journal.nameTaken`, under the field) | Announced; `common.saveBeforeCreateJournal` when the open entry could not be saved; `library.recoveryJournal.created` when the journal was created but could not be displayed |
+| Error | `InfoBar`, Severity Error, not closable (a taken name is not here: it is the name field's own error, `messages.journal.nameTaken`, under the field) | Announced; `messages.save.before.goBack` when the open entry could not be saved; `library.recoveryJournal.created` when the journal was created but could not be displayed |
 | Create | `PrimaryButton` `common.create`, `DefaultButton` Primary | Enabled when the name is not blank after trimming, not busy, not created yet. Enter in the name field does the same |
 | Cancel or Done | `CloseButton` `common.cancel` before creating; `common.done` after creating if the step stays | In the Move entry step Cancel and Esc return to the list; they do not close the whole dialog |
 

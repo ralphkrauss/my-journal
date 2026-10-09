@@ -41,7 +41,7 @@ The flow is a chain of system and app surfaces: a file picker (or a file opened 
 
 **3. Install** (`ArchiveImportView.install()` then `AppModel.installArchive`, `Model/ArchiveInstalling.swift`):
 1. `checkArchiveCanBeInstalled()`: refuses when a library problem does not offer import (`LibraryNotOpenError`), while replacing, retrying or locked (except the missing-key lock screen).
-2. `finishPendingSave()`; if the open entry cannot be saved, `messages.save.before.importArchive`.
+2. `finishPendingSave()`; if the open entry cannot be saved, `messages.save.before.goBack`.
 3. When there is a configuration but no open store and App Lock is on, the device owner authenticates (reason `settings.archiveImport.restoreReason` "Restore journals on this device", lower-cased on the Mac by `AppModel.authenticationReason`). Cancelled: nothing changes and no error is shown.
 4. `vaultReplacement = true` pauses writing and syncing.
 5. With an open library (add): the current library is snapshotted into a new `vault-<uuid>` folder, a `JournalStore` is opened on it with the same key, and `importAsNewJournals(from:)` adds the archive's journals, giving duplicated names a number. `ContentImport` refuses content from a newer version with `messages.import.archiveNeedsUpdate`. The connection and settings stay; the earlier library is recorded as superseded.

@@ -43,7 +43,7 @@ Buttons: `common.cancel` (`common.done` once the journal is gone) and `common.me
 - **Busy:** controls disabled; not dismissable; the app doesn't lock for inactivity meanwhile.
 - **Merged journal disappeared:** `messages.generic.journalNamedUnavailable`; only Done remains.
 - **Chosen journal disappeared:** the choice clears; `common.journalGone` (before merging) or `library.merge.destinationGone` (while merging).
-- **Errors:** `messages.lifecycle.needsReview` (with Review Changes), `messages.merge.newerVersion`, `messages.save.before.mergeJournal`, `library.merge.displayFailed` (then only Done).
+- **Errors:** `messages.lifecycle.needsReview` (with Review Changes), `messages.merge.newerVersion`, `messages.save.before.goBack`, `library.merge.displayFailed` (then only Done).
 - **Locked:** the sheet closes.
 
 ## Rules

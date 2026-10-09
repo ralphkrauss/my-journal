@@ -73,8 +73,6 @@ extension AppModel {
 
     func recordSyncHealth(_ health: SyncHealth?, failure: Error?) {
         if syncHealth != health { syncHealth = health }
-        // Being offline or out of reach is quiet; a state the person must act on isn't (ReviewRequestTiming.swift).
-        if let health, health.kind != .temporary { reviewRequests.noteProblem() }
         // Sign In… opens Connect to a Server, which signs in to this device's server straight away; any other state,
         // or a sync that succeeds, ends that.
         let signIn = health == .signInNeeded

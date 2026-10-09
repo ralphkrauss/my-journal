@@ -85,7 +85,7 @@ The messages and actions are the spec's table; this adds the Windows severity an
 
 ### Save failures
 
-The failure itself is [save-failure](flows/save-failure.md). The "save first" refusals (`common.saveBeforeMoveEntry`, `common.saveBeforeCreateJournal` and every `messages.save.before.*`, `messages.connection.saveBeforeConnecting`) are errors of an action the person started, so they show where that action's errors show: inline in its dialog or page (the Export, Import and Restore dialogs show it in their own error bar), or the alert dialog when the action opens nothing (Delete journal, Review changes, and the like). `messages.save.before.changeDate` and `messages.save.before.imageDescriptions` stay inline in their dialog and page, with Windows wording ([Copy differences](#copy-differences)).
+The failure itself is [save-failure](flows/save-failure.md). The "save first" refusals (`messages.save.before.goBack`, and `messages.save.before.tryAgain` in the alert dialog) are errors of an action the person started, so they show where that action's errors show: inline in its dialog or page (the Export, Import and Restore dialogs show it in their own error bar), or the alert dialog when the action opens nothing (Delete journal, Review changes, and the like). `messages.save.before.goBack` stays inline in its dialog or page; the two texts have Windows wording in [Copy differences](#copy-differences).
 
 ### Writing paused
 
@@ -144,7 +144,6 @@ Sentence case applies as in [platform.md, 12](platform.md#12-copy-casing-ellipse
 | `messages.sync.localDataUnreadable` | … choose Export Archive in Settings > Backup. | … select Export archive in Settings > Backup. | vocabulary |
 | `messages.connection.serverChanged` | … Choose Continue to check it again. | … Select Continue to check it again. | vocabulary |
 | `messages.connection.setUpElsewhere` | … Choose it again to sign in. | … Select it again to sign in. | vocabulary |
-| `messages.save.before.imageDescriptions` | … close this view and save your entry … | … go back and save your entry … (Image descriptions is a page on Windows) | vocabulary |
 | `messages.sync.appUpdateNeeded` and the other "Update My Journal" texts | Update My Journal … | Unchanged. Where an action is needed, a link "Get updates" (new Windows-only string) opens the Microsoft Store's updates page | new string (D51, B38) |
 
 ## Accessibility

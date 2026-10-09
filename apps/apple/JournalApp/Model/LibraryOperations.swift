@@ -41,7 +41,8 @@ extension AppModel {
         } catch is CancellationError {
             return false
         } catch {
-            self.error = pinned ? "Couldn’t pin the entry." : "Couldn’t unpin the entry."
+            self.error = Self.libraryFailure(
+                error, fallback: pinned ? "Couldn’t pin the entry." : "Couldn’t unpin the entry.")
             return false
         }
     }
@@ -105,7 +106,7 @@ extension AppModel {
             }
             return true
         } catch {
-            self.error = "Couldn’t move the journal."
+            self.error = Self.libraryFailure(error, fallback: "Couldn’t move the journal.")
             return false
         }
     }
@@ -122,10 +123,19 @@ extension AppModel {
         try? await store.placeJournalAtEnd(id)
     }
 
+    /// Pins and journal order were saved by a newer version, so this one can't change them.
+    static let libraryNeedsUpdate = "Update My Journal to use pinned entries and journal order."
+
+    /// What a failed pin, unpin or move tells the person: to update when the library record is from a newer version,
+    /// which no retry fixes, otherwise `fallback`.
+    static func libraryFailure(_ failure: Error, fallback: String) -> String {
+        failure as? LibraryError == .newerVersion ? libraryNeedsUpdate : fallback
+    }
+
     /// The Settings ▸ Sync footer about pins and journal order, when there's something to say.
     var libraryFooter: String? {
         guard connection != nil else { return nil }
-        if librarySync.needsUpdate { return "Update My Journal to use pinned entries and journal order." }
+        if librarySync.needsUpdate { return Self.libraryNeedsUpdate }
         if librarySync.waitingForServer {
             return "Pinned entries and journal order stay on this device until the server is updated."
         }

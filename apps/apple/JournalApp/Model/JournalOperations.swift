@@ -5,7 +5,7 @@ extension AppModel {
     func moveEntry(_ entryID: UUID, to journalID: UUID, restoring: Bool = false) async throws {
         guard !locked, !replacingVault, draft?.id == entryID else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your changes before moving this entry.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, draft?.id == entryID, let store else { throw JournalError.locked }
@@ -30,7 +30,7 @@ extension AppModel {
     func resolveJournalConflict(_ conflict: ConflictVersion, choice: ConflictChoice) async throws -> Bool {
         guard conflict.local.kind == "journal", !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your entry before reviewing these changes.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store else { throw JournalError.locked }
@@ -51,7 +51,7 @@ extension AppModel {
     func prepareJournalDeletion(_ id: UUID) async throws -> JournalDeletionPlan {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your entry before deleting this journal.")
+            throw JournalError.saveRequired
         }
         guard let store else { throw JournalError.locked }
         guard !locked, !replacingVault else { throw JournalError.locked }
@@ -60,7 +60,7 @@ extension AppModel {
     func deleteJournal(_ plan: JournalDeletionPlan) async throws -> Bool {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your entry before deleting this journal.")
+            throw JournalError.saveRequired
         }
         guard !locked, !replacingVault, let store else { throw JournalError.locked }
         return try await commitJournalResolution { try await store.deleteJournal(plan) }
@@ -68,7 +68,7 @@ extension AppModel {
     func restoreJournal(_ id: UUID, expectedTitle: String? = nil) async throws -> Bool {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your entry before restoring this journal.")
+            throw JournalError.saveRequired
         }
         guard !locked, !replacingVault, let store else { throw JournalError.locked }
         return try await commitMutation({
@@ -93,7 +93,7 @@ extension AppModel {
     func mergeJournal(_ sourceID: UUID, into destinationID: UUID) async throws -> Bool {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your entry before merging this journal.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store else { throw JournalError.locked }
@@ -128,7 +128,7 @@ extension AppModel {
     }
     func createRecoveryJournal(_ name: String, entryID: UUID?) async throws -> Bool {
         guard !locked, !replacingVault, entryID == nil || draft?.id == entryID else { throw JournalError.locked }
-        guard await finishPendingSave() else { throw JournalError.server("Save your entry before creating a journal.") }
+        guard await finishPendingSave() else { throw JournalError.saveRequired }
         guard !locked, !replacingVault, entryID == nil || draft?.id == entryID, let store else {
             throw JournalError.locked
         }

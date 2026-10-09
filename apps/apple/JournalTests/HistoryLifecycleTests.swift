@@ -75,7 +75,7 @@ final class HistoryLifecycleTests: XCTestCase {
         do {
             _ = try await model.restoreHistoricalVersion(version, to: journal.id)
             XCTFail("A failed current draft must not be discarded by history recovery.")
-        } catch JournalError.server {}
+        } catch JournalError.saveRequired {}
         XCTAssertTrue(model.saveFailure)
         XCTAssertEqual(model.draft?.title, failedDraft.title)
         let reopened = try JournalStore(directory: root, key: key)
@@ -180,7 +180,7 @@ final class HistoryLifecycleTests: XCTestCase {
         do {
             _ = try await model.restoreHistoricalJournalSettings(version, expectedJournal: current)
             XCTFail("Settings restoration must not hide a failed current-entry save.")
-        } catch JournalError.server {}
+        } catch JournalError.saveRequired {}
         XCTAssertTrue(model.saveFailure)
         XCTAssertEqual(model.draft?.title, unsaved.title)
         let reopened = try JournalStore(directory: root, key: key)

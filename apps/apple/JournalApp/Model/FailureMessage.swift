@@ -21,6 +21,10 @@ enum FailureMessage {
     static let full = "There isn’t enough space on this device. Free up space, then try again."
     static let keychain = "My Journal couldn’t use the device key. Try again."
     static let anythingElse = "Something went wrong. Try again."
+    /// The app's alert, which has a Try Again button while a save has failed. Every other place that refuses for an
+    /// unsaved entry shows `JournalError.saveRequired`'s text, which says where Try Again is.
+    static let saveRequiredWithTryAgain =
+        "Your changes aren’t saved yet. Choose Try Again, then repeat what you were doing."
 
     private static let log = Logger(subsystem: "org.privatejournal", category: "failures")
 

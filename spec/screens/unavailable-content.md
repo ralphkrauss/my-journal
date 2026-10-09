@@ -83,7 +83,7 @@ Nothing is written to the library in any of these states.
 | An entry whose Markdown can only be shown as source | Opens in source; View Preview is dimmed with a help tag | `messages.unavailable.markdownSource`, `common.previewUnavailable` |
 | A journal | Left out of the Journals list; its entries are listed in Unavailable Journals | `common.updateToRestoreEntry` on each entry |
 | A journal in Recently Deleted | Shown without Restore; Export Archive… is offered | `messages.unavailable.restoreJournalNeedsUpdate` |
-| Pins and journal order | Kept as they are; changes are refused | `messages.library.needsUpdate` in Settings ▸ Sync; pinning shows `messages.generic.pinFailed` |
+| Pins and journal order | Kept as they are; changes are refused | `messages.library.needsUpdate` in Settings ▸ Sync; pinning, unpinning and moving a journal show `messages.library.needsUpdate` in the error alert |
 | A version in a conflict | The review can't be completed | `messages.conflict.updateToReview` (see [conflict-review.md](conflict-review.md)) |
 | The server, or content arriving by sync | Sync stops | `messages.sync.appUpdateNeeded` |
 | An archive to import into a device with journals | Refused | `messages.import.archiveNeedsUpdate` |
@@ -163,7 +163,7 @@ While App Lock is on and the app isn't active, a plain cover in the system backg
 - **iPhone and iPad:** the privacy cover is a window above everything else in each scene, shown when a scene is about to become inactive or enters the background, and removed when it is active again.
 - **Mac:** the same cover is drawn over the journal window's content whenever the window's scene isn't active and App Lock is on. The Mac also locks after inactivity, on sleep and on switching users (App Lock screens).
 - Notices sit above the title on both; on iPhone and iPad they are part of the entry's scrolling header.
-- The paragraphs name the device (iPhone, iPad or Mac) in `library.problem.cantOpen.advice` and `library.problem.settingsUnread.advice`, and the update paragraph names the App Store and TestFlight. Another platform names its own device and update channel. An App Store button is planned for after the app is live and is not part of the screen yet.
+- The paragraphs name the device (iPhone, iPad or Mac) in `library.problem.cantOpen.advice` and `library.problem.settingsUnread.advice`, and the update paragraph says only "Update My Journal" (the operating system does the update; no store is named). Another platform names its own device and may add its own update link. An App Store button is planned for after the app is live and is not part of the screen yet.
 
 ## Open questions
 

@@ -154,8 +154,16 @@ final class AppModel: ObservableObject {
         didSet { if error != nil { reviewRequests.noteProblem() } }
     }
     @Published var saveFailure = false {
-        didSet { if saveFailure { reviewRequests.noteProblem() } }
+        didSet {
+            if saveFailure {
+                reviewRequests.noteProblem()
+            } else {
+                saveRequiredAlert = nil
+            }
+        }
     }
+    /// An operation shown in the app's alert needed the open entry saved first (`report(_:_:)`).
+    @Published var saveRequiredAlert: JournalError?
     @Published var locked = false {
         didSet {
             if locked {
@@ -206,9 +214,7 @@ final class AppModel: ObservableObject {
     /// once it succeeds.
     @Published var syncHealth: SyncHealth?
     /// Changes have waited more than a day while sync fails (`updateSyncLongWait`): Sync Status asks for attention.
-    @Published var syncLongWait = false {
-        didSet { if syncLongWait { reviewRequests.noteProblem() } }
-    }
+    @Published var syncLongWait = false
     @Published var connection: SyncConnection? {
         didSet { syncActivity.connectionChanged(connection) }
     }
@@ -223,7 +229,6 @@ final class AppModel: ObservableObject {
     /// File ▸ Export Journals as Markdown…'s sheet.
     @Published var markdownExportPresented = false
     @Published var settingsPresented = false
-    @Published var journalsPresented = false
     @Published var templateChooserPresented = false
     @Published var settingsTab: AppSettingsTab = .general
     /// The pane Settings opens at on iPhone and iPad, once (Sync Settings… in Sync Status).
@@ -531,7 +536,7 @@ final class AppModel: ObservableObject {
         return draft == draftBase
     }
     func awaitEntryAutosave() async throws {
-        guard await entryAutosaveSettled() else { throw ImageDescriptionError.entrySaveRequired }
+        guard await entryAutosaveSettled() else { throw JournalError.saveRequired }
     }
     /// How a failed write is announced in the alert. Writing again after each keystroke would otherwise repeat it.
     enum SaveFailureAnnouncement {

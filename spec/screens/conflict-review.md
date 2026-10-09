@@ -10,7 +10,6 @@ sources:
   - apps/apple/JournalApp/Views/PermanentDeletionView.swift
   - apps/apple/JournalApp/Views/SettingsView.swift
   - apps/apple/JournalApp/Views/RootView.swift
-  - apps/apple/JournalApp/Views/JournalSettingsView.swift
   - apps/apple/JournalApp/Views/DeletedJournalView.swift
   - apps/apple/JournalApp/Views/EntryRecoveryNotice.swift
   - apps/apple/Packages/JournalCore/Sources/JournalCore/Store.swift
@@ -35,7 +34,6 @@ When the same entry, template or journal changed on this device and on another o
 | The open entry or template | Notice above the writing: `messages.conflict.entryNotice` and `common.reviewChanges` | the review for that record (the open writing is saved first) |
 | Entries list | An exclamation-mark-in-a-circle symbol on the row, accessibility label `messages.conflict.needsReview` | the entry, by selecting it |
 | Settings ▸ Sync | Section `messages.conflict.settingsSection`: one row per record with changes to review, including journals, templates and permanently deleted records | the review for that row |
-| A journal's settings (Journals sheet on iPhone and iPad; journal settings on the Mac) | `messages.conflict.needsReview` and `common.reviewChanges`; the name and default-template controls are dimmed | the journal's review |
 | A deleted journal shown from Recently Deleted | `common.reviewChanges` | the journal's review |
 | An entry in a journal with changes to review (in Unavailable Journals) | `common.journalNeedsReview` and `common.reviewChanges` | the journal's review |
 | A journal's Version History | When the journal has changes to review, the review appears in place of restoring | the journal's review |
@@ -98,7 +96,7 @@ Keep Deletion's confirmation is a sheet titled `messages.conflict.deletion.confi
 
 **Unsupported review** (a version from a newer version of My Journal)
 
-`messages.conflict.updateToReview`, then Export Archive… (the archive export control of Settings ▸ Backup, including its one-time password check). Nothing can be resolved; both versions stay. The journal review has its own copy of this form (the same text and Export Archive…, followed by `messages.save.before.exportArchiveForConflict` while a save has failed), used only if its versions become unreadable after Reload Changes, because the sheet routes unreadable versions here first.
+`messages.conflict.updateToReview`, then Export Archive… (the archive export control of Settings ▸ Backup, including its one-time password check). Nothing can be resolved; both versions stay. The journal review has its own copy of this form (the same text and Export Archive…, followed by `messages.save.before.goBack` while a save has failed), used only if its versions become unreadable after Reload Changes, because the sheet routes unreadable versions here first.
 
 ## Actions
 

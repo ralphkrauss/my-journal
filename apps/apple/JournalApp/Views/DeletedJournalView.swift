@@ -36,7 +36,7 @@ struct DeletedJournalView: View {
             }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
         }
         .permanentDeletionPrompt($permanentDeletionRequest, leave: leave)
-        .sheet(isPresented: $restoring) { JournalLifecycleView(journalID: journal.id, restoring: true) }
+        .sheet(isPresented: $restoring) { JournalLifecycleView(journalID: journal.id) }
         .sheet(item: $reviewing) { JournalConflictView(conflict: $0) }
         .sheet(isPresented: $history) { JournalHistoryView(journalID: journal.id) }
         .onValueChange(of: model.locked) { locked in

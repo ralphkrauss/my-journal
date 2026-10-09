@@ -14,7 +14,7 @@ extension AppModel {
         do {
             let saved = await finishPendingSave()
             try validateVaultSession(session)
-            guard saved else { throw JournalError.server("Save your changes before exporting your journals.") }
+            guard saved else { throw JournalError.saveRequired }
             let summary = try await MarkdownExport.write(store: store, to: destination)
             var excluded = URLResourceValues()
             excluded.isExcludedFromBackup = true

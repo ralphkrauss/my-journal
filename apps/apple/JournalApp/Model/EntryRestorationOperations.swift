@@ -11,7 +11,7 @@ extension AppModel {
         // Restoring works on the open entry; Undo and the list's Restore may name another one.
         if draft?.id != item.id { guard await selectEntryForAction(item.id) else { return } }
         do { try await moveEntry(item.id, to: journalID, restoring: true) } catch {
-            self.error = error.shown(.saving)
+            report(error, .saving)
         }
     }
     /// Return to the exact current entry for a new review, without repeating a restoration mutation.
@@ -19,7 +19,7 @@ extension AppModel {
         guard !locked, !replacingVault, let originalStore = store else { throw JournalError.locked }
         let selection = selectedID
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your changes before reviewing this entry.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store, store === originalStore, selectedID == selection else {
@@ -54,7 +54,7 @@ extension AppModel {
     func prepareEntryRestoration(_ entryID: UUID, journalID: UUID) async throws -> EntryRestorationPlan {
         guard !locked, !replacingVault, let originalStore = store else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your changes before restoring this entry.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store, store === originalStore else { throw JournalError.locked }
@@ -67,7 +67,7 @@ extension AppModel {
     func restoreEntryAndJournal(_ plan: EntryRestorationPlan) async throws -> Bool {
         guard !locked, !replacingVault, let originalStore = store else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your changes before restoring this entry.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store, store === originalStore else { throw JournalError.locked }

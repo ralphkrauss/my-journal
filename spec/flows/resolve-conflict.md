@@ -45,19 +45,19 @@ The person then reaches the review from the entry's notice, the entries list (by
 ### 2a. Entry or template
 
 1. The person compares This Device and Other Device: title, modification date, where each version is (`messages.conflict.placement.*`, only when they differ), and the full text with images.
-2. **Keep Both.** The pending save of the open entry finishes first (failure: `messages.save.before.resolveEntryConflict`, nothing changed). Then this device's version stays as the record, and the other device's version becomes a new, separate entry (or template) where that device had it, with its own date. Both are sent.
+2. **Keep Both.** The pending save of the open entry finishes first (failure: `messages.save.before.goBack`, nothing changed). Then this device's version stays as the record, and the other device's version becomes a new, separate entry (or template) where that device had it, with its own date. Both are sent.
 3. **Keep Version from This Device… / Other Device….** Confirmation `messages.conflict.keepOne.title` with `messages.conflict.keepOne.history`; for Other Device, what happens to the entry here comes first (`messages.conflict.outcome.*`: it moves, is archived, or changes date). Keep Version saves the chosen version as the record; the other is kept only in Version History.
 4. **Outcome.** The changes are marked resolved, the journals are read again, the resolved entry opens, and the sheet closes. No success message.
 
 ### 2b. Journal
 
 1. The person compares name, default template and location for each version; Other Device's Details shows the recorded device ID.
-2. **Keep Version….** Confirmation (`messages.conflict.journal.confirmThisDevice` or `messages.conflict.journal.confirmOtherDevice`, message `messages.conflict.journal.confirmMessage`). The open entry is saved first (failure: `messages.save.before.reviewChanges`). The chosen metadata becomes the journal's; its entries don't move or copy. There is no Keep Both.
+2. **Keep Version….** Confirmation (`messages.conflict.journal.confirmThisDevice` or `messages.conflict.journal.confirmOtherDevice`, message `messages.conflict.journal.confirmMessage`). The open entry is saved first (failure: `messages.save.before.goBack`). The chosen metadata becomes the journal's; its entries don't move or copy. There is no Keep Both.
 3. **Outcome.** `messages.conflict.journal.saved` with Done. The journal's controls are enabled again and its entries leave Unavailable Journals.
 
 ### 2c. Deletion
 
-The review is prepared first (`common.pleaseWait`), saving the open entry (failure: `messages.save.before.reviewChanges`).
+The review is prepared first (`common.pleaseWait`), saving the open entry (failure: `messages.save.before.goBack`).
 
 | Case | Choices | Outcome |
 | --- | --- | --- |

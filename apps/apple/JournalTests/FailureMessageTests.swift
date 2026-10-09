@@ -59,8 +59,10 @@ final class FailureMessageTests: XCTestCase {
     /// The app's own errors are already plain and keep their text, also when a merge stopped part way wraps them.
     func testTheAppsOwnErrorsKeepTheirText() {
         XCTAssertEqual(JournalError.locked.shown(.saving), "Unlock My Journal to continue.")
-        let saveFirst = "Save your changes before connecting."
-        XCTAssertEqual(JournalError.server(saveFirst).shown(.saving), saveFirst)
+        XCTAssertEqual(
+            JournalError.saveRequired.shown(.saving),
+            "Your changes aren’t saved yet. Go back to your entry, choose Try Again under Not Saved, then repeat what you were doing."
+        )
         XCTAssertEqual(JournalLifecycleError.changed.shown(.saving), JournalLifecycleError.changed.errorDescription)
         XCTAssertEqual(
             JournalError.newerVersion.shown(.reading),

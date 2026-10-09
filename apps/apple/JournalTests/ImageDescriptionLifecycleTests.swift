@@ -74,7 +74,7 @@ final class ImageDescriptionLifecycleTests: XCTestCase {
                 expectedImages: current.document.blocks.filter { $0.kind == "image" },
                 descriptions: [picture.id: "Keep these local descriptions"])
             XCTFail("A failed entry save needs an explicit recovery route, not a repeating description retry.")
-        } catch ImageDescriptionError.entrySaveRequired {}
+        } catch JournalError.saveRequired {}
         XCTAssertTrue(model.saveFailure)
         XCTAssertEqual(model.draft?.title, unsaved.title)
         let reopened = AppModel(directory: root)

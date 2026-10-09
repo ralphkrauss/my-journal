@@ -5,6 +5,9 @@ public enum JournalError: Error, LocalizedError {
         invalidAddress, newerVersion, invalidSetupCode
     /// Journals on this device were saved by a newer version, so they can't be merged with a server's yet.
     case mergeNeedsUpdate
+    /// The open entry isn't saved yet, so the operation that needs it written first didn't start. The app's alert
+    /// chooses its own words (it has a Try Again button); every other presenter shows this text.
+    case saveRequired
     public var errorDescription: String? {
         switch self {
         case .unsupportedFormat: return "Update My Journal to edit this entry."
@@ -20,6 +23,9 @@ public enum JournalError: Error, LocalizedError {
         case .invalidSetupCode: return "That setup code isn’t valid. Check it and try again."
         case .mergeNeedsUpdate:
             return "Update My Journal to merge the journals on this device. Some of them were saved by a newer version."
+        case .saveRequired:
+            return
+                "Your changes aren’t saved yet. Go back to your entry, choose Try Again under Not Saved, then repeat what you were doing."
         }
     }
 }

@@ -74,29 +74,20 @@
             return (names + widths).joined(separator: ",")
         }
 
-        /// Also reads what earlier versions stored: the visible and the remembered `NavigationSplitViewVisibility`,
-        /// such as "detailOnly,doubleColumn".
+        /// A value that isn't in this form, such as one a build before the widths were kept stored, is not read, and
+        /// the window opens with every column.
         init?(rawValue: String) {
             let parts = rawValue.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
-            guard parts.count >= 2, let restored = Self.plain(named: parts[1]) else { return nil }
+            guard parts.count == 4, let restored = Plain(rawValue: parts[1]) else { return nil }
             switch parts[0] {
             case "all": layout = .all
-            case "sidebarHidden", "doubleColumn": layout = .sidebarHidden
-            case "editorOnly", "detailOnly": layout = .editorOnly(returnTo: restored)
+            case "sidebarHidden": layout = .sidebarHidden
+            case "editorOnly": layout = .editorOnly(returnTo: restored)
             default: return nil
             }
-            if parts.count == 4 {
-                sidebarWidth = Double(parts[2])
-                listWidth = Double(parts[3])
-            }
+            sidebarWidth = Double(parts[2])
+            listWidth = Double(parts[3])
         }
 
-        private static func plain(named name: String) -> Plain? {
-            switch name {
-            case "all": return .all
-            case "sidebarHidden", "doubleColumn": return .sidebarHidden
-            default: return nil
-            }
-        }
     }
 #endif

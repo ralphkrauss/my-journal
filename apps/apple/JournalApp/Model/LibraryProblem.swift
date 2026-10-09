@@ -147,9 +147,33 @@ extension AppModel {
         guard libraryProblem == nil, !retryingOpen else { throw LibraryNotOpenError() }
     }
 
-    /// Reports a failure the way every action does, except one that was already shown as a problem screen.
+    /// Reports a failure the way every action does, except one that was already shown as a problem screen. A save
+    /// that is needed first stays typed until the alert is drawn, which then chooses its words and its Try Again
+    /// button together (`showsSaveRequiredAlert`).
     func report(_ failure: Error, _ operation: FailureMessage.Operation) {
         guard !(failure is LibraryOpenHandled) else { return }
+        if case JournalError.saveRequired = failure {
+            // The failed save that made the operation stop has just shown its own text; this one replaces it, as the
+            // old sentence did. Saved again in the meantime: there is nothing to say, and nothing is kept.
+            saveRequiredAlert = saveFailure ? .saveRequired : nil
+            error = nil
+            return
+        }
         error = failure.shown(operation)
+    }
+
+    /// The alert for an operation that needed the open entry saved first, while saving still fails. Once a retry
+    /// has saved the entry there is nothing to tell (`saveFailure` clears `saveRequiredAlert`).
+    var showsSaveRequiredAlert: Bool { saveRequiredAlert != nil && saveFailure }
+
+    /// What the app's alert says, or nil when it has nothing to say. The words for an unsaved entry are chosen here,
+    /// together with the alert's Try Again button, which shows while `saveFailure` holds.
+    var alertText: String? {
+        error ?? (showsSaveRequiredAlert ? FailureMessage.saveRequiredWithTryAgain : nil)
+    }
+
+    func dismissAlert() {
+        error = nil
+        saveRequiredAlert = nil
     }
 }

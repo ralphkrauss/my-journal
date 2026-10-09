@@ -51,7 +51,7 @@ There is no Save command and no Save menu item on any device.
 | --- | --- | --- | --- |
 | `finish-editing` | iPhone, iPad: Done (a checkmark) in the editor's navigation bar, trailing, while the text or title has focus (`RootView+Toolbar.swift`). It ends editing (the editor's finish-editing action) and then waits for the save (`model.finishPendingSave()`) | none | While writing (the editor reports editing). Not on the Mac |
 
-Every command that acts on the open entry saves first by calling `finishPendingSave()` or `flush()`: opening another entry or journal (`select`, `show`, `switchJournal`), New Entry (`newEntry`), the iPhone back button (`CompactJournalNavigation.navigate`), Change Date, Move Entry, Save as Template, Image Descriptions, Version History, restoring, reviewing a conflict, deleting, exporting, importing, connecting and turning on encryption. Where the save fails the command does nothing and the sheet or action shows its own `messages.save.before.*` or `common.saveBeforeMoveEntry` message ([save-failure.md](save-failure.md)).
+Every command that acts on the open entry saves first by calling `finishPendingSave()` or `flush()`: opening another entry or journal (`select`, `show`, `switchJournal`), New Entry (`newEntry`), the iPhone back button (`CompactJournalNavigation.navigate`), Change Date, Move Entry, Save as Template, Image Descriptions, Version History, restoring, reviewing a conflict, deleting, exporting, importing, connecting and turning on encryption. Where the save fails the command does nothing and the sheet or action shows its own `messages.save.before.*` or `messages.save.before.goBack` message ([save-failure.md](save-failure.md)).
 
 ## Copy differences
 

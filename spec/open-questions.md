@@ -38,7 +38,7 @@ Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [screens
 
 Spec: [flows/resolve-conflict.md](flows/resolve-conflict.md), [messages.md](messages.md). Code: `Views/DeletionConflictView.swift` (`handle`), `Model/FailureMessage.swift`, `Views/PermanentDeletionView.swift` (`report`).
 
-**A8.** Pin, Unpin and Move Journal failures always show `messages.generic.pinFailed`, `messages.generic.unpinFailed` or `messages.generic.moveJournalFailed`, including for content from a newer version, for which `messages.library.needsUpdate` exists. Superseded in part in 1.1 by simplification C (version-too-old states say “Update My Journal”; owner-approved 2026-10-07), still open for 1.0.
+**A8.** Pin, Unpin and Move Journal failures always show `messages.generic.pinFailed`, `messages.generic.unpinFailed` or `messages.generic.moveJournalFailed`, including for content from a newer version, for which `messages.library.needsUpdate` exists. Superseded in part in 1.1 by simplification C (version-too-old states say “Update My Journal”; owner-approved 2026-10-07), still open for 1.0. **Resolved in 1.1:** when the failure is a library record from a newer version, Pin Entry, Unpin Entry and Move Journal show `messages.library.needsUpdate` ([1-1-encryption-and-passwords.md](../docs/design/1-1-encryption-and-passwords.md) §5).
 
 Spec: [messages.md](messages.md), [screens/unavailable-content.md](screens/unavailable-content.md). Code: `Model/LibraryOperations.swift`.
 
@@ -70,7 +70,7 @@ Spec: [flows/sync-recovery.md](flows/sync-recovery.md), [screens/settings-device
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Views/SettingsView.swift` (`ConflictNotice`), `Views/ConflictRouting.swift`.
 
-**A16.** The unsupported-version review offers Export Archive… without saying that a failed save blocks it (the export then reports `messages.save.before.exportArchive`); only the journal review's own, nearly unreachable, unsupported branch adds `messages.save.before.exportArchiveForConflict`. Superseded in 1.1 by simplification H, first step (the journal and deletion review forms are dropped; owner-approved 2026-10-07), still open for 1.0.
+**A16.** The unsupported-version review offers Export Archive… without saying that a failed save blocks it (the export then reports `messages.save.before.goBack`); only the journal review's own, nearly unreachable, unsupported branch adds the same text beside the controls. Superseded in 1.1 by simplification H, first step (the journal and deletion review forms are dropped; owner-approved 2026-10-07), still open for 1.0.
 
 Spec: [screens/conflict-review.md](screens/conflict-review.md). Code: `Views/ConflictRouting.swift`, `Views/JournalConflictView.swift`.
 
@@ -214,7 +214,7 @@ Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [screens
 
 The same situation worded differently, wording that no longer matches the product, or text that is never shown. The catalog keeps the text the app shows today.
 
-**B1.** “Save your changes before …”, “Save your entry before …” and “Save your current entry before …” are three wordings for the same situation (`common.saveBeforeMoveEntry`, `common.saveBeforeCreateJournal`, `messages.save.before.*`). They could be one. Superseded in 1.1 by simplification B (about 26 save-before messages become two; owner-approved 2026-10-07), still open for 1.0.
+**B1.** “Save your changes before …”, “Save your entry before …” and “Save your current entry before …” are three wordings for the same situation (20 catalog keys, listed by the record). They could be one. Superseded in 1.1 by simplification B (about 26 save-before messages become two; owner-approved 2026-10-07), still open for 1.0. **Resolved in 1.1:** one typed error, `JournalError.saveRequired`, with two texts: `messages.save.before.tryAgain` in the app's alert, which has a Try Again button, and `messages.save.before.goBack` everywhere else ([1-1-settings-messages-editor.md](../docs/design/1-1-settings-messages-editor.md) §2). The 20 operation-specific keys are gone.
 
 Spec: [flows/save-failure.md](flows/save-failure.md), [messages.md](messages.md). Code: `Model/JournalOperations.swift`, `Model/AppModel.swift`.
 
@@ -402,11 +402,11 @@ The code, not the record, looks right, or the record names something that no lon
 
 Spec: [screens/journals.md](screens/journals.md). Code: `Views/JournalDeletionPrompt.swift`.
 
-**C2.** `JournalsSheet.swift` and `JournalSettingsView.swift` (a Journals form with name fields, Default Template pickers, Deleted Journals and its own New Journal section) are still in the app, but nothing presents them; the owner decisions asked to remove this pane. Its copy is left out of the catalog. **Owner decision, 2026-09-25:** remove the unreachable Journals settings pane ([owner-decisions-2026-09-25.md](../docs/design/owner-decisions-2026-09-25.md), §10); not yet done. Superseded in 1.1 by simplification A (dead code, owner-approved 2026-10-07), still open for 1.0.
+**C2.** `JournalsSheet.swift` and `JournalSettingsView.swift` (a Journals form with name fields, Default Template pickers, Deleted Journals and its own New Journal section) are still in the app, but nothing presents them; the owner decisions asked to remove this pane. Its copy is left out of the catalog. **Owner decision, 2026-09-25:** remove the unreachable Journals settings pane ([owner-decisions-2026-09-25.md](../docs/design/owner-decisions-2026-09-25.md), §10); not yet done. Superseded in 1.1 by simplification A (dead code, owner-approved 2026-10-07), still open for 1.0. **Resolved in 1.1:** both files, `RootView.managedJournal`, `AppModel.journalsPresented` and `AppModel.journalRecords` are removed.
 
-Spec: [screens/journals.md](screens/journals.md), [screens/conflict-review.md](screens/conflict-review.md). Code: `Views/JournalsSheet.swift`, `Views/JournalSettingsView.swift`.
+Spec: [screens/journals.md](screens/journals.md), [screens/conflict-review.md](screens/conflict-review.md).
 
-**C3.** The Restore Journal view still has a Delete Journal mode (“Delete Journal”, “{count} will move to Recently Deleted. Entries from other devices will appear there when they sync.”), but nothing opens it any more: journals are deleted with the standard alert. Its copy is left out of the catalog. Superseded in 1.1 by simplification A (dead code; owner-approved 2026-10-07), still open for 1.0.
+**C3.** The Restore Journal view still has a Delete Journal mode (“Delete Journal”, “{count} will move to Recently Deleted. Entries from other devices will appear there when they sync.”), but nothing opens it any more: journals are deleted with the standard alert. Its copy is left out of the catalog. Superseded in 1.1 by simplification A (dead code; owner-approved 2026-10-07), still open for 1.0. **Resolved in 1.1:** `JournalLifecycleView` only restores (its `restoring` parameter and the Delete Journal mode are removed); the model functions `prepareJournalDeletion` and `deleteJournal` stay for the Delete Journal alert.
 
 Spec: [screens/restore-journal.md](screens/restore-journal.md). Code: `Views/JournalLifecycleView.swift`.
 
@@ -490,9 +490,15 @@ Spec: [platforms/apple/platform.md](platforms/apple/platform.md). Code: `apps/ap
 
 Spec: [platforms/windows/flows/export-archive.md](platforms/windows/flows/export-archive.md), [platforms/windows/flows/save-failure.md](platforms/windows/flows/save-failure.md), [platforms/windows/screens/settings.md](platforms/windows/screens/settings.md), [platforms/windows/flows/editing-rules.md](platforms/windows/flows/editing-rules.md), [platforms/windows/flows/reconnect-to-server.md](platforms/windows/flows/reconnect-to-server.md), [platforms/windows/flows/pair-device.md](platforms/windows/flows/pair-device.md). Code: none (Windows not started).
 
-**C24.** Build 18 behaviour the Apple notes record but the neutral spec doesn't state: the rating request treats the sync state `messages.sync.localDataUnavailable` as quiet (`platforms/apple/flows/rating-request.md`); Keep Both gives the copy the current modification time (`platforms/apple/flows/resolve-conflict.md`); the iPhone and iPad Face ID usage text and the local network text are Info.plist values with no key (B42). Recommendation: add one sentence for each to the neutral flows.
+**C24.** Build 18 behaviour the Apple notes record but the neutral spec doesn't state: Keep Both gives the copy the current modification time (`platforms/apple/flows/resolve-conflict.md`); the iPhone and iPad Face ID usage text and the local network text are Info.plist values with no key (B42). Recommendation: add one sentence for each to the neutral flows.
 
-Spec: [flows/rating-request.md](flows/rating-request.md), [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: `Model/ReviewRequestTiming.swift`; the Keep Both copy is written by the store (see the Apple page).
+The rating-request part of this item ended in 1.1: sync states no longer count as problems, and Sync Status showing blocks the moment instead ([flows/rating-request.md](flows/rating-request.md)).
+
+Spec: [flows/resolve-conflict.md](flows/resolve-conflict.md). Code: the Keep Both copy is written by the store (see the Apple page).
+
+**C25.** Rule, 1.1 (simplification C): every state where this version of the app is too old for what it meets says “Update My Journal”, as a sentence or on the library problem screen as its heading, names what the person cannot do yet or what stays safe, and never names a store (the operating system does the update). A server that is too old keeps “needs an update”, because the person cannot act on it from the app. `python3 spec/tools/check-spec.py` warns when a catalog text about a newer app version lacks the words. **Built in 1.1** on Apple; other platforms may add their own update link to the same key. Windows pages that name `messages.save.before.*` or the Update texts were changed only where they would be false: the Windows agent maps the two save-first texts (`messages.save.before.tryAgain`, `messages.save.before.goBack`) and the changed Update texts in the pages it owns. Record: [1-1-encryption-and-passwords.md](../docs/design/1-1-encryption-and-passwords.md) §5.
+
+Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [messages.md](messages.md). Code: `Views/LibraryProblemView.swift`, `Views/DeleteAllPrompt.swift`, `Model/LibraryOperations.swift`.
 
 ## D. Product questions for the owner
 

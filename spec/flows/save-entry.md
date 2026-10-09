@@ -33,7 +33,7 @@ Writing is saved on this device as it happens, quietly, and is never lost: not w
 
 ## Before anything leaves the entry
 
-Every action that leaves or acts on the open entry first finishes its save: opening another entry or journal, New Entry, Done (phone, tablet), the Entry Actions that open a sheet (Change Date, Move Entry, Save as Template, Image Descriptions, Version History), restoring a version, reviewing a conflict, deleting the open entry, locking and quitting. Pinning doesn't wait for the save; it doesn't change the entry's content. If the save fails, the action doesn't happen and the entry stays open with the writing intact; the sheets that need a saved entry say so with their own message (for example `common.saveBeforeMoveEntry`, `messages.save.before.restoreVersion`, `messages.save.before.changeDate`).
+Every action that leaves or acts on the open entry first finishes its save: opening another entry or journal, New Entry, Done (phone, tablet), the Entry Actions that open a sheet (Change Date, Move Entry, Save as Template, Image Descriptions, Version History), restoring a version, reviewing a conflict, deleting the open entry, locking and quitting. Pinning doesn't wait for the save; it doesn't change the entry's content. If the save fails, the action doesn't happen and the entry stays open with the writing intact; the operations that need a saved entry say so, with `messages.save.before.goBack` in a sheet or pane and `messages.save.before.tryAgain` in the generic alert ([save-failure.md](save-failure.md)).
 
 ## When saving fails
 

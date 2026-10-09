@@ -3,8 +3,7 @@
 
     @testable import Journal
 
-    /// View ▸ Show Editor Only: the layout it replaces comes back, and each window keeps its columns across relaunches,
-    /// including windows saved by earlier versions.
+    /// View ▸ Show Editor Only: the layout it replaces comes back, and each window keeps its columns across relaunches.
     final class EditorOnlyTests: XCTestCase {
         func testLeavingRestoresTheLayoutTheModeReplacedAndSurvivesRelaunch() throws {
             var columns = WindowColumns()
@@ -34,19 +33,6 @@
             columns.toggleEditorOnly()
             columns.toggleSidebar()
             XCTAssertEqual(columns.layout, .all)
-        }
-
-        /// An updated app must reopen windows saved in the earlier `NavigationSplitViewVisibility` format.
-        func testWindowsSavedByEarlierVersionsReopenInTheirLayout() throws {
-            XCTAssertEqual(WindowColumns(rawValue: "all,all")?.layout, .all)
-            XCTAssertEqual(WindowColumns(rawValue: "doubleColumn,all")?.layout, .sidebarHidden)
-            XCTAssertEqual(
-                WindowColumns(rawValue: "detailOnly,doubleColumn")?.layout, .editorOnly(returnTo: .sidebarHidden))
-            XCTAssertEqual(WindowColumns(rawValue: "detailOnly,all")?.layout, .editorOnly(returnTo: .all))
-            XCTAssertNil(WindowColumns(rawValue: "detailOnly,detailOnly"), "The mode can't restore to itself")
-            var migrated = try XCTUnwrap(WindowColumns(rawValue: "detailOnly,doubleColumn"))
-            migrated.toggleEditorOnly()
-            XCTAssertEqual(migrated.layout, .sidebarHidden)
         }
     }
 #endif

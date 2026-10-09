@@ -1,13 +1,11 @@
 import Foundation
 
 public enum ImageDescriptionError: Error, LocalizedError, Sendable {
-    case changed, unavailable, entrySaveRequired
+    case changed, unavailable
     public var errorDescription: String? {
         switch self {
         case .changed: return "This entry has changed. Review its images again."
         case .unavailable: return "This entry is no longer available for editing."
-        case .entrySaveRequired:
-            return "Copy your descriptions, then close this view and save your entry before trying again."
         }
     }
 }

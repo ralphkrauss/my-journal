@@ -256,7 +256,7 @@ Contents: [1 Target and toolkit](#1-target-and-toolkit), [2 App shell and window
 
 ## 28 Rating
 
-- **Request.** `@Environment(\.requestReview)` from StoreKit, given to the window by `ReviewRequestPresenter`; the app has no prompt of its own. Rules and moment: [flows/rating-request](../../flows/rating-request.md), implemented by `ReviewRequests` (`Model/ReviewRequestTiming.swift`) and `ReviewRequestRules` (`Model/ReviewRequest.swift`): a week since first use, four writing days, a new version since the last ask, 120 days apart, no problem this session, 2 s after leaving an edited entry on a clear screen.
+- **Request.** `@Environment(\.requestReview)` from StoreKit, given to the window by `ReviewRequestPresenter`; the app has no prompt of its own. Rules and moment: [flows/rating-request](../../flows/rating-request.md), implemented by `ReviewRequests` (`Model/ReviewRequestTiming.swift`) and `ReviewRequestRules` (`Model/ReviewRequest.swift`): five writing days, 120 days apart, no error, failed save or conflict this session, no sync problem showing, 2 s after leaving an edited entry on a clear screen.
 - **Store check.** The request happens only if `AppTransaction.shared` verifies and its environment is production, so TestFlight and development builds never ask. The system limits how often it shows anything.
 - **Usage data** is kept in `UserDefaults` (`ReviewRequestUsage`), removed by Erase.
 - **Always available.** Rate My Journal in Settings ▸ About (iOS) and the Help menu (Mac) opens the store's review page: `macappstore://` on the Mac, `https://apps.apple.com` on iOS (`AboutLinks.swift`).

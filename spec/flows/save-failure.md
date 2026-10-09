@@ -54,7 +54,7 @@ Writing is saved on this device after every edit, quietly. When a save fails, th
 | Leaving the entry (another entry, journal or collection, New Entry) | First tries to save; if that fails, stays on the entry and the alert shows again | `common.saveFailed` |
 | Back on iPhone (stacked navigation) | The entry's page leaves at once; the entry stays selected with its writing in memory and is deselected only once it saves. Opening another entry tries to save first and stays on the list if that fails | `common.saveFailed` |
 | Sync | Doesn't run; Sync Now is dimmed; Settings ▸ Sync's footer explains | `messages.sync.pausedForSaveFailure` |
-| Operations that need the entry saved | Refused with a message, nothing else happens | `messages.save.before.*`, `messages.connection.saveBeforeConnecting` |
+| Operations that need the entry saved | Refused with a message, nothing else happens | `messages.save.before.tryAgain`, `messages.save.before.goBack` |
 | Change Date | Save is dimmed | |
 | Erase Journals and Settings | Unavailable, as while busy | |
 | Template suggestion in a new entry | Hidden | |
@@ -62,30 +62,14 @@ Writing is saved on this device after every edit, quietly. When a save fails, th
 | Locking (Lock My Journal, screen lock, sleep, inactivity) | Saves first for up to 2 seconds, locks, then saves again; the writing stays in memory and the notice returns after unlocking | `common.saveFailedLocked` |
 | Mac: closing the journal window, or quitting | Tries to save first; on failure an app-modal alert, the window stays open and quitting is cancelled | `messages.save.mac.title`, `messages.save.mac.message`, `messages.save.mac.keepOpen` |
 
-The "save first" messages, by operation:
+The "save first" message is one typed refusal, with the words chosen where it is shown:
 
-| Operation | Key |
-| --- | --- |
-| Move Entry, Restore and Move… | `common.saveBeforeMoveEntry` |
-| Review an entry's restoration | `messages.save.before.reviewEntry` |
-| Restore an entry | `messages.save.before.restoreEntry` |
-| Restore a template | `messages.save.before.restoreTemplate` |
-| Export as Markdown | `messages.save.before.exportMarkdown` |
-| Export Archive | `messages.save.before.exportArchive` |
-| Import Archive | `messages.save.before.importArchive` |
-| Connect to a Server | `messages.connection.saveBeforeConnecting` |
-| Resolve a journal or deletion conflict | `messages.save.before.reviewChanges` |
-| Resolve an entry conflict | `messages.save.before.resolveEntryConflict` |
-| Export Archive from an unsupported journal conflict | `messages.save.before.exportArchiveForConflict` |
-| Delete Journal | `messages.save.before.deleteJournal` |
-| Restore Journal | `messages.save.before.restoreJournal` |
-| Restore Journal that another device already restored | `messages.save.before.openRestoredJournal` |
-| Merge Into… | `messages.save.before.mergeJournal` |
-| Create a journal from a sheet | `common.saveBeforeCreateJournal` |
-| Version History ▸ restore a version | `messages.save.before.restoreVersion` |
-| Journal Version History ▸ restore settings | `messages.save.before.restoreJournalSettings` |
-| Change Date (save not settled) | `messages.save.before.changeDate` |
-| Image Descriptions (save not settled) | `messages.save.before.imageDescriptions` |
+| Where it is shown | Key | Operations |
+| --- | --- | --- |
+| The generic alert, which has Try Again while a save has failed | `messages.save.before.tryAgain` | Restore a template, Delete Journal, Delete Permanently, Delete All, Move Entry when Restore calls it. If the save has succeeded by the time the alert would show, nothing is shown. |
+| Inline in the operation's sheet or pane, and anywhere else | `messages.save.before.goBack` | Move Entry and Create Journal sheets, Version History ▸ restore a version, Restore Journal, Change Date, Image Descriptions, Export Archive, Export as Markdown, Import Archive, Connect to a Server (setting up, joining, signing in). |
+
+A place that does not say it is the alert shows `messages.save.before.goBack`: it is wordier, but it never mentions a button that is not there. A new operation needs no new sentence.
 
 ### Writing paused while the library is replaced
 

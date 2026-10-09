@@ -27,7 +27,7 @@ Header `settings.backup.archive.header`.
 | Spec element | Control | Notes |
 | --- | --- | --- |
 | Export Archive… | An [action card](settings.md#card-patterns), `Header` `common.exportArchive`, icon Export (EDE1), a standard `Button` `common.exportArchive` in its content. `Description`: while the library exists only on this PC (not syncing), the date of the last export ("Last exported {date}") or "Not exported yet" (D22, new copy), so an uninstall that removes the local data is never a surprise. Trailing a small indeterminate `ProgressBar` (about 80 epx) with `AutomationProperties.Name` `settings.backup.preparingArchive`, shown after 0.3 seconds; the card keeps its size | Pressing again while preparing, or while the picker is open, does nothing. The date is a device-only local setting written when an export completes |
-| Error line | An `InfoBar` (Error) under the card, `Content` a selectable `TextBlock`; cleared when the next export starts | The messages are the export flow's (`messages.export.archiveFailed`, `messages.export.archiveNoSpace`, `messages.export.archiveSaveFailed`, `messages.save.before.exportArchive`) |
+| Error line | An `InfoBar` (Error) under the card, `Content` a selectable `TextBlock`; cleared when the next export starts | The messages are the export flow's (`messages.export.archiveFailed`, `messages.export.archiveNoSpace`, `messages.export.archiveSaveFailed`, `messages.save.before.goBack`) |
 | Import Archive… | An action card, `Header` `common.importArchive`, icon Import (E8B5), a standard `Button` `common.importArchive` | Opens the picker, then the Import archive task page ([archive-import](archive-import.md)) |
 | Footer | A `TextBlock` (Caption) under the group: `settings.backup.archive.footerEncrypted` with the credential in lower case, or `settings.backup.archive.footerUnencrypted` | |
 
@@ -38,7 +38,7 @@ Header `settings.backup.markdown.header`.
 | Spec element | Control | Notes |
 | --- | --- | --- |
 | Export as Markdown… | An action card, `Header` `settings.backup.exportMarkdown`, icon Export, a standard `Button` with that label. A small indeterminate `ProgressBar` named `settings.backup.preparingFiles` after 0.3 seconds | Disabled while preparing or without a library |
-| Error line | An `InfoBar` (Error), as above | `messages.export.markdownFailed`, `messages.export.markdownNoSpace`, `messages.export.markdownSaveFailed`, `messages.save.before.exportMarkdown` |
+| Error line | An `InfoBar` (Error), as above | `messages.export.markdownFailed`, `messages.export.markdownNoSpace`, `messages.export.markdownSaveFailed`, `messages.save.before.goBack` |
 | Note after a save that left something out | An `InfoBar` (Informational), not closable, `Content` the spec's sentences joined with a space (`settings.backup.markdownNote.imagesNotDownloaded`, `settings.backup.markdownNote.imagesUnreadable`, `settings.backup.markdownNote.itemsUnreadable`, `settings.backup.markdownNote.otherVersions`); cleared when the next export starts | Announced when it opens |
 | Footer | `settings.backup.markdown.footer` for encrypted journals, `settings.backup.markdown.footerUnencrypted` otherwise | |
 

@@ -14,7 +14,6 @@ sources:
   - apps/apple/JournalApp/Views/PermanentDeletionView.swift
   - apps/apple/JournalApp/Views/SettingsView.swift
   - apps/apple/JournalApp/Views/RootView.swift
-  - apps/apple/JournalApp/Views/JournalSettingsView.swift
   - apps/apple/JournalApp/Views/DeletedJournalView.swift
   - apps/apple/JournalApp/Views/EntryRecoveryNotice.swift
   - apps/apple/JournalApp/Model/PermanentDeletionOperations.swift
@@ -47,7 +46,6 @@ The model is `AppModel.conflicts`, an array of `ConflictVersion` (record id, thi
 - **Notice above the writing**: `ConflictNotice` (in `SettingsView.swift`), shown by `RootView.detailContent` when `model.conflicts` holds the open item. A `Text` (`.callout`, key `messages.conflict.entryNotice`) and a plain `Button` (`common.reviewChanges`) in an `HStack` with a `Spacer`, on a `.quaternary` background. At accessibility Dynamic Type sizes it becomes a `VStack` (`AnyLayout` switch on `dynamicTypeSize.isAccessibilitySize`). The button runs `model.flush()` (saves the open writing); only if that succeeds it calls `model.refresh()` and presents `ConflictReview` as a `.sheet`. If the save fails nothing opens and the save-failure alert/notice shows (see `flows/save-failure`). The notice has no `replacingVault` check of its own; the sheet closes itself when a library replacement starts.
 - **Entries list row**: `RootView.entryConflictIndicator` puts `Image(systemName: "exclamationmark.circle")` with accessibility label `messages.conflict.needsReview` at the trailing end of the row's first line (date line). At accessibility sizes the date line is a `VStack` and the symbol sits beside the date. It is not a button; the row's own selection opens the entry.
 - **Settings ▸ Sync ▸ Changes to Review**: `ConflictSettingsSection`, a `Section` at the end of the Sync pane's `Form` (`.formStyle(.grouped)`), shown only when `!model.locked` and `model.conflicts` is not empty. Header `messages.conflict.settingsSection`. Each row is a `VStack` of the title (wrapping `Text`; `DeletionConflictView.deletedTitle` for a permanently deleted record, keys `messages.conflict.deletion.deletedTitle.entry`, `.template`, `.journal`), the date (`Text(_, format: .dateTime)`, secondary) and a `Button` `common.reviewChanges` whose accessibility label is `common.reviewChangesFor` with the title. The pane owns a `@State var reviewingConflict` and presents `ConflictReview` with `.sheet(item:)`; the sheet is dropped when the app locks.
-- **A journal's settings**: `JournalSettingsView.reviewActions` shows `messages.conflict.needsReview` as secondary text and `common.reviewChanges`; the name field and default-template control are `.disabled` while the journal has a conflict. The sheet is `JournalConflictView`.
 - **A deleted journal** (`DeletedJournalView`): `common.reviewChanges` button beside Restore Journal, `.disabled(model.replacingVault)`.
 - **An entry of a journal with changes to review** (`EntryRecoveryNotice`, `.conflict` case): `common.journalNeedsReview` and `common.reviewChanges`, listed under Unavailable Journals.
 - **A journal's Version History** (`JournalHistoryView`) shows `common.reviewChanges` in its recovery actions in place of restoring while a conflict exists. Move Entry (`MoveEntryView`), Merge Into… (`MergeJournalView`) and the journal lifecycle sheet (`JournalLifecycleView`) show the same button when a conflict blocks them and present `JournalConflictView` or `ConflictReview` nested.
@@ -67,11 +65,11 @@ All forms except the journal form are wrapped in `DeletionSheet` (`PermanentDele
 5. `ProgressView` labelled `messages.conflict.journal.loading` (Reload) or `messages.conflict.savingChanges`.
 6. Error `Text` (secondary, selectable, accessibility label `messages.conflict.journal.errorLabel`) with a `Button` `messages.conflict.journal.reloadChanges`, or `messages.conflict.journal.reload` once `completed`. `messages.conflict.updatedReviewAgain` is the message for `JournalError.conflict`; `messages.conflict.journal.savedNotDisplayed` when the choice was saved but `AppModel.refresh` failed.
 7. After a saved choice `messages.conflict.journal.saved`, and the close button reads `common.done`.
-8. If its versions are not editable, the form shows `messages.conflict.updateToReview`, `ArchiveExportControls` and, while `model.saveFailure`, `messages.save.before.exportArchiveForConflict`.
+8. If its versions are not editable, the form shows `messages.conflict.updateToReview`, `ArchiveExportControls` and, while `model.saveFailure`, `messages.save.before.goBack`.
 
 **Deletion form** (`DeletionConflictView`, loaded by `AppModel.prepareDeletionConflict` and committed by `resolveDeletionConflict`; core `StoreDeletion` and `DeletionConflict.swift`)
 
-1. `.task { await prepare() }` first saves the open entry (`deletionStoreAfterSaving`; failure surfaces as `JournalError.server` text `messages.save.before.reviewChanges`), reads the confirmation, refreshes, and loads the edited version's attachments into `images`. `ProgressView` `common.pleaseWait` shows while `busy`.
+1. `.task { await prepare() }` first saves the open entry (`deletionStoreAfterSaving`; failure surfaces as `JournalError.saveRequired`, text `messages.save.before.goBack`), reads the confirmation, refreshes, and loads the edited version's attachments into `images`. `ProgressView` `common.pleaseWait` shows while `busy`.
 2. Two `event` blocks (`.accessibilityElement(children: .combine)`): headline title, then three secondary lines: `common.onThisDevice` or `messages.conflict.deletion.receivedVersion`, `messages.conflict.deletion.unknownDevice`, and the date.
 3. With an edited version: an entry or template shows its title and a read-only preview, `NativeEditor(editable: false)` with `.frame(minHeight: 260)` (an `NSTextView` in an `NSScrollView` on the Mac, a `UITextView` wrapper on iPhone and iPad), font size `@ScaledMetric(relativeTo: .body)`; a journal shows `JournalMetadataSummary`. Choices are plain `Button`s each followed by a secondary `Text` with its explanation (keys in the spec). `messages.conflict.deletion.keepDeletion` is `role: .destructive`.
 4. Keep Entry… and Keep Entry as Copy… replace the choices with `destinationChoices`: heading `common.chooseJournal`, one `Button` per journal in `model.journals` that has no conflict (checkmark `Image` `.accessibilityHidden(true)` and `.isSelected` trait on the chosen one; names disambiguated by `destinationName` with date and shortest id prefix), `common.newJournalEllipsis` (presents `RecoveryJournalView` in a nested `.sheet`), then `messages.conflict.deletion.selectedJournal` and the confirm button, and `common.back`.
@@ -93,7 +91,7 @@ Empty/loading/error states: loading is the `ProgressView`s above; the offline-li
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `review-changes` | Notice above the entry, Settings ▸ Sync ▸ Changes to Review, journal settings and the other buttons listed in Controls; as in [commands.md](../commands.md) | None | Unlocked; the notice and journal buttons are not disabled for anything else except the journal buttons while `model.replacingVault` |
+| `review-changes` | Notice above the entry, Settings ▸ Sync ▸ Changes to Review and the other buttons listed in Controls; as in [commands.md](../commands.md) | None | Unlocked; the notice and journal buttons are not disabled for anything else except the journal buttons while `model.replacingVault` |
 | `export-archive` | Export Archive… inside the unsupported forms | None | Not while an export is preparing (`export.showsProgress`) |
 
 Keyboard: in `DeletionSheet` Cancel/Done is the cancel action, so Escape closes it on the Mac and a hardware keyboard on iPad (not while busy). The journal form's close button has no `.keyboardShortcut`, so Escape is not bound there by the app. Confirmation dialogs take their default and Escape keys from the system. Tab order follows the view order; Full Keyboard Access reaches every button.
@@ -141,7 +139,7 @@ View:
 - `Views/DeletionConflictAlert.swift`: the Can’t Be Deleted alert with Review Changes.
 - `Views/PermanentDeletionView.swift`: `DeletionSheet` (the sheet frame), `DeletionConsequences`.
 - `Views/SettingsView.swift`: `ConflictNotice` and where the section is placed. `Views/RootView.swift`: the row marker and notice placement.
-- `Views/JournalSettingsView.swift`, `Views/DeletedJournalView.swift`, `Views/EntryRecoveryNotice.swift`, `Views/JournalHistoryView.swift`: the other entry points.
+- `Views/DeletedJournalView.swift`, `Views/EntryRecoveryNotice.swift`, `Views/JournalHistoryView.swift`: the other entry points.
 
 Model:
 

@@ -5,7 +5,7 @@ extension AppModel {
     func restoreHistoricalVersion(_ version: JournalItem, to journalID: UUID?) async throws -> Bool {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your current entry before restoring a version.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store else { throw JournalError.locked }
@@ -28,7 +28,7 @@ extension AppModel {
     func restoreHistoricalJournalSettings(_ version: JournalItem, expectedJournal: JournalItem) async throws -> Bool {
         guard !locked, !replacingVault else { throw JournalError.locked }
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your current entry before restoring journal settings.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         guard !locked, !replacingVault, let store else { throw JournalError.locked }

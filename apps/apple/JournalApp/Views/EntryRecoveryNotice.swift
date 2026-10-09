@@ -25,7 +25,7 @@ struct EntryRecoveryNotice: View {
             }
             .sheet(item: $restoringParent) { captured in
                 if let journalID = captured.journalID {
-                    JournalLifecycleView(journalID: journalID, restoring: true, restoringEntryID: captured.id)
+                    JournalLifecycleView(journalID: journalID, restoringEntryID: captured.id)
                 }
             }
             .sheet(item: $reviewing) { JournalConflictView(conflict: $0) }

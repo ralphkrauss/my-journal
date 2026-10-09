@@ -1,7 +1,7 @@
 {
   "common.alertTitle": {
     "text": "My Journal",
-    "context": "Title of the generic error alert, whose message is the error text: save failures and every “Couldn’t …” or “Save your … before …” message routed to the window. The app's name (it was “Journal” before build 18). Not shown while locked; the lock screen shows the message instead."
+    "context": "Title of the generic error alert, whose message is the error text: save failures and every “Couldn’t …” message and messages.save.before.tryAgain routed to the window. The app's name (it was “Journal” before build 18). Not shown while locked; the lock screen shows the message instead."
   },
   "common.back": {
     "text": "Back",
@@ -231,14 +231,6 @@
   "common.save": {
     "text": "Save",
     "context": "Confirms Save as Template and Change Date."
-  },
-  "common.saveBeforeCreateJournal": {
-    "text": "Save your entry before creating a journal.",
-    "context": "New Journal sheet (from Move Entry) error. Also: Shown when creating a journal from a sheet is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "common.saveBeforeMoveEntry": {
-    "text": "Save your changes before moving this entry.",
-    "context": "Inline error when the entry couldn't be saved first. Also: Shown when Move Entry, or Restore and Move… is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
   },
   "common.saveFailed": {
     "text": "Couldn’t save “{title}”. Keep it open and try again.",
@@ -953,8 +945,8 @@
   },
   "library.deleteAll.held.newerVersion": {
     "text": {
-      "one": "1 item needs a newer version of My Journal and will stay in Recently Deleted.",
-      "other": "{count} items need a newer version of My Journal and will stay in Recently Deleted."
+      "one": "1 item was saved by a newer version and stays in Recently Deleted. Update My Journal to delete it.",
+      "other": "{count} items were saved by a newer version and stay in Recently Deleted. Update My Journal to delete them."
     },
     "context": "Delete All message, before the retention sentence."
   },
@@ -1653,11 +1645,11 @@
     "context": "Caption above Import Archive… and Erase Journals and Settings… on the lock screen of a missing device key. {credential} is the library's own credential name, for example Master Password or Recovery Key. Also the accessibility label of that group."
   },
   "library.problem.newerVersion.message": {
-    "text": "These journals were saved by a newer version of My Journal. Update My Journal in the App Store or TestFlight to open them.",
-    "context": "The only paragraph of the update screen. Names the Apple distribution channels; another platform words its own channel."
+    "text": "These journals were saved by a newer version of My Journal. Update My Journal to open them.",
+    "context": "The only paragraph of the update screen. Never names a store: the operating system does the update."
   },
   "library.problem.settingsUnread.advice": {
-    "text": "If you recently used a newer version of My Journal, update it. Then try again. If this keeps happening, restart your {device}.",
+    "text": "If a newer version of My Journal saved these settings, update My Journal, then try again. If this keeps happening, restart your {device}.",
     "context": "Second paragraph of the same screen. {device} is the device's name: iPhone, iPad or Mac on Apple."
   },
   "library.problem.settingsUnread.message": {
@@ -2440,10 +2432,6 @@
     "text": "That recovery code isn’t correct or has already been used.",
     "context": "Signing in with a server’s one-time recovery code: wrong, already used, or not a recovery code at all."
   },
-  "messages.connection.saveBeforeConnecting": {
-    "text": "Save your changes before connecting.",
-    "context": "Connecting, setting up or signing in while the open entry couldn’t be saved."
-  },
   "messages.connection.serverChanged": {
     "text": "This server has changed since you checked it. Choose Continue to check it again.",
     "context": "ServerConnectionError.serverChanged: the server’s recovery envelope changed between checking it and signing in, setting up or finishing a pairing. The flow returns to the address step."
@@ -2698,11 +2686,11 @@
   },
   "messages.generic.moveJournalFailed": {
     "text": "Couldn’t move the journal.",
-    "context": "Reordering a journal failed."
+    "context": "Reordering a journal failed, except when the library record is from a newer version, which shows messages.library.needsUpdate."
   },
   "messages.generic.pinFailed": {
     "text": "Couldn’t pin the entry.",
-    "context": "Pin Entry failed (including when the library record is from a newer version)."
+    "context": "Pin Entry failed, except when the library record is from a newer version, which shows messages.library.needsUpdate."
   },
   "messages.generic.templateNeedsReview": {
     "text": "Review the changes to this template first.",
@@ -2714,7 +2702,7 @@
   },
   "messages.generic.unpinFailed": {
     "text": "Couldn’t unpin the entry.",
-    "context": "Unpin Entry failed."
+    "context": "Unpin Entry failed, except when the library record is from a newer version, which shows messages.library.needsUpdate."
   },
   "messages.history.chooseJournal": {
     "text": "Choose an available journal.",
@@ -2774,7 +2762,7 @@
   },
   "messages.library.needsUpdate": {
     "text": "Update My Journal to use pinned entries and journal order.",
-    "context": "Settings ▸ Sync footer while connected, when the synced library record (pins and journal order) was written by a newer version. Same text as the LibraryError.newerVersion description, which itself is never shown (pin and move failures show their own text)."
+    "context": "Settings ▸ Sync footer while connected, when the synced library record (pins and journal order) was written by a newer version. Also what Pin Entry, Unpin Entry and Move Journal show when the library record is from a newer version; it is the LibraryError.newerVersion description."
   },
   "messages.library.notOpen": {
     "text": "Your journals need to open before this can be done.",
@@ -2940,73 +2928,13 @@
     "text": "This entry or journal is no longer available for restoration.",
     "context": "EntryRestorationError.unavailable."
   },
-  "messages.save.before.changeDate": {
-    "text": "Your entry has unsaved changes. Close this sheet and save your entry before changing its date.",
-    "context": "EntryDateError.saveRequired: Change Date while the entry’s save hasn’t settled."
+  "messages.save.before.goBack": {
+    "text": "Your changes aren’t saved yet. Go back to your entry, choose Try Again under Not Saved, then repeat what you were doing.",
+    "context": "JournalError.saveRequired everywhere except the generic alert: inline in the sheet or pane of Move Entry, Create Journal, Version History, Restore Journal, Change Date, Image Descriptions, Export Archive, Export as Markdown, Import Archive and Connect to a Server. The Try Again button is in the Not Saved notice behind the sheet; on the Mac, from the Settings window, “go back” means switching to the journal window. Also the fallback for any presenter that does not say it is the alert."
   },
-  "messages.save.before.deleteJournal": {
-    "text": "Save your entry before deleting this journal.",
-    "context": "Shown when Delete Journal is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.exportArchive": {
-    "text": "Save your changes before exporting an archive.",
-    "context": "Shown when Export Archive is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.exportArchiveForConflict": {
-    "text": "Save your entry before exporting the archive.",
-    "context": "Shown when the unsupported journal conflict, under Export Archive…, while a save has failed is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.exportMarkdown": {
-    "text": "Save your changes before exporting your journals.",
-    "context": "Shown when Export as Markdown is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.imageDescriptions": {
-    "text": "Copy your descriptions, then close this view and save your entry before trying again.",
-    "context": "ImageDescriptionError.entrySaveRequired: saving image descriptions while the entry’s save hasn’t settled."
-  },
-  "messages.save.before.importArchive": {
-    "text": "Save your changes before importing journals.",
-    "context": "Shown when Import Archive is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.mergeJournal": {
-    "text": "Save your entry before merging this journal.",
-    "context": "Shown when Merge Into… is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.openRestoredJournal": {
-    "text": "The journal has already been restored. Save your entry before opening it.",
-    "context": "Shown when Restore Journal when another device already restored it and the open entry can’t be saved is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.resolveEntryConflict": {
-    "text": "Your latest changes couldn’t be saved. Try again.",
-    "context": "Keep Both or Keep Version in an entry conflict when the open entry’s pending save fails first."
-  },
-  "messages.save.before.restoreEntry": {
-    "text": "Save your changes before restoring this entry.",
-    "context": "Shown when restoring an entry from Recently Deleted is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.restoreJournal": {
-    "text": "Save your entry before restoring this journal.",
-    "context": "Shown when Restore Journal is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.restoreJournalSettings": {
-    "text": "Save your current entry before restoring journal settings.",
-    "context": "Shown when journal Version History ▸ restore is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.restoreTemplate": {
-    "text": "Save your changes before restoring this template.",
-    "context": "Shown when restoring a template from Recently Deleted is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.restoreVersion": {
-    "text": "Save your current entry before restoring a version.",
-    "context": "Shown when Version History ▸ restore is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.reviewChanges": {
-    "text": "Save your entry before reviewing these changes.",
-    "context": "Shown when resolving a journal or deletion conflict is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
-  },
-  "messages.save.before.reviewEntry": {
-    "text": "Save your changes before reviewing this entry.",
-    "context": "Shown when reviewing an entry’s restoration is attempted while the open entry can’t be saved (its save failed). Nothing else happens."
+  "messages.save.before.tryAgain": {
+    "text": "Your changes aren’t saved yet. Choose Try Again, then repeat what you were doing.",
+    "context": "JournalError.saveRequired in the app's generic alert (common.alertTitle), which has a Try Again button while a save has failed: restoring a template, Delete Journal, Delete Permanently, Delete All, and Move Entry when Restore calls it. The wording is chosen when the alert is shown: if the save has succeeded by then, nothing is shown."
   },
   "messages.save.mac.keepOpen": {
     "text": "Keep Open",
@@ -4315,10 +4243,6 @@
   "settings.devices.loading": {
     "text": "Loading Devices…",
     "context": "Progress while the device list loads."
-  },
-  "settings.devices.locked": {
-    "text": "Unlock My Journal to view Devices.",
-    "context": "Settings ▸ Devices while locked."
   },
   "settings.devices.notConnected": {
     "text": "Connect to a server to add your other devices.",

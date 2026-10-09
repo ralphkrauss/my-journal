@@ -32,7 +32,7 @@ One `ContentDialog`, default width (320 to 420 epx), content scrolling. Its titl
 ### Action and states
 
 - **Move or Restore** saves the open entry first, then moves it (restoring it from Recently deleted when restoring). The dialog closes; the entry stays open, now shown in the destination journal's list. The entry keeps its date, text and images, and nothing else in either journal changes. Edit ▸ Undo does not undo a move.
-- **Selected journal disappears or becomes ambiguous:** the selection clears and `common.journalGone` shows. **Conflict on the entry or a journal:** `messages.lifecycle.needsReview` with Review changes. **Open entry could not be saved:** `common.saveBeforeMoveEntry`. **Moved but not shown:** the dialog closes and the general error dialog says `common.entryMovedNotDisplayed`. Other errors show the error's own text. Errors are announced.
+- **Selected journal disappears or becomes ambiguous:** the selection clears and `common.journalGone` shows. **Conflict on the entry or a journal:** `messages.lifecycle.needsReview` with Review changes. **Open entry could not be saved:** `messages.save.before.goBack`. **Moved but not shown:** the dialog closes and the general error dialog says `common.entryMovedNotDisplayed`. Other errors show the error's own text. Errors are announced.
 - **Locked, or another entry opened:** the dialog closes and the move is cancelled if not committed. A lock after the commit cannot save the old journal membership back.
 
 ## Layout at each window width

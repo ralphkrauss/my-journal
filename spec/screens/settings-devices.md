@@ -23,7 +23,6 @@ Lists the devices that can sync with this device's server, says how each was add
 
 ## Content
 
-- **Locked:** only `settings.devices.locked`.
 - **Not connected:** `settings.devices.notConnected` ("Connect to a server to add your other devices.") in secondary text, and the button `common.connectToServer` ("Connect to a Server…").
 - **Connected**, in order:
   1. While loading: an indicator with `settings.devices.loading` ("Loading Devices…").

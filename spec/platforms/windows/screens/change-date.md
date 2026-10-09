@@ -20,7 +20,7 @@ A `ContentDialog` opened from Change date… in the entry row's context menu or 
 | --- | --- | --- |
 | Title | `ContentDialog.Title`, `library.changeDate.title` | |
 | Date | `CalendarDatePicker`, `Header` `library.changeDate.date`, `Date` set to the entry's date, `IsTodayHighlighted` true, `IsGroupLabelVisible` true, date only | Honours the user's calendar system, first day of the week and regional format ([31](../platform.md#31-dates-time-zones-and-formats)). `MinDate` and `MaxDate` are widened so the entry's own date is always inside the range. Only the date is chosen: the entry keeps its time of day, as the spec says (date only, no time) |
-| Error text | `InfoBar`, Severity Error, not closable, under the picker | `messages.entry.dateChanged`, `messages.save.before.changeDate`, `messages.entry.unavailableForEditing`; announced when it opens |
+| Error text | `InfoBar`, Severity Error, not closable, under the picker | `messages.entry.dateChanged`, `messages.save.before.goBack`, `messages.entry.unavailableForEditing`; announced when it opens |
 | Save | `PrimaryButton` `common.save`, `DefaultButton` Primary | Disabled while saving and while the entry has a failed save |
 | Cancel | `CloseButton` `common.cancel`; Esc | |
 
@@ -47,7 +47,7 @@ A `ContentDialog` opened from Change date… in the entry row's context menu or 
 
 ## Copy differences
 
-Sentence case: "Change date" for `library.changeDate.title`, "Change date…" for the menu item ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)). `messages.entry.dateChanged` and `messages.save.before.changeDate` say "Close this sheet" and become "Close this dialog" (platform.md, 12.3).
+Sentence case: "Change date" for `library.changeDate.title`, "Change date…" for the menu item ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)). `messages.entry.dateChanged` says "Close this sheet" and becomes "Close this dialog" (platform.md, 12.3).
 
 ## Accessibility
 

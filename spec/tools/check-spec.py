@@ -167,6 +167,20 @@ def check_catalog(catalog):
             err("copy/en.json", f"{key}: text must be a string or an object")
         if "!" in json.dumps(text, ensure_ascii=False):
             warn("copy/en.json", f"{key}: text contains an exclamation mark")
+        check_update_wording(key, text)
+
+
+def check_update_wording(key, text):
+    """A text about a newer version of the app tells the person to update My Journal, and never says that the
+    app "needs an update": only a server needs an update, because the person can't do that from here."""
+    variants = list(text.values()) if isinstance(text, dict) else [text]
+    for variant in variants:
+        if not isinstance(variant, str):
+            continue
+        if re.search(r"newer version", variant, re.I) and "update my journal" not in variant.lower():
+            err("copy/en.json", f"{key}: a text about a newer version must say \"Update My Journal\"")
+        if re.search(r"needs? an update", variant, re.I) and not re.search(r"server|\{host\}", variant, re.I):
+            err("copy/en.json", f"{key}: only a server \"needs an update\"; the app says \"Update My Journal\"")
 
 
 def flat_text(entry):

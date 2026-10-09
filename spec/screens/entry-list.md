@@ -99,7 +99,7 @@ From the leading swipe, the context menu, Entry Actions, or File ▸ Pin Entry (
 - Undo and Redo: Edit ▸ Undo Pin Entry / Undo Unpin Entry (`library.entryActions.pinUndo`, `library.entryActions.unpin`).
 - A pin belongs to the entry: it's kept through edits, Change Date, Move Entry, deletion (hidden in Recently Deleted) and restoring. Copies (Save as Template, New Entry from Template, Version History copies) aren't pinned. Pins sync.
 - Can be pinned: an entry listed in a journal in use, while unlocked and not replacing the library, including read-only entries and entries with changes to review. Not templates, not entries in Recently Deleted or Unavailable Journals.
-- Failure: error alert `messages.generic.pinFailed` or `messages.generic.unpinFailed`.
+- Failure: error alert `messages.generic.pinFailed` or `messages.generic.unpinFailed`; `messages.library.needsUpdate` when the library record is from a newer version.
 
 ### Delete Entry (`delete-entry`)
 

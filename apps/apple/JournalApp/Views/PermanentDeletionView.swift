@@ -116,7 +116,7 @@ private struct PermanentDeletionPrompt: ViewModifier {
                 id: recordID, title: DeletionConflict.alertTitle(kind: kind, title: title),
                 message: "This has changes that need review before it can be deleted.")
         default:
-            model.error = failure.shown(.saving)
+            model.report(failure, .saving)
         }
     }
 }

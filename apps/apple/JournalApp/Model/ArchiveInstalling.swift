@@ -31,7 +31,7 @@ extension AppModel {
     func installArchive(_ restored: VaultArchive.Restored) async throws {
         try checkArchiveCanBeInstalled()
         guard await finishPendingSave() else {
-            throw JournalError.server("Save your changes before importing journals.")
+            throw JournalError.saveRequired
         }
         try Task.checkCancellation()
         try checkArchiveCanBeInstalled()

@@ -55,7 +55,7 @@ Content:
 | Moving | `library.moveEntry.moving` (can't swipe to dismiss) |
 | The selected journal disappears or becomes ambiguous | `common.journalGone` (selection cleared) |
 | Conflict on the entry or a journal | `messages.lifecycle.needsReview`, Review Changes |
-| Open entry couldn't be saved | `common.saveBeforeMoveEntry` |
+| Open entry couldn't be saved | `messages.save.before.goBack` in the sheet; `messages.save.before.tryAgain` in the app's error alert when Restore and Move… calls it without the sheet |
 | Moved but not shown | the app's error alert with `common.entryMovedNotDisplayed` |
 | Other errors | the error's own text |
 | Locked, or another entry opened | the sheet closes; the move is cancelled if not committed |

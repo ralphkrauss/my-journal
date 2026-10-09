@@ -64,7 +64,7 @@ Scrolling content:
 | Entry no longer describable while the sheet is open (deleted, moved out, conflict, read-only): fields stay, Done disabled | `editor.imageDescriptions.noLongerAvailable` |
 | The entry changed (images added or removed elsewhere) | `messages.entry.imagesChanged` |
 | Unavailable | `messages.entry.unavailableForEditing` |
-| The entry's own writing isn't saved | `messages.save.before.imageDescriptions` (Reload and Try Again hidden; Copy stays) |
+| The entry's own writing isn't saved | `messages.save.before.goBack` (Reload and Try Again hidden; Copy stays) |
 | Saved but not shown | `editor.imageDescriptions.savedNotShown` |
 | The entry’s images can only be edited as Markdown source (refused when saving) | `messages.image.descriptionsNeedSource` |
 | Locked | See Rules. |

@@ -56,7 +56,7 @@ Flow step by step, with the control and the code behind it. The model type throu
 
 **2b. Journal** (`JournalMetadataConflictReview`)
 
-- Keep Version…: `AppModel.resolveJournalConflict` (guards: kind is journal, not locked, library not being replaced; `finishPendingSave()` or throws text `messages.save.before.reviewChanges`), then `store.resolve(conflict, choice:)` inside `commitJournalResolution` -> `commitMutation`. `commitMutation` runs the store call and the in-memory reconcile in one unstructured `Task`, so a lock or a closed sheet after the commit cannot undo it; afterwards it refreshes and returns whether that worked (false gives `messages.conflict.journal.savedNotDisplayed`). The store rejects `.keepBoth` for a journal.
+- Keep Version…: `AppModel.resolveJournalConflict` (guards: kind is journal, not locked, library not being replaced; `finishPendingSave()` or throws text `messages.save.before.goBack`), then `store.resolve(conflict, choice:)` inside `commitJournalResolution` -> `commitMutation`. `commitMutation` runs the store call and the in-memory reconcile in one unstructured `Task`, so a lock or a closed sheet after the commit cannot undo it; afterwards it refreshes and returns whether that worked (false gives `messages.conflict.journal.savedNotDisplayed`). The store rejects `.keepBoth` for a journal.
 - Reconcile: if the chosen journal is deleted, a draft inside it and the selection are cleared.
 
 **2c. Deletion** (`DeletionConflictView`)

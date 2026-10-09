@@ -47,7 +47,7 @@ Ctrl+S is the Windows addition of [7.2](../platform.md#72-additions), not a comm
 
 ## Copy differences
 
-`messages.save.mac.title` becomes "Couldn’t save changes on this PC." (platform.md, 12.3). The Keep open button text `messages.save.mac.keepOpen` stays. The `messages.save.before.*` strings that say "Close this sheet" become "Close this dialog". No other differences.
+`messages.save.mac.title` becomes "Couldn’t save changes on this PC." (platform.md, 12.3). The Keep open button text `messages.save.mac.keepOpen` stays. `messages.entry.dateChanged`, which says "Close this sheet", becomes "Close this dialog". No other differences.
 
 ## Accessibility
 

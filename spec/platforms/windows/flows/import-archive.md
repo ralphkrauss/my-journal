@@ -39,7 +39,7 @@ The spec's table, with the Windows surface: all are inline in the import page's 
 
 | When | Message |
 | --- | --- |
-| The open entry cannot be saved first | `messages.save.before.importArchive` |
+| The open entry cannot be saved first | `messages.save.before.goBack` |
 | The archive has items from a newer version and journals exist here | `messages.import.archiveNeedsUpdate` |
 | Locked meanwhile | The dialog hides and the work is cancelled; `messages.error.locked` is never seen |
 | Imported, but the journals cannot be shown | `messages.refresh.imported` in the bar; the import stands |

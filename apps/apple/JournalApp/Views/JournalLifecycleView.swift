@@ -7,10 +7,8 @@ struct JournalLifecycleView: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) private var dismiss
     let journalID: UUID
-    var restoring = false
     var restoringEntryID: UUID?
     @State private var journal: JournalItem?
-    @State private var plan: JournalDeletionPlan?
     @State private var entryPlan: EntryRestorationPlan?
     @State private var entryIssue: EntryRecoveryIssue?
     @State private var busy = false
@@ -22,18 +20,18 @@ struct JournalLifecycleView: View {
     @State private var reviewing = false
     @State private var operation: Task<Void, Never>?
     private var title: String {
-        restoringEntryID != nil ? "Restore Entry" : restoring ? "Restore Journal" : "Delete Journal"
+        restoringEntryID != nil ? "Restore Entry" : "Restore Journal"
     }
     private var actionTitle: String {
         guard restoringEntryID != nil else { return title }
         return "Restore"
     }
     private var name: String {
-        let value = plan?.title ?? journal?.title ?? ""
+        let value = journal?.title ?? ""
         return value.isEmpty ? "Untitled Journal" : value
     }
     private var eligibleCount: Int {
-        entryPlan?.entryCount ?? plan?.entryIDs.count ?? model.restorableEntryCount(journalID)
+        entryPlan?.entryCount ?? model.restorableEntryCount(journalID)
     }
     private var countText: String {
         eligibleCount == 1 ? "1 entry on this device" : "\(eligibleCount) entries on this device"
@@ -67,7 +65,6 @@ struct JournalLifecycleView: View {
             if locked {
                 operation?.cancel()
                 journal = nil
-                plan = nil
                 entryPlan = nil
                 reviewing = false
                 dismiss()
@@ -77,7 +74,6 @@ struct JournalLifecycleView: View {
             isPresented: $reviewing,
             onDismiss: {
                 prepared = false
-                plan = nil
                 entryPlan = nil
             }
         ) {
@@ -112,23 +108,15 @@ struct JournalLifecycleView: View {
                         Text(name).font(.title2).fixedSize(horizontal: false, vertical: true)
                         Text(countText).foregroundStyle(.secondary)
                     }
-                    if restoring && (restoringEntryID == nil || entryPlan != nil) {
-                        restorationExplanation
-                    } else if !restoring {
-                        Text(
-                            eligibleCount == 0
-                                ? "This journal will move to Recently Deleted. Entries from other devices will appear there when they sync."
-                                : "\(countText) will move to Recently Deleted. Entries from other devices will appear there when they sync."
-                        )
-                    }
+                    if restoringEntryID == nil || entryPlan != nil { restorationExplanation }
                     if let error { Text(error).foregroundStyle(.secondary).textSelection(.enabled) }
                     if busy { ProgressView("Please Wait…") }
                     if !completed {
                         if prepared {
-                            Button(role: restoring ? nil : .destructive, action: commit) {
+                            Button(action: commit) {
                                 Text(actionTitle).multilineTextAlignment(.leading)
                                     .fixedSize(horizontal: false, vertical: true)
-                            }.foregroundStyle(restoring ? Color.accentColor : .red).disabled(busy)
+                            }.foregroundStyle(Color.accentColor).disabled(busy)
                                 .accessibilityIdentifier("confirm-journal-lifecycle")
                         } else if entryIssue == nil, !busy,
                             !loaded || restoringEntryID != nil || journal?.document.isEditable == true
@@ -218,7 +206,6 @@ struct JournalLifecycleView: View {
         guard !busy, !model.locked, !Task.isCancelled else { return }
         busy = true
         prepared = false
-        plan = nil
         entryPlan = nil
         entryIssue = nil
         journal = nil
@@ -247,11 +234,7 @@ struct JournalLifecycleView: View {
             if model.conflicts.contains(where: { $0.id == journalID }) {
                 throw JournalLifecycleError.conflict(journalID)
             }
-            if restoring {
-                if journal.deletedAt == nil { throw JournalLifecycleError.alreadyRestored }
-            } else {
-                plan = try await model.prepareJournalDeletion(journalID)
-            }
+            if journal.deletedAt == nil { throw JournalLifecycleError.alreadyRestored }
             try Task.checkCancellation()
             guard !model.locked else { return }
             prepared = true
@@ -259,7 +242,6 @@ struct JournalLifecycleView: View {
     }
     private func commit() {
         guard prepared, !busy, let journal else { return }
-        let capturedPlan = plan
         let capturedEntryPlan = entryPlan
         busy = true
         operation = Task {
@@ -270,12 +252,8 @@ struct JournalLifecycleView: View {
                     refreshed = try await model.restoreEntryAndJournal(capturedEntryPlan)
                 } else if restoringEntryID != nil {
                     return
-                } else if restoring {
-                    refreshed = try await model.restoreJournal(journalID, expectedTitle: journal.title)
-                } else if let capturedPlan {
-                    refreshed = try await model.deleteJournal(capturedPlan)
                 } else {
-                    return
+                    refreshed = try await model.restoreJournal(journalID, expectedTitle: journal.title)
                 }
                 guard !model.locked, !Task.isCancelled else { return }
                 completed = true
@@ -286,10 +264,7 @@ struct JournalLifecycleView: View {
                     error =
                         "The entry and journal were restored, but My Journal couldn’t update the view. Reopen My Journal to continue."
                 } else {
-                    error =
-                        restoring
-                        ? "The journal was restored, but couldn’t be displayed. Reopen My Journal to try again."
-                        : "The journal was deleted, but couldn’t be displayed. Reopen My Journal to try again."
+                    error = "The journal was restored, but couldn’t be displayed. Reopen My Journal to try again."
                 }
             } catch { await handle(error) }
         }
@@ -297,7 +272,6 @@ struct JournalLifecycleView: View {
     private func handle(_ failure: Error) async {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
         prepared = false
-        plan = nil
         entryPlan = nil
         if restoringEntryID != nil {
             journal = nil
@@ -317,20 +291,13 @@ struct JournalLifecycleView: View {
             journal = nil
             loaded = true
         }
-        if case JournalLifecycleError.alreadyDeleted = failure {
-            completed = true
-            do { try await model.refresh() } catch {
-                self.error = "The journal was deleted, but couldn’t be displayed. Reopen My Journal to try again."
-                return
-            }
-        }
         if case JournalLifecycleError.alreadyRestored = failure {
             completed = true
             do {
                 try await model.refresh()
                 await model.switchJournal(journalID)
                 if model.saveFailure {
-                    error = "The journal has already been restored. Save your entry before opening it."
+                    error = JournalError.saveRequired.shown(.saving)
                     return
                 }
             } catch {

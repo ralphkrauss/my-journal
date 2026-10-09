@@ -32,7 +32,7 @@ Saves one file with everything needed to bring the journals back: entries, journ
    - Not Now: continue; asked again next time.
    - Wrong: `settings.passwordCheck.wrong`; after a wrong try, Forgot Password? may be offered (`flows/forgot-password`).
    - The save dialog appears only after the sheet has closed.
-4. **Preparing:** the open entry is saved (if it can't be: `messages.save.before.exportArchive`); the archive is written to a temporary package. After 0.3 seconds an indicator appears.
+4. **Preparing:** the open entry is saved (if it can't be: `messages.save.before.goBack`); the archive is written to a temporary package. After 0.3 seconds an indicator appears.
 5. **Save dialog:** the system's dialog, suggesting `settings.backup.archiveFilename` ("Journal Archive {yyyy-MM-dd}.journalarchive", the date in the Gregorian calendar, numerals 0–9).
    - Saved: done; nothing is announced.
    - Cancelled: nothing; not an error.
@@ -44,7 +44,7 @@ Saves one file with everything needed to bring the journals back: entries, journ
 | When | Message |
 | --- | --- |
 | The device's authentication failed | `settings.backup.verifyFailed` |
-| The open entry can't be saved first | `messages.save.before.exportArchive` |
+| The open entry can't be saved first | `messages.save.before.goBack` |
 | Not enough space | `messages.export.archiveNoSpace` |
 | Anything else while preparing | `messages.export.archiveFailed` |
 | Saving to the chosen place failed | `messages.export.archiveSaveFailed` |

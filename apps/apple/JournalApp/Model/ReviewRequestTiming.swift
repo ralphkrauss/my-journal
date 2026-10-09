@@ -15,7 +15,6 @@ import StoreKit
         var calendar = Calendar.current
         /// The pause before asking; tests make it return at once.
         var pause: () async throws -> Void = { try await Task.sleep(for: .seconds(2)) }
-        var version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
         /// Whether this copy came from the App Store: TestFlight and development builds never ask.
         var installedFromAppStore: () async -> Bool = ReviewRequests.installedFromAppStore
     }
@@ -45,7 +44,7 @@ import StoreKit
         #if DEBUG
             // A UI-test run that checks the moment starts with usage that meets the rules, kept in memory.
             if processEnvironment["JOURNAL_UI_TEST_REVIEW"] == "eligible" {
-                let usage = ReviewUsage(firstUse: Date(timeIntervalSinceNow: -30 * 24 * 60 * 60), writingDays: 10)
+                let usage = ReviewUsage(writingDays: 10)
                 var environment = Environment()
                 environment.installedFromAppStore = { true }
                 return ReviewRequests(store: .memory(usage), environment: environment)
@@ -53,11 +52,6 @@ import StoreKit
         #endif
         let testing = hostsTests || processEnvironment["JOURNAL_UI_TEST_ID"] != nil
         return ReviewRequests(store: testing ? nil : .preferences())
-    }
-
-    /// Records the first use on this device.
-    func noteLaunch() {
-        _ = store?.current(now: environment.now())
     }
 
     /// The person changed this entry in the editor.
@@ -70,12 +64,13 @@ import StoreKit
     func noteSaved(entry id: UUID) {
         guard let store, id == editedEntry else { return }
         let now = environment.now()
-        var usage = store.current(now: now)
+        var usage = store.current()
         usage.recordWriting(at: now, calendar: environment.calendar)
         store.usage = usage
     }
 
-    /// Something needed the person's attention: no request in this session.
+    /// An error alert, a failed save or changes to review: no request in this session. A sync problem is not
+    /// remembered; Sync Status showing blocks the moment while it lasts (`AppModel.reviewMomentIsClear`).
     func noteProblem() {
         problemThisSession = true
         interrupt()
@@ -117,13 +112,11 @@ import StoreKit
     private func askIfStillPaused(_ expected: Int) async {
         guard let store, !Task.isCancelled, activity == expected, momentIsClear() else { return }
         let now = environment.now()
-        let allowed = ReviewRequestRules.allow(
-            store.usage, version: environment.version, problemThisSession: problemThisSession, now: now)
+        let allowed = ReviewRequestRules.allow(store.usage, problemThisSession: problemThisSession, now: now)
         guard allowed, await environment.installedFromAppStore() else { return }
         guard !Task.isCancelled, activity == expected, momentIsClear(), let present else { return }
         present()
-        var usage = store.current(now: now)
-        usage.lastRequestVersion = environment.version
+        var usage = store.current()
         usage.lastRequest = now
         store.usage = usage
         pending = nil
@@ -136,16 +129,26 @@ import StoreKit
 }
 
 extension AppModel {
-    /// Nothing is happening that the system's prompt would interrupt: no operation, sheet, error or new entry, and
-    /// the window in front has nothing over it and no text input focused.
+    /// Nothing is happening that the system's prompt would interrupt: no operation, sheet, error, problem Sync Status
+    /// shows, or new entry, and the window in front has nothing over it and no text input focused.
     var reviewMomentIsClear: Bool {
+        guard reviewStateIsClear else { return false }
+        #if os(macOS)
+            return ReviewMoment.windowIsClear(journalWindow: journalWindow)
+        #else
+            return ReviewMoment.windowIsClear()
+        #endif
+    }
+
+    /// The model's side of `reviewMomentIsClear`: what the app is doing and showing, apart from the window.
+    var reviewStateIsClear: Bool {
         guard !locked, applicationActive, !unlockState.requestInFront, store != nil, isReady else { return false }
         guard !replacingVault, !erasingLibrary, !connectingToServer, !creatingEntry, deleteAllPhase == .idle else {
             return false
         }
-        guard !saveFailure, error == nil, conflicts.isEmpty, !openingJournals else { return false }
+        guard !saveFailure, error == nil, conflicts.isEmpty, !openingJournals, !showsSyncStatus else { return false }
         let presenting =
-            settingsPresented || journalsPresented || templateChooserPresented || archiveExportPresented
+            settingsPresented || templateChooserPresented || archiveExportPresented
             || markdownExportPresented
             || archiveImportRequested || newJournalRequested
         guard !presenting else { return false }
@@ -153,11 +156,7 @@ extension AppModel {
         if let draft, draft.kind == "entry", draft.title.isEmpty, TemplateSuggestion.hasEmptyBody(draft) {
             return false
         }
-        #if os(macOS)
-            return ReviewMoment.windowIsClear(journalWindow: journalWindow)
-        #else
-            return ReviewMoment.windowIsClear()
-        #endif
+        return true
     }
 }
 
