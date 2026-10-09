@@ -122,7 +122,7 @@ The message appears in the footer of Settings ▸ Sync's Server section, and in 
 
 **Item-level refusals.** A record larger than 4 MB, or one the server refuses, is kept on this device with `messages.sync.recordTooLarge` or `messages.sync.recordRefused` ({title} cut to 40 characters with "…"). It is sent again when it is edited, or with Sync Now or Try Again. An image the server refuses keeps the entries that include it waiting (`messages.sync.imageTooLarge`, `messages.sync.imageRefused`). When several are refused, one message shows: a record's first (sorted by text), then images.
 
-**Other sync-related messages.** `messages.library.needsUpdate` and `messages.library.waitingForServer` explain pins and journal order in the same footer when nothing else is shown. `messages.sync.pausedForSaveFailure` replaces everything while a save has failed ([flows/save-failure.md](save-failure.md)).
+**Other sync-related messages.** `messages.library.needsUpdate` explains pins and journal order in the same footer when nothing else is shown. `messages.sync.pausedForSaveFailure` replaces everything while a save has failed ([flows/save-failure.md](save-failure.md)).
 
 ## Accessibility
 

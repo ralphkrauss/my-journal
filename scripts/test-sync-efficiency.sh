@@ -2,7 +2,8 @@
 # Short push receipts and waiting for changes against disposable loopback servers
 # (docs/design/sync-protocol-efficiency.md §7.3): real-server checks, faults injected by scripts/sync-fault-proxy.py,
 # many waiting devices, and, with JOURNAL_BASELINE_DIR set to a checkout of an earlier build (for example a git
-# worktree of build 9), mixed versions both ways. JOURNAL_TEST_RESULTS keeps the servers' logs.
+# worktree of the 1.0 release, which has no protocolRevision and lists the 13 frozen capabilities), mixed versions
+# both ways. JOURNAL_TEST_RESULTS keeps the servers' logs.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 task_dir="$(mktemp -d)"
@@ -104,10 +105,7 @@ stop_server
 if [[ -n "${JOURNAL_BASELINE_DIR:-}" ]]; then
   baseline_dll="$JOURNAL_BASELINE_DIR/server/src/Journal.Api/bin/Debug/net10.0/Journal.Api.dll"
   dotnet build "$JOURNAL_BASELINE_DIR/server/src/Journal.Api" -v quiet -p:RestoreLockedMode=true
-  # A new client with the earlier server: nothing new is asked for, and everything still synchronizes.
-  start_server "$baseline_dll" "$task_dir/old-server"
-  probe wait-old "$address" "$task_dir/old-server/setup-code"
-  stop_server
+  # A new client with the earlier server: it counts as revision 1, and everything still synchronizes.
   start_server "$baseline_dll" "$task_dir/old-server-main"
   probe "$address" "$task_dir/old-server-main/setup-code"
   stop_server

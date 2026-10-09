@@ -138,7 +138,7 @@ Spec: [screens/add-device.md](screens/add-device.md). Code: `Views/AddDeviceView
 
 Spec: [screens/add-device.md](screens/add-device.md). Code: `Views/AddDeviceView.swift`, `Views/PairingCodeImage.swift`.
 
-**A33.** A server without check codes shows Get New Code after `messages.pairing.serverOutdated`; the sync-security record says no button, and getting a new code can't help.
+**A33.** A server without check codes shows Get New Code after “This server needs an update before you can add devices.” (a key removed in 1.1); the sync-security record says no button, and getting a new code can't help. Superseded in 1.1 by simplification O (owner-approved 2026-10-07), still open for 1.0. **Resolved in 1.1 by simplification O:** a server without check codes is below protocol revision 1 and is refused by the status check before any pairing request (`messages.connection.serverNeedsUpdate`); the button stays so Get New Code checks the server again once it is updated.
 
 Spec: [flows/connect-to-server.md](flows/connect-to-server.md). Code: `Model/ConnectionFlow.swift`, `Views/ConnectionSteps.swift`.
 
@@ -382,7 +382,7 @@ Spec: [platforms/windows/screens/settings-devices.md](platforms/windows/screens/
 
 Spec: [platforms/windows/screens/image-description.md](platforms/windows/screens/image-description.md). Code: none yet.
 
-**B42.** Three system permission texts in `project.yml` have no copy key. `NSFaceIDUsageDescription` ("Unlock your journals and confirm adding a device.", iPhone and iPad) and `NSLocalNetworkUsageDescription` ("Find and sync with your server on your local network.", iPhone, iPad and Mac) are shown by the system, but only the camera and Add to Photos texts have keys (`editor.permission.camera`, `editor.permission.photosAdd`). A port that copies the catalog cannot find them. Recommendation: add keys for both, noting they are Info.plist values. (Superseded if the 1.1 server cleanup, simplification O, removes local network discovery.)
+**B42.** Three system permission texts in `project.yml` have no copy key. `NSFaceIDUsageDescription` ("Unlock your journals and confirm adding a device.", iPhone and iPad) and `NSLocalNetworkUsageDescription` ("Find and sync with your server on your local network.", iPhone, iPad and Mac) are shown by the system, but only the camera and Add to Photos texts have keys (`editor.permission.camera`, `editor.permission.photosAdd`). A port that copies the catalog cannot find them. Recommendation: add keys for both, noting they are Info.plist values. (The 1.1 server cleanup, simplification O, was to supersede this if it removed local network discovery; the owner decided on 2026-10-09 to keep discovery, so the permission text stays and this stays open.)
 
 Spec: [flows/insert-image.md](flows/insert-image.md), [screens/lock-screen.md](screens/lock-screen.md), [screens/connect-to-server.md](screens/connect-to-server.md), [copy/en.json](copy/en.json). Code: `apps/apple/project.yml:30,76,79`.
 
@@ -515,6 +515,8 @@ Spec: [screens/unavailable-content.md](screens/unavailable-content.md), [message
 ## D. Product questions for the owner
 
 Behaviour no record decides, or choices for the Windows and Android ports.
+
+**Owner decisions of 2026-10-09 for simplification O (server cleanup, [1-1-server-cleanup.md](../docs/design/1-1-server-cleanup.md)):** LAN discovery stays, unchanged: Servers on This Network, the Bonjour service `_myjournal._tcp` and its announcer, `NSBonjourServices`, the local network permission text, `deploy/lan/` and the `lan` Compose profile ("I love it"). One setup path is confirmed as designed: in the app, Connect to a Server, choose the server (nearby, by address or by scanning a code), enter the setup code, choose a master password; in the repository, one first deployment route (the local container, then Tailscale or HTTPS as variations of where it runs). 1.1 apps refuse a server below protocol revision 1 with one message and change nothing; 1.1 removes no route from the wire.
 
 **Owner decisions of 2026-10-07 for the Windows questions D20 to D54:** every reviewed recommendation is accepted, except that (1) there is no OneDrive warning before a plain Markdown export (D46, B37) and (2) tables are fully editable in place, exactly like on the Mac, a hard requirement for the editor choice (D30, D33). The accepted archive recommendation (D29, one file) still needs its protocol change in [protocol/archive.md](../protocol/archive.md), with a version bump and conformance fixtures, before Windows builds archives. The questions below keep their text as history; where one disagrees with this paragraph, this paragraph wins.
 

@@ -11,9 +11,13 @@ public static class AccountEndpoints
 {
     // Wire major versions this server implements; see protocol/README.md, Versioning.
     private static readonly int[] ProtocolVersions = [1];
+    // The protocol revision within wire major 1: everything of revisions 1 to this one. Revision 1 is what a
+    // 1.0 server implements. Raise it for additive changes; see protocol/README.md, Versioning.
+    private const int ProtocolRevision = 1;
     private static readonly int[] RecoveryVersions = [1, 2, 3, 4];
-    // Additive protocol v1 capabilities; see protocol/README.md.
-    private static readonly string[] Features = ["sync-identity", "pairing-check-code", "password-change", "sync-continuity", SyncEndpoints.ContinuityDigestFeature, "private-envelope", "pairing-invite", "setup-check", EncryptionEndpoints.Feature, "agent-access-2", SyncEndpoints.ShortReceiptFeature, SyncEndpoints.WaitFeature, SyncEndpoints.RecordKindsFeature];
+    // Frozen: 1.0 apps read these 13 names, so they stay on every server and are never extended or shortened.
+    // New capabilities raise the protocol revision instead; see protocol/README.md, Versioning.
+    private static readonly string[] Features = ["sync-identity", "pairing-check-code", "password-change", "sync-continuity", "sync-continuity-digest", "private-envelope", "pairing-invite", "setup-check", "encryption-upgrade", "agent-access-2", "sync-short-receipt", "sync-wait", "record-kinds"];
     private static readonly string ServerVersion = (typeof(AccountEndpoints).Assembly
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0").Split('+')[0];
 
@@ -23,6 +27,7 @@ public static class AccountEndpoints
         app.MapGet("/v1/server", (HttpContext http) => Results.Ok(new
         {
             protocolVersions = ProtocolVersions,
+            protocolRevision = ProtocolRevision,
             serverVersion = ServerVersion,
             features = Features,
             recoveryVersions = RecoveryVersions,
@@ -36,6 +41,7 @@ public static class AccountEndpoints
             return Results.Ok(new
             {
                 protocolVersion = 1,
+                protocolRevision = ProtocolRevision,
                 recoveryVersions = RecoveryVersions,
                 features = Features,
                 initialized = vault is not null,

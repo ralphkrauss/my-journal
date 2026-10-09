@@ -217,7 +217,7 @@ public enum VaultCrypto {
 }
 
 public enum PasswordChangeError: Error, LocalizedError, Equatable {
-    case incorrectPassword, samePassword, tooShort, unsupported, serverOutdated, failed
+    case incorrectPassword, samePassword, tooShort, unsupported, failed
     /// The server has the new password; saving it on this device failed. Retry with this envelope.
     case notSavedLocally
     public var errorDescription: String? {
@@ -226,7 +226,6 @@ public enum PasswordChangeError: Error, LocalizedError, Equatable {
         case .samePassword: return "Choose a password that’s different from your current password."
         case .tooShort: return "Enter a new password."
         case .unsupported: return "This journal library doesn’t use a master password."
-        case .serverOutdated: return "This server needs an update before you can change your password."
         case .failed:
             return
                 "Couldn’t change your password. Your current password still works. Check your connection and try again."

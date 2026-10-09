@@ -75,7 +75,7 @@ final class ServerEnvelopeTests: XCTestCase {
         var parameters = RecoveryParameters(published)
         parameters.wrappedKey = nil
         let publishedBody = try JournalCoding.encoder().encode(parameters)
-        let status = Data(#"{"protocolVersion":1,"initialized":true,"features":["private-envelope"]}"#.utf8)
+        let status = HealthyStatus.json()
         let page = Data(#"{"changes":[],"cursor":0,"hasMore":false}"#.utf8)
         struct Recovered: Encodable {
             let deviceId: UUID

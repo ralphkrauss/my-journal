@@ -42,13 +42,15 @@ final class MergeRetryTests: XCTestCase {
     /// (`sends: false`) or it downloads nothing and refuses what this device sends (`sends: true`).
     private func recoveryCodeServer(grant: DeviceGrant, sends: Bool) async throws -> FakeJournalServer {
         let parameters = try JournalCoding.encoder().encode(RecoveryParameters(RecoveryEnvelope.unprotected))
-        let status = Data(#"{"protocolVersion":1,"initialized":true,"serverId":"fake-server"}"#.utf8)
+        let status = HealthyStatus.json(serverId: "fake-server")
         let recovered = try JournalCoding.encoder().encode(grant)
         let page = Data(#"{"changes":[],"cursor":0,"hasMore":false,"serverId":"fake-server","serverIdCursor":0}"#.utf8)
         return try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
+            case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             case ("GET", "/v1/recovery"): return (200, parameters)
+            case ("GET", "/v1/recovery/envelope"): return (200, parameters)
             case ("POST", "/v1/recovery"): return (200, recovered)
             case ("DELETE", _): return (204, Data())
             case ("GET", let path) where path.hasPrefix("/v1/sync/") && sends: return (200, page)
@@ -107,13 +109,15 @@ final class MergeRetryTests: XCTestCase {
         let key = try VaultCrypto.generateKey()
         let envelope = try VaultCrypto.makeRecovery(masterKey: key, phrase: "the server's password").0
         let published = try JournalCoding.encoder().encode(envelope)
-        let status = Data(#"{"protocolVersion":1,"initialized":true,"serverId":"fake-server"}"#.utf8)
+        let status = HealthyStatus.json(serverId: "fake-server")
         let page = Data(#"{"changes":[],"cursor":0,"hasMore":false,"serverId":"fake-server","serverIdCursor":0}"#.utf8)
         // It downloads nothing and refuses what this device sends.
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
+            case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             case ("GET", "/v1/recovery"): return (200, published)
+            case ("GET", "/v1/recovery/envelope"): return (200, published)
             case ("GET", let path) where path.hasPrefix("/v1/sync/"): return (200, page)
             case ("DELETE", _): return (204, Data())
             default: return (503, Data("{}".utf8))
@@ -139,11 +143,13 @@ final class MergeRetryTests: XCTestCase {
         let model = try await model(writing: false, encrypted: true)
         let envelope = try VaultCrypto.makeRecovery(masterKey: VaultCrypto.generateKey(), phrase: "password").0
         let parameters = try JournalCoding.encoder().encode(RecoveryParameters(envelope))
-        let status = Data(#"{"protocolVersion":1,"initialized":true}"#.utf8)
+        let status = HealthyStatus.json()
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
+            case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             case ("GET", "/v1/recovery"): return (200, parameters)
+            case ("GET", "/v1/recovery/envelope"): return (200, parameters)
             default: return (503, Data("{}".utf8))
             }
         }

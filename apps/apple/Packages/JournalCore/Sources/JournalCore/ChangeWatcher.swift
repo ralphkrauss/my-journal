@@ -27,11 +27,9 @@ public struct ChangeWatcher: Sendable {
         public var position: QuietPosition?
         /// The soonest an item waiting for a retry time may be sent, after `finishedAt`.
         public var earliestRetry: Duration?
-        /// The server holds waits (capability `sync-wait`).
-        public var waitingSupported: Bool
         public init(
             outcome: Outcome, startedAt: Instant, finishedAt: Instant, mark: QuietMark? = nil,
-            position: QuietPosition? = nil, earliestRetry: Duration? = nil, waitingSupported: Bool = false
+            position: QuietPosition? = nil, earliestRetry: Duration? = nil
         ) {
             self.outcome = outcome
             self.startedAt = startedAt
@@ -39,7 +37,6 @@ public struct ChangeWatcher: Sendable {
             self.mark = mark
             self.position = position
             self.earliestRetry = earliestRetry
-            self.waitingSupported = waitingSupported
         }
     }
     public enum Event: Sendable {
@@ -108,7 +105,6 @@ public struct ChangeWatcher: Sendable {
     }
     private var mark: QuietMark?
     private var retryAt: Instant?
-    private var waitingSupported = false
     private var allowWaiting = false
     private var wait: Wait?
     private var nextWaitID = 0
@@ -131,7 +127,7 @@ public struct ChangeWatcher: Sendable {
     }
 
     /// While true, the app doesn't poll: synchronizations run when the watcher asks.
-    public var ownsSchedule: Bool { mark != nil && waitingSupported && allowWaiting && !inFallback }
+    public var ownsSchedule: Bool { mark != nil && allowWaiting && !inFallback }
     /// A wait is running.
     public var waiting: Bool { wait != nil }
     /// The wait running, if any.
@@ -198,7 +194,6 @@ public struct ChangeWatcher: Sendable {
             return
         }
         lastSyncAt = finished.startedAt
-        waitingSupported = finished.waitingSupported
         switch judged {
         case .afterChanged(let sent): sent == finished.position ? strike() : (strikes = 0)
         case .afterFailure: strike()

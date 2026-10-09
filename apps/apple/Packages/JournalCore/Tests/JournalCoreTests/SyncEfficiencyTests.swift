@@ -65,16 +65,13 @@ final class SyncEfficiencyTests: XCTestCase {
         }
     }
 
-    func testShortReceiptsAreAskedForOnlyFromServersThatOfferThem() async throws {
-        for offered in [false, true] {
-            let server = MemoryServer()
-            if offered { await server.offerShortReceipts() }
-            let phone = try device("phone-\(offered)")
-            try await phone.save(JournalItem(kind: "entry", journalID: UUID(), document: .plain("Hello")))
-            try await SyncEngine(store: phone, server: server).synchronize()
-            let requests = await server.shortReceiptRequests
-            XCTAssertEqual(requests, [offered])
-        }
+    func testPushesAskForShortReceipts() async throws {
+        let server = MemoryServer()
+        let phone = try device("phone")
+        try await phone.save(JournalItem(kind: "entry", journalID: UUID(), document: .plain("Hello")))
+        try await SyncEngine(store: phone, server: server).synchronize()
+        let requests = await server.shortReceiptRequests
+        XCTAssertEqual(requests, [true])
     }
 
     // MARK: Waiting for changes: answers
@@ -200,7 +197,6 @@ final class SyncEfficiencyTests: XCTestCase {
 
     func testRefusedItemsAndOutstandingRenamesKeepTheDevicePolling() async throws {
         let server = MemoryServer()
-        await server.offerShortReceipts()
         let phone = try device("phone")
         let tooLarge = SyncEngine(store: phone, server: server, recordLimit: 10)
         try await phone.save(JournalItem(kind: "entry", journalID: UUID(), document: .plain("Too large to sync")))

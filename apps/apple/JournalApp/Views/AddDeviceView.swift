@@ -283,10 +283,21 @@ struct AddDeviceView: View {
         }
     }
     private func start() async {
-        guard !model.locked, let address = model.connection?.address,
-            PairingInviteHost(server: address) != nil,
-            (try? await model.connectedClient().status().supports(PairingInvite.feature)) == true
-        else {
+        guard !model.locked, let address = model.connection?.address else {
+            step = .entry
+            return
+        }
+        do { try await model.connectedClient().status().requireCompatible() } catch let refusal as ServerRefusal {
+            // The same message every place that needs the server says it, with nothing changed on this device.
+            error = refusal.localizedDescription
+            announceForAccessibility(refusal.localizedDescription)
+            step = .finished
+            return
+        } catch {
+            step = .entry
+            return
+        }
+        guard PairingInviteHost(server: address) != nil else {
             step = .entry
             return
         }

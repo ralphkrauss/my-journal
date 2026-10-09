@@ -184,7 +184,7 @@ While the computer connects to a server from the Settings window, the journal wi
 | Continue (address) | `connect-check-server` | Checks the typed address. |
 | Choose a nearby server | `connect-check-server` | Fills the address and checks it. |
 | Scan Code | `connect-scan-code` | Opens the scanner. |
-| Set Up / Continue (setup code) | `connect-set-up` | Validates the code; checks it with the server when supported. |
+| Set Up / Continue (setup code) | `connect-set-up` | Validates the code; checks it with the server. |
 | Sign In | `connect-sign-in` | Signs in with the typed credential. |
 | Use a Connected Device Instead… | `connect-use-device` | Pushes Add This Device. |
 | Copy Code | `connect-copy-code` | Copies the nine digits only. |

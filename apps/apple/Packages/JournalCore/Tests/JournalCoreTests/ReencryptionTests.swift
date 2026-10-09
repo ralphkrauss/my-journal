@@ -14,9 +14,7 @@ private actor EncryptedServer: SyncServer {
     /// Runs once, before the next record is accepted, as another device writing at that moment would.
     var beforeNextPush: (@Sendable () async -> Void)?
     func setBeforeNextPush(_ hook: @escaping @Sendable () async -> Void) { beforeNextPush = hook }
-    func status() -> ServerStatus {
-        ServerStatus(protocolVersion: 1, initialized: true, features: [], serverId: "encrypted-server")
-    }
+    func status() -> ServerStatus { .healthy(serverId: "encrypted-server") }
     func changes(after cursor: Int64, limit: Int, applied: LoggedChange?) -> SyncPage {
         let newer = log.filter { $0.cursor > cursor }
         let page = Array(newer.prefix(limit))

@@ -123,6 +123,7 @@ final class ConformanceSyncTests: XCTestCase {
         let status = try JSONDecoder().decode(ServerStatus.self, from: step.bodyData)
         XCTAssertEqual(status.protocolVersion, 1)
         XCTAssertTrue(status.initialized)
-        XCTAssertTrue(status.supports(ServerClient.shortReceiptFeature))
+        // The recorded body lists only some of the 13 names (it is matched as a subset): it is not a revision.
+        XCTAssertEqual(status.features, ["sync-short-receipt", "record-kinds"])
     }
 }

@@ -135,11 +135,7 @@ extension AppModel {
     /// The Settings ▸ Sync footer about pins and journal order, when there's something to say.
     var libraryFooter: String? {
         guard connection != nil else { return nil }
-        if librarySync.needsUpdate { return Self.libraryNeedsUpdate }
-        if librarySync.waitingForServer {
-            return "Pinned entries and journal order stay on this device until the server is updated."
-        }
-        return nil
+        return librarySync.needsUpdate ? Self.libraryNeedsUpdate : nil
     }
 
     /// Moves in the lists follow Reduce Motion, as deletion does.

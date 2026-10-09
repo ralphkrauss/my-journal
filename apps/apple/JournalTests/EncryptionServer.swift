@@ -25,7 +25,8 @@ final class EncryptionServer {
     }
     struct State {
         var parameters = RecoveryParameters(.unprotected)
-        var features = ["encryption-upgrade"]
+        /// A server from before protocol revision 1: no revision, and some of the 13 capability names missing.
+        var tooOld = false
         var refusesDevices = false
         /// Tokens that were revoked (the purge revokes every device but the one that switched); everything
         /// authenticated with one is refused.
@@ -79,13 +80,15 @@ final class EncryptionServer {
         let json = { (text: String) in Data(text.utf8) }
         switch (request.method, request.path) {
         case ("GET", "/v1/status"):
-            let features = state.features.map { "\"\($0)\"" }.joined(separator: ",")
-            return (
-                200,
-                json(
-                    #"{"protocolVersion":1,"initialized":true,"recoveryVersions":[1,2,3,4],"features":[\#(features)],"serverId":"\#(state.serverID)"}"#
+            if state.tooOld {
+                return (
+                    200,
+                    json(
+                        #"{"protocolVersion":1,"initialized":true,"recoveryVersions":[1,2,3,4],"features":["encryption-upgrade"],"serverId":"\#(state.serverID)"}"#
+                    )
                 )
-            )
+            }
+            return (200, HealthyStatus.json(serverId: state.serverID))
         case ("GET", "/v1/recovery"): return (200, (try? JournalCoding.encoder().encode(state.parameters)) ?? Data())
         case ("POST", "/v1/recovery/encrypt"): return switchEncryption(request, state: &state)
         case ("POST", "/v1/recovery") where state.grantsRecovery:

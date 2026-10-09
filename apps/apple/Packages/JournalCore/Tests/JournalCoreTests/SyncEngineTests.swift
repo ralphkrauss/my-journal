@@ -25,19 +25,9 @@ actor MemoryServer: SyncServer {
     var downloads = 0
     /// Applies the next change but loses the answer, as a dropped connection would.
     private var losesNextAnswer = false
-    /// Offers capability `sync-continuity`, confirming the change a client last read before reading on from it.
-    var confirmsContinuity = false
-    /// Also confirms that change's payload (capability `sync-continuity-digest`).
-    var confirmsDigest = false
-    /// Offers capability `sync-short-receipt`: a push that asks gets a short receipt, read back by the real decoder.
-    var answersShortReceipts = false
-    /// Whether each push asked for a short receipt.
+    /// Whether each push asked for a short receipt; one that asks gets it, read back by the real decoder.
     var shortReceiptRequests: [Bool] = []
-    /// Offers capability `sync-wait`; waits answer from `waitAnswers` in order, then `unchanged`.
-    var holdsWaits = false
-    /// Offers capability `record-kinds`; without it, like servers from before it, a record of another kind than
-    /// journal, entry or template is refused as invalid.
-    var acceptsAnyKind = true
+    /// Waits answer from `waitAnswers` in order, then `unchanged`.
     /// The identity pages and the status report, and the newest cursor that existed when it was assigned.
     var serverID = "memory-server"
     var identityCursor: Int64 = 0
@@ -53,18 +43,13 @@ actor MemoryServer: SyncServer {
     private var heldPage: CheckedContinuation<Void, Never>?
     private var pageHeld: CheckedContinuation<Void, Never>?
 
-    func status() -> ServerStatus {
-        ServerStatus(
-            protocolVersion: 1, initialized: true,
-            features: (confirmsContinuity ? ["sync-continuity"] : [])
-                + (confirmsDigest ? ["sync-continuity-digest"] : [])
-                + (answersShortReceipts ? [ServerClient.shortReceiptFeature] : []) + (holdsWaits ? ["sync-wait"] : [])
-                + (acceptsAnyKind ? [SyncEngine.recordKindsFeature] : []),
-            serverId: serverID)
-    }
+    /// What the status says instead of a healthy server's, such as a server below protocol revision 1.
+    var statusOverride: ServerStatus?
+    func status() -> ServerStatus { statusOverride ?? .healthy(serverId: serverID) }
+    func report(_ status: ServerStatus?) { statusOverride = status }
     func changes(after cursor: Int64, limit: Int, applied: LoggedChange?) async throws -> SyncPage {
         pageRequests += 1
-        if confirmsContinuity, let applied, cursor > 0,
+        if let applied, cursor > 0,
             !state.log.contains(where: {
                 $0.cursor == cursor && $0.recordId == applied.recordId && $0.revision == applied.revision
                     && (applied.digest == nil || JournalStore.payloadDigest($0.payload) == applied.digest)
@@ -102,10 +87,10 @@ actor MemoryServer: SyncServer {
             if remaining == 1 { throw ServerUnavailable() }
         }
         let result = try await apply(pending)
-        guard shortReceipt, answersShortReceipts, case .accepted(let change) = result else { return result }
+        guard shortReceipt, case .accepted(let change) = result else { return result }
         return .accepted(try ServerClient.receipt(Self.shortReceipt(change), for: pending))
     }
-    /// The short receipt a server with `sync-short-receipt` sends for `change`.
+    /// The short receipt a server sends for `change` to a push that asks for one.
     static func shortReceipt(_ change: RemoteChange) throws -> Data {
         struct Short: Encodable {
             var cursor: Int64
@@ -126,22 +111,15 @@ actor MemoryServer: SyncServer {
         waitPositions.append(position)
         return waitAnswers.isEmpty ? .unchanged(early: false) : waitAnswers.removeFirst()
     }
-    func offerShortReceipts() { answersShortReceipts = true }
     /// The `count`th push from now fails with a server error before anything is applied.
     func failPush(number count: Int) { pushesBeforeFailure = count }
-    func holdWaits(answering answers: [WaitAnswer] = []) {
-        holdsWaits = true
-        waitAnswers = answers
-    }
+    func holdWaits(answering answers: [WaitAnswer] = []) { waitAnswers = answers }
     private func apply(_ pending: PendingChange) async throws -> ServerClient.PushResult {
         if let action = whileSendingNext {
             whileSendingNext = nil
             await action()
         }
         pushes.append(pending)
-        guard acceptsAnyKind || ["journal", "entry", "template"].contains(pending.kind) else {
-            throw SyncRejection(reason: .invalid)
-        }
         if failsPageAfterNextPush {
             failsPageAfterNextPush = false
             failsNextPage = true
@@ -185,10 +163,6 @@ actor MemoryServer: SyncServer {
     func loseImage(_ id: UUID) -> Data? { state.images.removeValue(forKey: id) }
     func receiveImage(_ image: Data, id: UUID) { state.images[id] = image }
     func limitUploads(to bytes: Int) { uploadLimit = bytes }
-    func confirmContinuity(withDigest: Bool = false) {
-        confirmsContinuity = true
-        confirmsDigest = withDigest
-    }
     func stallPages() { stallsPages = true }
     /// Fails the page request after the next change sent, as when the connection drops right after it was accepted.
     func failPageAfterNextPush() { failsPageAfterNextPush = true }
@@ -202,8 +176,6 @@ actor MemoryServer: SyncServer {
         serverID = identity
         identityCursor = backup.nextCursor - 1
     }
-    /// Stops or starts offering capability `record-kinds`, as downgrading or updating the server would.
-    func acceptAnyKind(_ accepts: Bool) { acceptsAnyKind = accepts }
     /// The library record's values as the server holds them, opened with `store`'s key.
     func libraryValues(openedBy store: JournalStore) async -> [String: JSONValue]? {
         guard let record = state.records[LibraryRecord.id] else { return nil }
@@ -383,14 +355,9 @@ final class SyncEngineTests: XCTestCase {
     }
 
     func testAServerRestoredFromACopyOfItsDataIsReadAgain() async throws {
-        // Short receipts keep the cursor check that notices an accepted change at a position already seen.
-        for short in [false, true] { try await serverRestoredFromACopy(shortReceipts: short) }
-    }
-    private func serverRestoredFromACopy(shortReceipts: Bool) async throws {
         let server = MemoryServer()
-        if shortReceipts { await server.offerShortReceipts() }
-        let mac = try device("mac-\(shortReceipts)")
-        let phone = try device("phone-\(shortReceipts)")
+        let mac = try device("mac")
+        let phone = try device("phone")
         let phoneSync = SyncEngine(store: phone, server: server)
         let first = JournalItem(kind: "entry", journalID: UUID(), document: .plain("First"))
         try await phone.save(first)
@@ -405,7 +372,7 @@ final class SyncEngineTests: XCTestCase {
 
         await server.rollBack(to: copy)
         let tablet = JournalItem(kind: "entry", journalID: UUID(), document: .plain("Written after the restore"))
-        let tabletStore = try device("tablet-\(shortReceipts)")
+        let tabletStore = try device("tablet")
         try await tabletStore.save(tablet)
         try await SyncEngine(store: tabletStore, server: server).synchronize()
         var edited = try await item(mac, first.id)
@@ -424,7 +391,6 @@ final class SyncEngineTests: XCTestCase {
     /// change it read last.
     func testADeviceThatOnlyReceivesNoticesAServerRestoredFromACopy() async throws {
         let server = MemoryServer()
-        await server.confirmContinuity()
         let phone = try device("phone")
         let mac = try device("mac")
         let phoneSync = SyncEngine(store: phone, server: server)
@@ -461,7 +427,6 @@ final class SyncEngineTests: XCTestCase {
     /// revision number the restored server reused would replace another device's version unseen.
     func testAnEditIsNotSentOverAVersionWrittenAfterTheServerWasRestoredFromACopy() async throws {
         let server = MemoryServer()
-        await server.confirmContinuity()
         let phone = try device("phone")
         let mac = try device("mac")
         let phoneSync = SyncEngine(store: phone, server: server)
@@ -502,13 +467,9 @@ final class SyncEngineTests: XCTestCase {
     /// data folder is replaced by an older copy without that edit. The Mac's edit of the same entry then gets the same
     /// revision number: the phone keeps both for review instead of ignoring the Mac's.
     func testAnAcceptedEditTheServerLostBecomesAReviewWithTheVersionWrittenInstead() async throws {
-        for digest in [false, true] { try await acceptedEditLostByTheServer(confirmingDigest: digest) }
-    }
-    private func acceptedEditLostByTheServer(confirmingDigest: Bool) async throws {
         let server = MemoryServer()
-        await server.confirmContinuity(withDigest: confirmingDigest)
-        let phone = try device("phone-\(confirmingDigest)")
-        let mac = try device("mac-\(confirmingDigest)")
+        let phone = try device("phone")
+        let mac = try device("mac")
         let phoneSync = SyncEngine(store: phone, server: server)
         let macSync = SyncEngine(store: mac, server: server)
         var entry = try await phone.save(JournalItem(kind: "entry", journalID: UUID(), document: .plain("Shared")))
@@ -646,7 +607,6 @@ final class SyncEngineTests: XCTestCase {
     /// there's nothing to confirm before sending.
     func testAutomaticSyncWhileWritingOnlyAsksForNewChanges() async throws {
         let server = MemoryServer()
-        await server.confirmContinuity(withDigest: true)
         let phone = try device("phone")
         let sync = SyncEngine(store: phone, server: server)
         var entry = try await phone.save(JournalItem(kind: "entry", journalID: UUID(), document: .plain("One")))
@@ -730,7 +690,6 @@ final class SyncEngineTests: XCTestCase {
     /// that did is received, with this device's own, and reading on from the change it sent stays confirmed.
     func testASentChangeIsNotDownloadedAgain() async throws {
         let server = MemoryServer()
-        await server.confirmContinuity(withDigest: true)
         let mac = try device("mac")
         let phone = try device("phone")
         let macSync = SyncEngine(store: mac, server: server)

@@ -1,7 +1,7 @@
 ---
 id: connect-to-server
 title: Connect to a server
-features: [sync-connect, server-discovery, server-setup, join-with-local-journals, pair-device-scan, pair-device-code, recovery-code-join]
+features: [sync-connect, server-discovery, server-protocol-revision, server-setup, join-with-local-journals, pair-device-scan, pair-device-code, recovery-code-join]
 sources:
   - apps/apple/JournalApp/Model/ConnectionFlow.swift
   - apps/apple/JournalApp/Model/ServerJoining.swift
@@ -68,12 +68,13 @@ A device with an encrypted library, or with no library, is refused by a server w
 
 | Outcome | Next |
 | --- | --- |
+| The server is below protocol revision 1 (see Rules, Old servers) | Error `messages.connection.serverNeedsUpdate` ("This server needs an update before this device can connect."). This is checked first: nothing else is asked of the server, and the address stays for correcting. |
 | Server not set up | Set Up Server; focus on the setup code. |
 | Set up, and this device has journals not yet agreed to merge with this server | Merge Journals. |
 | Set up, without encryption, and this device's library is encrypted or this device has none | Error `messages.connection.encryptionOff` on page 1; nothing is sent. |
 | Set up, without encryption, and this device's library is unencrypted (it chose Not Now) | Add This Device. |
 | Set up, with a credential | Enter {credential} (sign in); focus on the field. |
-| The server speaks a newer protocol | Error `messages.connection.updateApp` ("Update My Journal to connect to this server."). |
+| The server speaks a newer protocol (a newer wire major) | Error `messages.connection.updateApp` ("Update My Journal to connect to this server."), also checked before anything else is asked. |
 | The address isn't a valid HTTPS address | Error `messages.error.invalidAddress`. |
 | The address answers, but not as a My Journal server | Error `messages.connection.notJournalServer`. |
 | No connection or server unreachable | Error `messages.connection.cannotConnectTailscale` for hosts ending in `.ts.net`, otherwise `messages.connection.cannotConnect`. |
@@ -90,7 +91,7 @@ The scanner reads only My Journal codes (`MYJOURNAL1.` followed by the encoded d
 
 After a code is read:
 1. Page 1 shows the code's server host with `settings.connect.busy.checking`.
-2. The server is checked: it must speak this protocol (`messages.connection.updateApp`), be set up and support scanned codes (`messages.connection.serverNeedsUpdateForDevices`), and must not be a server without encryption for a device with an encrypted library or none (`messages.connection.encryptionOff`).
+2. The server is checked: it must speak this protocol (`messages.connection.updateApp`) and be at protocol revision 1 or later (`messages.connection.serverNeedsUpdate`), be set up, and must not be a server without encryption for a device with an encrypted library or none (`messages.connection.encryptionOff`).
 3. If this device has journals not yet agreed for this server: **Merge Journals** (no pairing request is sent before Merge).
 4. Otherwise (or after Merge): **Finish on Your Other Device**. A pairing request naming the code is sent; this device waits for approval (`settings.connect.waitingForApproval`).
 5. The connected device that showed the code approves (`flows/pair-device`). No check code is compared: the code named the connected device's key, and an approval from any other key is refused.
@@ -115,10 +116,10 @@ Scan Again forgets the code, returns to page 1 and opens the scanner again.
 Shown when the server isn't set up. The person types the setup code the server printed when it started.
 
 Checking the code as typed (no request):
-- not 6 characters (after removing spaces and dashes): field error `messages.connection.setupCodeLength`, unless it's an 8-character code from an older server that can't check codes, which is accepted;
+- not 6 characters (after removing spaces and dashes): field error `messages.connection.setupCodeLength` (an 8-character code from a server before 6-character codes is not accepted: such a server is below protocol revision 1);
 - characters outside the setup code alphabet (letters and digits 2–9, without I or O; also 0 and 1): field error `messages.connection.setupCodeCharacters`.
 
-Then, if another step follows (Choose a Master Password or Enter Master Password) and the server can check codes, the code is checked with the server first (`settings.connect.busy.checking`):
+Then, if another step follows (Choose a Master Password or Enter Master Password), the code is checked with the server first (`settings.connect.busy.checking`):
 - wrong code: field error `messages.connection.setupCodeIncorrect`;
 - too many wrong codes: field error `messages.connection.setupCodeRateLimited`;
 - the server has no setup code (it was used or never made): error `messages.server.noSetupCode`;
@@ -189,7 +190,7 @@ Errors:
 ### 9. Add This Device with a typed code
 
 Shown for a server without encryption, or after Use a Connected Device Instead….
-1. The device asks the server for a pairing code (`settings.connect.addThisDevice.gettingCode`). A server without check codes: `messages.pairing.serverOutdated` ("This server needs an update before you can add devices."), primary Get New Code.
+1. The device asks the server for a pairing code (`settings.connect.addThisDevice.gettingCode`). A server below protocol revision 1: `messages.connection.serverNeedsUpdate` ("This server needs an update before this device can connect."), primary Get New Code.
 2. The nine-digit code appears with Copy Code and the instruction; status `settings.connect.waitingForApproval`.
 3. On the connected device the person types this code (`flows/pair-device`). When it's accepted there, both devices show the same six-digit **check code**. This device announces it.
 4. The person compares the codes and chooses **Connect** (Command-Return). Nothing from the other device is used before this. If the codes don't match, the person chooses Cancel; the request is withdrawn and any access received is given up.
@@ -259,6 +260,7 @@ Version 1.1 never creates a library without encryption, so a server whose recove
 ## Rules
 
 - **Nothing is sent before consent.** A device with journals sends no sign-in, pairing request or scanned-code request to a server before Merge on Merge Journals for that server. A device with an encrypted library, or with none, is refused by a server without encryption before any request, with the one text `messages.connection.encryptionOff` ("{host} doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption.") on page 1, for a typed or nearby address, for a scanned code and when finishing a pairing. A device whose library is unencrypted (Not Now) keeps the earlier behaviour toward its own unencrypted server; its Encrypt Your Journals form encrypts the server ([flows/encrypt-journals](encrypt-journals.md)).
+- **Old servers (protocol revision, [protocol/README.md](../../protocol/README.md#protocol-revision)):** the server's status is read first and is the only request made to a server below protocol revision 1 (one from before the first 1.0 releases) or one that speaks a newer wire major. The same refusal, `messages.connection.serverNeedsUpdate` (or `messages.connection.updateApp`), comes from every place that needs the server: this sheet, the sync state (`messages.sync.serverUpdateNeeded`, in its own words), Add Device, Change Password, Encrypt Your Journals and Agent Access. It is a gate and nothing else: queued changes, pending images, the sync position, the device's access, agents and the Devices list are not changed, and syncing resumes by itself when a later status read shows revision 1 or more. The revision is read again on every status read and never kept.
 - **Never lost:** a failed join leaves this device's library exactly as it was; a staged copy is discarded when the sheet is left, and writing continues.
 - **Retries never duplicate:** merging again derives the same identities.
 - **Unused access is given up:** access granted by a pairing or recovery code but never used is revoked when the sheet is left (best effort; otherwise the device appears in Devices, where it can be revoked).

@@ -108,7 +108,7 @@ extension AppModel {
             let parameters = try await ServerClient(address: address).recoveryParameters()
             if [1, 2].contains(parameters.formatVersion) { return .encrypted }
             let client = try ServerClient(address: address, token: token)
-            guard try await client.status().supports(ServerClient.encryptionUpgradeFeature) else { return .outdated }
+            do { try await client.status().requireCompatible() } catch is ServerRefusal { return .outdated }
             _ = try await client.devices()
             return .ready
         } catch JournalError.unauthorized {
@@ -286,7 +286,6 @@ extension AppModel {
         } catch let refusal as EncryptionUpgradeRefusal {
             switch refusal {
             case .serverChanged: throw EncryptionFailure.serverChanged
-            case .serverOutdated: throw EncryptionFailure.serverOutdated
             case .incorrectPassword: throw EncryptionFailure.incorrectPassword
             case .alreadyEncrypted: throw EncryptionFailure.turnedOnElsewhere
             case .failed:

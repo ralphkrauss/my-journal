@@ -1,9 +1,7 @@
 import Foundation
 
-/// Why a server didn't turn on encryption (POST /v1/recovery/encrypt, capability `encryption-upgrade`).
+/// Why a server didn't turn on encryption (POST /v1/recovery/encrypt).
 public enum EncryptionUpgradeRefusal: Error, Equatable, Sendable {
-    /// The server doesn't have this capability.
-    case serverOutdated
     /// Another device wrote to the server after this one last read it; nothing changed.
     case serverChanged
     /// The server's journals are already encrypted, with another envelope.
@@ -15,8 +13,6 @@ public enum EncryptionUpgradeRefusal: Error, Equatable, Sendable {
 }
 
 extension ServerClient {
-    public static let encryptionUpgradeFeature = "encryption-upgrade"
-
     /// Asks the server to replace its unencrypted vault with `envelope`, a master-password envelope for a new vault
     /// key. The server removes every record, revision and image, signs out every other device and takes a new identity;
     /// this device then uploads its encrypted copy. `position` is the last change this device read, which must still
@@ -47,7 +43,6 @@ extension ServerClient {
         switch status {
         case 200: return try JournalCoding.decoder().decode(Result.self, from: data).serverId
         case 403: throw EncryptionUpgradeRefusal.incorrectPassword
-        case 404, 405: throw EncryptionUpgradeRefusal.serverOutdated
         case 409:
             throw Self.problemCode(data) == "server_changed"
                 ? EncryptionUpgradeRefusal.serverChanged : EncryptionUpgradeRefusal.alreadyEncrypted

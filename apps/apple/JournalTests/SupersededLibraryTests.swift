@@ -79,7 +79,7 @@ final class SupersededLibraryTests: XCTestCase {
         let server = try await FakeJournalServer { request in
             guard answering.withLock({ $0 }) else { return (503, Data("{}".utf8)) }
             switch request.path {
-            case "/v1/status": return (200, Data(#"{"protocolVersion":1,"initialized":true}"#.utf8))
+            case "/v1/status": return (200, HealthyStatus.json())
             case let path where path.hasPrefix("/v1/sync/"):
                 return (200, Data(#"{"changes":[],"cursor":0,"hasMore":false}"#.utf8))
             default: return (404, Data("{}".utf8))

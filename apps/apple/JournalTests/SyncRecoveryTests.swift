@@ -19,6 +19,8 @@ private final class LibraryServer {
         var refusesImages = false
         /// Another web server answers at the address.
         var impostor = false
+        /// A server from before protocol revision 1: no revision, and 12 of the 13 capability names.
+        var tooOld = false
     }
     let state = OSAllocatedUnfairLock(initialState: State())
     private var server: FakeJournalServer?
@@ -38,13 +40,15 @@ private final class LibraryServer {
         let json = { (text: String) in Data(text.utf8) }
         if state.impostor { return (404, json("<html>Not found</html>")) }
         switch (request.method, request.path) {
-        case ("GET", "/v1/status"):
+        case ("GET", "/v1/status") where state.tooOld:
+            let names = ServerStatus.revisionOneFeatures.dropLast().map { "\"\($0)\"" }.joined(separator: ",")
             return (
                 200,
                 json(
-                    #"{"protocolVersion":1,"initialized":\#(state.initialized),"recoveryVersions":[1,2,3,4],"features":[],"serverId":"\#(state.serverID)"}"#
-                )
+                    #"{"protocolVersion":1,"initialized":true,"features":[\#(names)],"serverId":"\#(state.serverID)"}"#)
             )
+        case ("GET", "/v1/status"):
+            return (200, HealthyStatus.json(serverId: state.serverID, initialized: state.initialized))
         case ("GET", "/v1/recovery"): return (200, state.parameters)
         case ("POST", "/v1/setup"):
             state.initialized = true
@@ -125,6 +129,69 @@ final class SyncRecoveryTests: XCTestCase {
         try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
         running.cancel()
         await running.value
+    }
+
+    /// A server below protocol revision 1 is a gate and nothing else (docs/design/1-1-server-cleanup.md §3.5): every
+    /// place that needs the server says the same thing, nothing queued is lost or sent, and syncing resumes by itself
+    /// once the server is updated.
+    func testAServerThatNeedsAnUpdateIsRefusedEverywhereWithOneMessageAndNothingIsLost() async throws {
+        let message = "This server needs an update before this device can connect."
+        let server = try await LibraryServer.start()
+        let model = try await library(address: server.address, encrypted: true)
+        let envelope = try XCTUnwrap(model.configuration?.recovery)
+        server.update { $0.parameters = (try? JournalCoding.encoder().encode(RecoveryParameters(envelope))) ?? Data() }
+        await model.sync()
+        XCTAssertNil(model.syncHealth)
+        let store = try XCTUnwrap(model.store)
+        try await store.save(JournalItem(kind: "entry", journalID: UUID(), document: .plain("Written meanwhile")))
+        let queued = try await store.pending().map(\.operationId)
+        XCTAssertFalse(queued.isEmpty)
+        let identity = try await store.syncedServerID()
+        let pushes = { server.requests.filter { $0.method == "PUT" }.count }
+        let before = pushes()
+
+        server.update { $0.tooOld = true }
+        await model.sync()
+        XCTAssertEqual(model.syncHealth, .serverUpdateNeeded)
+        XCTAssertEqual(
+            model.syncError,
+            "The server needs an update before this device can sync. Your changes are saved on this device.")
+        XCTAssertEqual(pushes(), before, "Nothing is sent to it")
+
+        // Connect to a Server stops on its first page and asks nothing else.
+        let requestsBefore = server.requests.count
+        let flow = ConnectionFlow(model: model)
+        flow.address = server.address
+        flow.check()
+        try await settle(flow)
+        XCTAssertEqual(flow.errorMessage(on: nil), message)
+        XCTAssertTrue(flow.path.isEmpty)
+        XCTAssertEqual(server.requests.dropFirst(requestsBefore).map(\.path), ["/v1/status"])
+        flow.close()
+
+        // Change Password and Agent Access say the same.
+        do {
+            _ = try await model.preparePasswordChange(current: "this device's own password", new: "another password")
+            XCTFail("A server that needs an update isn't asked to change the password")
+        } catch let refusal as ServerRefusal {
+            XCTAssertEqual(refusal.localizedDescription, message)
+        }
+        let agents = ServerAgentsController()
+        await agents.load(model)
+        XCTAssertEqual(agents.phase, .needsUpdate(.serverNeedsUpdate))
+
+        // Nothing changed on this device.
+        let kept = try await (store.pending().map(\.operationId), store.syncedServerID())
+        XCTAssertEqual(kept.0, queued)
+        XCTAssertEqual(kept.1, identity)
+
+        // Once the server is updated, the next sync sends the work with no other action.
+        server.update { $0.tooOld = false }
+        await model.sync()
+        XCTAssertNil(model.syncHealth)
+        XCTAssertGreaterThan(pushes(), before)
+        let remaining = try await store.pending()
+        XCTAssertTrue(remaining.isEmpty)
     }
 
     func testAResetServerOffersReconnectAndStopsAskingIt() async throws {
@@ -603,7 +670,7 @@ final class SyncRecoveryTests: XCTestCase {
     /// Every failure only a faulty or different server can send (docs/design/sync-health-and-recovery.md, coverage):
     /// its state, message, single action, and whether automatic sync stops or waits, and for how long.
     func testEveryFailureAServerCanSendShowsItsStateActionAndRetry() async throws {
-        let status = #"{"protocolVersion":1,"initialized":true,"serverId":"faulty"}"#
+        let status = HealthyStatus.text(serverId: "faulty")
         struct Case {
             let name: String
             let answer: @Sendable (FakeJournalServer.Request) -> (Int, String)
@@ -622,7 +689,7 @@ final class SyncRecoveryTests: XCTestCase {
             Case(
                 name: "no sync endpoint",
                 answer: { request in
-                    request.path == "/v1/status" ? (200, #"{"protocolVersion":1,"initialized":true}"#) : (404, "")
+                    request.path == "/v1/status" ? (200, HealthyStatus.text()) : (404, "")
                 },
                 health: .serverUpdateNeeded, action: .checkAgain, wait: 300),
             Case(
@@ -635,7 +702,7 @@ final class SyncRecoveryTests: XCTestCase {
                 name: "a page that goes back",
                 answer: { request in
                     switch request.path {
-                    case "/v1/status": return (200, #"{"protocolVersion":1,"initialized":true}"#)
+                    case "/v1/status": return (200, HealthyStatus.text())
                     case let path where path.hasPrefix("/v1/sync/?"):
                         return (200, #"{"changes":[],"cursor":-5,"hasMore":true}"#)
                     default: return (503, "{}")

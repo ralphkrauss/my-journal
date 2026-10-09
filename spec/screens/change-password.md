@@ -56,7 +56,7 @@ Return moves from Current to New to Confirm; Return in Confirm changes.
 - **Working:** the form is disabled; the sheet can't be dismissed; `settings.changePassword.busy`.
 - **Wrong current password:** `messages.password.incorrect` under Current; focus returns to Current.
 - **New equals current:** `messages.password.same`.
-- **Server too old:** `messages.password.serverOutdated`.
+- **Server too old:** `messages.connection.serverNeedsUpdate`, checked with the server's status before anything else is asked of it.
 - **Library doesn't use a master password:** `messages.password.unsupported`.
 - **Couldn't change (connection or server):** `messages.password.failed`.
 - **Empty new password:** `messages.password.empty` (only reachable if the button's checks are bypassed).

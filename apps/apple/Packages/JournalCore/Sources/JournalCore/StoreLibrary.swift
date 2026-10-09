@@ -19,13 +19,10 @@ public enum LibraryError: LocalizedError, Equatable, Sendable {
 
 /// What Settings ▸ Sync explains about pins and journal order.
 public struct LibrarySyncState: Equatable, Sendable {
-    /// The connected server can't take them, and this device has changes it couldn't send.
-    public var waitingForServer: Bool
     /// The library record is from a newer version.
     public var needsUpdate: Bool
 
-    public init(waitingForServer: Bool = false, needsUpdate: Bool = false) {
-        self.waitingForServer = waitingForServer
+    public init(needsUpdate: Bool = false) {
         self.needsUpdate = needsUpdate
     }
 }
@@ -41,7 +38,9 @@ struct LibraryEffects {
 struct LibraryStore: Sendable {
     let key: Data
     let protection: ContentProtection
-    static let recordKindsSetting = "server-record-kinds"
+    /// "1" once this library has synchronized with a server, which takes the library record. 1.0 also wrote "0" for
+    /// a server that could not; that value is read as "not yet" and replaced at the next synchronization.
+    static let syncedSetting = "server-record-kinds"
     static let logger = Logger(subsystem: "io.github.ralphkrauss.myjournal", category: "library")
 
     struct Stored {
@@ -118,12 +117,13 @@ struct LibraryStore: Sendable {
             sql: "INSERT INTO settings(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
             arguments: [LibraryChanges.setting, Data(sealed.base64EncodedString().utf8)])
     }
-    /// Whether the server last synchronized with takes the library record (capability `record-kinds`).
+    /// Whether this library has synchronized with a server.
     static func syncOpen(_ db: Database) throws -> Bool {
         try String.fetchOne(
-            db, sql: "SELECT CAST(value AS TEXT) FROM settings WHERE key=?", arguments: [recordKindsSetting]) == "1"
+            db, sql: "SELECT CAST(value AS TEXT) FROM settings WHERE key=?", arguments: [syncedSetting]) == "1"
     }
-    /// Queues the library record unless the server can't take it: the one place it's queued. A queued change stays.
+    /// Queues the library record once the library has synchronized with a server: the one place it's queued. A
+    /// queued change stays.
     func queue(_ db: Database, payload: String, revision: Int64) throws -> UUID? {
         guard try Self.syncOpen(db) else { return nil }
         let operation = UUID()
@@ -450,15 +450,8 @@ extension JournalStore {
     }
     public func librarySyncState() throws -> LibrarySyncState {
         try db.read { db in
-            guard let stored = try library.stored(db) else {
-                return LibrarySyncState(waitingForServer: false, needsUpdate: false)
-            }
-            let readable = library.content(stored.payload).record != nil
-            let refused =
-                try String.fetchOne(
-                    db, sql: "SELECT CAST(value AS TEXT) FROM settings WHERE key=?",
-                    arguments: [LibraryStore.recordKindsSetting]) == "0"
-            return LibrarySyncState(waitingForServer: readable && refused && stored.dirty, needsUpdate: !readable)
+            guard let stored = try library.stored(db) else { return LibrarySyncState() }
+            return LibrarySyncState(needsUpdate: library.content(stored.payload).record == nil)
         }
     }
     /// Pins or unpins an entry. Only an entry listed in a journal in use can be pinned; any can be unpinned.
@@ -570,21 +563,21 @@ extension JournalStore {
 
     // MARK: Synchronization
 
-    /// Records whether the server takes the library record, at the start of each synchronization. Once it does, a
-    /// record changed meanwhile is queued at the revision it has; while it doesn't, nothing of it is sent or counted.
-    func updateLibrarySync(available: Bool) throws {
-        let value = available ? "1" : "0"
+    /// Records that this library synchronizes with a server, at the start of each synchronization. A library record
+    /// changed before the first one is queued then, at the revision it has; until then nothing of it is sent or
+    /// counted.
+    func updateLibrarySync() throws {
         try db.write { db in
             let current = try String.fetchOne(
                 db, sql: "SELECT CAST(value AS TEXT) FROM settings WHERE key=?",
-                arguments: [LibraryStore.recordKindsSetting])
-            if current != value {
+                arguments: [LibraryStore.syncedSetting])
+            if current != "1" {
                 try db.execute(
                     sql:
                         "INSERT INTO settings(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                    arguments: [LibraryStore.recordKindsSetting, Data(value.utf8)])
+                    arguments: [LibraryStore.syncedSetting, Data("1".utf8)])
             }
-            guard available, let stored = try library.stored(db), stored.dirty,
+            guard let stored = try library.stored(db), stored.dirty,
                 library.content(stored.payload).record != nil,
                 try Bool.fetchOne(
                     db,
@@ -597,9 +590,9 @@ extension JournalStore {
             }
         }
     }
-    /// SQL for queued changes that may be sent: none of the library record while the server can't take it.
+    /// SQL for queued changes that may be sent: none of the library record before the library has synchronized.
     static let sendable =
-        "(o.kind <> 'library' OR EXISTS(SELECT 1 FROM settings WHERE key='\(LibraryStore.recordKindsSetting)' AND CAST(value AS TEXT)='1'))"
+        "(o.kind <> 'library' OR EXISTS(SELECT 1 FROM settings WHERE key='\(LibraryStore.syncedSetting)' AND CAST(value AS TEXT)='1'))"
 
     /// A change of the library record from the server (`apply`).
     func applyLibrary(_ db: Database, change: RemoteChange) throws {

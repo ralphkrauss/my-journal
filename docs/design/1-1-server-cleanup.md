@@ -1,6 +1,6 @@
 # 1.1 server cleanup (simplification O) — 2026-10-09
 
-Status: design for the owner and for the mandatory design gate in [AGENTS.md](../../AGENTS.md). Nothing is built. The independent review (appended below) approved it with changes; this body includes them, and [Changes after review](#changes-after-review) maps each finding to its change. Scope record: [release-1-1-scope.md](release-1-1-scope.md), item O. The archive half of the 1.1 protocol work is in [1-1-archive-v2.md](1-1-archive-v2.md).
+Status: implemented in 1.1 phase 6 (2026-10-09); see [Implementation notes](#implementation-notes) for the few places the code differs from this text. Design for the owner and for the mandatory design gate in [AGENTS.md](../../AGENTS.md). The independent review (appended below) approved it with changes; this body includes them, and [Changes after review](#changes-after-review) maps each finding to its change. Scope record: [release-1-1-scope.md](release-1-1-scope.md), item O. The archive half of the 1.1 protocol work is in [1-1-archive-v2.md](1-1-archive-v2.md).
 
 Item O had four parts: capability flags become one protocol version, unused endpoints go, LAN discovery goes, and there is one setup path. **The owner decided on 2026-10-09 to keep LAN discovery** (Servers on This Network, the Bonjour service `_myjournal._tcp` and its announcer), so the second part of this record is now only the protocol revision, the route audit and the setup path; discovery is left exactly as in 1.0. The MCP agent access has to keep working. Version 1.0 (build 19) is in App Review and will be public before 1.1 ships, so every 1.0 app and every 1.0 server people run has to work with 1.1 ones in both directions.
 
@@ -334,3 +334,14 @@ Owner decision of 2026-10-09 after the review: **LAN discovery stays.** The reco
 
 - **One setup path:** confirmed with LAN discovery kept (owner, 2026-10-09).
 - **LAN discovery:** kept, unchanged (owner, 2026-10-09: "I love it").
+
+## Implementation notes
+
+Phase 6 (2026-10-09). Where the code differs from the text above:
+
+- **Library record gate.** Section 3.1 says the store setting `server-record-kinds` is no longer read or written. The store still needs to tell a library that has never synchronized from one that has: a device with no server must not queue the library record (pins and journal order) as unsent work. The setting is kept under the same key with one meaning, "this library has synchronized with a server", written `1` at the start of every synchronization; a `0` left by 1.0 reads as "not yet" and is replaced at the next one. `waitingForServer` and its footer text are gone.
+- **`waitingSupported`.** Removed from the sync report and the change watcher too: every revision 1 server holds waits, so the watcher owns the schedule after any settled synchronization.
+- **Messages.** `messages.connection.serverNeedsUpdate` replaces `messages.connection.serverNeedsUpdateForDevices`, `messages.pairing.serverOutdated`, `messages.password.serverOutdated`, `messages.encryption.serverOutdated`, `settings.agents.connect.needsUpdate` and `messages.library.waitingForServer`. The sync state keeps `messages.sync.serverUpdateNeeded`. One typed error carries the gate in the core: `ServerRefusal`.
+- **Fixtures.** `sync/status-v2.json` has a few more malformed-revision cases than listed in 3.1 (a decimal, a boolean, null, and the largest valid revision); the status that `exchanges-v1.json` records for the client check lists only some of the 13 names, so the Swift test no longer treats it as a healthy server.
+- **Probes and scripts.** The `wait-old`, `library-held` and `library-released` probes exercised servers without waits or record kinds and are gone; `scripts/test-sync-efficiency.sh` still runs a 1.0 server against the new client when `JOURNAL_BASELINE_DIR` is set.
+- **`--remove-orphans`.** Not needed: the `lan` service stays, so no service leaves the Compose files.

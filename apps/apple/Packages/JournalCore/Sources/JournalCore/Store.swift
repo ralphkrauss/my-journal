@@ -477,7 +477,7 @@ public actor JournalStore {
         }
     }
     /// `readingOn` moves the position past the change when nothing can come before it, for a server that confirms
-    /// the payload of the change a device read last (`sync-continuity-digest`).
+    /// the payload of the change a device read last.
     public func acknowledge(_ pending: PendingChange, receipt: RemoteChange, readingOn: Bool = false) throws {
         guard receipt.recordId == pending.recordID, receipt.payload == pending.payload,
             receipt.revision == pending.baseRevision + 1

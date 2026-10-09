@@ -763,7 +763,6 @@ final class AppModel: ObservableObject {
         finished.mark = report?.quietMark
         finished.position = report?.position
         finished.earliestRetry = report?.earliestRetry.map { .milliseconds(Int64($0 * 1000)) }
-        finished.waitingSupported = report?.waitingSupported == true
         return failure == nil
     }
     /// Locks at once when App Lock is on, before anything else can be shown, and returns whether it did. Writing is

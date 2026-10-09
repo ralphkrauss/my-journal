@@ -77,8 +77,7 @@ Footer (only one, the first that applies):
    - Computer that stopped syncing with the server earlier versions ran on it: `settings.sync.footer.formerMacServer`, then on a new line the link `settings.sync.footer.learnMore`.
    - Otherwise: `settings.sync.footer.notConnected`, then on a new line the link `settings.sync.footer.howToSetUp` ("How to Set Up a Server").
 4. Connected and the server can't keep pinned entries and journal order:
-   - this app is older than the library record on the server: `messages.library.needsUpdate`;
-   - the server is older and doesn't store it yet: `messages.library.waitingForServer`.
+   - this app is older than the library record on the server: `messages.library.needsUpdate`.
 
 One more line is added below whichever footer shows (or alone), connected or not, while a journal or permanent-deletion change from another device is held because a newer version of My Journal wrote it: `messages.conflict.kept.updateNeeded`. It has no row, no button and no alert.
 

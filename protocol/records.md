@@ -87,7 +87,7 @@ These values are arrangement, not content, so the record is a deliberate excepti
 
 ### Compatibility
 
-Only servers that list `record-kinds` take the record ([README.md](README.md#sync-and-conflicts)); until then a client keeps it, and its intents, on the device, without counting it as waiting or reporting an error.
+Every server at protocol revision 1 or later takes the record ([README.md](README.md#sync-and-conflicts)). A client keeps it, and its intents, on the device until the library first synchronizes with a server, without counting it as waiting or reporting an error. A 1.0 client also held it back from servers that did not list `record-kinds`; a 1.1 client does not sync with those servers.
 
 Clients that don't know the record read it under the [reading rules](#reading-rules) below as an unreadable record of an unknown kind: it's kept byte for byte, read-only, and invisible in lists. Such a client may still send it again after a server restore, when turning on encryption or from a restored archive, and may keep a differing server version of it for review; the next version that knows the record converts such a review into a merge when it opens the library, and removes any of its versions from Version History. An older client that joins a server without encryption may take the record's shared identity as a sign that two libraries are the same; this is a known limit of those versions.
 

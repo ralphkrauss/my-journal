@@ -544,9 +544,7 @@ final class EncryptionUpgrade: ObservableObject {
         case .incorrectPassword: return "That password isn’t correct."
         case .rateLimited: return "Too many password attempts on this server. Try again in a few minutes."
         case .unreachable: return "Couldn’t reach \(host). Check your connection and try again."
-        case .serverOutdated:
-            return
-                "\(capitalizedHost) needs an update before it can store encrypted journals. Updating it is the way to keep syncing."
+        case .serverOutdated: return ServerRefusal.serverNeedsUpdate.localizedDescription
         case .notEnoughSpace(let bytes):
             let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
             return "There isn’t enough space to encrypt your journals. Free up \(size) and try again."

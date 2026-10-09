@@ -11,7 +11,6 @@ import os
 ///   and revocation while waiting.
 /// - `wait-fault <address> <setup-code file> <mode>`: through scripts/sync-fault-proxy.py in that mode.
 /// - `wait-many <address> <setup-code file> <devices>`: many devices waiting while one writes.
-/// - `wait-old <address> <setup-code file>`: a server without the capabilities; nothing new is used.
 /// - `wait-caddy <address> <setup-code file> <caddy https address> <root certificate PEM> <h2|h3>`: waits held
 ///   through a Caddy reverse proxy with its internal certificate authority, which only this probe trusts.
 /// - `wait-push-bytes <address> <setup-code file> <words>`: 60 revisions of an entry of that many words, for the
@@ -28,7 +27,6 @@ extension Probe {
         case "wait": try await waitChecks(library)
         case "wait-fault" where arguments.count == 4: try await faultChecks(library, mode: arguments[3])
         case "wait-many" where arguments.count == 4: try await manyDevices(library, count: Int(arguments[3]) ?? 20)
-        case "wait-old": try await oldServerChecks(library)
         case "wait-caddy" where arguments.count == 6:
             try await throughCaddy(library, caddy: arguments[3], root: arguments[4], http3: arguments[5] == "h3")
         case "wait-push-bytes" where arguments.count == 4:
@@ -43,7 +41,7 @@ extension Probe {
         let mac = library.first
         try await mac.write("Before waiting")
         let settled = try await phone.engine.synchronize()
-        guard settled.settled, settled.waitingSupported, let mark = settled.quietMark,
+        guard settled.settled, let mark = settled.quietMark,
             let position = try await phone.store.quietPosition(since: mark)
         else { throw ProbeFailure("a device that synchronized everything can't wait") }
         let waiting = Task { try await phone.engine.waitForChange(from: position) }
@@ -242,22 +240,6 @@ extension Probe {
         guard try await device.store.pending().isEmpty else { throw ProbeFailure("revisions left unsent") }
         print("PASS: 61 revisions of a \(words)-word entry sent")
     }
-
-    private static func oldServerChecks(_ library: WaitLibrary) async throws {
-        let status = try await library.first.client.status()
-        guard !status.supports("sync-wait"), !status.supports(ServerClient.shortReceiptFeature) else {
-            throw ProbeFailure("the baseline server offers the new capabilities")
-        }
-        let phone = try await library.device("Phone")
-        try await library.first.write("From the Mac")
-        let report = try await phone.engine.synchronize()
-        let driver = await WaitDriver(library.first)
-        await driver.run(seconds: 8)
-        guard !report.waitingSupported, await driver.waits == 0, await !driver.ownsSchedule,
-            try await phone.store.items().contains(where: { $0.document.text == "From the Mac" })
-        else { throw ProbeFailure("a new client used a capability the old server lacks") }
-        print("PASS: with a server without the capabilities, pushes take full receipts and the device polls")
-    }
 }
 
 private func digest(_ text: String) -> String {
@@ -420,8 +402,7 @@ struct WaitDevice: Sendable {
                     .init(
                         outcome: report.settled ? .settled : .unsettled, startedAt: started, finishedAt: .now,
                         mark: report.quietMark, position: report.position,
-                        earliestRetry: report.earliestRetry.map { .milliseconds(Int64($0 * 1000)) },
-                        waitingSupported: report.waitingSupported)))
+                        earliestRetry: report.earliestRetry.map { .milliseconds(Int64($0 * 1000)) })))
         } catch {
             handle(.syncFinished(.init(outcome: .failed, startedAt: started, finishedAt: .now)))
         }

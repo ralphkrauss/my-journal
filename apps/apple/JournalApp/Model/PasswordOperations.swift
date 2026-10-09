@@ -11,7 +11,12 @@ extension AppModel {
         let client = connection == nil ? nil : try connectedClient()
         var envelope = local
         if let client {
-            do { envelope = try await client.recoveryEnvelope() } catch { throw PasswordChangeError.failed }
+            do {
+                try await client.status().requireCompatible()
+                envelope = try await client.recoveryEnvelope()
+            } catch let refusal as ServerRefusal {
+                throw refusal
+            } catch { throw PasswordChangeError.failed }
         }
         let verified = envelope
         let change = try await Task.detached {

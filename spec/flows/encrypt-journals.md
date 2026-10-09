@@ -65,7 +65,7 @@ Every error is announced. Field errors are the field's hint and move focus there
 | --- | --- | --- | --- |
 | Not enough space | `messages.encryption.notEnoughSpace` ("There isn’t enough space to encrypt your journals. Free up {size} and try again.") | Form or failure notice | Try Again, Not Now |
 | Couldn't reach the server (checking or encrypting) | `common.couldntReachHost` | Form or failure notice | Try Again, Not Now |
-| The server is too old | `messages.encryption.serverOutdated` ("{Host} needs an update before it can store encrypted journals. Updating it is the way to keep syncing.", host capitalised) | Form | Not Now, Stop Syncing… |
+| The server is too old (protocol revision below 1) | `messages.connection.serverNeedsUpdate` | Form | Not Now, Stop Syncing… |
 | This device lost access | `messages.encryption.accessLost` ("This device no longer has access to {host}. You can stop syncing to encrypt your journals on this device.") | Form | Not Now, Stop Syncing… |
 | Wrong access password | `messages.encryption.incorrectPassword` | Under Current Access Password | Not Now, Stop Syncing… |
 | Too many attempts | `messages.encryption.rateLimited` | Under Current Access Password | Not Now, Stop Syncing… |

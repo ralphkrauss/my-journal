@@ -71,11 +71,10 @@ public struct PairingApproval: Sendable {
 }
 
 public enum PairingError: Error, LocalizedError, Equatable {
-    case serverOutdated, deviceOutdated, insecureCandidate, insecureGrant, declined, expired, codeNotFound, inviteUsed
+    case deviceOutdated, insecureCandidate, insecureGrant, declined, expired, codeNotFound, inviteUsed
     case noResponse(String)
     public var errorDescription: String? {
         switch self {
-        case .serverOutdated: return "This server needs an update before you can add devices."
         case .deviceOutdated: return "Update My Journal on the new device, then try again."
         case .insecureCandidate:
             return "Couldn’t add this device securely. Get a new code on the new device and try again."
@@ -95,7 +94,6 @@ public typealias PairingPrivateKey = Curve25519.KeyAgreement.PrivateKey  // gitl
 /// Check-code pairing (protocol/README.md). The new device commits to its key before the approving
 /// device contributes a one-time key, so a dishonest server can't search for keys with a matching code.
 public enum PairingCheck {
-    public static let feature = "pairing-check-code"
     public static func commitment(_ publicKey: Data) -> String {
         Data(SHA256.hash(data: Data("journal:v2:pairing-commitment".utf8) + publicKey)).base64EncodedString()
     }
@@ -144,8 +142,6 @@ extension ServerClient {
                     deviceName: deviceName, keyCommitment: commitment, invite: invite?.code,
                     inviteProof: try invite?.proof(commitment: commitment, deviceName: deviceName))))
         if status == 409, Self.problemCode(data) == "invite_used" { throw PairingError.inviteUsed }
-        // Servers from before check codes require the key itself and refuse a commitment without giving a reason.
-        if status == 400, Self.problemCode(data) == nil { throw PairingError.serverOutdated }
         guard status == 200 else { throw Self.unanswered(status: status) }
         return try JournalCoding.decoder().decode(PairingTicket.self, from: data)
     }

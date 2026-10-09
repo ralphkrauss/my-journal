@@ -315,14 +315,14 @@ final class EncryptionLifecycleTests: XCTestCase {
         XCTAssertTrue(unreachable.encryption.offersNotNow)
         XCTAssertFalse(unreachable.encryption.offersStopSyncing, "An unreachable server is not a reason to leave it.")
 
-        let old = try await EncryptionServer.start { $0.features = [] }
+        let old = try await EncryptionServer.start { $0.tooOld = true }
         let outdated = try await library(server: old)
         outdated.encryption.formAppeared()
         await outdated.encryption.finishedChecking()
         XCTAssertEqual(outdated.encryption.formFailure, .serverOutdated)
         XCTAssertTrue(outdated.encryption.offersNotNow)
         XCTAssertTrue(outdated.encryption.offersStopSyncing)
-        XCTAssertTrue(outdated.encryption.formError?.contains("Updating it is the way to keep syncing.") == true)
+        XCTAssertEqual(outdated.encryption.formError, "This server needs an update before this device can connect.")
         XCTAssertEqual(old.count("POST", "/v1/recovery/encrypt"), 0)
         outdated.encryption.stopSyncing()
         XCTAssertNil(outdated.connection, "This device stopped using the server.")

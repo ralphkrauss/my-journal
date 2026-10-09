@@ -975,6 +975,16 @@ server-discovery:
   windows-notes: "DNS-SD discovery without any permission prompt; the Local Network strings are not shown."
   android: planned
 
+server-protocol-revision:
+  title: "The protocol revision of a server decides what a client does: below revision 1 every place that needs the server gives one message and changes nothing; the 13 capability names are frozen and never read by a client"
+  specs: [flows/connect-to-server.md, flows/sync-recovery.md, messages.md, ../protocol/README.md]
+  reference: apple
+  apple: shipped
+  apple-notes: "Core: ServerStatus.compatibility, requireCompatible() and ServerRefusal (ServerClient.swift); the sync engine reads it in checkedStatus() on every status read."
+  windows: planned
+  windows-notes: "Must contain the effective-revision rule (protocol/conformance/sync/status-v2.json) before the first revision 2 exists, and pass those cases in its own tests."
+  android: planned
+
 server-setup:
   title: "Set up a new server with its 6-character setup code, from a new device (Choose a Master Password) or one with journals"
   specs: [flows/connect-to-server.md, screens/connect-to-server.md]

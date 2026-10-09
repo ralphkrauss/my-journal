@@ -13,7 +13,7 @@ import SwiftUI
 @MainActor
 final class ServerAgentsController: ObservableObject {
     enum Phase: Equatable {
-        case loading, needsUpdate, unreachable, noAccess, addressUnavailable(String), ready
+        case loading, needsUpdate(ServerRefusal), unreachable, noAccess, addressUnavailable(String), ready
     }
     @Published private(set) var phase: Phase = .loading
     @Published private(set) var agents: [LibraryAgent] = []
@@ -57,8 +57,8 @@ final class ServerAgentsController: ObservableObject {
         if !loaded { phase = .loading }
         do {
             let status = try await client.status()
-            guard status.supports(ServerClient.agentAccessFeature) else {
-                phase = .needsUpdate
+            do { try status.requireCompatible() } catch let refusal as ServerRefusal {
+                phase = .needsUpdate(refusal)
                 return
             }
             guard let address = status.mcpUrl else {
@@ -73,8 +73,6 @@ final class ServerAgentsController: ObservableObject {
             phase = .ready
         } catch JournalError.unauthorized {
             phase = .noAccess
-        } catch AgentCopyError.serverOutdated {
-            phase = .needsUpdate
         } catch {
             phase = .unreachable
         }

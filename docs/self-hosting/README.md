@@ -2,6 +2,16 @@
 
 The server supports one owner and one running instance on persistent local storage. It does not require Tailscale. The same container runs on a home Linux server, a NAS, a VPS, a [Mac](#running-the-server-on-a-mac) or another suitable container host. The My Journal apps only connect to it; they don't run a server. Do not place the SQLite data directory on a network filesystem or run multiple replicas against it.
 
+## First deployment
+
+There is one route: start the [local container](#local-container), then, if your other devices need to reach it, run it with [Tailscale](#tailscale) or behind [public HTTPS](#public-hosting). Those are variations of where the same server runs; setting it up in the app is the same every time:
+
+1. Start the server and run `setup-code`. It prints the one-time setup code and, when `JOURNAL_URL` is set, the HTTPS address devices use. Copy the address and the code from this one output.
+2. In My Journal, choose **Connect to a Server…**. An iPhone or iPad lists a server announced on the network under **Servers on This Network** or scans a code from a device that already syncs; a Mac has no scanner, so it selects a nearby server or types the address.
+3. Enter the setup code, then choose a master password.
+
+My Journal 1.1 apps need a server that reports protocol revision 1 or later, which every server since the first My Journal 1.0 releases does. If you run a server built before those releases, update it before the app; the app refuses it with “This server needs an update before this device can connect” and changes nothing on the device.
+
 ## Local container
 
 From the project root:
@@ -16,6 +26,8 @@ The service binds to 127.0.0.1:8080 on the host and runs as a non-root user. The
 The code has 6 characters, without look-alikes such as 0 and O, and you can type it in either case, with or without the hyphen. Anyone who can reach a server that isn't set up yet can try codes, so the server limits wrong codes from all addresses together: after 10 within an hour, each further attempt waits 30 seconds, then twice as long each time, up to 15 minutes. That allows about a hundred guesses a day, so set up the server before exposing it beyond your tailnet or network.
 
 ## Tailscale
+
+The same container with a Tailscale sidecar, so it has a private HTTPS address on your tailnet.
 
     docker compose -f deploy/compose.tailscale.yaml up -d --build
     docker compose -f deploy/compose.tailscale.yaml exec tailscale tailscale up
@@ -51,7 +63,7 @@ The Tailscale container joins your tailnet as its own machine, named `journal` u
 
 ## Public hosting
 
-Place the service behind an HTTPS reverse proxy that terminates TLS with a valid certificate. Do not publish the raw HTTP port or forward setup-code files. Set the server up before you make it reachable from the internet, so no one else can try setup codes. Device authentication remains required even inside a private network. Anyone who can reach the server can try to guess your master password through it, slowed down after 20 wrong attempts an hour, and anyone with its data or backups can guess offline, so a public server relies on a strong password. Prefer a private network such as Tailscale when you don’t need public reachability (see [SECURITY.md](../../SECURITY.md#password-guessing)). While the app is open, the server holds its sync requests for up to 25 seconds so new changes arrive at once; give your proxy a response and idle timeout of at least 30 seconds. Behind a shorter one, the apps still sync, by asking every few seconds.
+The same container behind a reverse proxy, so it has a public HTTPS address. Place the service behind an HTTPS reverse proxy that terminates TLS with a valid certificate. Do not publish the raw HTTP port or forward setup-code files. Set the server up before you make it reachable from the internet, so no one else can try setup codes. Device authentication remains required even inside a private network. Anyone who can reach the server can try to guess your master password through it, slowed down after 20 wrong attempts an hour, and anyone with its data or backups can guess offline, so a public server relies on a strong password. Prefer a private network such as Tailscale when you don’t need public reachability (see [SECURITY.md](../../SECURITY.md#password-guessing)). While the app is open, the server holds its sync requests for up to 25 seconds so new changes arrive at once; give your proxy a response and idle timeout of at least 30 seconds. Behind a shorter one, the apps still sync, by asking every few seconds.
 
 Use the [public HTTPS deployment example](https.md) for a complete Caddy and Compose setup with a private backend network and automatic certificates.
 

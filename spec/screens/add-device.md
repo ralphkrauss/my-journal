@@ -34,9 +34,9 @@ A sheet titled `settings.addDevice.title` ("Add Device").
 - **Locked:** only `settings.addDevice.locked`.
 
 ### Preparing
-An activity indicator while the server is asked whether it takes scanned codes.
+An activity indicator while the server's status is read. A server below protocol revision 1 ends here: the error row shows `messages.connection.serverNeedsUpdate` and only `common.done` remains (Finished); if the status can't be read at all, the typed-code step is shown instead.
 
-### Showing a code (server supports scanned codes and has an HTTPS address)
+### Showing a code (the server has an HTTPS address)
 1. A section, centred:
    - a notice when one applies, in smaller text (for example `settings.addDevice.stoppedConnecting`);
    - the QR code, black on white with a quiet margin and rounded corners, 220 points plus margin, not scaling with text size (accessibility label `settings.addDevice.qrLabel`). On the phone and tablet, while the app isn't active (app switcher) a plain placeholder of the same size replaces it; on the computer the placeholder shows only when the app goes to the background, so another window in front doesn't hide the code from a phone held up to the screen (owner decision, 2026-10-06). When the session ended: `settings.addDevice.expired` ("This code has expired.") in its place;
@@ -46,7 +46,7 @@ An activity indicator while the server is asked whether it takes scanned codes.
 3. A section with the button `settings.addDevice.enterCodeInstead` ("Enter Code Instead…") and footer `settings.addDevice.enterCodeInstead.footer` ("For a Mac or a device that can’t scan the code.").
 - Primary: `settings.addDevice.showNewCode` ("Show New Code") only once expired.
 
-### Entering a code (typed-code pairing; also when the server can't take scanned codes)
+### Entering a code (typed-code pairing; also when the status can't be read)
 1. A monospaced field (label `settings.addDevice.codeField` "Pairing Code", placeholder `settings.addDevice.codePlaceholder` "123 456 789"), number pad; it groups digits in threes as typed. Footer `settings.addDevice.codeFooter` ("On the new device, choose Connect to a Server, then Add This Device.").
 2. When connected through HTTPS: rows `common.serverAddress` ("Server Address") → the full address (selectable), and a button `settings.addDevice.copyAddress` ("Copy Address").
    When connected through a plain HTTP address (only possible for a server on this computer): `settings.addDevice.httpOnly` ("Other devices can’t connect to {host}. To add devices, connect this device to the server’s HTTPS address.") in secondary text.

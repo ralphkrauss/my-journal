@@ -11,11 +11,6 @@ public static class SyncEndpoints
     // so a single large record still makes progress.
     public const long PageBytes = 8 * 1024 * 1024;
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-    public const string ContinuityDigestFeature = "sync-continuity-digest";
-    public const string ShortReceiptFeature = "sync-short-receipt";
-    public const string WaitFeature = "sync-wait";
-    // Records of any well-formed kind are stored as they are, such as the library record (protocol/records.md).
-    public const string RecordKindsFeature = "record-kinds";
     // The longest a wait is held. Below the response and idle timeouts of common reverse proxies (30 s and more).
     public const int MaximumWaitSeconds = 25;
 

@@ -2063,9 +2063,9 @@
     "text": "This server has changed since you checked it. Choose Continue to check it again.",
     "context": "ServerConnectionError.serverChanged: the server’s recovery envelope changed between checking it and signing in, setting up or finishing a pairing. The flow returns to the address step."
   },
-  "messages.connection.serverNeedsUpdateForDevices": {
-    "text": "This server needs an update before you can add devices this way.",
-    "context": "Adding this device with a scanned code to a server without check-code pairing."
+  "messages.connection.serverNeedsUpdate": {
+    "text": "This server needs an update before this device can connect.",
+    "context": "One message from every place that needs the server when its protocol revision is below 1 (a server from before the first 1.0 releases): Connect to a Server page 1 and a scanned code, Add This Device with a typed code, Add Device, Change Password, Encrypt Your Journals and Agent Access. Nothing on this device is changed; it clears when the server is updated."
   },
   "messages.connection.setUpElsewhere": {
     "text": "This server has just been set up. Choose it again to sign in.",
@@ -2134,10 +2134,6 @@
   "messages.encryption.rateLimited": {
     "text": "Too many password attempts on this server. Try again in a few minutes.",
     "context": "Encrypt Your Journals, current access password field."
-  },
-  "messages.encryption.serverOutdated": {
-    "text": "{host} needs an update before it can store encrypted journals. Updating it is the way to keep syncing.",
-    "context": "Encrypt Your Journals: the server lacks encryption support; {host} is the host name with its first letter capitalized."
   },
   "messages.encryption.stillSyncing": {
     "text": "Your other devices are still syncing. Wait for them to finish, then try again.",
@@ -2359,10 +2355,6 @@
     "text": "Your journals need to open before this can be done.",
     "context": "Connecting to a server, pairing and starting a journal while the library problem screen is showing or Try Again is running. They refuse because they would replace the library."
   },
-  "messages.library.waitingForServer": {
-    "text": "Pinned entries and journal order stay on this device until the server is updated.",
-    "context": "Settings ▸ Sync footer while connected, when the server can’t store the library record and this device has changes to it."
-  },
   "messages.lifecycle.alreadyDeleted": {
     "text": "This journal is already in Recently Deleted.",
     "context": "JournalLifecycleError.alreadyDeleted."
@@ -2423,10 +2415,6 @@
     "text": "{name} didn’t respond. Get a new code on the new device and try again.",
     "context": "PairingError.noResponse: the new device stopped answering. {name} is that device’s name."
   },
-  "messages.pairing.serverOutdated": {
-    "text": "This server needs an update before you can add devices.",
-    "context": "PairingError.serverOutdated: the server doesn’t support check-code pairing."
-  },
   "messages.password.empty": {
     "text": "Enter a new password.",
     "context": "PasswordChangeError.tooShort (an empty new password)."
@@ -2450,10 +2438,6 @@
   "messages.password.same": {
     "text": "Choose a password that’s different from your current password.",
     "context": "PasswordChangeError.samePassword."
-  },
-  "messages.password.serverOutdated": {
-    "text": "This server needs an update before you can change your password.",
-    "context": "PasswordChangeError.serverOutdated."
   },
   "messages.password.unsupported": {
     "text": "This journal library doesn’t use a master password.",
@@ -3001,10 +2985,6 @@
   "settings.agents.connect.httpsRequired": {
     "text": "{host} doesn’t know its HTTPS address. Set its public address before agents can connect.",
     "context": "Agent Access when the server has no HTTPS address; {host} capitalised."
-  },
-  "settings.agents.connect.needsUpdate": {
-    "text": "{host} needs an update before agents can connect.",
-    "context": "Agent Access when the server lacks agent access; {host} capitalised."
   },
   "settings.agents.connect.noAccess": {
     "text": "This device no longer has access to {host}.",

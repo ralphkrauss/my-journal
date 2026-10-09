@@ -53,7 +53,7 @@ Header `settings.agents.agents.header` ("Agents"). One row per agent, sorted by 
 Header `settings.agents.connect.header` ("Connect an Agent"). Content by state:
 - **Not connected to a server:** `settings.agents.connect.notConnected` ("To let agents read your journals, connect to a server.") and `common.connectToServer` ("Connect to a Server…").
 - **Loading (first time):** busy row `settings.agents.loading` ("Loading…").
-- **Server needs an update:** `settings.agents.connect.needsUpdate` ("{Host} needs an update before agents can connect.").
+- **Server needs an update:** `messages.connection.serverNeedsUpdate` (a server below protocol revision 1); a server that speaks a newer wire major says `messages.connection.updateApp`.
 - **This device lost access:** `settings.agents.connect.noAccess` ("This device no longer has access to {host}.") and `common.reconnect` ("Reconnect…") → Reconnect (`flows/reconnect-to-server`).
 - **The server has no public HTTPS address:** `settings.agents.connect.publicUrlRequired` ("Set your server’s public address before agents can connect.") when the server says a public address is required, otherwise `settings.agents.connect.httpsRequired` ("{Host} doesn’t know its HTTPS address. Set its public address before agents can connect."); plus the link `settings.agents.connect.guide` ("How to Connect an Agent").
 - **Unreachable:** `settings.agents.connect.unreachable` ("Couldn’t reach {host}.") and `common.tryAgain`.

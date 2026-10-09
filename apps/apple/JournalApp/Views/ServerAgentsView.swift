@@ -66,8 +66,8 @@ struct ServerAgentsSections: View {
             switch controller.phase {
             case .loading where !controller.loaded:
                 connectionStatus("Loading…")
-            case .needsUpdate:
-                Text(verbatim: "\(leadingHost) needs an update before agents can connect.")
+            case .needsUpdate(let refusal):
+                Text(verbatim: refusal.localizedDescription)
             case .noAccess:
                 Text(verbatim: "This device no longer has access to \(host).")
                 Button("Reconnect…") { controller.connecting = true }

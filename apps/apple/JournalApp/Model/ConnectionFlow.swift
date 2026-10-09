@@ -106,6 +106,9 @@ final class ConnectionFlow: ObservableObject {
             do {
                 let client = try ServerClient(address: address)
                 let server = try await client.statusOnFirstContact()
+                // Before anything else is asked of the server: one that is too old (or newer than this app) is
+                // refused with nothing changed, and chosen again once it is updated.
+                try server.requireCompatible()
                 var shown: RecoveryParameters?
                 if server.initialized {
                     let current = try await client.recoveryParameters()
@@ -114,9 +117,6 @@ final class ConnectionFlow: ObservableObject {
                     shown = current
                 }
                 try Task.checkCancellation()
-                guard server.protocolVersion == 1 else {
-                    throw JournalError.server("Update My Journal to connect to this server.")
-                }
                 envelope = shown
                 passwordless = shown.map { !$0.requiresPassword } ?? false
                 status = server
@@ -151,17 +151,12 @@ final class ConnectionFlow: ObservableObject {
 
     func continueFromSetupCode() {
         error = nil
-        let checksCode = status?.supports(ServerClient.setupCheckFeature) == true
         switch CodeEntry.setupCodeProblem(setupCode) {
-        case .length where !checksCode && CodeEntry.isOlderSetupCode(setupCode):
-            // A server from before six-character codes still shows its eight-character one until it's updated.
-            setupCode = CodeEntry.normalized(setupCode)
         case .length: return fail(.setupCode, "Enter the 6-character setup code from your server.")
         case .characters: return fail(.setupCode, "Setup codes use letters and the digits 2–9, without I or O.")
         case nil: setupCode = CodeEntry.setupCode(CodeEntry.normalized(setupCode), previous: "")
         }
         guard let next = stepAfterSetupCode else { return setUp() }
-        guard checksCode else { return advance(to: next) }
         busy = true
         activity = "Checking…"
         operation = Task {
@@ -348,9 +343,7 @@ final class ConnectionFlow: ObservableObject {
             withdrawal = nil
             do {
                 let client = try ServerClient(address: address)
-                guard try await client.status().supports(PairingCheck.feature) else {
-                    throw PairingError.serverOutdated
-                }
+                try await client.status().requireCompatible()
                 let key = Curve25519.KeyAgreement.PrivateKey()
                 let request = try await client.beginPairing(
                     deviceName: model.deviceName, publicKey: key.publicKey.rawRepresentation)
@@ -384,12 +377,7 @@ final class ConnectionFlow: ObservableObject {
             do {
                 let client = try ServerClient(address: scanned.server)
                 let server = try await client.statusOnFirstContact()
-                guard server.protocolVersion == 1 else {
-                    throw JournalError.server("Update My Journal to connect to this server.")
-                }
-                guard server.initialized, server.supports(PairingInvite.feature) else {
-                    throw JournalError.server("This server needs an update before you can add devices this way.")
-                }
+                try server.requireCompatible()
                 let current = try await client.recoveryParameters()
                 try model.checkServerEnvelope(current, shown: nil)
                 envelope = current

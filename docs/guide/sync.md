@@ -8,10 +8,13 @@ There is no My Journal account or company server. To sync, you run a small serve
 
 The server runs on a computer you control that stays on while your devices sync, such as a home server, a NAS, a VPS, or a Mac or PC you leave on. The My Journal apps don’t run a server; they only connect to one.
 
+Start with the local container. It is the same server wherever it runs, and setting it up in the app is the same every time. Tailscale and public HTTPS only change where the server runs and how your devices reach it.
+
 | Option | What you need | Keep in mind |
 | --- | --- | --- |
-| [A server with Tailscale](../self-hosting/README.md#tailscale) | A computer that runs containers, such as a home server, a NAS or a Mac with Docker, and [Tailscale](https://tailscale.com) on it and on your devices | Available whenever that computer is on, and only your devices can reach it. |
-| [A public HTTPS server](../self-hosting/https.md) | A host with a domain name | Reachable from anywhere. Anyone can try to guess your master password through it, so it must be long. |
+| [The local container](../self-hosting/README.md#local-container), where you start | A computer that runs containers, such as a home server, a NAS or a Mac with Docker | The server is reachable only on that computer until you choose one of the two options below. |
+| [The container with Tailscale](../self-hosting/README.md#tailscale) | The same, and [Tailscale](https://tailscale.com) on it and on your devices | Available whenever that computer is on, and only your devices can reach it. |
+| [The container behind public HTTPS](../self-hosting/https.md) | A host with a domain name | Reachable from anywhere. Anyone can try to guess your master password through it, so it must be long. |
 
 Tailscale is a separate service that connects your devices privately. My Journal doesn’t require it, but it is the simplest way to reach a server without putting it on the public internet.
 
@@ -19,14 +22,16 @@ A Mac can be the server if it stays on and awake while your devices sync: run th
 
 ## Use your own server
 
-1. Set up the server by following [self-hosting](../self-hosting/README.md): a container on a home server or another computer, privately with Tailscale, or behind [public HTTPS](../self-hosting/https.md).
-2. On the server, run `setup-code` to see its one-time setup code, for example `docker compose exec journal setup-code`. It looks like `K7Q-M4X`.
-3. On your first device, choose **Connect to a Server…** (on the first screen, or in Settings > Sync). Choose your server under **Servers on This Network**, or enter its address and choose **Continue**. With Tailscale, use its HTTPS address while the device is connected to your tailnet.
+1. Start the server by following [self-hosting](../self-hosting/README.md): the local container first, then Tailscale or public HTTPS if your other devices need to reach it.
+2. On the server, run `setup-code`. It shows the server’s one-time setup code, for example `K7Q-M4X`, and its address when one is configured. Copy the address and the code from this one output.
+3. On your first device, choose **Connect to a Server…** (on the first screen, or in Settings > Sync). On an iPhone or iPad, a server announced on your network is listed under **Servers on This Network**; otherwise enter its address and choose **Continue**. A Mac can’t scan a code, so it chooses a nearby server or types the address. With Tailscale, use its HTTPS address while the device is connected to your tailnet.
 4. Enter the **Setup Code** and choose **Continue**.
-5. On a new device, choose whether to encrypt your journals under **Protect Your Journals**. With encryption, choose a master password and enter it again to verify it. On a device that already has journals, enter the master password you use for them; they're uploaded to the server. Choose **Set Up**.
+5. On a new device, choose a master password and enter it again to verify it. On a device that already has journals, enter the master password you use for them; they’re uploaded to the server. Choose **Set Up**.
 6. When **Server Is Ready** appears, choose **Add Another Device…** or [add your other devices](devices.md#add-a-device) later. An iPhone or iPad only has to scan a code.
 
 The setup code works once. After many wrong codes the server makes people wait longer between tries, so set it up before making it reachable beyond your tailnet or home network.
+
+If the app says **This server needs an update before this device can connect**, the server runs an older version of My Journal’s server software. Update the server; the app changes nothing on your device, and syncing starts again by itself.
 
 ## If you used Use This Mac
 

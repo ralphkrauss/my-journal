@@ -12,8 +12,6 @@ namespace Journal.Api.Features;
 // is signed out, and the server gets a new identity. The device then uploads its encrypted copy.
 public static class EncryptionEndpoints
 {
-    public const string Feature = "encryption-upgrade";
-
     public static void MapEncryption(this WebApplication app) =>
         app.MapPost("/v1/recovery/encrypt", TurnOn).RequireAuthorization().RequireRateLimiting(RateLimits.Password);
 

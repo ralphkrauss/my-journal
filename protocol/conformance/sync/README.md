@@ -6,7 +6,15 @@ The sync endpoints ([Sync and conflicts](../../README.md#sync-and-conflicts) in 
 | --- | --- | --- |
 | `exchanges-v1.json` | A conversation of 29 requests and the exact responses: create, retry, reused operation, short receipt, stale and ahead base revisions, immutable kind, payload limits and checks, other server identity, paging, continuity checks, waits, no credential, capabilities and status | Written from the contract; replayed against the server |
 | `conflict-scenarios-v1.json` | Devices that change the same records offline and meet at a server, with what every device must hold at the end ([conflicts.md](../../conflicts.md)) | Written from the contract; replayed against real clients' stores |
-| `sync-receipts-v1.json` | A push, its full receipt and the equivalent short receipt (capability `sync-short-receipt`, `payloadDigest` = lower-case hex SHA-256 of the payload text), and the three wait answers ([README.md](../../README.md#waiting-for-changes)) | Python's hashlib; checked by the server's serializer and the Apple client's decoder |
+| `status-v2.json` | The protocol revision both unauthenticated endpoints report with the 13 frozen capability names, and the effective-revision rule as table-driven cases (explicit, derived from the list, malformed, newer major) | Written from the contract; the server's output is checked against it, and every client computes the cases with its own code |
+| `sync-receipts-v1.json` | A push, its full receipt and the equivalent short receipt (revision 1, `payloadDigest` = lower-case hex SHA-256 of the payload text), and the three wait answers ([README.md](../../README.md#waiting-for-changes)) | Python's hashlib; checked by the server's serializer and the Apple client's decoder |
+
+## The status contract (`status-v2.json`)
+
+The 2 is the second file version of the status contract (`exchanges-v1.json` has the first): it is not a protocol version, a recovery format or the archive's number. The old file is unchanged and still replays against the server.
+
+- `server` lists the members GET /v1/status and GET /v1/server must return (a subset match, arrays containing each listed element): `protocolRevision` 1, `protocolVersion` or `protocolVersions` 1, `recoveryVersions` and the 13 `features`. The server's `StatusConformanceTests` checks both endpoints, and also that the list is exactly `revisionOneFeatures`, because 1.0 apps read the names: a missing or added name silently breaks them.
+- `effectiveRevision.cases` are statuses and the revision a client must compute from each (`expect` is an integer, 0 meaning a server too old to sync with, or `"newerMajor"`). A client builds its own status type from each `status` object and compares; it must not fail on a malformed `protocolRevision` (a string, 0, a negative number, above 2147483647, a decimal, a boolean, null) but treat it as absent. Swift `ServerRevisionTests` runs them through `ServerStatus`.
 
 ## The conversation (`exchanges-v1.json`)
 

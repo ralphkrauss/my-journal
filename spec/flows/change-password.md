@@ -28,12 +28,11 @@ Replace the master password on every device at once, without re-encrypting the j
 
 1. The person types the current password, a new one, and the new one again; Change.
 2. The device reads the password information:
-   - when connected, the server's copy (it's newer if the password was changed on another device); if it can't be read: `messages.password.failed`;
+   - when connected, it first reads the server's status: a server below protocol revision 1 gives `messages.connection.serverNeedsUpdate` and nothing else is asked of it; then the server's copy (it's newer if the password was changed on another device); if it can't be read: `messages.password.failed`;
    - otherwise, this device's copy.
 3. It checks the current password opens this library's key; checks the new one differs (`messages.password.same`) and isn't empty (`messages.password.empty`).
 4. When connected, the server is updated first, proving both passwords with derived secrets (the passwords never leave the device):
    - wrong current password: `messages.password.incorrect`;
-   - server too old: `messages.password.serverOutdated`;
    - the server's library doesn't use a master password: `messages.password.unsupported`;
    - connection failed or anything else: `messages.password.failed`.
 5. This device saves the new password information.

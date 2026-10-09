@@ -72,12 +72,7 @@ final class ChangeWaitingTests: XCTestCase {
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"):
-                return (
-                    200,
-                    Data(
-                        #"{"protocolVersion":1,"initialized":true,"recoveryVersions":[4],"features":["sync-wait","sync-short-receipt"],"serverId":"server"}"#
-                            .utf8)
-                )
+                return (200, HealthyStatus.json(serverId: "server"))
             case ("GET", let path) where path.hasPrefix("/v1/sync/wait?"):
                 return (200, Data(#"{"changed":false,"early":true}"#.utf8))
             case ("GET", let path) where path.hasPrefix("/v1/sync/?"):
@@ -115,12 +110,7 @@ final class ChangeWaitingTests: XCTestCase {
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"):
-                return (
-                    200,
-                    Data(
-                        #"{"protocolVersion":1,"initialized":true,"recoveryVersions":[4],"features":["sync-wait"],"serverId":"server"}"#
-                            .utf8)
-                )
+                return (200, HealthyStatus.json(serverId: "server"))
             case ("GET", let path) where path.hasPrefix("/v1/sync/?"):
                 return (200, Self.page(path, log: log.withLock { $0 }))
             case ("PUT", let path) where path.hasPrefix("/v1/sync/"):

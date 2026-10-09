@@ -226,7 +226,7 @@ extension JournalStore {
         }
         return (try cursor(), applied)
     }
-    /// Moves the cursor together with the change read there, which a server with the `sync-continuity` capability
+    /// Moves the cursor together with the change read there, which the server
     /// confirms before reading on. When that change isn't known, none is kept for a new position.
     func moveCursor(_ db: Database, to cursor: Int64, reading change: LoggedChange?) throws {
         let position = Data(String(cursor).utf8)

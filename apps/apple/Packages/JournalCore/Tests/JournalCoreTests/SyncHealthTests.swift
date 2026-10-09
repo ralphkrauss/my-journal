@@ -42,8 +42,9 @@ private actor HealthServer: SyncServer {
     func status() throws -> ServerStatus {
         statusRequests += 1
         if let statusFailure { throw statusFailure }
-        return ServerStatus(
-            protocolVersion: protocolVersion, initialized: initialized, features: [], serverId: serverID)
+        var status = ServerStatus.healthy(serverId: serverID, initialized: initialized)
+        status.protocolVersion = protocolVersion
+        return status
     }
     func changes(after cursor: Int64, limit: Int, applied: LoggedChange?) throws -> SyncPage {
         pageRequests += 1

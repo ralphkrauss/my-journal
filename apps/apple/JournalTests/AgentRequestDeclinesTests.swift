@@ -61,7 +61,7 @@ final class AgentRequestDeclinesTests: XCTestCase {
         XCTAssertNil(AgentRequestDeclines.outcome(of: URLError(.cancelled)))
         XCTAssertEqual(AgentRequestDeclines.outcome(of: URLError(.notConnectedToInternet)), .failed)
         XCTAssertEqual(AgentRequestDeclines.outcome(of: JournalError.unauthorized), .failed)
-        XCTAssertEqual(AgentRequestDeclines.outcome(of: AgentCopyError.serverOutdated), .failed)
+        XCTAssertEqual(AgentRequestDeclines.outcome(of: AgentCopyError.failed), .failed)
     }
 
     /// Lets an asynchronous send wait until the test releases it.

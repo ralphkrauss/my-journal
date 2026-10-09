@@ -1,0 +1,614 @@
+{
+  "corpusVersion": 2,
+  "purpose": "What GET /v1/status and GET /v1/server report about the protocol revision (protocol/README.md, Versioning), and the effective revision every client computes from a status. The 2 is the second file version of the status contract, not a protocol version. exchanges-v1.json is unchanged and still replays against the server.",
+  "revisionOneFeatures": [
+    "sync-identity",
+    "pairing-check-code",
+    "password-change",
+    "sync-continuity",
+    "sync-continuity-digest",
+    "private-envelope",
+    "pairing-invite",
+    "setup-check",
+    "encryption-upgrade",
+    "agent-access-2",
+    "sync-short-receipt",
+    "sync-wait",
+    "record-kinds"
+  ],
+  "server": {
+    "match": "subset",
+    "note": "A server must return at least these members from both endpoints. The 13 names are frozen: 1.0 apps read them, so a server never drops or adds one.",
+    "endpoints": [
+      {
+        "path": "/v1/status",
+        "body": {
+          "protocolVersion": 1,
+          "protocolRevision": 1,
+          "recoveryVersions": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        }
+      },
+      {
+        "path": "/v1/server",
+        "body": {
+          "protocolVersions": [
+            1
+          ],
+          "protocolRevision": 1,
+          "recoveryVersions": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        }
+      }
+    ]
+  },
+  "effectiveRevision": {
+    "rule": [
+      "1. protocolVersion greater than 1: a newer wire major, expect \"newerMajor\" (update the app).",
+      "2. protocolRevision present and an integer from 1 to 2147483647: that value.",
+      "3. Otherwise 1 if features contains all 13 names in revisionOneFeatures, else 0.",
+      "4. A revision below 1 is a server too old to sync with. A client gates each behaviour on revision >= N and never on a name in features."
+    ],
+    "cases": [
+      {
+        "name": "explicit-1",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 1
+        },
+        "expect": 1
+      },
+      {
+        "name": "explicit-7",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 7
+        },
+        "expect": 7,
+        "note": "A client that knows less than the server's revision uses what it knows; it does not refuse."
+      },
+      {
+        "name": "largest-valid",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 2147483647
+        },
+        "expect": 2147483647
+      },
+      {
+        "name": "explicit-revision-wins-over-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 2,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 2
+      },
+      {
+        "name": "absent-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A 1.0 server has no protocolRevision and lists all 13 names."
+      },
+      {
+        "name": "absent-with-12-missing-record-kinds",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "A server from before the last name was added is too old to sync with."
+      },
+      {
+        "name": "absent-with-no-features",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true
+        },
+        "expect": 0
+      },
+      {
+        "name": "newer-major",
+        "status": {
+          "protocolVersion": 2,
+          "initialized": true,
+          "protocolRevision": 1,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": "newerMajor",
+        "note": "A newer wire major is checked first: update the app."
+      },
+      {
+        "name": "unknown-extra-names",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds",
+            "future-capability"
+          ]
+        },
+        "expect": 1
+      },
+      {
+        "name": "different-order",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "features": [
+            "record-kinds",
+            "sync-wait",
+            "sync-short-receipt",
+            "agent-access-2",
+            "encryption-upgrade",
+            "setup-check",
+            "pairing-invite",
+            "private-envelope",
+            "sync-continuity-digest",
+            "sync-continuity",
+            "password-change",
+            "pairing-check-code",
+            "sync-identity"
+          ]
+        },
+        "expect": 1
+      },
+      {
+        "name": "malformed-string-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": "x",
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-string-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": "x",
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      },
+      {
+        "name": "malformed-zero-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 0,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-zero-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 0,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      },
+      {
+        "name": "malformed-negative-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": -1,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-negative-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": -1,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      },
+      {
+        "name": "malformed-above-32-bits-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 2147483648,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-above-32-bits-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 2147483648,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      },
+      {
+        "name": "malformed-decimal-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 1.5,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-decimal-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": 1.5,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      },
+      {
+        "name": "malformed-boolean-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": true,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-boolean-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": true,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      },
+      {
+        "name": "malformed-null-with-all-13",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": null,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait",
+            "record-kinds"
+          ]
+        },
+        "expect": 1,
+        "note": "A malformed revision counts as absent, so the list decides."
+      },
+      {
+        "name": "malformed-null-without-the-list",
+        "status": {
+          "protocolVersion": 1,
+          "initialized": true,
+          "protocolRevision": null,
+          "features": [
+            "sync-identity",
+            "pairing-check-code",
+            "password-change",
+            "sync-continuity",
+            "sync-continuity-digest",
+            "private-envelope",
+            "pairing-invite",
+            "setup-check",
+            "encryption-upgrade",
+            "agent-access-2",
+            "sync-short-receipt",
+            "sync-wait"
+          ]
+        },
+        "expect": 0,
+        "note": "It cannot lock a client out of a server whose list is complete, or let one skip the check."
+      }
+    ]
+  }
+}

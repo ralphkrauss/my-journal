@@ -193,7 +193,7 @@ struct ChangePasswordView: View {
         if known == .incorrectPassword {
             focus = .current
             message = nil
-        } else if known == nil, !(error is JournalError) {
+        } else if known == nil, !(error is JournalError), !(error is ServerRefusal) {
             message = PasswordChangeError.failed.localizedDescription
         } else {
             message = error.shown(.saving)

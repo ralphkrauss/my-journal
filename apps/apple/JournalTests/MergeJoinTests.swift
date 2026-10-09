@@ -41,11 +41,13 @@ final class MergeJoinTests: XCTestCase {
             ? try VaultCrypto.makeRecovery(masterKey: VaultCrypto.generateKey(), phrase: serverPassword).0
             : RecoveryEnvelope.unprotected
         let parameters = try JournalCoding.encoder().encode(RecoveryParameters(envelope))
-        let status = Data(#"{"protocolVersion":1,"initialized":true,"features":["pairing-invite"]}"#.utf8)
+        let status = HealthyStatus.json()
         return try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
+            case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             case ("GET", "/v1/recovery"): return (200, parameters)
+            case ("GET", "/v1/recovery/envelope"): return (200, parameters)
             default: return (503, Data("{}".utf8))
             }
         }
@@ -177,12 +179,14 @@ final class MergeJoinTests: XCTestCase {
         }
         let recovered = try JournalCoding.encoder().encode(
             Recovered(deviceId: grant.deviceId, token: grant.token, envelope: envelope))
-        let status = Data(#"{"protocolVersion":1,"initialized":true,"serverId":"fake-server"}"#.utf8)
+        let status = HealthyStatus.json(serverId: "fake-server")
         let page = Data(#"{"changes":[],"cursor":0,"hasMore":false,"serverId":"fake-server","serverIdCursor":0}"#.utf8)
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
+            case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             case ("GET", "/v1/recovery"): return (200, parameters)
+            case ("GET", "/v1/recovery/envelope"): return (200, parameters)
             case ("POST", "/v1/recovery"): return (200, recovered)
             case ("DELETE", _): return (204, Data())
             case ("GET", let path) where downloads && path.hasPrefix("/v1/sync/"): return (200, page)
@@ -278,11 +282,13 @@ final class MergeJoinTests: XCTestCase {
             masterKey: VaultCrypto.generateKey(), phrase: recoveryKey, formatVersion: 1
         ).0
         let parameters = try JournalCoding.encoder().encode(RecoveryParameters(envelope))
-        let status = Data(#"{"protocolVersion":1,"initialized":true}"#.utf8)
+        let status = HealthyStatus.json()
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
+            case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             case ("GET", "/v1/recovery"): return (200, parameters)
+            case ("GET", "/v1/recovery/envelope"): return (200, parameters)
             default: return (429, Data("{}".utf8))
             }
         }
@@ -314,14 +320,13 @@ final class MergeJoinTests: XCTestCase {
         let key = try VaultCrypto.generateKey()
         let envelope = try VaultCrypto.makeRecovery(masterKey: key, phrase: serverPassword).0
         let published = try JournalCoding.encoder().encode(envelope)
-        let status = Data(
-            #"{"protocolVersion":1,"initialized":true,"serverId":"fake-server","features":["agent-access-2"],"mcpUrl":"https://journal.test/mcp"}"#
-                .utf8)
+        let status = HealthyStatus.json(serverId: "fake-server", mcpUrl: "https://journal.test/mcp")
         let page = Data(#"{"changes":[],"cursor":0,"hasMore":false,"serverId":"fake-server","serverIdCursor":0}"#.utf8)
         let server = try await FakeJournalServer { request in
             switch (request.method, request.path) {
             case ("GET", "/v1/status"): return (200, status)
             case ("GET", "/v1/recovery"): return (200, published)
+            case ("GET", "/v1/recovery/envelope"): return (200, published)
             case ("GET", let path) where path.hasPrefix("/v1/sync/"): return (200, page)
             case ("GET", "/v1/agents/"): return (200, Data("[]".utf8))
             default: return (503, Data("{}".utf8))

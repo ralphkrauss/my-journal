@@ -57,7 +57,8 @@ final class SyncFixtureServer: Sendable {
 
     private func status() throws -> Data {
         try JSONSerialization.data(withJSONObject: [
-            "protocolVersion": 1, "initialized": true, "serverId": serverID, "features": [String](),
+            "protocolVersion": 1, "protocolRevision": 1, "initialized": true, "serverId": serverID,
+            "features": ServerStatus.revisionOneFeatures,
         ])
     }
 

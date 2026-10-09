@@ -22,12 +22,13 @@ final class ConnectionRetryTests: XCTestCase {
         let envelope = try XCTUnwrap(model.configuration?.recovery)
         let key = try XCTUnwrap(model.masterKey)
         let encoded = try JournalCoding.encoder().encode(envelope)
-        let status = Data(#"{"protocolVersion":1,"initialized":true}"#.utf8)
+        let status = HealthyStatus.json()
         // The server hands out the envelope but can't sync, so connecting fails after the copy is made.
         let server = try await FakeJournalServer { request in
             switch request.path {
-            case "/v1/recovery": return (200, encoded)
+            case "/v1/recovery", "/v1/recovery/envelope": return (200, encoded)
             case "/v1/status": return (200, status)
+            case "/v1/agents/": return (200, Data("[]".utf8))
             default: return (503, Data("{}".utf8))
             }
         }

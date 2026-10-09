@@ -112,6 +112,8 @@ public enum SyncHealth: Equatable, Sendable {
         case let error as DatabaseError:
             self = LocalDataFailure(classifying: error) == .damaged ? .localDataUnreadable : .localDataUnavailable
         case JournalError.unauthorized: self = .accessRemoved
+        case ServerRefusal.serverNeedsUpdate: self = .serverUpdateNeeded
+        case ServerRefusal.appNeedsUpdate: self = .appUpdateNeeded
         case JournalError.unsupportedFormat, JournalError.newerVersion: self = .appUpdateNeeded
         default: self = .unexpected
         }

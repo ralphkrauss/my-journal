@@ -11,17 +11,105 @@ public struct DeviceGrant: Codable, Sendable {
 }
 public struct ServerStatus: Codable, Sendable {
     public var protocolVersion: Int
+    /// The protocol revision within wire major 1, exactly as the server sent it; nil when it is absent or not a
+    /// positive integer that fits 32 bits. Read `compatibility` instead (protocol/README.md, Versioning).
+    public var protocolRevision: Int?
     public var initialized: Bool
     public var recoveryVersions: [Int]?
-    /// Additive protocol v1 capabilities. Older servers omit this.
+    /// The 13 capability names 1.0 servers list. Frozen: only the revision rule reads them, to tell a server from
+    /// before `protocolRevision` that has all of them (revision 1) from one that lacks some (too old).
     public var features: [String]?
     /// Random identity of the server database, replaced when a backup is restored. Older servers omit this.
     public var serverId: String?
-    /// The MCP address agents connect to (capability `agent-access`), or nil with the reason in `mcpUnavailable`:
+    /// The MCP address agents connect to (revision 1), or nil with the reason in `mcpUnavailable`:
     /// "https-required" or "public-url-required".
     public var mcpUrl: String?
     public var mcpUnavailable: String?
-    public func supports(_ feature: String) -> Bool { features?.contains(feature) == true }
+
+    /// The capability names every revision 1 server lists, and a 1.0 server (which has no `protocolRevision`) is
+    /// recognised by. Never extended.
+    public static let revisionOneFeatures: [String] = [
+        "sync-identity", "pairing-check-code", "password-change", "sync-continuity", "sync-continuity-digest",
+        "private-envelope", "pairing-invite", "setup-check", "encryption-upgrade", "agent-access-2",
+        "sync-short-receipt", "sync-wait", "record-kinds",
+    ]
+
+    public init(
+        protocolVersion: Int, protocolRevision: Int? = nil, initialized: Bool, recoveryVersions: [Int]? = nil,
+        features: [String]? = nil, serverId: String? = nil, mcpUrl: String? = nil, mcpUnavailable: String? = nil
+    ) {
+        self.protocolVersion = protocolVersion
+        self.protocolRevision = protocolRevision
+        self.initialized = initialized
+        self.recoveryVersions = recoveryVersions
+        self.features = features
+        self.serverId = serverId
+        self.mcpUrl = mcpUrl
+        self.mcpUnavailable = mcpUnavailable
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case protocolVersion, protocolRevision, initialized, recoveryVersions, features, serverId, mcpUrl,
+            mcpUnavailable
+    }
+    /// A revision that is not an integer counts as absent, so a broken value can neither lock this app out of a
+    /// server nor let it skip the check of the capability list.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        protocolVersion = try container.decode(Int.self, forKey: .protocolVersion)
+        protocolRevision = try? container.decodeIfPresent(Int.self, forKey: .protocolRevision)
+        initialized = try container.decode(Bool.self, forKey: .initialized)
+        recoveryVersions = try container.decodeIfPresent([Int].self, forKey: .recoveryVersions)
+        features = try container.decodeIfPresent([String].self, forKey: .features)
+        serverId = try container.decodeIfPresent(String.self, forKey: .serverId)
+        mcpUrl = try container.decodeIfPresent(String.self, forKey: .mcpUrl)
+        mcpUnavailable = try container.decodeIfPresent(String.self, forKey: .mcpUnavailable)
+    }
+
+    /// What this app can do with the server that sent this status.
+    public enum Compatibility: Equatable, Sendable {
+        /// The server speaks a newer wire major: the app is too old.
+        case newerMajor
+        /// The effective protocol revision; 0 is a server too old to sync with.
+        case revision(Int)
+    }
+    /// The effective revision, computed the same way by every client: a newer `protocolVersion` first, then a valid
+    /// `protocolRevision` (1 to 2^31 − 1), else 1 when `features` has all 13 names, else 0. Read on every status
+    /// read and never kept: a server restored from a backup may report less (protocol/README.md, Versioning).
+    public var compatibility: Compatibility {
+        if protocolVersion > 1 { return .newerMajor }
+        guard protocolVersion == 1 else { return .revision(0) }
+        if let protocolRevision, (1...Int(Int32.max)).contains(protocolRevision) { return .revision(protocolRevision) }
+        let listed = Set(features ?? [])
+        return .revision(Self.revisionOneFeatures.allSatisfy(listed.contains) ? 1 : 0)
+    }
+    /// Whether the server implements revision `revision` and below; every behaviour newer than 1.0 is gated by this,
+    /// never by a capability name.
+    public func supports(revision: Int) -> Bool {
+        guard case .revision(let effective) = compatibility else { return false }
+        return effective >= revision
+    }
+    /// Throws `ServerRefusal` unless the server is one this app syncs with (revision 1 or newer, same wire major).
+    public func requireCompatible() throws {
+        switch compatibility {
+        case .newerMajor: throw ServerRefusal.appNeedsUpdate
+        case .revision(let effective): if effective < 1 { throw ServerRefusal.serverNeedsUpdate }
+        }
+    }
+}
+/// Why this app won't use a server. A pure gate: nothing on the device is changed or discarded, and it clears on the
+/// next status read of a server that has been updated.
+public enum ServerRefusal: Error, Equatable, LocalizedError, Sendable {
+    /// The server speaks a newer wire major.
+    case appNeedsUpdate
+    /// The server is below protocol revision 1.
+    case serverNeedsUpdate
+    public var errorDescription: String? {
+        switch self {
+        case .appNeedsUpdate: return "Update My Journal to connect to this server."
+        case .serverNeedsUpdate: return "This server needs an update before this device can connect."
+        }
+    }
 }
 public struct ServerDevice: Codable, Identifiable, Sendable {
     /// How a device joined the server.
@@ -120,12 +208,11 @@ public struct ResponseTooLarge: Error, LocalizedError {
     public var errorDescription: String? { "The server sent more data than expected." }
 }
 /// The server doesn't have the change this device last read at its cursor, so its data was replaced, for example by
-/// copying back an older data folder (protocol/README.md, capability `sync-continuity`).
+/// copying back an older data folder (protocol/README.md, Sync and conflicts).
 public struct SyncLogChanged: Error {}
-/// The change at a position of the server's log. A server with the `sync-continuity` capability confirms it still has
-/// this change there before reading on from it; one with `sync-continuity-digest` also confirms its payload `digest`
-/// (lower-case hex SHA-256 of the payload text), since a rolled-back server can give the same record and revision to
-/// another version.
+/// The change at a position of the server's log. The server confirms it still has this change there before reading on
+/// from it, and its payload `digest` (lower-case hex SHA-256 of the payload text), since a rolled-back server can give
+/// the same record and revision to another version.
 public struct LoggedChange: Codable, Sendable, Equatable {
     public var recordId: UUID
     public var revision: Int64
@@ -336,8 +423,6 @@ public final class ServerClient: Sendable {
                     iterations: envelope.iterations, formatVersion: envelope.formatVersion,
                     recoverySecret: recoverySecret, deviceName: deviceName)))
     }
-    /// Servers with this capability check a setup code with `checkSetupCode` without using it.
-    public static let setupCheckFeature = "setup-check"
     /// Checks a setup code before the person chooses a password, so a wrong one is reported right away. The code
     /// stays valid for `initialize`, and wrong codes count toward the same limit as setup's.
     public func checkSetupCode(_ code: String) async throws {
@@ -348,16 +433,12 @@ public final class ServerClient: Sendable {
         if status == 400 && Self.problemCode(data) == "invalid_setup_code" { throw JournalError.invalidSetupCode }
         throw Self.failure(status: status, path: path)
     }
-    /// Servers with this capability publish only `RecoveryParameters` and send the wrapped vault key with a new
-    /// device credential or to a connected device.
-    public static let privateEnvelopeFeature = "private-envelope"
     /// What deriving the recovery secret needs; anyone may read it.
     public func recoveryParameters() async throws -> RecoveryParameters { try await call("/v1/recovery") }
-    /// The server's whole recovery envelope, read with this client's device credential. Servers without the
-    /// `private-envelope` capability publish it instead.
+    /// The server's whole recovery envelope, read with this client's device credential. Revision 1 servers publish
+    /// only `RecoveryParameters` without one.
     public func recoveryEnvelope() async throws -> RecoveryEnvelope {
-        guard try await status().supports(Self.privateEnvelopeFeature) else { return try await call("/v1/recovery") }
-        return try await call("/v1/recovery/envelope")
+        try await call("/v1/recovery/envelope")
     }
     public func recover(secret: String, deviceName: String) async throws -> DeviceGrant {
         try await recoverDevice(secret: secret, deviceName: deviceName).grant
@@ -365,7 +446,7 @@ public final class ServerClient: Sendable {
     private func recoverDevice(secret: String, deviceName: String) async throws -> (
         grant: DeviceGrant, envelope: RecoveryEnvelope?
     ) {
-        // Servers with `private-envelope` include the envelope once the secret is verified.
+        // The server includes the envelope once the secret is verified.
         struct Recovered: Decodable {
             let deviceId: UUID
             let token: String
@@ -431,13 +512,12 @@ public final class ServerClient: Sendable {
         switch status {
         case 204: return
         case 403: throw PasswordChangeError.incorrectPassword
-        case 404, 405: throw PasswordChangeError.serverOutdated
         case 409: throw PasswordChangeError.unsupported
         default: throw PasswordChangeError.failed
         }
     }
-    /// The changes after `after`. `applied` is the change this device last read at `after`; a server with the
-    /// `sync-continuity` capability then refuses with `SyncLogChanged` when it has a different change there.
+    /// The changes after `after`. `applied` is the change this device last read at `after`; the server then refuses
+    /// with `SyncLogChanged` when it has a different change there.
     public func changes(after: Int64, limit: Int = 100, applied: LoggedChange? = nil) async throws -> SyncPage {
         var path = "/v1/sync/?after=\(after)&limit=\(limit)"
         if let applied {
@@ -457,10 +537,8 @@ public final class ServerClient: Sendable {
         /// The server database is not the one this device last synchronized with.
         case serverChanged
     }
-    /// Servers with this capability answer an accepted push with a short receipt when asked.
-    public static let shortReceiptFeature = "sync-short-receipt"
-    /// Sends a queued change. With `shortReceipt` (only to servers with that capability), the server leaves the
-    /// payload out of its receipt; the receipt returned here is complete either way.
+    /// Sends a queued change. With `shortReceipt`, the server leaves the payload out of its receipt; the receipt
+    /// returned here is complete either way.
     public func push(_ pending: PendingChange, serverID: String? = nil, shortReceipt: Bool = false) async throws
         -> PushResult
     {

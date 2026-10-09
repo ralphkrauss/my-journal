@@ -27,9 +27,7 @@ import os
         ) {
             switch (request.method, request.path) {
             case ("GET", "/v1/status"):
-                let status =
-                    #"{"protocolVersion":1,"initialized":true,"recoveryVersions":[1,2,3,4],"features":[],"serverId":"erase-server"}"#
-                return (200, Data(status.utf8))
+                return (200, HealthyStatus.json(serverId: "erase-server"))
             case ("GET", "/v1/recovery"):
                 return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.unprotected))) ?? Data())
             case ("DELETE", _): return (204, Data())

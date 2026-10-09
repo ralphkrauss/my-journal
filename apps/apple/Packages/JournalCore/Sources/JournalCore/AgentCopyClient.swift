@@ -2,8 +2,6 @@ import Foundation
 
 /// Why an agent request didn't succeed (protocol/agent-access-server.md).
 public enum AgentCopyError: Error, Equatable, Sendable {
-    /// The server doesn't support agent access.
-    case serverOutdated
     /// The library already has the most agents a server allows.
     case limit
     /// The request expired, was replaced, or was already answered.
@@ -98,9 +96,6 @@ struct AgentCopyUpload: Encodable, Sendable {
 }
 
 extension ServerClient {
-    /// Servers with this capability serve MCP to agents the owner approves.
-    public static let agentAccessFeature = "agent-access-2"
-
     public func agents() async throws -> [ServerAgent] {
         let (data, status) = try await request("/v1/agents/")
         try Self.checkAgentResponse(status, data: data)
@@ -109,9 +104,8 @@ extension ServerClient {
     /// The journals an agent was given one by one (Selected Journals), opened with the library's key. Combining
     /// another journal into one of them would let that agent read more (docs/design/journal-name-uniqueness.md §4.5).
     /// Agents with All Journals add nothing: they read a journal whether it's combined or added. Nil when an agent's
-    /// settings can't be read, so which journals it reads isn't known. A server without agent access has none.
+    /// settings can't be read, so which journals it reads isn't known.
     public func journalsAgentsCanRead(vaultKey: Data, protection: ContentProtection) async throws -> Set<UUID>? {
-        guard try await status().supports(Self.agentAccessFeature) else { return [] }
         var journals = Set<UUID>()
         for agent in try await agents() {
             guard
@@ -231,8 +225,6 @@ extension ServerClient {
         case (409, "agent_settings_changed"): throw AgentCopyError.settingsChanged
         case (404, "agent_not_found"): throw AgentCopyError.notFound
         case (404, "agent_request_not_found"): throw AgentCopyError.requestNotFound
-        // Servers without the capability don't know these routes.
-        case (404, _), (405, _): throw AgentCopyError.serverOutdated
         default: throw AgentCopyError.failed
         }
     }

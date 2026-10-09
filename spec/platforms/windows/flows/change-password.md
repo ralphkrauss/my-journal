@@ -21,7 +21,7 @@ The spec's six steps happen in the dialog of the screen file. Windows details:
 | 1 Type current, new, confirm; Change | Three `PasswordBox`es and the Change button; the passwords stay in memory only as long as the dialog needs them and are cleared when it closes. They are never written to a log, a crash report or the undo stack of a text box |
 | 2 Read the password information | Connected: the server's copy (newer if changed elsewhere), `messages.password.failed` when it cannot be read; otherwise this PC's copy |
 | 3 Checks | The current password must open this library's key; the new one differs (`messages.password.same`) and is not empty (`messages.password.empty`); if the window is locked, `messages.error.locked` |
-| 4 Server first | Proves both passwords with derived secrets (the passwords never leave the PC): `messages.password.incorrect`, `messages.password.serverOutdated`, `messages.password.unsupported`, `messages.password.failed` |
+| 4 Server first | Proves both passwords with derived secrets (the passwords never leave the PC): `messages.password.incorrect`, `messages.connection.serverNeedsUpdate`, `messages.password.unsupported`, `messages.password.failed` |
 | 5 This PC saves | The new password information is written to the library's configuration in the app's local folder, with no other marker. If the write fails after the server changed: `messages.password.notSavedLocally`, primary Try again, Cancel disabled; if Try again fails, `settings.changePassword.error.notSavedRetry` and Cancel is enabled. A full disk, a read-only folder and security software holding the file are the likely causes on Windows, and the messages ask the person to free up space |
 | 6 Close | The dialog closes; nothing else announces success |
 

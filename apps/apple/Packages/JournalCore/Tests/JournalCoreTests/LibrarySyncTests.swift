@@ -167,38 +167,35 @@ final class LibrarySyncTests: XCTestCase {
     }
 
     func testAPinWhoseAnswerWasLostIsAcknowledgedWhenReadBack() async throws {
-        for short in [false, true] {
-            let server = MemoryServer()
-            if short { await server.offerShortReceipts() }
-            let mac = try device("mac-\(short)")
-            let macSync = SyncEngine(store: mac, server: server)
-            let (_, entries) = try await journalWithEntries(mac)
-            try await macSync.synchronize()
+        let server = MemoryServer()
+        let mac = try device("mac")
+        let macSync = SyncEngine(store: mac, server: server)
+        let (_, entries) = try await journalWithEntries(mac)
+        try await macSync.synchronize()
 
-            try await mac.setPinned(true, entry: entries[0].id)
-            await server.loseNextAnswer()
-            do {
-                try await macSync.synchronize()
-                XCTFail("The lost answer stops the synchronization")
-            } catch {}
-            // Reading the log brings the device's own change back.
-            let cursor = try await mac.cursor()
-            let page = try await server.changes(after: cursor, limit: 100, applied: nil)
-            try await mac.apply(page.changes, cursor: page.cursor)
-
-            let intents = try await mac.libraryChanges()
-            XCTAssertTrue(intents.isEmpty, "Reading its own change back clears what it asked for")
-            let waiting = try await mac.pending()
-            XCTAssertTrue(waiting.isEmpty)
-            let pushes = await libraryPushes(server).count
+        try await mac.setPinned(true, entry: entries[0].id)
+        await server.loseNextAnswer()
+        do {
             try await macSync.synchronize()
-            let later = await libraryPushes(server).count
-            XCTAssertEqual(later, pushes, "Nothing is merged or sent twice")
-            let reviews = try await conflictCount(mac)
-            XCTAssertEqual(reviews, 0)
-            let shown = try await pinned(mac)
-            XCTAssertEqual(shown, [entries[0].id])
-        }
+            XCTFail("The lost answer stops the synchronization")
+        } catch {}
+        // Reading the log brings the device's own change back.
+        let cursor = try await mac.cursor()
+        let page = try await server.changes(after: cursor, limit: 100, applied: nil)
+        try await mac.apply(page.changes, cursor: page.cursor)
+
+        let intents = try await mac.libraryChanges()
+        XCTAssertTrue(intents.isEmpty, "Reading its own change back clears what it asked for")
+        let waiting = try await mac.pending()
+        XCTAssertTrue(waiting.isEmpty)
+        let pushes = await libraryPushes(server).count
+        try await macSync.synchronize()
+        let later = await libraryPushes(server).count
+        XCTAssertEqual(later, pushes, "Nothing is merged or sent twice")
+        let reviews = try await conflictCount(mac)
+        XCTAssertEqual(reviews, 0)
+        let shown = try await pinned(mac)
+        XCTAssertEqual(shown, [entries[0].id])
     }
 
     // MARK: 4–5: newer and older versions
@@ -340,65 +337,7 @@ final class LibrarySyncTests: XCTestCase {
         XCTAssertEqual(reviews, 0)
     }
 
-    // MARK: 6–7: the capability gate and archives
-
-    func testNothingOfTheLibraryIsSentToAServerWithoutTheCapability() async throws {
-        let server = MemoryServer()
-        await server.acceptAnyKind(false)
-        let plain = try device("plain", protection: .plaintext)
-        let plainSync = SyncEngine(store: plain, server: server)
-        let (_, entries) = try await journalWithEntries(plain)
-        try await plain.setPinned(true, entry: entries[0].id)
-        let report = try await plainSync.synchronize()
-        let sent = await libraryPushes(server)
-        XCTAssertTrue(sent.isEmpty)
-        XCTAssertNil(report.problem, "Nothing has failed")
-        XCTAssertTrue(report.settled, "A pin the server can't take isn't waiting to sync")
-        let counted = try await (plain.pendingItemCount(), plain.hasPendingChanges())
-        XCTAssertEqual(counted.0, 0)
-        XCTAssertFalse(counted.1)
-        let state = try await plain.librarySyncState()
-        XCTAssertTrue(state.waitingForServer)
-
-        // Turning on encryption sends every record again; still nothing of the library.
-        await server.restore(.init(), identity: "encrypted")
-        let newKey = try VaultCrypto.generateKey()
-        let copy = try await plain.reencryptedCopy(
-            to: root.appendingPathComponent("encrypted"), key: newKey, baseline: .restart)
-        addTeardownBlock { try? await copy.close() }
-        let copySync = SyncEngine(store: copy, server: server)
-        try await copySync.synchronize()
-        let afterCopy = await libraryPushes(server)
-        XCTAssertTrue(afterCopy.isEmpty)
-        let copied = try await copy.libraryArrangement().pinned
-        XCTAssertEqual(copied, [entries[0].id])
-
-        // A server that takes it, then is downgraded while a change is queued.
-        await server.acceptAnyKind(true)
-        let phone = try device("phone", key: newKey)
-        let phoneSync = SyncEngine(store: phone, server: server)
-        try await phoneSync.synchronize()
-        try await phone.setPinned(true, entry: entries[1].id)
-        await server.acceptAnyKind(false)
-        let downgraded = try await phoneSync.synchronize()
-        XCTAssertNil(downgraded.problem)
-        XCTAssertTrue(downgraded.settled)
-        let stillNone = await libraryPushes(server)
-        XCTAssertTrue(stillNone.isEmpty)
-
-        // Once the server takes it, both devices' changes made meanwhile converge.
-        // Synchronizations read the server's status again at least once a minute; Sync Now always does.
-        await server.acceptAnyKind(true)
-        for engine in [copySync, phoneSync, copySync, phoneSync, copySync] {
-            try await engine.synchronize(retryingRefused: true)
-        }
-        let onCopy = try await copy.libraryArrangement().pinned
-        let onPhone = try await pinned(phone)
-        XCTAssertEqual(onCopy, Set(entries.map(\.id)))
-        XCTAssertEqual(onPhone, Set(entries.map(\.id)))
-        let waitingState = try await phone.librarySyncState()
-        XCTAssertFalse(waitingState.waitingForServer)
-    }
+    // MARK: 6–7: archives
 
     func testUnsentPinsInARestoredArchiveReachTheServer() async throws {
         let mac = try device("mac")

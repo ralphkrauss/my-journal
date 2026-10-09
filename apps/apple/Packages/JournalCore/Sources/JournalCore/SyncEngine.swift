@@ -10,7 +10,7 @@ protocol SyncServer: Sendable {
     func downloadAttachment(_ id: UUID) async throws -> Data
     /// How the server stores journals, from its recovery format; nil when it can't say.
     func contentProtection() async throws -> ContentProtection?
-    /// Waits for the server's log to move past `position` (capability `sync-wait`). Throws only on cancellation.
+    /// Waits for the server's log to move past `position`. Throws only on cancellation.
     func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer
 }
 extension SyncServer {
@@ -44,8 +44,6 @@ public struct SyncReport: Sendable {
     public var quietMark: QuietMark?
     /// Where this device is in the server's log afterwards.
     public var position: QuietPosition?
-    /// The server holds waits for changes (capability `sync-wait`).
-    public var waitingSupported = false
     /// Conflicts this synchronization settled on its own (protocol/conflicts.md).
     public var resolvedConflicts: [ResolvedConflict] = []
 }
@@ -71,18 +69,6 @@ public actor SyncEngine {
     private var missingImages = Set<UUID>()
     private var checkedAllImages = false
     private var pageSize = 100
-    /// The server confirms it still has the change this device last read (capability `sync-continuity`).
-    private var confirmsContinuity = false
-    static let continuityFeature = "sync-continuity"
-    /// The server also confirms that change's payload (capability `sync-continuity-digest`).
-    private var confirmsDigest = false
-    static let continuityDigestFeature = "sync-continuity-digest"
-    /// The server answers a push with a short receipt when asked (capability `sync-short-receipt`).
-    private var shortReceipts = false
-    /// The server holds waits for changes (capability `sync-wait`).
-    static let waitFeature = "sync-wait"
-    /// The server takes records of any well-formed kind, such as the library record (capability `record-kinds`).
-    static let recordKindsFeature = "record-kinds"
     /// Queued records this synchronization left only because they wait for a retry time or for images.
     private var waitingRecords = Set<UUID>()
     private let now: @Sendable () -> Date
@@ -217,14 +203,15 @@ public actor SyncEngine {
         }
         return ready
     }
-    /// The server's status, refusing one that can't be synchronized with: not set up (reset), another protocol, or
-    /// not a journal server.
+    /// The server's status, refusing one that can't be synchronized with: not set up (reset), a newer protocol,
+    /// a server below protocol revision 1, or not a journal server. The refusal is a gate and nothing else: nothing
+    /// queued, no cursor, identity or credential changes, and the next status read of an updated server passes.
     private func checkedStatus() async throws -> ServerStatus {
         let status: ServerStatus
         do { status = try await server.status() } catch is DecodingError { throw SyncFailure(.notJournalServer) }
-        guard status.protocolVersion == 1 else {
-            throw SyncFailure(status.protocolVersion > 1 ? .appUpdateNeeded : .serverUpdateNeeded)
-        }
+        do { try status.requireCompatible() } catch ServerRefusal.appNeedsUpdate {
+            throw SyncFailure(.appUpdateNeeded)
+        } catch { throw SyncFailure(.serverUpdateNeeded) }
         guard status.initialized else { throw SyncFailure(.serverNotSetUp) }
         return status
     }
@@ -242,14 +229,11 @@ public actor SyncEngine {
     private func synchronizeOnce(_ request: Request, status: ServerStatus) async throws -> SyncReport {
         let retryingRefused = request.retryingRefused
         let serverID = status.serverId
-        confirmsContinuity = status.supports(Self.continuityFeature)
-        confirmsDigest = status.supports(Self.continuityDigestFeature)
-        shortReceipts = status.supports(ServerClient.shortReceiptFeature)
         waitingRecords = []
         var received = Set<UUID>()
         try await confirmSameProtection(serverID: serverID)
-        // Before anything is queued or read for sending: pins and journal order go only to a server that takes them.
-        try await store.updateLibrarySync(available: status.supports(Self.recordKindsFeature))
+        // Before anything is queued or read for sending: pins and journal order go to this server.
+        try await store.updateLibrarySync()
         if try await store.needsReconciliation(serverID: serverID) {
             try await reconcile(serverID: serverID)
             checkedAllImages = false
@@ -293,7 +277,6 @@ public actor SyncEngine {
         if let failure = uploads.failure ?? pushed.failure { throw failure }
         var report = SyncReport(problem: problem())
         report.imagesToDownload = missingImages.filter { !isWaiting($0) }.count
-        report.waitingSupported = status.supports(Self.waitFeature)
         // The last step before the gate is released: anything written after this read breaks the quiet mark.
         let facts = try await store.settledFacts()
         report.position = facts.position
@@ -317,11 +300,11 @@ public actor SyncEngine {
     /// Reads this many changes per page, for tests of page boundaries.
     func usePageSize(_ size: Int) { pageSize = max(1, size) }
     /// Forgets the status read last, so the next synchronization reads it again; after a failed wait, a server
-    /// that stopped offering a capability is noticed at once.
+    /// that fell below the protocol revision is noticed at once.
     public func forgetStatus() { statusRead = nil }
     /// Waits for the server's log to move past `position`. Throws only on cancellation.
     public func waitForChange(from position: QuietPosition) async throws -> WaitAnswer {
-        try await server.waitForChange(position, digest: confirmsDigest)
+        try await server.waitForChange(position, digest: true)
     }
     /// A library never synchronizes with a server that stores journals another way. When another device turned on
     /// encryption, the server took a new identity and kept this device's access only if it turned encryption on; a
@@ -373,7 +356,7 @@ public actor SyncEngine {
                 continue
             }
             do {
-                switch try await server.push(pending, serverID: serverID, shortReceipt: shortReceipts) {
+                switch try await server.push(pending, serverID: serverID, shortReceipt: true) {
                 case .accepted(let receipt):
                     // Every new change follows the ones already seen. An earlier position means the server lost
                     // changes this device saw, such as after restoring a copy of its data: compare everything.
@@ -381,8 +364,7 @@ public actor SyncEngine {
                         try await store.beginReconciliation(serverID: serverID)
                         throw ServerChanged()
                     }
-                    try await store.acknowledge(
-                        pending, receipt: receipt, readingOn: confirmsContinuity && confirmsDigest)
+                    try await store.acknowledge(pending, receipt: receipt, readingOn: true)
                 case .conflict(let remote):
                     if try await !store.adoptSameContent(pending, remote: remote) {
                         received.formUnion(try await store.recordConflict(remote))
@@ -513,7 +495,7 @@ public actor SyncEngine {
                 try Task.checkCancellation()
                 let result: ServerClient.PushResult
                 do {
-                    result = try await server.push(rename.change, serverID: serverID, shortReceipt: shortReceipts)
+                    result = try await server.push(rename.change, serverID: serverID, shortReceipt: true)
                 } catch {
                     // A rename that can't be sent now is worked out again at the next synchronization; everything
                     // else was already sent and read.
@@ -546,7 +528,6 @@ public actor SyncEngine {
     /// The newest change this device sent and the server accepted is confirmed too when it's past what was read, so
     /// a server that lost it and gave its revision to another device's version isn't written over.
     private func confirmSameLog(serverID: String?) async throws {
-        guard confirmsContinuity else { return }
         let position = try await store.syncPosition()
         if position.cursor > 0, let applied = position.applied {
             _ = try await changes(after: position.cursor, applied: applied, serverID: serverID, limit: 1)
@@ -562,10 +543,9 @@ public actor SyncEngine {
         async throws -> SyncPage
     {
         let page: SyncPage
-        var confirmed = confirmsContinuity && cursor > 0 ? applied : nil
-        if !confirmsDigest { confirmed?.digest = nil }
         do {
-            page = try await server.changes(after: cursor, limit: limit ?? pageSize, applied: confirmed)
+            page = try await server.changes(
+                after: cursor, limit: limit ?? pageSize, applied: cursor > 0 ? applied : nil)
         } catch let error as ResponseTooLarge {
             guard limit == nil, pageSize > 1 else { throw error }
             // Large records can make a full page bigger than this client reads; ask for fewer at a time.

@@ -24,13 +24,12 @@ final class ChangeWatcherTests: XCTestCase {
         return watcher.handle(event, at: now)
     }
     private func finished(
-        _ outcome: ChangeWatcher.Outcome = .settled, position: QuietPosition? = nil, retry: Duration? = nil,
-        supported: Bool = true
+        _ outcome: ChangeWatcher.Outcome = .settled, position: QuietPosition? = nil, retry: Duration? = nil
     ) -> ChangeWatcher.Event {
         .syncFinished(
             .init(
                 outcome: outcome, startedAt: now, finishedAt: now, mark: outcome == .settled ? mark : nil,
-                position: position ?? self.position, earliestRetry: retry, waitingSupported: supported))
+                position: position ?? self.position, earliestRetry: retry))
     }
     /// A settled synchronization, then the floor: the watcher starts a wait. Returns its ID.
     @discardableResult private func settleAndWait() -> Int {
@@ -46,13 +45,11 @@ final class ChangeWatcherTests: XCTestCase {
         return id
     }
 
-    func testWaitsOnlyAfterASettledSyncWithTheCapabilityWhileAllowed() {
+    func testWaitsOnlyAfterASettledSyncWhileAllowed() {
         send(.conditions(allowWaiting: true))
         send(finished(.unsettled))
         XCTAssertEqual(send(.tick, after: 3), [])
         XCTAssertFalse(watcher.ownsSchedule, "Something left to do: the app polls")
-        send(finished(supported: false))
-        XCTAssertEqual(send(.tick, after: 3), [])
         send(.conditions(allowWaiting: false))
         send(finished())
         XCTAssertEqual(send(.tick, after: 3), [], "Locked, stopped or a save failure")
@@ -271,8 +268,7 @@ final class ChangeWatcherTests: XCTestCase {
         send(
             .syncFinished(
                 .init(
-                    outcome: .settled, startedAt: earlier, finishedAt: now, mark: mark, position: position,
-                    waitingSupported: true)))
+                    outcome: .settled, startedAt: earlier, finishedAt: now, mark: mark, position: position)))
         XCTAssertFalse(watcher.ownsSchedule, "A sync of the previous library or connection doesn't arm waiting")
     }
 }

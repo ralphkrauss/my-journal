@@ -21,11 +21,6 @@ public enum CodeEntry {
         if code.count != 6 { return .length }
         return code.allSatisfy { setupAlphabet.contains($0) } ? nil : .characters
     }
-    /// An eight-character code shown by a server from before six-character codes.
-    public static func isOlderSetupCode(_ text: String) -> Bool {
-        let code = normalized(text)
-        return code.count == 8 && code.allSatisfy { setupAlphabet.contains($0) }
-    }
     public static func pairingCodeIsComplete(_ text: String) -> Bool {
         let code = normalized(text)
         return code.count == 9 && code.allSatisfy { $0.isASCII && $0.isNumber }

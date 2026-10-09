@@ -17,9 +17,7 @@ actor MergeServer: SyncServer {
     private var uploadsBeforeFailure: Int?
     private var refusingNextPush = false
 
-    func status() -> ServerStatus {
-        ServerStatus(protocolVersion: 1, initialized: true, features: [], serverId: identity)
-    }
+    func status() -> ServerStatus { .healthy(serverId: identity) }
     func changes(after position: Int64, limit: Int, applied: LoggedChange?) throws -> SyncPage {
         if failingPages > 0 {
             failingPages -= 1

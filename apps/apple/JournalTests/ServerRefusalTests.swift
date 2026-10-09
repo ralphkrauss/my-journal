@@ -74,19 +74,4 @@ final class ServerRefusalTests: XCTestCase {
         }
         XCTAssertEqual(failure as? ServerConnectionError, .invalidRecoveryCode)
     }
-
-    func testOnlyAServerWithoutCheckCodesIsReportedAsNeedingAnUpdate() async throws {
-        let key = PairingPrivateKey().publicKey.rawRepresentation
-        let current = try await refusing(400, code: "invalid_pairing_request")
-        let refused = await error {
-            _ = try await ServerClient(address: current.address).beginPairing(deviceName: "Mac", publicKey: key)
-        }
-        XCTAssertNotNil(refused)
-        XCTAssertNotEqual(refused as? PairingError, .serverOutdated)
-        let older = try await refusing(400, code: nil)
-        let outdated = await error {
-            _ = try await ServerClient(address: older.address).beginPairing(deviceName: "Mac", publicKey: key)
-        }
-        XCTAssertEqual(outdated as? PairingError, .serverOutdated)
-    }
 }

@@ -26,9 +26,7 @@ final class CodeEntryTests: XCTestCase {
 
     func testSetupCodeProblemsAreSpecific() {
         XCTAssertEqual(CodeEntry.setupCodeProblem("FPJ-S3"), .length)
-        XCTAssertEqual(CodeEntry.setupCodeProblem("FPJS-UR35"), .length, "An 8-character code from an older server")
-        XCTAssertTrue(CodeEntry.isOlderSetupCode("fpjs-ur35"))
-        XCTAssertFalse(CodeEntry.isOlderSetupCode("FPJS-UR30"))
+        XCTAssertEqual(CodeEntry.setupCodeProblem("FPJS-UR35"), .length, "Eight characters are no longer accepted")
         XCTAssertEqual(CodeEntry.setupCodeProblem("FPJ-S30"), .characters)
         XCTAssertEqual(CodeEntry.setupCodeProblem("FPJ-SÉ5"), .characters)
         XCTAssertTrue(CodeEntry.pairingCodeIsComplete("123 456 789"))

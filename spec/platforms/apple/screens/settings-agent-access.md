@@ -41,7 +41,7 @@ Order of the spec's Content section. The container is a `Form` with `.formStyle(
 3. **Connect an Agent** (`connectSection`, header `settings.agents.connect.header`). `connect` switches on the connection and `controller.phase`:
    - not connected: `settings.agents.connect.notConnected` and a `Button` `common.connectToServer`, which sets `controller.connecting` to present `ConnectionView` as a sheet;
    - `.loading` and nothing loaded yet: `connectionStatus` (a small `ProgressView` and `settings.agents.loading`);
-   - `.needsUpdate`: `settings.agents.connect.needsUpdate`;
+   - `.needsUpdate(ServerRefusal)`: the refusal's message, `messages.connection.serverNeedsUpdate` (a server below protocol revision 1) or `messages.connection.updateApp` (a newer wire major), from the status read `ServerAgentsController.read` makes with `ServerStatus.requireCompatible()`;
    - `.noAccess`: `settings.agents.connect.noAccess` and a button `common.reconnect` ("Reconnect…") that also presents `ConnectionView`, titled Reconnect;
    - `.addressUnavailable(reason)`: `settings.agents.connect.publicUrlRequired` when the server reports that a public address is required, else `settings.agents.connect.httpsRequired`, plus a `Link` `settings.agents.connect.guide`;
    - `.unreachable`: `settings.agents.connect.unreachable` and `common.tryAgain` (`controller.load`);
