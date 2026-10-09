@@ -209,34 +209,53 @@ extension AppModel {
     }
 }
 
-/// Removes export copies left behind when the save dialog was cancelled or the app quit during an export: packages
-/// named `export-<UUID>.journalarchive` and Markdown folders named `markdown-<UUID>` in the data folder, and the save
-/// dialog's `Journal Archive <yyyy-MM-dd>.journalarchive` and `Journal Markdown <yyyy-MM-dd>` copies in the app's own
-/// temporary folder. Nothing else is touched.
+/// Removes what an export or a restore left behind when the save dialog was cancelled or the app quit meanwhile:
+/// - in the data folder, the staged archive `export-<UUID>.journalarchive` (a file; a package, a folder, from earlier
+///   builds), Markdown folders named `markdown-<UUID>`, and, when the library folders are known, a restore's staging
+///   folder `import-<UUID>` that no configuration names;
+/// - in the app's own temporary folder, the save dialog's `Journal Archive <yyyy-MM-dd>.journalarchive` and
+///   `Journal Markdown <yyyy-MM-dd>` copies, and the export's database copy `export-<UUID>.sqlite`.
+/// Links are never followed or removed, and nothing else is touched.
 enum ArchiveExportLeftovers {
     @MainActor private static var removed = false
     /// Export as Markdown's folder while it is prepared (MarkdownExportOperations.swift).
     static let markdownPrefix = "markdown-"
+    /// A restore or import extracts here (`AppModel.inspectArchive`). It becomes the library's folder when the archive is
+    /// installed, so a folder a configuration names is never leftover.
+    static let restoreStagingPrefix = "import-"
 
-    /// Once per launch, before any window can start an export.
-    @MainActor static func removeAtLaunch(dataDirectory: URL) async {
+    private enum Kind { case folder, file }
+
+    /// Once per launch, before any window can start an export. `libraryFolders` are the folders of the data folder that
+    /// belong to a library (`AppModel.libraryFolderNames`); nil while that can't be told, which leaves restore staging
+    /// alone.
+    @MainActor static func removeAtLaunch(dataDirectory: URL, libraryFolders: Set<String>?) async {
         guard !removed else { return }
         removed = true
         let temporary = FileManager.default.temporaryDirectory
         await Task.detached(priority: .utility) {
-            remove(dataDirectory: dataDirectory, temporaryDirectory: temporary)
+            remove(dataDirectory: dataDirectory, temporaryDirectory: temporary, libraryFolders: libraryFolders)
         }.value
     }
 
-    static func remove(dataDirectory: URL, temporaryDirectory: URL) {
-        removePackages(in: dataDirectory, where: isStagedExport)
-        removePackages(in: temporaryDirectory, where: isDialogCopy)
+    static func remove(dataDirectory: URL, temporaryDirectory: URL, libraryFolders: Set<String>? = nil) {
+        removeItems(in: dataDirectory, of: .folder, where: isStagedExport)
+        removeItems(in: dataDirectory, of: .file, where: isStagedArchive)
+        removeItems(in: temporaryDirectory, of: .folder, where: isDialogCopy)
+        removeItems(in: temporaryDirectory, of: .file) { isDialogArchive($0) || isSnapshotDatabase($0) }
+        if let libraryFolders {
+            removeItems(in: dataDirectory, of: .folder) { isRestoreStaging($0) && !libraryFolders.contains($0) }
+        }
     }
 
     static func isStagedExport(_ name: String) -> Bool {
         if name.hasPrefix(markdownPrefix) {
             return UUID(uuidString: String(name.dropFirst(markdownPrefix.count))) != nil
         }
+        return isStagedArchive(name)
+    }
+
+    static func isStagedArchive(_ name: String) -> Bool {
         guard name.hasPrefix("export-"), name.hasSuffix(".journalarchive") else { return false }
         let identifier = name.dropFirst("export-".count).dropLast(".journalarchive".count)
         return UUID(uuidString: String(identifier)) != nil
@@ -246,8 +265,23 @@ enum ArchiveExportLeftovers {
         if name.hasPrefix("Journal Markdown ") {
             return isDate(name.dropFirst("Journal Markdown ".count))
         }
+        return isDialogArchive(name)
+    }
+
+    static func isDialogArchive(_ name: String) -> Bool {
         guard name.hasPrefix("Journal Archive "), name.hasSuffix(".journalarchive") else { return false }
         return isDate(name.dropFirst("Journal Archive ".count).dropLast(".journalarchive".count))
+    }
+
+    /// The copy of the database an archive export makes in the temporary folder (`FileArchive.export`).
+    static func isSnapshotDatabase(_ name: String) -> Bool {
+        guard name.hasPrefix("export-"), name.hasSuffix(".sqlite") else { return false }
+        return UUID(uuidString: String(name.dropFirst("export-".count).dropLast(".sqlite".count))) != nil
+    }
+
+    static func isRestoreStaging(_ name: String) -> Bool {
+        name.hasPrefix(restoreStagingPrefix)
+            && UUID(uuidString: String(name.dropFirst(restoreStagingPrefix.count))) != nil
     }
 
     private static func isDate(_ date: Substring) -> Bool {
@@ -257,17 +291,38 @@ enum ArchiveExportLeftovers {
         return formatter.date(from: String(date)).map { formatter.string(from: $0) == date } ?? false
     }
 
-    /// Only packages (folders) directly inside `folder` whose names match; never files, links or anything deeper.
-    private static func removePackages(in folder: URL, where matches: (String) -> Bool) {
+    /// Only items of one kind directly inside `folder` whose names match; never links or anything deeper.
+    private static func removeItems(in folder: URL, of kind: Kind, where matches: (String) -> Bool) {
         let manager = FileManager.default
         guard
             let items = try? manager.contentsOfDirectory(
-                at: folder, includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                at: folder, includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey])
         else { return }
         for item in items where matches(item.lastPathComponent) {
-            let values = try? item.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
-            guard values?.isDirectory == true, values?.isSymbolicLink != true else { continue }
+            let values = try? item.resourceValues(forKeys: [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey])
+            guard values?.isSymbolicLink != true else { continue }
+            switch kind {
+            case .folder: guard values?.isDirectory == true else { continue }
+            case .file: guard values?.isRegularFile == true else { continue }
+            }
             try? manager.removeItem(at: item)
         }
+    }
+}
+
+extension AppModel {
+    /// The folders of the data folder that a library the configuration names uses: the current one, an unfinished
+    /// encryption copy and the earlier libraries waiting to be removed. nil while the settings can't be read, because
+    /// then no folder can be called leftover.
+    var libraryFolderNames: Set<String>? {
+        guard libraryProblem != .settingsUnread else { return nil }
+        guard let configuration else { return [] }
+        var names = Set<String>()
+        if let folder = configuration.storageFolder { names.insert(folder) }
+        if let folder = configuration.encryptionUpgrade?.storageFolder { names.insert(folder) }
+        for library in configuration.supersededLibraries ?? [] {
+            if let folder = library.storageFolder { names.insert(folder) }
+        }
+        return names
     }
 }

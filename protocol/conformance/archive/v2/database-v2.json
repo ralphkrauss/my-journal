@@ -1,0 +1,1812 @@
+{
+  "cases" : [
+    {
+      "expect" : "accept",
+      "file" : "database/foreign.sqlite",
+      "name" : "foreign",
+      "note" : "An empty library written by Python's sqlite3 in its own style: quoted identifiers, lower-case types, table constraints, NOT NULL on the primary keys."
+    },
+    {
+      "expect" : "accept",
+      "file" : "database/foreign-older.sqlite",
+      "name" : "foreign-older",
+      "note" : "Only v1, sync-reconciliation and history-record-index are recorded and created: a reader applies the other two migrations."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-trigger.sqlite",
+      "name" : "foreign-trigger",
+      "note" : "A trigger the migrations do not create."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-view.sqlite",
+      "name" : "foreign-view",
+      "note" : "A view the migrations do not create."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-extra-table.sqlite",
+      "name" : "foreign-extra-table",
+      "note" : "A table the migrations do not create."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-missing-column.sqlite",
+      "name" : "foreign-missing-column",
+      "note" : "records has no dirty column."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-nullable-column.sqlite",
+      "name" : "foreign-nullable-column",
+      "note" : "records.kind may be NULL."
+    },
+    {
+      "expect" : "newer",
+      "file" : "database/foreign-unknown-migration.sqlite",
+      "name" : "foreign-unknown-migration",
+      "note" : "grdb_migrations lists a migration this version does not know: written by a newer version."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-migration-objects-missing.sqlite",
+      "name" : "foreign-migration-objects-missing",
+      "note" : "server-versions is recorded but its table was never created."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-migrations-out-of-order.sqlite",
+      "name" : "foreign-migrations-out-of-order",
+      "note" : "history-checkpoints is recorded without the migrations before it."
+    },
+    {
+      "expect" : "damaged",
+      "file" : "database/foreign-wal.sqlite",
+      "name" : "foreign-wal",
+      "note" : "File format versions 2 and 2 (write-ahead logging): not a one-file snapshot."
+    }
+  ],
+  "comparison" : "Tables, columns (name, declared type in upper case, NOT NULL, default without outer parentheses, primary key position) and indexes (CREATE INDEX name, uniqueness, partial, key columns) are compared; the text of CREATE statements is not. A primary key column counts as NOT NULL. grdb_migrations is compared by its identifier column only. sqlite_sequence is ignored. Triggers, views and any other table or index are refused.",
+  "corpusVersion" : 1,
+  "migrations" : [
+    "v1",
+    "sync-reconciliation",
+    "history-record-index",
+    "history-checkpoints",
+    "server-versions"
+  ],
+  "purpose" : "The structure of the library database after each migration (protocol/archive.md, Database), and databases written by something other than GRDB that a reader accepts or refuses before it opens them. See README.md in this folder.",
+  "structureAfter" : {
+    "1" : {
+      "attachments" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "uploaded",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "conflicts" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "grdb_migrations" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "identifier",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "identifier"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "history" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "saved",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+
+        ]
+      },
+      "outbox" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "base",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "operation",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "operation"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          },
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "records" : {
+        "columns" : [
+          {
+            "default" : "1",
+            "name" : "dirty",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "settings" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "key",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "value",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "BLOB"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "key"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      }
+    },
+    "2" : {
+      "attachments" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "uploaded",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "conflicts" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "grdb_migrations" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "identifier",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "identifier"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "history" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "saved",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+
+        ]
+      },
+      "outbox" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "base",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "operation",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "operation"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          },
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "reconcile_heads" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "cursor",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "seen_payload",
+            "notNull" : false,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "records" : {
+        "columns" : [
+          {
+            "default" : "1",
+            "name" : "dirty",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "settings" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "key",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "value",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "BLOB"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "key"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      }
+    },
+    "3" : {
+      "attachments" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "uploaded",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "conflicts" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "grdb_migrations" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "identifier",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "identifier"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "history" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "saved",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : "history_record",
+            "partial" : false,
+            "unique" : false
+          }
+        ]
+      },
+      "outbox" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "base",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "operation",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "operation"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          },
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "reconcile_heads" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "cursor",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "seen_payload",
+            "notNull" : false,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "records" : {
+        "columns" : [
+          {
+            "default" : "1",
+            "name" : "dirty",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "settings" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "key",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "value",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "BLOB"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "key"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      }
+    },
+    "4" : {
+      "attachments" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "uploaded",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "conflicts" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "grdb_migrations" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "identifier",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "identifier"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "history" : {
+        "columns" : [
+          {
+            "default" : "0",
+            "name" : "checkpoint",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "saved",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : "history_record",
+            "partial" : false,
+            "unique" : false
+          }
+        ]
+      },
+      "outbox" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "base",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "operation",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "operation"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          },
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "reconcile_heads" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "cursor",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "seen_payload",
+            "notNull" : false,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "records" : {
+        "columns" : [
+          {
+            "default" : "1",
+            "name" : "dirty",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "settings" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "key",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "value",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "BLOB"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "key"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      }
+    },
+    "5" : {
+      "attachments" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "uploaded",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "conflicts" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "grdb_migrations" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "identifier",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "identifier"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "history" : {
+        "columns" : [
+          {
+            "default" : "0",
+            "name" : "checkpoint",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "saved",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : "history_record",
+            "partial" : false,
+            "unique" : false
+          }
+        ]
+      },
+      "outbox" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "base",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "operation",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "operation"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          },
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "reconcile_heads" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "cursor",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "device",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "modified",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "seen_payload",
+            "notNull" : false,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "records" : {
+        "columns" : [
+          {
+            "default" : "1",
+            "name" : "dirty",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          },
+          {
+            "default" : null,
+            "name" : "id",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "kind",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "payload",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : "0",
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "id"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "server_versions" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "digest",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "record",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "revision",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "INTEGER"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "record"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      },
+      "settings" : {
+        "columns" : [
+          {
+            "default" : null,
+            "name" : "key",
+            "notNull" : true,
+            "primaryKey" : 1,
+            "type" : "TEXT"
+          },
+          {
+            "default" : null,
+            "name" : "value",
+            "notNull" : true,
+            "primaryKey" : 0,
+            "type" : "BLOB"
+          }
+        ],
+        "indexes" : [
+          {
+            "columns" : [
+              "key"
+            ],
+            "name" : null,
+            "partial" : false,
+            "unique" : true
+          }
+        ]
+      }
+    }
+  }
+}

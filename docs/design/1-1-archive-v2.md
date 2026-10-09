@@ -631,3 +631,19 @@ Owner list set to exactly three (section 11): the ladder with the exact strings 
 - **File-type ladder:** all three rungs approved as recommended, including rung (c) `org.privatejournal.archive.file` with the `journalbackup` extension if the spike needs it.
 - **Unlisted files:** ignored, as recommended.
 - **`grdb_migrations`:** normative, as recommended; the section 8.3 conformance fixes ship as separate changes.
+
+## Implementation notes (phase 8a, 2026-10-09)
+
+The container, the reader, the writer, the database inspection, the protocol text and the fixtures are built in JournalCore and `protocol/`; the app, its file types and its views are untouched (phase 8b). Where the build differs from the text above:
+
+| Topic | Built | Why |
+| --- | --- | --- |
+| Inflate | System zlib `inflate` through the small C target `CJournalArchive` (which also holds the CRC-32 and SQLite's defensive-mode call, a variadic function Swift cannot call), not the `Compression` framework | The record asks that a deflate stream end exactly at its compressed size. `Compression` consumes bytes after the stream's end and reports them as used, so the container case `deflate-trailing-bytes` was accepted; zlib reports exactly how much of the input a stream used |
+| Recorded migrations | Must be a prefix of the five identifiers, in order | A reader applies the unrecorded ones in order; recorded ones with a gap cannot be told from a damaged file |
+| Structure comparison | A primary key column counts as NOT NULL; `grdb_migrations` is compared by its column and primary key; `sqlite_sequence` is ignored; foreign keys and CHECK constraints are not compared | `TEXT PRIMARY KEY` is nullable in SQLite and an EF Core writer adds NOT NULL; the record lists tables, columns, indexes and uniqueness only |
+| Container cases | 97 generated cases and 5 real-tool samples instead of about 50 | One case per rule of 3.2, 4.2 and 5.2, so each normative sentence has a fixture |
+| Database cases | Eleven files (the record's five negatives plus a view, an extra table, a nullable column, migrations out of order, and a library with only the first three migrations recorded) | The prefix rule and the NOT NULL rule need a positive and a negative case each |
+| Independent tools | A script (`Tests/check-archive-with-tools.sh`) run by a normal test on the writer's output, ordinary, forced ZIP64 and with small chunks; the 4.5 GiB entry was written and read back by hand once with the writer, the reader, `unzip` and Python | The check is cheap, so it runs in the core lane instead of only before a release |
+| Temporary database | `export-<uuid>.sqlite` in the temporary folder, removed by the export and, after a kill, by the launch cleaner | The record does not say where the SQLite backup goes |
+| Launch cleaner | Removes `import-<uuid>` folders only when the settings were read and no configuration names the folder (current library, unfinished encryption copy, superseded libraries) | A library restored from an archive keeps its `import-` folder, and a superseded one is waiting to be removed by its own rule |
+| Directory archive | Read with the same strict JSON rules and limits; the directory writer stays until the app exports file archives | The app still calls it |

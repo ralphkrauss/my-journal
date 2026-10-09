@@ -1,0 +1,1856 @@
+{
+  "cases": [
+    {
+      "expect": "accept",
+      "file": "container/stored.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "stored",
+      "note": "Stored entries, no extras: the baseline."
+    },
+    {
+      "expect": "accept",
+      "file": "container/deflated.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "deflated",
+      "note": "Every entry deflated (method 8)."
+    },
+    {
+      "expect": "accept",
+      "file": "container/data-descriptors.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "data-descriptors",
+      "note": "Flag bit 3: sizes and CRC-32 only in the descriptor and the central directory."
+    },
+    {
+      "expect": "accept",
+      "file": "container/local-bit3-nonzero-sizes.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-bit3-nonzero-sizes",
+      "note": "Flag bit 3 with non-zero, wrong local sizes and CRC-32: the local values are ignored."
+    },
+    {
+      "expect": "accept",
+      "file": "container/local-sizes-ignored.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-sizes-ignored",
+      "note": "No flag bit 3, local sizes and CRC-32 disagree with the central directory: still ignored."
+    },
+    {
+      "expect": "accept",
+      "file": "container/local-zip64-extra.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-zip64-extra",
+      "note": "Local headers carry saturated sizes and a ZIP64 extra field; the central sizes are not saturated."
+    },
+    {
+      "expect": "accept",
+      "file": "container/zip64-small.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-small",
+      "note": "ZIP64 structures on a small archive: saturated central fields and extra fields, ZIP64 end records."
+    },
+    {
+      "expect": "accept",
+      "file": "container/zip64-end-records-unsaturated.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-end-records-unsaturated",
+      "note": "ZIP64 end records present although the ordinary record is not saturated (and agrees)."
+    },
+    {
+      "expect": "accept",
+      "file": "container/unknown-extra-fields-and-comment.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "unknown-extra-fields-and-comment",
+      "note": "Unknown extra fields and an archive comment are ignored."
+    },
+    {
+      "expect": "accept",
+      "file": "container/unlisted-noise.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "unlisted-noise",
+      "note": "Unlisted entries, including an unlisted UUID-named file once and one with an unknown flag and method, are ignored."
+    },
+    {
+      "expect": "accept",
+      "file": "container/entry-order.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "entry-order",
+      "note": "archive.json first and the database last: the order is not part of the contract."
+    },
+    {
+      "expect": "accept",
+      "file": "container/no-images.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "no-images",
+      "note": "An empty attachments map and no image entries."
+    },
+    {
+      "expect": "accept",
+      "file": "container/zero-length-stored.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zero-length-stored",
+      "note": "A zero-length listed entry, stored."
+    },
+    {
+      "expect": "accept",
+      "file": "container/zero-length-deflated.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zero-length-deflated",
+      "note": "A zero-length listed entry as the two-byte empty deflate stream."
+    },
+    {
+      "expect": "accept",
+      "file": "container/local-extra-length-differs.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-extra-length-differs",
+      "note": "The local extra field is longer or shorter than the central one: the data starts after the local lengths."
+    },
+    {
+      "expect": "accept",
+      "file": "container/names-that-only-look-like-profile-names.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "names-that-only-look-like-profile-names",
+      "note": "Names that differ from a profile name by case, a backslash, '..' or NUL are just unlisted names."
+    },
+    {
+      "expect": "accept",
+      "file": "container/deflate-about-6x.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 280,
+          "sha256": "9cf12c1bdb967dc791388d7d5f5ab6d2e54265bcf6d63c51847e42d766b02816"
+        }
+      },
+      "name": "deflate-about-6x",
+      "note": "A deflated database that expands about 6 times: below the cap of 8."
+    },
+    {
+      "expect": "accept",
+      "file": "container/deflate-exactly-8x.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 48,
+          "sha256": "17b0761f87b081d5cf10757ccc89f12be355c70e2e29df288b65b30710dcbcd1"
+        }
+      },
+      "name": "deflate-exactly-8x",
+      "note": "Uncompressed size equals 8 times the compressed size: allowed."
+    },
+    {
+      "expect": "accept",
+      "file": "container/manifest-unknown-members.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "comment": "unknown members are ignored",
+        "database": {
+          "bytes": 640,
+          "note": {
+            "future": true
+          },
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "manifest-unknown-members",
+      "note": "Unknown members of the manifest are ignored."
+    },
+    {
+      "expect": "accept",
+      "file": "container/header-valid.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-valid",
+      "note": "A header within the envelope bounds: salt of 16 bytes, 100,000 iterations, recovery format 1.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/random-bytes.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "random-bytes",
+      "note": "Not a ZIP file at all."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/truncated.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "truncated",
+      "note": "The end of the file is cut off: no end record."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/empty-file.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "empty-file",
+      "note": "Zero bytes."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/directory-offset-out-of-range.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "directory-offset-out-of-range",
+      "note": "The end record points the central directory beyond the file."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/directory-size-too-large.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "directory-size-too-large",
+      "note": "The end record claims a larger central directory than the file holds before it."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/comment-length-mismatch.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "comment-length-mismatch",
+      "note": "The comment length in the end record does not reach the end of the file."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/trailing-bytes-after-end-record.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "trailing-bytes-after-end-record",
+      "note": "Bytes after a complete end record: no end record reaches the end of the file."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/two-end-records.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "two-end-records",
+      "note": "A second, internally consistent end record forged inside the comment: two candidates reach the end of the file."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/entry-count-too-small.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "entry-count-too-small",
+      "note": "The end record counts fewer entries than the central directory holds."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/entry-count-too-large.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "entry-count-too-large",
+      "note": "The end record counts more entries than the central directory holds."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/nonzero-disk-number.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "nonzero-disk-number",
+      "note": "The disk number of the end record is 1."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/nonzero-directory-disk.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "nonzero-directory-disk",
+      "note": "The disk holding the central directory is 1."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/zip64-and-ordinary-disagree.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-and-ordinary-disagree",
+      "note": "ZIP64 and ordinary end records give different entry counts, and the ordinary one is not saturated."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/zip64-locator-without-record.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-locator-without-record",
+      "note": "A ZIP64 locator that points at no ZIP64 end record."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/saturated-end-without-zip64.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "saturated-end-without-zip64",
+      "note": "The end record is saturated but there are no ZIP64 end records."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/compressed-size-near-2-64.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "compressed-size-near-2-64",
+      "note": "A listed entry's compressed size is near 2^64: adding it to the offset overflows."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/offset-near-2-64.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "offset-near-2-64",
+      "note": "A listed entry's local header offset is near 2^64."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/zip64-saturated-without-extra-value.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-saturated-without-extra-value",
+      "note": "Sizes and offset are saturated but the ZIP64 extra field is empty."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/zip64-extra-too-short.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "zip64-extra-too-short",
+      "note": "The ZIP64 extra field lacks the offset the saturated field asks for."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/central-extra-past-directory.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "central-extra-past-directory",
+      "note": "A central directory entry whose extra field runs past the end of the directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/central-comment-past-directory.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "central-comment-past-directory",
+      "note": "A central directory entry whose comment runs past the end of the directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/central-name-past-directory.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "central-name-past-directory",
+      "note": "A central directory entry whose name runs past the end of the directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/compressed-size-larger-than-file.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 500000,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "compressed-size-larger-than-file",
+      "note": "A listed compressed size larger than the file."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/duplicate-database.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "duplicate-database",
+      "note": "Two entries named journal.sqlite."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/duplicate-header.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "duplicate-header",
+      "note": "Two entries named archive.json."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/duplicate-unlisted-uuid.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "duplicate-unlisted-uuid",
+      "note": "Two entries with the same UUID name that the manifest does not list: refused, so readers that keep only listed names cannot disagree."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/local-name-differs.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-name-differs",
+      "note": "The local header repeats a different name than the central directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/local-method-differs.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-method-differs",
+      "note": "The local header says deflate, the central directory says stored."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/local-header-signature.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "local-header-signature",
+      "note": "A listed entry whose offset does not point at a local header."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/overlapping-listed-entries.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          }
+        },
+        "database": {
+          "bytes": 188,
+          "sha256": "6df7c6ec7d62465fb54070a14dc3dc27bb94f8849e9df5877ab0407982629eea"
+        }
+      },
+      "name": "overlapping-listed-entries",
+      "note": "Two listed entries whose data ranges overlap: the second lies inside the first's data."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-overlaps-listed-entry.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          }
+        },
+        "database": {
+          "bytes": 153,
+          "sha256": "e44ee65dc68321d382a5c13a9a1c7f44098bc3c289817e99a56272d4af961bd1"
+        }
+      },
+      "name": "header-overlaps-listed-entry",
+      "note": "archive.json lies inside a listed entry's data."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/data-covers-central-directory.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 550,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "data-covers-central-directory",
+      "note": "A listed entry whose data range reaches over the central directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/encrypted-flag.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "encrypted-flag",
+      "note": "General-purpose flag bit 0 (encrypted) on a listed entry."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/strong-encryption-flag.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "strong-encryption-flag",
+      "note": "Flag bit 6 (strong encryption) on a listed entry."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/method-12.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "method-12",
+      "note": "Compression method 12 (bzip2) on a listed entry."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/method-99.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "method-99",
+      "note": "Method 99 (AES encryption) on a listed entry."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/central-directory-encryption-flag.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "central-directory-encryption-flag",
+      "note": "Flag bit 13 (central directory encryption) on any entry refuses the archive."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/listed-entry-missing.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "11111111-2222-4333-8444-555555555555": {
+            "bytes": 6,
+            "sha256": "5ad38304b535c2987dbd24657c1a11b884984ff600d9f389deb0d4e634fee792"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "listed-entry-missing",
+      "note": "The manifest lists an image that has no entry."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/size-differs-from-manifest.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 71,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "size-differs-from-manifest",
+      "note": "The manifest says a different size than the central directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/stored-size-mismatch.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "stored-size-mismatch",
+      "note": "A stored entry whose compressed size is not its size."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/deflate-compressed-size-zero.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "deflate-compressed-size-zero",
+      "note": "Method 8 with a compressed size of 0."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/stale-crc.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "stale-crc",
+      "note": "The CRC-32 of a listed entry is wrong in the local header and the central directory."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/sha256-differs.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "sha256-differs",
+      "note": "The data and its CRC-32 are consistent, but the manifest hash is of other data."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/deflate-expands-past-declared-size.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 60,
+            "sha256": "c5fb235befd875b915fa6c4702a7abb93cacf3d7c414b71cbeff9e1b0a9fbd41"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "deflate-expands-past-declared-size",
+      "note": "A deflate stream that would produce 800 bytes for a declared size of 60: the reader stops at the declared size."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/deflate-ends-early.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 40,
+            "sha256": "0bd73af61dd00a2be7bdcdff73d6efb3a88ef386ee53fe3edcce98813c1387d8"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "deflate-ends-early",
+      "note": "A deflate stream that ends after 20 of the 40 declared bytes."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/deflate-trailing-bytes.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 60,
+            "sha256": "31c5ab6111f1d6aa13c2c4e92bb3c0f7c76b61b42d141af1e846eb7f6586a51c"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "deflate-trailing-bytes",
+      "note": "Bytes after the end of the deflate stream, still inside the compressed size."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/deflate-just-over-8x.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 49,
+          "sha256": "78877fa898f0b4c45c9c33ae941e40617ad7c8657a307db62bc5691f92f4f60e"
+        }
+      },
+      "name": "deflate-just-over-8x",
+      "note": "Uncompressed size is one byte more than 8 times the compressed size."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/deflate-highly-compressed.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 5000,
+            "sha256": "e652f948731d411820e17c288f224c37850a208745477429614815862039e302"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "deflate-highly-compressed",
+      "note": "A stream that expands 5000 bytes from about 20: well over 8 times."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-larger-than-16-mib.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-larger-than-16-mib",
+      "note": "archive.json declares more than 16 MiB."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/central-offset-not-a-local-header.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "central-offset-not-a-local-header",
+      "note": "The central directory points a listed entry at an offset that holds no local header."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-duplicate-member.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"bytes\":1},\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-duplicate-member",
+      "note": "A repeated member name in the manifest."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-duplicate-attachment-key.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-duplicate-attachment-key",
+      "note": "The same image key twice."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-bytes-float.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70.0},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-bytes-float",
+      "note": "A size written as 70.0."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-bytes-exponent.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":7e1},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-bytes-exponent",
+      "note": "A size written as 7e1."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-bytes-negative.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":-70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-bytes-negative",
+      "note": "A negative size."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-bytes-above-2-53.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":9007199254740992},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-bytes-above-2-53",
+      "note": "A size above 2^53 - 1."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-bytes-leading-zero.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":070},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-bytes-leading-zero",
+      "note": "A size with a leading zero."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-key-uppercase.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89AB-4CDE-8FAB-0123456789AB\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-key-uppercase",
+      "note": "An upper-case UUID key."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-key-braces.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"{01234567-89ab-4cde-8fab-0123456789ab}\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-key-braces",
+      "note": "A key in braces."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-key-no-hyphens.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"0123456789ab4cde8fab0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-key-no-hyphens",
+      "note": "A key without hyphens."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-key-traversal.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"../x\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-key-traversal",
+      "note": "A key that names a file outside the folder."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-key-path.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"attachments/01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-key-path",
+      "note": "A key with a path."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-hash-uppercase.zip",
+      "manifestText": "{\"database\":{\"sha256\":\"34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836\",\"bytes\":640},\"attachments\":{\"01234567-89ab-4cde-8fab-0123456789ab\":{\"sha256\":\"FFCC9DA5FEECE32BA128EDA9C54432ADEBADA97A17C46B47D5E0C261BC62111A\",\"bytes\":70},\"fedcba98-7654-4321-8fed-cba987654321\":{\"sha256\":\"5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248\",\"bytes\":150}}}",
+      "name": "manifest-hash-uppercase",
+      "note": "A hash in upper-case hex."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/manifest-not-json.zip",
+      "manifestText": "{not json",
+      "name": "manifest-not-json",
+      "note": "Text that is not JSON."
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-duplicate-recovery.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-duplicate-recovery",
+      "note": "A repeated recovery member in archive.json.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-iterations-below-minimum.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-iterations-below-minimum",
+      "note": "99,999 iterations: outside the bounds a reader enforces before it asks for a password.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-iterations-above-maximum.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-iterations-above-maximum",
+      "note": "2,000,001 iterations.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-salt-15-bytes.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-salt-15-bytes",
+      "note": "A salt of 15 bytes.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-recovery-format-3.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-recovery-format-3",
+      "note": "A file archive is always encrypted: recovery format 3 is damage.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-recovery-format-4.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-recovery-format-4",
+      "note": "Recovery format 4 (no password).",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-without-archive-version.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-without-archive-version",
+      "note": "No archiveVersion member: not a file archive.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-archive-version-1.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-archive-version-1",
+      "note": "archiveVersion 1 is not defined.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-archive-version-float.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-archive-version-float",
+      "note": "archiveVersion written as 2.0.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-bom.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-bom",
+      "note": "A byte order mark in front of the JSON.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-trailing-comma.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-trailing-comma",
+      "note": "A trailing comma.",
+      "parseHeader": true
+    },
+    {
+      "expect": "damaged",
+      "file": "container/header-manifest-not-base64.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-manifest-not-base64",
+      "note": "The manifest member is not base64.",
+      "parseHeader": true
+    },
+    {
+      "expect": "newer",
+      "file": "container/header-newer-archive-version.zip",
+      "manifest": {
+        "attachments": {},
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "header-newer-archive-version",
+      "note": "archiveVersion 3: a newer archive. Reported as newer, not damaged.",
+      "parseHeader": true
+    },
+    {
+      "expect": "accept",
+      "file": "container/real-ditto.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "real-ditto",
+      "note": "Written by a real tool (see README.md in this folder)."
+    },
+    {
+      "expect": "accept",
+      "file": "container/real-dotnet-nonseekable.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "real-dotnet-nonseekable",
+      "note": "Written by a real tool (see README.md in this folder)."
+    },
+    {
+      "expect": "accept",
+      "file": "container/real-dotnet-seekable.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "real-dotnet-seekable",
+      "note": "Written by a real tool (see README.md in this folder)."
+    },
+    {
+      "expect": "accept",
+      "file": "container/real-info-zip.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "real-info-zip",
+      "note": "Written by a real tool (see README.md in this folder)."
+    },
+    {
+      "expect": "accept",
+      "file": "container/real-python-zipfile.zip",
+      "manifest": {
+        "attachments": {
+          "01234567-89ab-4cde-8fab-0123456789ab": {
+            "bytes": 70,
+            "sha256": "ffcc9da5feece32ba128eda9c54432adebada97a17c46b47d5e0c261bc62111a"
+          },
+          "fedcba98-7654-4321-8fed-cba987654321": {
+            "bytes": 150,
+            "sha256": "5b94885f458a70dfe48daf7c6d06f31aacb8c75e5e28121d065a284742ce4248"
+          }
+        },
+        "database": {
+          "bytes": 640,
+          "sha256": "34efbb47f54ed4c5aacff8f3452c8619a22de1007aed2d4e70c97e51b3329836"
+        }
+      },
+      "name": "real-python-zipfile",
+      "note": "Written by a real tool (see README.md in this folder)."
+    }
+  ],
+  "corpusVersion": 1,
+  "outcomes": "accept: every listed entry extracts and matches the manifest. damaged and newer are the message classes of protocol/archive.md (Failures): compare the class, not the reason.",
+  "purpose": "Archives that exercise the ZIP container layer of protocol/archive.md (the file archive): structure, entry validation, and extraction of the entries a given manifest lists. See README.md in this folder."
+}

@@ -237,9 +237,9 @@ extension AppModel {
         list.names += ((try? manager.contentsOfDirectory(atPath: directory.path)) ?? []).filter(LocalErasure.isMovable)
         let temporary = manager.temporaryDirectory
         list.temporaryFiles =
-            ((try? manager.contentsOfDirectory(atPath: temporary.path)) ?? []).filter(
-                ArchiveExportLeftovers.isDialogCopy
-            )
+            ((try? manager.contentsOfDirectory(atPath: temporary.path)) ?? []).filter {
+                ArchiveExportLeftovers.isDialogCopy($0) || ArchiveExportLeftovers.isSnapshotDatabase($0)
+            }
             .sorted().map { temporary.appendingPathComponent($0) }
         if sweepsKeychain { list.accounts += sweptKeychainAccounts() }
         list.names = Array(Set(list.names.filter(LocalErasure.isMovable))).sorted()

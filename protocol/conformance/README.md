@@ -14,7 +14,7 @@ Each folder is one contract. A file or folder name ends in the version of that c
 | [records/](records/README.md) | Record JSON as plaintext: entries, journals, templates, deletion markers, legacy documents, unknown future fields; timestamps; the library record; journal ranks; settling conflicts and the identity of parked entries; a journal written back | [records.md](../records.md), [conflicts.md](../conflicts.md) |
 | [markdown/](markdown/README.md) | Stored Markdown: how each supported construct reads and writes, and image references | [records.md](../records.md#markdown) |
 | [markdown-export/](markdown-export/README.md) | Export as Markdown: safe names, numbering, escapes, dates and a whole exported folder | [markdown-export.md](../markdown-export.md) |
-| [archive/](archive/README.md) | A small encrypted archive and a small one without a password (`archive/v1/`) | [archive.md](../archive.md) |
+| [archive/](archive/README.md) | Directory archives (`archive/v1/`: a small encrypted archive, one without a password, what a reader ignores and the hostile folders it refuses) and file archives (`archive/v2/`: real encrypted ZIP archives, about a hundred container cases, the database structure and databases written by another stack) | [archive.md](../archive.md) |
 | [sync/](sync/README.md) | A conversation with the server's sync endpoints, short receipts, the protocol revision and the effective-revision rule, and scripted conversations between devices that settle conflicts | [README.md](../README.md#sync-and-conflicts), [conflicts.md](../conflicts.md) |
 | [pairing/](pairing/README.md) | The invite proof, invite codes, server origins and the check code | [README.md](../README.md#pairing) |
 | [agent-copy/](agent-copy/README.md) | Agent access through the server: subkeys, item IDs, sealed items, key wraps | [agent-access-server.md](../agent-access-server.md) |
@@ -30,7 +30,7 @@ Current checks:
 
 | Where | Tests |
 | --- | --- |
-| Swift core (`apps/apple/Packages/JournalCore/Tests/JournalCoreTests`) | `Conformance*Tests`, `InteroperabilityTests`, `InteroperabilityV2Tests`, `SyncReceiptVectorTests`, `ServerRevisionTests`, `AgentCopyTests`, `LibrarySyncTests`, `JournalOrderTests`, `ConflictScenarioTests`. `scripts/check.sh core` |
+| Swift core (`apps/apple/Packages/JournalCore/Tests/JournalCoreTests`) | `Conformance*Tests` (the archive ones: `ConformanceArchiveTests`, `ConformanceArchiveUnlistedTests`, `ConformanceArchiveV2Tests`, `ConformanceContainerTests`, `ConformanceArchiveDatabaseTests`), `ArchiveSweepTests`, `InteroperabilityTests`, `InteroperabilityV2Tests`, `SyncReceiptVectorTests`, `ServerRevisionTests`, `AgentCopyTests`, `LibrarySyncTests`, `JournalOrderTests`, `ConflictScenarioTests`. `scripts/check.sh core` |
 | .NET server (`server/tests/Journal.Api.Tests`) | `*ConformanceTests` (including `ConflictIdentityConformanceTests`), `ProtocolVectorTests`, `StatusConformanceTests`, `AgentAccessTests`, `SyncEfficiencyTests`. `scripts/check.sh backend` |
 
 Windows (C#) and Android (Kotlin) clients add their own tests against the same files.
@@ -40,7 +40,7 @@ Windows (C#) and Android (Kotlin) clients add their own tests against the same f
 - **Never edit a fixture in place** to make a test pass or to follow a change. A published fixture is what existing clients were built and tested against.
 - A change to a contract (a new field a reader must understand, a different name rule, a new archive layout) raises that contract's version: add new fixtures beside the old ones (`-v2.json`, `v2/`), keep the old ones passing for as long as clients must read old data, and describe the difference in the folder's README.
 - Additive changes within a version, such as a new optional field, get new cases in a new version of the file; the old file still describes what old data looks like.
-- The archive is versioned by folder (`archive/v1/`), so a later layout slots in as `archive/v2/` without touching `v1`.
+- The archive is versioned by folder: `archive/v1/` holds directory archives and `archive/v2/` file archives. They coexist, because 1.1 reads both kinds. `archive/v1/unlisted-files-v1.json` and its `hostile/` folders were added beside the v1 files without editing them.
 - Correcting a fixture that contradicts its contract (a mistake in the fixture, not a change of contract) is allowed with a note under Known issues saying what was wrong.
 
 ## Regenerating
@@ -53,14 +53,14 @@ JOURNAL_CONFORMANCE_REGENERATE=1 mise exec -- swift test \
 git diff protocol/conformance
 ```
 
-The same tests then rewrite those files from the inputs in the test sources. Review every difference as a protocol change (see above). Files that aren't rewritten were not produced this way: `crypto/` and `agent-copy/` (made by .NET and the Apple app's code, with fixed nonces), `sync/` (written from the contract and replayed against the server), `records/journal-ranks-v1.json` (an independent implementation). The archives in `archive/v1/` contain random nonces, so regenerating them makes new files; commit them only for a new version.
+The same tests then rewrite those files from the inputs in the test sources. Review every difference as a protocol change (see above). Files that aren't rewritten were not produced this way: `crypto/` and `agent-copy/` (made by .NET and the Apple app's code, with fixed nonces), `sync/` (written from the contract and replayed against the server), `records/journal-ranks-v1.json` (an independent implementation), and in `archive/v2/` the container cases (`container/make-container-cases.py`, `make-real-tool-samples.py`) and the foreign databases (`database/make-foreign-database.py`), which are written by their own Python scripts. The archives in `archive/v1/` and `archive/v2/` contain random nonces, so regenerating them makes new files; commit them only for a new version. `archive/README.md` says which tests rewrite which archive files.
 
 ## Known issues
 
 Disagreements between the documents and the implementations that the fixtures deliberately leave unpinned. They are reported, not fixed here.
 
 - **Timestamps.** The Swift reader accepts out-of-range calendar fields (`2026-02-30T08:00:00Z`, hour `25`). The documents say ISO 8601. `records/timestamps-v1.json` lists only texts every reader must refuse; writers must never produce impossible dates.
-- **Archive, unlisted files.** [archive.md](../archive.md) says a name in `attachments/` that is not a lower-case UUID (or any file the manifest doesn't list) makes the archive invalid, and that restore checks the files against the manifest exactly. The Swift restore copies only the files the manifest lists and ignores the others, so an extra file doesn't make it refuse. `archive/v1/expected.json` pins neither behavior.
+- ~~**Archive, unlisted files.**~~ Resolved by the owner (2026-10-09): both archive kinds read exactly the files the manifest lists and ignore the rest, as the Swift reader always did. [archive.md](../archive.md) says so, `archive/v1/unlisted-files-v1.json` pins it, and the server's test reader no longer compares unlisted files.
 - **Heading text.** [markdown-export.md](../markdown-export.md) says the heading is one line. The Swift export turns a line feed into a space but a CRLF in a title into two. The fixtures avoid CRLF in titles.
 - **Link destinations with spaces.** The Swift writer writes a destination with a space as `a%20b`, which reads back as a different destination. The Markdown fixtures avoid it; the stored text is never changed unless the block is edited.
 - **Attachment references in capitals.** [records.md](../records.md#images) says an image refers to an attachment when its destination is exactly `attachments/` and a UUID, and that UUIDs compare case-insensitively but are written in lower case. The Swift reader accepts a UUID in any letter case. The image fixtures don't pin it.

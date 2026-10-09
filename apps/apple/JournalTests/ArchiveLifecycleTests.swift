@@ -312,17 +312,79 @@ final class ArchiveLifecycleTests: XCTestCase {
         ]
         let configuration = data.appendingPathComponent("configuration.json")
         try Data("{}".utf8).write(to: configuration)
+        // A file archive is a file: the dialog's copy of it goes like a package from an earlier build.
         let file = temporary.appendingPathComponent("Journal Archive 2026-09-28.journalarchive")
-        try Data("a file, not a package".utf8).write(to: file)
+        try Data("a file archive".utf8).write(to: file)
         let link = temporary.appendingPathComponent("Journal Archive 2026-09-29.journalarchive")
         try manager.createSymbolicLink(at: link, withDestinationURL: kept[kept.count - 1])
 
         ArchiveExportLeftovers.remove(dataDirectory: data, temporaryDirectory: temporary)
 
-        for leftover in leftovers { XCTAssertFalse(manager.fileExists(atPath: leftover.path), leftover.path) }
-        for item in kept + [configuration, file] { XCTAssertTrue(manager.fileExists(atPath: item.path), item.path) }
+        for leftover in leftovers + [file] { XCTAssertFalse(manager.fileExists(atPath: leftover.path), leftover.path) }
+        for item in kept + [configuration] { XCTAssertTrue(manager.fileExists(atPath: item.path), item.path) }
         XCTAssertNotNil(try? manager.destinationOfSymbolicLink(atPath: link.path))
         XCTAssertTrue(manager.fileExists(atPath: kept[kept.count - 1].appendingPathComponent("archive.json").path))
+    }
+
+    /// A file archive is a file: the staged export, the save dialog's copy and the export's database copy are files and
+    /// go; so does a restore's staging folder left by an app that quit, unless a library uses it. Links and anything
+    /// that merely looks similar stay.
+    func testLaunchCleanupRemovesStagedArchiveFilesAndRestoreStagingButNotALibrary() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        addTeardownBlock { try? FileManager.default.removeItem(at: root) }
+        let data = root.appendingPathComponent("library")
+        let temporary = root.appendingPathComponent("tmp")
+        let manager = FileManager.default
+        try manager.createDirectory(at: data, withIntermediateDirectories: true)
+        try manager.createDirectory(at: temporary, withIntermediateDirectories: true)
+        func file(_ url: URL) throws -> URL {
+            try Data("archive bytes".utf8).write(to: url)
+            return url
+        }
+        func folder(_ url: URL) throws -> URL {
+            try manager.createDirectory(at: url, withIntermediateDirectories: true)
+            try Data("contents".utf8).write(to: url.appendingPathComponent("journal.sqlite"))
+            return url
+        }
+        let current = "import-\(UUID().uuidString.lowercased())"
+        let earlier = "import-\(UUID().uuidString.lowercased())"
+        let leftovers = [
+            try file(data.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
+            try file(temporary.appendingPathComponent("Journal Archive 2026-09-30.journalarchive")),
+            try file(temporary.appendingPathComponent("export-\(UUID().uuidString.lowercased()).sqlite")),
+            try folder(data.appendingPathComponent("import-\(UUID().uuidString.lowercased())")),
+        ]
+        let kept = [
+            try folder(data.appendingPathComponent(current)),
+            try folder(data.appendingPathComponent(earlier)),
+            try folder(data.appendingPathComponent("vault-\(UUID().uuidString.lowercased())")),
+            try folder(data.appendingPathComponent("import-notes")),
+            try file(data.appendingPathComponent("import-\(UUID().uuidString.lowercased())-file")),
+            try file(data.appendingPathComponent("export-notes.journalarchive")),
+            try file(data.appendingPathComponent("Journal Archive 2026-09-30.journalarchive")),
+            try file(temporary.appendingPathComponent("Journal Archive 2026-09-30 2.journalarchive")),
+            try file(temporary.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
+            try file(temporary.appendingPathComponent("export-notes.sqlite")),
+        ]
+        let elsewhere = try folder(root.appendingPathComponent("elsewhere"))
+        let stagedLink = data.appendingPathComponent("import-\(UUID().uuidString.lowercased())")
+        try manager.createSymbolicLink(at: stagedLink, withDestinationURL: elsewhere)
+        let fileLink = temporary.appendingPathComponent("Journal Archive 2026-09-29.journalarchive")
+        try manager.createSymbolicLink(
+            at: fileLink, withDestinationURL: kept[0].appendingPathComponent("journal.sqlite"))
+
+        // While the settings can't be read nothing can be called leftover: restore staging stays.
+        ArchiveExportLeftovers.remove(dataDirectory: data, temporaryDirectory: temporary, libraryFolders: nil)
+        XCTAssertTrue(manager.fileExists(atPath: leftovers[3].path))
+        XCTAssertFalse(manager.fileExists(atPath: leftovers[0].path))
+
+        ArchiveExportLeftovers.remove(
+            dataDirectory: data, temporaryDirectory: temporary, libraryFolders: [current, earlier])
+        for leftover in leftovers { XCTAssertFalse(manager.fileExists(atPath: leftover.path), leftover.path) }
+        for item in kept + [elsewhere] { XCTAssertTrue(manager.fileExists(atPath: item.path), item.path) }
+        XCTAssertNotNil(try? manager.destinationOfSymbolicLink(atPath: stagedLink.path))
+        XCTAssertNotNil(try? manager.destinationOfSymbolicLink(atPath: fileLink.path))
+        XCTAssertTrue(manager.fileExists(atPath: elsewhere.appendingPathComponent("journal.sqlite").path))
     }
 
     private func capturePreview(_ summary: ArchiveSummary) async {

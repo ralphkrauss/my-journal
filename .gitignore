@@ -12,6 +12,8 @@ TestResults/
 *.sqlite*
 # The synthetic archives of the conformance fixtures hold a database each (protocol/conformance/README.md).
 !protocol/conformance/archive/**/journal.sqlite
+# The databases written by another stack (archive/v2/database/make-foreign-database.py).
+!protocol/conformance/archive/v2/database/foreign*.sqlite
 *.db*
 *.xcuserstate
 xcuserdata/

@@ -15,10 +15,15 @@ let package = Package(
     ],
     targets: [
         .target(name: "CJournalCrypto", publicHeadersPath: "include"),
+        // The system zlib's CRC-32 for the archive container and SQLite's defensive mode for inspecting archived
+        // databases: both ship with the operating system, so this adds no dependency.
+        .target(
+            name: "CJournalArchive", publicHeadersPath: "include",
+            linkerSettings: [.linkedLibrary("z"), .linkedLibrary("sqlite3")]),
         .target(
             name: "JournalCore",
             dependencies: [
-                "CJournalCrypto", .product(name: "GRDB", package: "GRDB.swift"),
+                "CJournalCrypto", "CJournalArchive", .product(name: "GRDB", package: "GRDB.swift"),
                 .product(name: "Markdown", package: "swift-markdown"),
             ]),
         .executableTarget(name: "JournalProbe", dependencies: ["JournalCore"]),

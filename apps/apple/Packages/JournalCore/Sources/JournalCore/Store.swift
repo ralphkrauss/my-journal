@@ -774,17 +774,12 @@ public actor JournalStore {
         }
     }
     /// Rejects a restored database with objects the app doesn't create, such as triggers or views that would act
-    /// on later writes. Call after opening it, when every known migration has been applied.
+    /// on later writes. Call after opening it, when every known migration has been applied. The structure is compared,
+    /// not the text that created it, because another client's database library writes the same tables differently
+    /// (`DatabaseStructure`).
     public func validateSchema() throws {
-        let expected = try DatabaseQueue()
-        try Self.migrator.migrate(expected)
-        // The migration library's own table may be written differently by another version of it.
-        let sql = """
-            SELECT type,name,tbl_name,CASE WHEN name='grdb_migrations' THEN NULL ELSE sql END
-            FROM sqlite_master ORDER BY type,name
-            """
-        let schema = { (db: Database) in try Row.fetchAll(db, sql: sql) }
-        guard try db.read(schema) == expected.read(schema) else { throw JournalError.invalidData }
+        let expected = try DatabaseStructure.expected(afterMigrations: Self.migrator.migrations.count)
+        guard try db.read(DatabaseStructure.read).matches(expected) else { throw JournalError.invalidData }
     }
     /// Images used by current records, their earlier versions and versions awaiting review.
     public func referencedAttachmentIDs() throws -> Set<UUID> {

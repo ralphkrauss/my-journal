@@ -6,7 +6,7 @@ This contract is implemented by the ASP.NET Core server and the shared Swift cor
 | --- | --- |
 | This page | Wire conventions, encryption and recovery formats, pairing, sync, limits and errors |
 | [records.md](records.md) | The record JSON, documents, Markdown and image references |
-| [archive.md](archive.md) | The `.journalarchive` package and its database |
+| [archive.md](archive.md) | The file archive (one ZIP file), the directory archive of 1.0, and the library database inside them |
 | [markdown-export.md](markdown-export.md) | Export as Markdown: the folder of Markdown files with front matter and images, for other apps |
 | [journal-lifecycle.md](journal-lifecycle.md), [permanent-deletion.md](permanent-deletion.md), [entry-archiving.md](entry-archiving.md), [history-recovery.md](history-recovery.md) | Deletion, restoration and history rules |
 | [conflicts.md](conflicts.md) | Settling a record changed on two devices without asking (conflicts v1): the rules, the copy of the other version of an entry or template, identities of copies and parked entries, when they run, and the pass over conflicts an earlier version left |
@@ -31,7 +31,7 @@ Contracts that only clients implement are versioned on their own and change no w
 | Wire major | The `/v1` path prefix; `protocolVersion` in GET /status, `protocolVersions` in GET /server | 1 |
 | Protocol revision | `protocolRevision` in GET /status and GET /server | 1 |
 | Recovery format | `formatVersion` of the envelope; `recoveryVersions` in both endpoints | 1 to 4 (2 for new libraries) |
-| Archive header | `version` in `archive.json` ([archive.md](archive.md)) | 1 and 2 |
+| Archive header | `archiveVersion` in the `archive.json` of a file archive; `version` in that of a directory archive ([archive.md](archive.md)) | 2 for file archives; 1 and 2 for directory archives, which are only read |
 | Conflicts | [conflicts.md](conflicts.md); client only | 1 |
 | Status fixtures | [conformance/sync/status-v2.json](conformance/sync/README.md#the-status-contract-status-v2json): the second file version of the status contract, not a protocol version | 2 |
 
@@ -100,7 +100,7 @@ For v3 and v4, each record payload is base64 of the record's UTF-8 JSON, not cip
 
 New unencrypted libraries use v4: `salt` and `wrappedKey` are empty strings, `iterations` is zero. There is no public or fixed encryption key. Setup still requires the server setup code and a random 32-byte recovery secret; the client discards this initial secret after setup. Device bearer authentication and pairing are required in every mode. A server administrator with filesystem access can run `Journal.Api --recovery-code` (with the same configuration as the server, for example `Journal__DataDirectory` or `--Journal:DataDirectory=<directory>`) to rotate the recovery verifier and issue a one-use code. Recovery consumes that code while creating the new device grant under the server write gate. Codes remain valid until used or replaced. They cannot unlock an encrypted vault. Public `/recovery` metadata contains no usable authorization secret.
 
-V4 archives use [archive header version 2](archive.md), a plaintext inventory with SHA-256 file hashes, and readable data. Hashes detect accidental corruption, not malicious edits by someone with file access. Restore requires no password and does not restore server credentials. Older v1–v3 archives remain readable under their existing password contracts.
+V4 libraries' archives are directory archives with [header version 2](archive.md#directory-archive) (1.1 writes only file archives, and only for libraries with a password), a plaintext inventory with SHA-256 file hashes, and readable data. Hashes detect accidental corruption, not malicious edits by someone with file access. Restore requires no password and does not restore server credentials. Older v1–v3 archives remain readable under their existing password contracts.
 
 Cross-language vectors for formats 2–4 (exact password bytes, derived keys, recovery secrets and the server's verifier hashes, wrapped keys) are in [conformance/crypto/encryption-v2.json](conformance/crypto/README.md); format 1 is in `conformance/crypto/encryption-v1.json`.
 

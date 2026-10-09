@@ -1,0 +1,130 @@
+{
+  "corpusVersion" : 1,
+  "mutations" : [
+    {
+      "name" : "unlisted-non-uuid-file",
+      "note" : "A file in attachments/ whose name is not a UUID is ignored.",
+      "ops" : [
+        {
+          "file" : "attachments/notes.txt",
+          "op" : "add",
+          "text" : "hello"
+        }
+      ],
+      "result" : "restores"
+    },
+    {
+      "name" : "unlisted-uuid-file",
+      "note" : "A UUID-named image the manifest does not list is ignored: only listed files are read.",
+      "ops" : [
+        {
+          "file" : "attachments/11111111-2222-4333-8444-555555555555",
+          "op" : "add",
+          "text" : "not in the manifest"
+        }
+      ],
+      "result" : "restores"
+    },
+    {
+      "name" : "unlisted-upper-case-uuid-file",
+      "note" : "An upper-case UUID name is just another unlisted name.",
+      "ops" : [
+        {
+          "file" : "attachments/11111111-2222-4333-8444-ABCDEFABCDEF",
+          "op" : "add",
+          "text" : "ignored"
+        }
+      ],
+      "result" : "restores"
+    },
+    {
+      "name" : "unlisted-directory-in-attachments",
+      "note" : "A folder in attachments/ is ignored.",
+      "ops" : [
+        {
+          "file" : "attachments/Thumbs/readme.txt",
+          "op" : "add",
+          "text" : "ignored"
+        }
+      ],
+      "result" : "restores"
+    },
+    {
+      "name" : "link-in-place-of-database",
+      "note" : "journal.sqlite is a link: never followed.",
+      "ops" : [
+        {
+          "file" : "journal.sqlite",
+          "op" : "symlink",
+          "target" : "attachments/01234567-89ab-4cde-8fab-0123456789ab"
+        }
+      ],
+      "result" : "damaged"
+    },
+    {
+      "name" : "link-in-place-of-listed-image",
+      "note" : "A listed image is a link: never followed.",
+      "ops" : [
+        {
+          "file" : "attachments/01234567-89ab-4cde-8fab-0123456789ab",
+          "op" : "symlink",
+          "target" : "journal.sqlite"
+        }
+      ],
+      "result" : "damaged"
+    },
+    {
+      "name" : "link-in-place-of-attachments-folder",
+      "note" : "attachments/ is a link to a folder: never followed.",
+      "ops" : [
+        {
+          "file" : "attachments",
+          "op" : "symlinkFolder",
+          "target" : "attachments-elsewhere"
+        }
+      ],
+      "result" : "damaged"
+    },
+    {
+      "name" : "sparse-database-above-limit",
+      "note" : "journal.sqlite of 33 GiB (a sparse file): refused before it is copied.",
+      "ops" : [
+        {
+          "bytes" : 35433480192,
+          "file" : "journal.sqlite",
+          "op" : "sparse"
+        }
+      ],
+      "result" : "damaged"
+    },
+    {
+      "name" : "sparse-image-above-limit",
+      "note" : "A listed image of 26 MiB (a sparse file): refused before it is copied.",
+      "ops" : [
+        {
+          "bytes" : 27262976,
+          "file" : "attachments/01234567-89ab-4cde-8fab-0123456789ab",
+          "op" : "sparse"
+        }
+      ],
+      "result" : "damaged"
+    }
+  ],
+  "operations" : "add: write a file (creating folders) with the text; symlink: replace a file with a link to target (relative to the package); symlinkFolder: replace a folder with a link to a new empty folder target; sparse: replace a file with a sparse file of that many bytes; delete: remove a file.",
+  "packages" : [
+    {
+      "directory" : "hostile/manifest-traversal",
+      "name" : "manifest-names-a-file-outside",
+      "note" : "A header of version 2 (no password) whose readable manifest lists the name ../x: refused before any file is created, inside or outside the restore.",
+      "result" : "damaged"
+    },
+    {
+      "directory" : "hostile/unpacked-file-archive",
+      "name" : "unpacked-file-archive",
+      "note" : "A folder holding an unpacked file archive (archive.json with archiveVersion): not a directory archive.",
+      "result" : "damaged"
+    }
+  ],
+  "passwordSource" : "expected.json, archives.encrypted.password",
+  "purpose" : "What the directory archive reader does with files the manifest does not list, and the hostile folders it refuses (protocol/archive.md). The mutations apply to a copy of encrypted/ in expected.json's archive; the packages are folders in this directory. See README.md."
+}

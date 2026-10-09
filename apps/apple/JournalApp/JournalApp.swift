@@ -35,7 +35,8 @@ struct JournalApp: App {
                         PrivacyCover.shared.watch(model)
                     #endif
                     await model.load()
-                    await ArchiveExportLeftovers.removeAtLaunch(dataDirectory: model.directory)
+                    await ArchiveExportLeftovers.removeAtLaunch(
+                        dataDirectory: model.directory, libraryFolders: model.libraryFolderNames)
                     #if os(macOS)
                         model.startInactivityLock()
                         LocalAgentCleanup.run(dataDirectory: model.directory)

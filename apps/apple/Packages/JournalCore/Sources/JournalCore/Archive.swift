@@ -1,8 +1,13 @@
 import CryptoKit
 import Foundation
 
-/// A directory package containing a SQLite snapshot and original image files.
-/// Encrypted libraries authenticate the inventory; passwordless libraries use readable checksums.
+/// The library archive (protocol/archive.md). Two kinds exist, told apart by what the picked item is:
+///
+/// - A **file archive**, one ZIP file, is what 1.1 writes (`exportFile`). Only libraries with a password have one.
+/// - A **directory archive**, a folder, is what 1.0 wrote. It is still read, and `export` still writes one until the
+///   app switches to `exportFile`; the directory writer is removed with that switch.
+///
+/// `restore` and `requiresPassword` read either kind.
 public enum VaultArchive {
     private struct Header: Codable {
         var version = 1
@@ -18,6 +23,62 @@ public enum VaultArchive {
         public let key: Data
         public let recovery: RecoveryEnvelope
     }
+    private enum Kind { case directory, file }
+
+    // MARK: File archive
+
+    /// Writes the library as a file archive at `destination`, a new file. The staged file is the only thing
+    /// created besides a temporary copy of the database, and both are removed if the export fails or is cancelled.
+    public static func exportFile(store: JournalStore, recovery: RecoveryEnvelope, key: Data, to destination: URL)
+        async throws
+    {
+        try await FileArchive.export(
+            store: store, recovery: recovery, key: key, to: destination, options: .standard)
+    }
+
+    // MARK: Reading either kind
+
+    public static func restore(from source: URL, to destination: URL, phrase: String) async throws -> Restored {
+        try await restore(from: source, to: destination, phrase: phrase, options: .standard)
+    }
+
+    static func restore(from source: URL, to destination: URL, phrase: String, options: ArchiveOptions) async throws
+        -> Restored
+    {
+        let (kind, resolved) = try identify(source)
+        switch kind {
+        case .directory:
+            return try await DirectoryArchive.restore(from: resolved, to: destination, phrase: phrase, options: options)
+        case .file:
+            return try await FileArchive.restore(from: resolved, to: destination, phrase: phrase, options: options)
+        }
+    }
+
+    public static func requiresPassword(at source: URL) throws -> Bool {
+        let (kind, resolved) = try identify(source)
+        switch kind {
+        case .directory: return try DirectoryArchive.requiresPassword(at: resolved)
+        case .file: return try FileArchive.requiresPassword(at: resolved)
+        }
+    }
+
+    /// A directory is a directory archive and a regular file is a file archive. There is no sniffing by name. The item
+    /// the person picked is followed if it is a link; nothing inside a directory archive is.
+    private static func identify(_ source: URL) throws -> (Kind, URL) {
+        let resolved = source.resolvingSymlinksInPath()
+        var information = stat()
+        guard stat(resolved.path, &information) == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+        switch information.st_mode & S_IFMT {
+        case S_IFDIR: return (.directory, resolved)
+        case S_IFREG: return (.file, resolved)
+        default: throw JournalError.invalidData
+        }
+    }
+
+    // MARK: Directory archive writer (kept until the app exports file archives)
+
     public static func export(store: JournalStore, recovery: RecoveryEnvelope, key: Data, to destination: URL)
         async throws
     {
@@ -40,73 +101,6 @@ public enum VaultArchive {
         }
     }
 
-    public static func restore(from source: URL, to destination: URL, phrase: String) async throws -> Restored {
-        try Task.checkCancellation()
-        let headerURL = source.appendingPathComponent("archive.json")
-        try regularFile(headerURL)
-        let headerSize = try headerURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-        guard headerSize > 0, headerSize <= 16 * 1024 * 1024 else { throw JournalError.invalidData }
-        let header = try JournalCoding.decoder().decode(Header.self, from: Data(contentsOf: headerURL))
-        guard header.version == (header.recovery.requiresPassword ? 1 : 2) else { throw JournalError.unsupportedFormat }
-        _ = try header.recovery.contentProtection
-        let recovered =
-            header.recovery.requiresPassword
-            ? try VaultCrypto.recover(header.recovery, phrase: phrase) : (try VaultCrypto.generateKey(), "")
-        let bytes =
-            header.recovery.requiresPassword
-            ? try VaultCrypto.open(header.manifest, key: recovered.0, context: "journal:v1:archive") : header.manifest
-        let manifest = try JournalCoding.decoder().decode(Manifest.self, from: bytes)
-        // Listed names become file paths below, so only the names an export writes are accepted: a passwordless
-        // manifest is unauthenticated, and a name such as "../x" must not reach outside the staging directory.
-        for identifier in manifest.attachments.keys where !isAttachmentName(identifier) {
-            throw JournalError.invalidData
-        }
-        let manager = FileManager.default
-        guard !manager.fileExists(atPath: destination.path) else { throw JournalError.invalidData }
-        try manager.createDirectory(
-            at: destination, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-        var stagedStore: JournalStore?
-        do {
-            try manager.copyItem(
-                at: source.appendingPathComponent("journal.sqlite"),
-                to: destination.appendingPathComponent("journal.sqlite"))
-            let images = destination.appendingPathComponent("attachments", isDirectory: true)
-            try manager.createDirectory(at: images, withIntermediateDirectories: true)
-            for identifier in manifest.attachments.keys {
-                try manager.copyItem(
-                    at: source.appendingPathComponent("attachments/\(identifier)"),
-                    to: images.appendingPathComponent(identifier))
-            }
-            // The copied bytes are verified, not the source's: the copy is what is committed, even if the source changes
-            // meanwhile, and reading every image twice would double the time a large archive takes.
-            try verify(destination, against: manifest)
-            let store = try JournalStore(
-                directory: destination, key: recovered.0, protection: header.recovery.contentProtection)
-            stagedStore = store
-            try await store.validateSchema()
-            try await store.validateSnapshot()
-            try Task.checkCancellation()
-            return Restored(store: store, key: recovered.0, recovery: header.recovery)
-        } catch {
-            // Only this newly created directory is owned by the failed restore.
-            try? await stagedStore?.close()
-            try? manager.removeItem(at: destination)
-            throw error
-        }
-    }
-
-    public static func requiresPassword(at source: URL) throws -> Bool {
-        let file = source.appendingPathComponent("archive.json")
-        try regularFile(file)
-        guard (try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0) <= 16 * 1024 * 1024 else {
-            throw JournalError.invalidData
-        }
-        let header = try JournalCoding.decoder().decode(Header.self, from: Data(contentsOf: file))
-        _ = try header.recovery.contentProtection
-        guard header.version == (header.recovery.requiresPassword ? 1 : 2) else { throw JournalError.unsupportedFormat }
-        return header.recovery.requiresPassword
-    }
-
     private static func inventory(_ directory: URL) throws -> Manifest {
         let images = directory.appendingPathComponent("attachments", isDirectory: true)
         let imageProperties = try images.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
@@ -119,7 +113,7 @@ public enum VaultArchive {
             // System files such as .DS_Store or AppleDouble "._" files appear when a package is copied between
             // volumes. They are never part of an archive: only listed files are copied and verified.
             if name.hasPrefix(".") { continue }
-            guard isAttachmentName(name) else { throw JournalError.invalidData }
+            guard ArchiveNames.isLowercaseUUID(name) else { throw JournalError.invalidData }
             files.append(file)
         }
         // A few files are read at once, which storage serves faster than one after another.
@@ -129,25 +123,11 @@ public enum VaultArchive {
         let hashes = Dictionary(digests, uniquingKeysWith: { first, _ in first })
         return Manifest(database: try digest(directory.appendingPathComponent("journal.sqlite")), attachments: hashes)
     }
-    /// An image file name as export writes it: a lower-case UUID.
-    private static func isAttachmentName(_ name: String) -> Bool {
-        guard let identifier = UUID(uuidString: name) else { return false }
-        return identifier.uuidString.lowercased() == name
-    }
-    private static func verify(_ directory: URL, against expected: Manifest) throws {
-        let actual = try inventory(directory)
-        guard actual.database == expected.database, actual.attachments == expected.attachments else {
-            throw JournalError.invalidData
-        }
-    }
-    private static func regularFile(_ file: URL) throws {
+    private static func digest(_ file: URL) throws -> String {
         let properties = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
         guard properties.isRegularFile == true, properties.isSymbolicLink != true else {
             throw JournalError.invalidData
         }
-    }
-    private static func digest(_ file: URL) throws -> String {
-        try regularFile(file)
         let handle = try FileHandle(forReadingFrom: file)
         defer { try? handle.close() }
         var digest = SHA256()

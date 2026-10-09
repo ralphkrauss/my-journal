@@ -1,0 +1,264 @@
+{
+  "archives" : {
+    "encrypted" : {
+      "entries" : [
+        {
+          "bytes" : 86016,
+          "crc32" : "f0801e89",
+          "dataOffset" : 44,
+          "localHeaderOffset" : 0,
+          "method" : 0,
+          "name" : "journal.sqlite",
+          "sha256" : "0730a4590b7c06ba1cb96723900bba44ae23549d6b55c171f1665a225fde1470"
+        },
+        {
+          "bytes" : 98,
+          "crc32" : "8c96a7b6",
+          "dataOffset" : 86138,
+          "localHeaderOffset" : 86060,
+          "method" : 0,
+          "name" : "attachments/01234567-89ab-4cde-8fab-0123456789ab",
+          "sha256" : "8395a8260655bdc8e4ddb3478662d6cb32a39283bdacf364b5b1f6b46d151e35"
+        },
+        {
+          "bytes" : 583,
+          "crc32" : "7279448a",
+          "dataOffset" : 86278,
+          "localHeaderOffset" : 86236,
+          "method" : 0,
+          "name" : "archive.json",
+          "sha256" : "57f0758ac4037acee312cece719984d6a1d459844ed1a8344229d2b16d608195"
+        }
+      ],
+      "file" : "encrypted.zip",
+      "password" : "  correct horse, café 🌿  ",
+      "recoveryFormat" : 2,
+      "titles" : [
+        "Morning pages",
+        "Written offline"
+      ]
+    },
+    "encryptedRecoveryKey" : {
+      "entries" : [
+        {
+          "bytes" : 86016,
+          "crc32" : "1b2b5d47",
+          "dataOffset" : 44,
+          "localHeaderOffset" : 0,
+          "method" : 0,
+          "name" : "journal.sqlite",
+          "sha256" : "55e90c2c664838725b9ae42c5a2cfa7e79e01e97f3ba54619fab9e1e39639179"
+        },
+        {
+          "bytes" : 415,
+          "crc32" : "6ba966ee",
+          "dataOffset" : 86102,
+          "localHeaderOffset" : 86060,
+          "method" : 0,
+          "name" : "archive.json",
+          "sha256" : "0015c0ef9568b1c72603d794015ef1ebee76eedef5ad5248ca8933ef4fddc960"
+        }
+      ],
+      "file" : "encrypted-recovery-key.zip",
+      "password" : "  café-012345-abcdef-678901-234567-89abcd-ef0123-456789\n",
+      "recoveryFormat" : 1,
+      "titles" : [
+
+      ]
+    }
+  },
+  "archiveVersion" : 2,
+  "corpusVersion" : 1,
+  "databaseSource" : "archive/v1/expected.json, archives.encrypted: journal.sqlite and the image of encrypted.zip are the files of archive/v1/encrypted byte for byte",
+  "mutations" : [
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "database-byte-changed",
+      "note" : "One byte of journal.sqlite; the CRC-32 is patched, so the manifest's hash catches it.",
+      "operations" : [
+        {
+          "bytes" : "01",
+          "offset" : 40044,
+          "op" : "set"
+        },
+        {
+          "bytes" : "40de1e57",
+          "offset" : 14,
+          "op" : "set"
+        },
+        {
+          "bytes" : "40de1e57",
+          "offset" : 86877,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "database-byte-changed-stale-crc",
+      "note" : "The same change with the CRC-32 left alone: the CRC-32 is checked.",
+      "operations" : [
+        {
+          "bytes" : "01",
+          "offset" : 40044,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "image-byte-changed",
+      "note" : "One byte of the image with the CRC-32 patched.",
+      "operations" : [
+        {
+          "bytes" : "4d",
+          "offset" : 86158,
+          "op" : "set"
+        },
+        {
+          "bytes" : "a980044b",
+          "offset" : 86074,
+          "op" : "set"
+        },
+        {
+          "bytes" : "a980044b",
+          "offset" : 86937,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "image-byte-changed-stale-crc",
+      "note" : "The same with the CRC-32 left alone.",
+      "operations" : [
+        {
+          "bytes" : "4d",
+          "offset" : 86158,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "manifest-byte-changed",
+      "note" : "A character of the sealed manifest in archive.json; the CRC-32 is patched, so authentication fails.",
+      "operations" : [
+        {
+          "bytes" : "41",
+          "offset" : 86328,
+          "op" : "set"
+        },
+        {
+          "bytes" : "d8b3ee24",
+          "offset" : 86250,
+          "op" : "set"
+        },
+        {
+          "bytes" : "d8b3ee24",
+          "offset" : 87031,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "newer",
+      "name" : "archive-version-newer",
+      "note" : "archiveVersion 3 with the CRC-32 patched: a newer archive.",
+      "operations" : [
+        {
+          "bytes" : "33",
+          "offset" : 86296,
+          "op" : "set"
+        },
+        {
+          "bytes" : "9f2e8650",
+          "offset" : 86250,
+          "op" : "set"
+        },
+        {
+          "bytes" : "9f2e8650",
+          "offset" : 87031,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "archive-version-newer-stale-crc",
+      "note" : "archiveVersion 3 with the CRC-32 left alone: the CRC-32 is checked before archive.json is decoded, so this is damaged, not newer.",
+      "operations" : [
+        {
+          "bytes" : "33",
+          "offset" : 86296,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "recovery-format-4",
+      "note" : "The envelope's formatVersion 4 (no password) in a file archive: refused before anything else is read.",
+      "operations" : [
+        {
+          "bytes" : "34",
+          "offset" : 86708,
+          "op" : "set"
+        },
+        {
+          "bytes" : "52a991b6",
+          "offset" : 86250,
+          "op" : "set"
+        },
+        {
+          "bytes" : "52a991b6",
+          "offset" : 87031,
+          "op" : "set"
+        }
+      ]
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "wrongPassword",
+      "name" : "wrong-password",
+      "note" : "The right file with a password that does not open the envelope.",
+      "operations" : [
+
+      ],
+      "password" : "not the password"
+    },
+    {
+      "archive" : "encrypted",
+      "expect" : "damaged",
+      "name" : "manifest-sealed-for-a-directory-archive",
+      "note" : "The manifest sealed under the directory archive's context journal:v1:archive instead of journal:v2:archive; same length, CRC-32 patched.",
+      "operations" : [
+        {
+          "bytes" : "75637359494a58666739527844343241375571652b2f6b38614e4c77484330564c2f444f56484652724f446459747874436a6c522b783843325368644a4f79717678447831466e75427072706a43464533646d71643055794d4638773143365371784a574b2f492f4c457355524a4c32566c444751755769544c33694e506650645268357a4c787156765538716d507a6d5448695a2b77354855714a6f6b6e686578445637436e75674264714f6a757259392f2b6b563837634a4e344a53516263623967564334376c5546412f3743336955555941514c6431674836594a4932305542364e75444f544f562f4d6f634861454364427053734f62744145454c565a706231637939724d4e314a633651394955377236615a68747554344e614b7247317035762b426d4c30324f4558585a544a434461484b4b524264596d7369617868392b78484a535a41535a7a456b3936376236587633316f426e78587a344959376b7a4c5533454247744b59616f48",
+          "offset" : 86310,
+          "op" : "set"
+        },
+        {
+          "bytes" : "63635030",
+          "offset" : 86250,
+          "op" : "set"
+        },
+        {
+          "bytes" : "63635030",
+          "offset" : 87031,
+          "op" : "set"
+        }
+      ]
+    }
+  ],
+  "passwordSource" : "crypto/encryption-v2.json, recovery.password (encrypted.zip); crypto/encryption-v1.json, recovery.phrase (encrypted-recovery-key.zip)",
+  "purpose" : "The file archive (protocol/archive.md): the library of archive/v1/encrypted repackaged with a master password envelope (recovery format 2), and an empty library under a recovery key envelope (format 1), with the entries of the container and the mutations a reader must refuse. See README.md in this folder."
+}
