@@ -24,9 +24,6 @@ struct SettingsView: View {
         Group {
             if model.locked {
                 Text("Unlock My Journal to open Settings.").foregroundStyle(.secondary).padding()
-            } else if model.showsEncryptionForm {
-                // The window asks to encrypt the journals first; Settings wait for that decision.
-                Text("Choose a master password to encrypt your journals first.").foregroundStyle(.secondary).padding()
             } else if model.showsLibraryProblem {
                 // Settings need a library, and Erase is on the problem screen, so no controls are shown greyed out.
                 Text("Settings are available once your journals open.").foregroundStyle(.secondary).padding()
@@ -243,7 +240,7 @@ struct SettingsView: View {
         Form {
             // Without a library (just erased, while Settings closes) there is no protection to describe.
             if model.configuration != nil {
-                EncryptionSettingsSection(upgrade: model.encryption) { connect = ConnectionRequest() }
+                EncryptionSettingsSection()
                 AppLockSettingsSection { dismiss() }
             }
         }.formStyle(.grouped)

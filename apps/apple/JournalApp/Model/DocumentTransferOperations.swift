@@ -3,13 +3,10 @@ import Foundation
 import JournalCore
 
 extension AppModel {
-    /// `readingWhileEncrypting`: an export only reads, so it also runs while the journals are being encrypted (they
-    /// stay readable and exportable then).
-    func validateVaultSession(_ session: UUID, readingWhileEncrypting: Bool = false) throws {
+    func validateVaultSession(_ session: UUID) throws {
         try Task.checkCancellation()
         // The lock screen of a missing device key offers Import Archive….
-        let paused = replacingVault && !(readingWhileEncrypting && encryption.pausesWriting)
-        guard session == vaultSessionID, !locked || libraryProblem == .needsKey, !paused else {
+        guard session == vaultSessionID, !locked || libraryProblem == .needsKey, !replacingVault else {
             throw CancellationError()
         }
     }
@@ -49,32 +46,31 @@ extension AppModel {
 }
 
 extension AppModel {
-    /// `messages.export.archiveSaved`: after an encrypted archive was saved, the password it needs. A readable
-    /// archive needs none.
+    /// `messages.export.archiveSaved`: after an archive was saved, the password it needs.
     var archiveSavedMessage: String? {
-        guard let configuration, configuration.encrypted else { return nil }
+        guard let configuration else { return nil }
         return "Archive saved. Keep your \(configuration.credentialName.lowercased()) with it."
     }
 
     func prepareArchive() async throws -> URL {
         let session = vaultSessionID
-        try validateVaultSession(session, readingWhileEncrypting: true)
+        try validateVaultSession(session)
         guard let store, let configuration, let masterKey else { throw JournalError.locked }
         let destination = directory.appendingPathComponent(ArchiveFileType.stagedFilename())
         var created = false
         do {
             let saved = await finishPendingSave()
-            try validateVaultSession(session, readingWhileEncrypting: true)
+            try validateVaultSession(session)
             guard saved else { throw JournalError.saveRequired }
             // The writer removes what it created when it fails; only a finished archive is this function's to remove.
             try await VaultArchive.exportFile(
                 store: store, recovery: configuration.recovery, key: masterKey, to: destination)
             created = true
-            try validateVaultSession(session, readingWhileEncrypting: true)
+            try validateVaultSession(session)
             return destination
         } catch {
             if created { try? FileManager.default.removeItem(at: destination) }
-            try validateVaultSession(session, readingWhileEncrypting: true)
+            try validateVaultSession(session)
             throw error
         }
     }
@@ -166,23 +162,8 @@ extension AppModel {
         return "Couldn’t export the archive. Try again."
     }
 
-    /// An archive of a library that isn't encrypted holds readable entries, images and earlier versions, and
-    /// restoring needs no password, so with App Lock on the device's authentication comes first, as for Markdown
-    /// (docs/design/build-18-fixes-2026-10-06.md §3.1). An encrypted archive needs the recovery credential instead.
-    private func confirmOwner(_ model: AppModel) async -> Bool {
-        guard model.appLockOn, model.configuration?.encrypted == false else { return true }
-        switch await model.checkDeviceOwner(reason: "Export an archive of your journals") {
-        case .approved: return true
-        case .cancelled: return false
-        case .failed:
-            error = Self.verificationFailure
-            return false
-        }
-    }
-
     private func prepare(_ model: AppModel, session: UUID) async {
         defer { operation = nil }
-        guard await confirmOwner(model) else { return }
         let progress = Task { [weak self] in
             try? await Task.sleep(for: Self.progressDelay)
             if !Task.isCancelled { self?.showsProgress = true }
@@ -193,9 +174,9 @@ extension AppModel {
         }
         let filename = ArchiveFileType.filename()
         do {
-            try model.validateVaultSession(session, readingWhileEncrypting: true)
+            try model.validateVaultSession(session)
             let url = try await model.prepareArchive()
-            guard !Task.isCancelled, (try? model.validateVaultSession(session, readingWhileEncrypting: true)) != nil
+            guard !Task.isCancelled, (try? model.validateVaultSession(session)) != nil
             else {
                 try? FileManager.default.removeItem(at: url)
                 return
@@ -205,7 +186,7 @@ extension AppModel {
             presenting = true
         } catch {
             guard !Task.isCancelled, !(error is CancellationError),
-                (try? model.validateVaultSession(session, readingWhileEncrypting: true)) != nil
+                (try? model.validateVaultSession(session)) != nil
             else { return }
             self.error = Self.message(for: error)
         }
@@ -321,15 +302,14 @@ enum ArchiveExportLeftovers {
 }
 
 extension AppModel {
-    /// The folders of the data folder that a library the configuration names uses: the current one, an unfinished
-    /// encryption copy and the earlier libraries waiting to be removed. nil while the settings can't be read, because
-    /// then no folder can be called leftover.
+    /// The folders of the data folder that a library the configuration names uses: the current one and the earlier
+    /// libraries waiting to be removed. nil while the settings can't be read, because then no folder can be called
+    /// leftover.
     var libraryFolderNames: Set<String>? {
         guard libraryProblem != .settingsUnread else { return nil }
         guard let configuration else { return [] }
         var names = Set<String>()
         if let folder = configuration.storageFolder { names.insert(folder) }
-        if let folder = configuration.encryptionUpgrade?.storageFolder { names.insert(folder) }
         for library in configuration.supersededLibraries ?? [] {
             if let folder = library.storageFolder { names.insert(folder) }
         }

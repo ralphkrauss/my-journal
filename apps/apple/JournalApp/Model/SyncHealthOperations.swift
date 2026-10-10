@@ -28,14 +28,14 @@ extension AppModel {
         guard let syncHealth else { return .syncNow }
         switch syncHealth.kind {
         case .temporary, .unexpected: return .tryAgain
-        case .needsYou, .serverChanged, .noAccess: return .reconnect
+        case .serverChanged, .noAccess: return .reconnect
         case .updateOrFix: return .checkAgain
         }
     }
 
     /// The server doesn't accept this device as it is: Reconnect is the way back, and Devices has nothing to list.
     var serverRefusesThisDevice: Bool {
-        [.needsYou, .serverChanged, .noAccess].contains(syncHealth?.kind)
+        [.serverChanged, .noAccess].contains(syncHealth?.kind)
     }
 
     /// The person must act, as opposed to waiting while it syncs by itself.
@@ -74,10 +74,6 @@ extension AppModel {
 
     func recordSyncHealth(_ health: SyncHealth?, failure: Error?) {
         if syncHealth != health { syncHealth = health }
-        // Reconnect… opens Reconnect, which signs in to this device's server straight away; any other state, or a sync
-        // that succeeds, ends that.
-        let signIn = health == .signInNeeded
-        if encryption.turnedOnElsewhere != signIn { encryption.turnedOnElsewhere = signIn }
         syncTiming.retryAfter = (failure as? ServerRateLimited)?.retryAfter
         if health?.stopsAutomaticSync == true { syncTiming.stoppedCheckAt = Date() }
         if health == nil {
@@ -87,10 +83,8 @@ extension AppModel {
         }
     }
 
-    /// The sync state's message, worded for this library (a library without a password names a recovery code).
-    func syncMessage(of health: SyncHealth) -> String {
-        health.message(host: connectionHost, hasPassword: configuration?.requiresPassword != false)
-    }
+    /// The sync state's message, with the Tailscale hint for a `.ts.net` server.
+    func syncMessage(of health: SyncHealth) -> String { health.message(host: connectionHost) }
 
     /// Sync Settings… in Sync Status: Settings at Sync, where the state is explained and fixed.
     func openSyncSettings() {
@@ -104,7 +98,6 @@ extension AppModel {
 
     func resetSyncHealth() {
         if syncHealth != nil { syncHealth = nil }
-        if encryption.turnedOnElsewhere { encryption.turnedOnElsewhere = false }
         if syncError != nil { syncError = nil }
         if syncFailed { syncFailed = false }
         syncTiming.stoppedCheckAt = nil
@@ -130,9 +123,9 @@ extension AppModel {
         }
     }
 
-    /// Reconnect goes straight to this device's server: after it was set up again, after access was removed or the
-    /// server was restored, or after encryption was turned on elsewhere.
-    var reconnectsOnConnect: Bool { encryption.offersSignIn || serverRefusesThisDevice }
+    /// Reconnect goes straight to this device's server: after it was set up again, or after access was removed or the
+    /// server was restored.
+    var reconnectsOnConnect: Bool { serverRefusesThisDevice }
 
     /// The device list was refused as unauthorised: learns why with a sync, which sets the state Settings ▸ Sync
     /// explains. Without an answer the device was removed. Devices then has nothing to show.
@@ -154,7 +147,6 @@ extension AppModel {
         configureSync()
         syncTiming.afterWriting?.cancel()
         syncActivity.pendingItems = 0
-        encryption.turnedOnElsewhere = false
         guard revoking else { return }
         Task {
             try? await ServerClient(address: previous.address, token: previous.token).revoke(previous.deviceID)

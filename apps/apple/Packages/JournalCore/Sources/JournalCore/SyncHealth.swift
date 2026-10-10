@@ -9,9 +9,6 @@ public enum SyncHealth: Equatable, Sendable {
     case unreachable
     /// The server answered, but can't serve now: a server error or too many requests.
     case unavailable
-    /// The server's journals are encrypted now and this library's aren't: encryption was turned on elsewhere, or the
-    /// server was replaced by an encrypted one. Reconnecting decides which.
-    case signInNeeded
     /// The server was reset and waits for a setup code.
     case serverNotSetUp
     /// The server holds another identity and doesn't know this device: restored, or set up again.
@@ -33,12 +30,11 @@ public enum SyncHealth: Equatable, Sendable {
     case localDataUnavailable
     case unexpected
 
-    public enum Kind: Equatable, Sendable { case temporary, needsYou, serverChanged, noAccess, updateOrFix, unexpected }
+    public enum Kind: Equatable, Sendable { case temporary, serverChanged, noAccess, updateOrFix, unexpected }
 
     public var kind: Kind {
         switch self {
         case .offline, .unreachable, .unavailable, .localDataUnavailable: return .temporary
-        case .signInNeeded: return .needsYou
         case .serverNotSetUp, .serverReplaced: return .serverChanged
         case .accessRemoved: return .noAccess
         case .appUpdateNeeded, .serverUpdateNeeded, .certificateInvalid, .notJournalServer: return .updateOrFix
@@ -49,16 +45,14 @@ public enum SyncHealth: Equatable, Sendable {
     /// Retrying by itself can't help: only the person, or updating My Journal, can.
     public var stopsAutomaticSync: Bool {
         switch kind {
-        case .needsYou, .serverChanged, .noAccess: return true
+        case .serverChanged, .noAccess: return true
         case .updateOrFix: return self == .appUpdateNeeded
         case .temporary, .unexpected: return false
         }
     }
 
     /// What the person sees in Settings ▸ Sync and Sync Status. `host` adds the Tailscale hint for a `.ts.net` server.
-    /// `hasPassword` is false for a library without encryption, which has no password to sign in again with: the
-    /// way back after a removal is a connected device or the server's recovery code.
-    public func message(host: String = "", hasPassword: Bool = true) -> String {
+    public func message(host: String = "") -> String {
         let saved = "Your changes are saved on this device."
         let still = "Your journals are still on this device."
         switch self {
@@ -72,13 +66,12 @@ public enum SyncHealth: Equatable, Sendable {
         case .unavailable:
             return
                 "The server isn’t available right now. Your changes are saved on this device and will sync automatically."
-        case .signInNeeded: return "The server now uses encryption or was replaced. Reconnect to keep syncing."
         case .serverNotSetUp: return "The server isn’t set up. \(still)"
         case .serverReplaced:
             return "The server was restored or replaced and doesn’t recognize this device. \(still)"
         case .accessRemoved:
-            let needed = hasPassword ? "your password or a connected device" : "a connected device or a recovery code"
-            return "This device no longer has access to the server. \(still) To reconnect, you need \(needed)."
+            return
+                "This device no longer has access to the server. \(still) To reconnect, you need your password or a connected device."
         case .appUpdateNeeded: return "Update My Journal to sync with this server. \(saved)"
         case .serverUpdateNeeded: return "The server needs an update before this device can sync. \(saved)"
         case .certificateInvalid:

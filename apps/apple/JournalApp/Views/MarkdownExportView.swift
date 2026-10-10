@@ -17,8 +17,7 @@ struct MarkdownExportSection: View {
     static func explanation(_ model: AppModel) -> String {
         let saves = "Saves your journals and their images as Markdown files that other apps can open."
         let archive = "To keep a copy you can import later, use Export Archive."
-        return model.configuration?.encrypted == false
-            ? "\(saves) \(archive)" : "\(saves) The files aren’t encrypted. \(archive)"
+        return "\(saves) The files aren’t encrypted. \(archive)"
     }
 }
 

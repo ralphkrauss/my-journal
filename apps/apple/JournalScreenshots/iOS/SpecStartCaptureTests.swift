@@ -63,6 +63,10 @@ final class SpecStartCaptureTests: SpecCaptureCase {
         try captureProblem("newer-version", .newerVersion)
     }
 
+    @MainActor func testNotEncrypted() throws {
+        try captureProblem("not-encrypted", .notEncrypted)
+    }
+
     // MARK: - Crafting
 
     /// Opens the sample library once, so the device has its key, then damages the copy and opens it again.

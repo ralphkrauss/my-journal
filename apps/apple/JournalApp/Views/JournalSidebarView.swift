@@ -119,7 +119,7 @@ struct JournalSidebarView: View {
             // The sidebar's empty area; New Journal is also in the toolbar and the File menu.
             .contextMenu(forSelectionType: JournalDestination.self) { selection in
                 if selection.isEmpty {
-                    Button("New Journal…", action: newJournal).disabled(model.writingPausedForEncryption)
+                    Button("New Journal…", action: newJournal)
                 }
             }
         #else
@@ -130,7 +130,7 @@ struct JournalSidebarView: View {
                 if showsToolbar {
                     ToolbarItem {
                         Button(action: newJournal) { Label("New Journal", systemImage: "folder.badge.plus") }
-                        .iconHelp("New Journal").disabled(model.writingPausedForEncryption)
+                        .iconHelp("New Journal")
                     }
                     JournalEditToolbarItems()
                 }
@@ -156,7 +156,7 @@ struct JournalSidebarView: View {
                 destinationRow(title, symbol: "book.closed", destination: .journal(journal.id))
                     .contextMenu {
                         #if os(macOS)
-                            Button("New Journal…", action: newJournal).disabled(model.writingPausedForEncryption)
+                            Button("New Journal…", action: newJournal)
                             Divider()
                         #endif
                         MenuActionsView(actions: actions(for: journal))
@@ -301,11 +301,10 @@ extension AppModel {
         _ journal: JournalItem, rename: @escaping @MainActor () -> Void, delete: @escaping @MainActor () -> Void
     ) -> [MenuAction] {
         [
-            .command("Rename…", symbol: "pencil", enabled: !writingPausedForEncryption, perform: rename),
+            .command("Rename…", symbol: "pencil", perform: rename),
             .separator("delete"),
             .command(
-                "Delete Journal…", symbol: "trash", enabled: !writingPausedForEncryption, destructive: true,
-                perform: delete),
+                "Delete Journal…", symbol: "trash", destructive: true, perform: delete),
         ]
     }
 }

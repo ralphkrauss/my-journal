@@ -15,9 +15,7 @@ struct ArchiveControls: View {
         }
     }
     static func explanation(_ model: AppModel) -> String {
-        model.configuration?.encrypted == false
-            ? "An archive includes readable entries, images and earlier versions. Keep it private."
-            : "An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your \(model.configuration?.credentialName.lowercased() ?? "password")."
+        "An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your \(model.configuration?.credentialName.lowercased() ?? "password")."
     }
 }
 
@@ -30,8 +28,11 @@ struct ArchiveFooter: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(ArchiveControls.explanation(model))
             if model.configuration?.recovery.formatVersion == 2 {
+                // Leading-aligned like the footer text above it; a wrapped button label is centred otherwise.
                 Button("Not sure of your password? Change Password…") { changingPassword = true }
                     .buttonStyle(.borderless).disabled(model.locked)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .sheet(isPresented: $changingPassword) { ChangePasswordView() }
             }
         }
@@ -107,7 +108,6 @@ struct ArchiveImportButton: View {
     @State private var error: String?
     var body: some View {
         Button("Import Archive…") { choosing = true }
-            .disabled(model.writingPausedForEncryption)
             .fileImporter(isPresented: $choosing, allowedContentTypes: ArchiveFileType.importTypes) { result in
                 do {
                     archive = try result.get()
@@ -131,7 +131,6 @@ struct ArchiveImportView: View {
     @Environment(\.dismiss) var dismiss
     let source: URL
     @State private var phrase = ""
-    @State private var requiresPassword = true
     @FocusState private var recoveryKeyFocused: Bool
     @State private var prepared: VaultArchive.Restored?
     @State private var preview: ArchiveSummary?
@@ -154,7 +153,7 @@ struct ArchiveImportView: View {
             .onAppear {
                 let granted = source.startAccessingSecurityScopedResource()
                 defer { if granted { source.stopAccessingSecurityScopedResource() } }
-                do { requiresPassword = try VaultArchive.requiresPassword(at: source) } catch {
+                do { try VaultArchive.checkHeader(at: source) } catch {
                     showInspectionError(error)
                 }
             }
@@ -197,7 +196,7 @@ struct ArchiveImportView: View {
                 Button("Done") { dismiss() }.buttonStyle(.borderedProminent)
             } else {
                 Text("Import Archive").font(.title2.bold())
-                if prepared == nil && requiresPassword {
+                if prepared == nil {
                     SecureField("Password or Recovery Key", text: $phrase).passwordAutofill().textFieldStyle(
                         .roundedBorder
                     )
@@ -224,12 +223,6 @@ struct ArchiveImportView: View {
                         }
                     }
                 }
-                // A readable archive from an earlier version restores as it is; the window then asks for a master
-                // password to encrypt it (docs/design/1-1-encryption-and-passwords.md §3.5).
-                if model.store == nil, let prepared, (try? prepared.recovery.contentProtection) == .plaintext {
-                    Text("This archive isn’t encrypted. You’ll choose a master password next.")
-                        .foregroundStyle(.secondary)
-                }
                 if let error {
                     // Scrolled to with the same margin above it as at the top of the sheet, clear of the corners.
                     Text(error).foregroundStyle(.red).textSelection(.enabled)
@@ -239,7 +232,7 @@ struct ArchiveImportView: View {
                     title: prepared == nil
                         ? "Continue" : model.store == nil ? "Restore Journals" : "Import as New Journals",
                     busy: busy, committing: committing,
-                    enabled: !busy && (prepared != nil || !requiresPassword || !phrase.isEmpty),
+                    enabled: !busy && (prepared != nil || !phrase.isEmpty),
                     cancel: {
                         operation?.cancel()
                         dismiss()

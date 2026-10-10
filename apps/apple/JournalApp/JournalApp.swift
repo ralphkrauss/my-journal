@@ -18,7 +18,7 @@ struct JournalApp: App {
             RootView()
                 .environmentObject(model)
                 .environmentObject(editor)
-                .modifier(EncryptionPresentation(model: model, upgrade: model.encryption))
+                .modifier(ReconnectPresentation(model: model))
                 .modifier(AppLockTurnedOffAlert(model: model))
                 .modifier(ReviewRequestPresenter(model: model))
                 .overlay {

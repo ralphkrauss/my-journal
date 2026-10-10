@@ -23,11 +23,9 @@ extension Probe {
         var deletion = pending
         deletion.operationId = UUID()
         let bytes = try PortableRecord.encode(marker)
-        deletion.payload =
-            try await clean.protection == .plaintext
-            ? bytes.base64EncodedString()
-            : VaultCrypto.seal(bytes, key: key, context: VaultCrypto.recordContext(id: entryID, kind: "entry"))
-                .base64EncodedString()
+        deletion.payload = try VaultCrypto.seal(
+            bytes, key: key, context: VaultCrypto.recordContext(id: entryID, kind: "entry")
+        ).base64EncodedString()
         guard case .accepted(let receipt) = try await client.push(deletion),
             case .accepted(let retry) = try await client.push(deletion),
             receipt.revision == retry.revision, receipt.payload == retry.payload

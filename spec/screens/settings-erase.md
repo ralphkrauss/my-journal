@@ -53,7 +53,7 @@ Title `settings.erase.failed.title` ("Couldn’t Erase"), message `settings.eras
 
 | Action | Command | Enabled | Result |
 | --- | --- | --- | --- |
-| Erase Journals and Settings… | `erase-device` | A library exists; nothing else is changing it (connecting, importing, encrypting, Delete All running, a failed save, another erase); not while checking | Saves the open entry, counts what would be lost, shows the warning. |
+| Erase Journals and Settings… | `erase-device` | A library exists; nothing else is changing it (connecting, importing, Delete All running, a failed save, another erase); not while checking | Saves the open entry, counts what would be lost, shows the warning. |
 | Export Archive… (alert) | `export-archive` | When journals would be lost | Closes the alert and opens the Export Archive sheet. |
 | Erase | `erase-confirm` | — | Authenticates (App Lock on), then erases (`flows/erase`). |
 | Cancel | — | — | Nothing. |

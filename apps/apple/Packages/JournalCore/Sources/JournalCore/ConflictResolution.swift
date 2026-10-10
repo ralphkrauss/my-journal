@@ -240,16 +240,12 @@ public struct ConflictCopyIdentity: Sendable {
     static let info = "journal:v1:conflict-copy-id"
     private let subkey: SymmetricKey
 
-    /// `vaultKey` is the 32-byte vault key of an encrypted library; nil in a library without encryption, where the
-    /// server reads the content anyway and the derivation key is a public constant.
-    public init(vaultKey: Data?) {
-        let infoBytes = Data(Self.info.utf8)
-        if let vaultKey {
-            subkey = HKDF<SHA256>.deriveKey(
-                inputKeyMaterial: SymmetricKey(data: vaultKey), salt: Data(), info: infoBytes, outputByteCount: 32)
-        } else {
-            subkey = SymmetricKey(data: Data(SHA256.hash(data: infoBytes)))
-        }
+    /// `vaultKey` is the 32-byte vault key of an encrypted library. Libraries without encryption (version 1.0 only)
+    /// derived the key from a public constant; this version never opens them.
+    public init(vaultKey: Data) {
+        subkey = HKDF<SHA256>.deriveKey(
+            inputKeyMaterial: SymmetricKey(data: vaultKey), salt: Data(), info: Data(Self.info.utf8),
+            outputByteCount: 32)
     }
     /// The derivation key, for the conformance vectors.
     public var subkeyBytes: Data { subkey.withUnsafeBytes { Data($0) } }

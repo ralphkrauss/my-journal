@@ -251,7 +251,6 @@ struct WaitLibrary: Sendable {
     let address: String
     let first: WaitDevice
     private let master: Data
-    private let protection: ContentProtection
     private let recoverySecret: String
     private let root: URL
     private let token: String
@@ -262,12 +261,11 @@ struct WaitLibrary: Sendable {
             code: code, envelope: envelope, recoverySecret: recoverySecret, deviceName: "Probe Mac")
         self.address = address
         self.master = master
-        self.protection = try envelope.contentProtection
         self.recoverySecret = recoverySecret
         self.root = root
         token = grant.token
         first = try WaitDevice(
-            address: address, grant: grant, key: master, protection: protection,
+            address: address, grant: grant, key: master,
             directory: root.appendingPathComponent("mac"))
         _ = try await first.store.save(JournalItem(kind: "journal", title: "Shared"))
     }
@@ -275,7 +273,7 @@ struct WaitLibrary: Sendable {
     func device(_ name: String) async throws -> WaitDevice {
         let grant = try await ServerClient(address: address).recover(secret: recoverySecret, deviceName: name)
         let device = try WaitDevice(
-            address: address, grant: grant, key: master, protection: protection,
+            address: address, grant: grant, key: master,
             directory: root.appendingPathComponent(UUID().uuidString))
         try await device.engine.synchronize()
         return device
@@ -319,10 +317,10 @@ struct WaitDevice: Sendable {
     let engine: SyncEngine
     private let journal = UUID()
 
-    init(address: String, grant: DeviceGrant, key: Data, protection: ContentProtection, directory: URL) throws {
+    init(address: String, grant: DeviceGrant, key: Data, directory: URL) throws {
         id = grant.deviceId
         token = grant.token
-        store = try JournalStore(directory: directory, key: key, protection: protection)
+        store = try JournalStore(directory: directory, key: key)
         client = try ServerClient(address: address, token: grant.token)
         engine = SyncEngine(store: store, client: client)
     }

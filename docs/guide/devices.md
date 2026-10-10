@@ -31,7 +31,7 @@ If you’d rather not type your master password, for example on a Mac:
 
 If the codes don’t match, choose **Cancel** on both devices; nothing is shared. If the pairing code expires before you enter it, choose **Get New Code**.
 
-For journals without encryption, whoever runs the server creates a one-time recovery code (see [self-hosting](../self-hosting/README.md#recovering-an-unencrypted-library)). Choose **Use a Recovery Code** and enter it.
+This version doesn’t connect to a server that was set up without encryption by version 1.0: it says “{host} doesn’t use encryption.” On a device that still runs version 1.0 and has your journals, turn on encryption in Settings, which also encrypts the server; then devices running this version can join.
 
 ## See your devices
 

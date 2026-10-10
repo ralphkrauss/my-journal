@@ -201,7 +201,7 @@ final class JournalNavigationTests: XCTestCase {
             if let account = model.configuration?.keyID { try? Keychain.remove(account) }
             try? FileManager.default.removeItem(at: root)
         }
-        await model.start(encrypted: false)
+        await model.start()
         let parent = try XCTUnwrap(model.selectedJournalID)
         await model.newEntry()
         var entry = try XCTUnwrap(model.draft)
@@ -297,7 +297,7 @@ final class JournalNavigationTests: XCTestCase {
             if let account = model.configuration?.keyID { try? Keychain.remove(account) }
             try? FileManager.default.removeItem(at: root)
         }
-        await model.start(encrypted: false)
+        await model.start()
         let parent = try XCTUnwrap(model.selectedJournalID)
         let store = try XCTUnwrap(model.store)
         var gone = JournalItem(kind: "entry", journalID: parent, title: "Gone entry")

@@ -9,8 +9,7 @@ It runs on iOS 16, iPadOS 16 and macOS 14 or later, on Mac computers with Apple 
 ## Create your journal
 
 1. Open My Journal and choose **Start a Journal**.
-2. Choose **Use Encryption**.
-3. Enter a master password twice, save it in your password manager, and choose **Create**.
+2. Enter a master password twice, save it in your password manager, and choose **Create**.
 
 My Journal creates your first journal, named Default. You can start writing right away; nothing leaves the device unless you set up [sync](sync.md).
 
@@ -31,13 +30,11 @@ If you’ve forgotten it, see [Troubleshooting](troubleshooting.md#i-forgot-my-m
 
 ## Encryption
 
-Encryption is on by default. Your entries, journal names, templates, image descriptions and images are encrypted on your device before they’re stored or synced, so a server you sync with can’t read them. The [security model](../../SECURITY.md) explains what is protected and what a server can still see.
+Every journal is encrypted. Your entries, journal names, templates, image descriptions and images are encrypted on your device before they’re stored or synced, so a server you sync with can’t read them. The [security model](../../SECURITY.md) explains what is protected and what a server can still see.
 
-When you start, you can choose **Continue Without Encryption** instead. Then there is no master password, and anyone with access to your files, server or backups can read your journals.
+There is no way to use My Journal without a master password, and encryption can’t be turned off.
 
-To turn encryption on later, open Settings > Privacy and choose **Turn On Encryption…**. Choose a master password and enter it again to verify it, then choose **Turn On**. You can’t write while your journals are being encrypted. Encryption can’t be turned off again.
-
-If your journals sync, update My Journal on your other devices and let them sync first. Afterwards, sign in on each of them with the new master password (**Reconnect…** appears where the sync problem shows), or add them from this device. Agents with access through your server must be given access again. Archives and backups made earlier stay unencrypted, so make a new archive and delete the old ones.
+**Journals made with version 1.0 without encryption.** Version 1.0 let you choose **Continue Without Encryption**. This version opens only encrypted journals, so it can’t open journals made that way: it shows **Your Journals Can’t Be Opened**. Nothing is changed or removed. Keep using version 1.0 to read them, or export them from version 1.0 before you update. See [Troubleshooting](troubleshooting.md#if-your-journals-arent-encrypted).
 
 ## Write
 

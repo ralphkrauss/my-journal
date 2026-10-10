@@ -88,7 +88,7 @@ These are slower. In CI, the sync and server recovery checks run in the Integrat
 
 | Command | What it covers |
 | --- | --- |
-| `mise exec -- scripts/test-sync.sh` | A real server process and several Swift clients: sync, images, pairing, offline conflicts, recovery, revocation, backup and restore. Set `JOURNAL_TEST_RECOVERY_VERSION` (for example `2` for a password library or `4` for one without encryption) to test another library format. |
+| `mise exec -- scripts/test-sync.sh` | A real server process and several Swift clients: sync, images, pairing, offline conflicts, recovery, revocation, backup and restore. Set `JOURNAL_TEST_RECOVERY_VERSION` (for example `2` for a master-password library) to test another library format. Formats 3 and 4 (no encryption) are no longer supported by the Swift clients in 1.1, so only the server side of those formats is exercised. |
 | `mise exec -- scripts/test-server-recovery.sh` | The Mac app's own sync recovery against real published servers: setting up, joining, stopping syncing, and a server that was stopped, wiped, restored or replaced. |
 | `mise exec -- scripts/test-native-pairing.sh` | The complete iOS unit and UI test scheme, including pairing through the app, against a disposable server. |
 | `mise exec -- scripts/test-native-accessibility.sh` | Recovery and restoration flows at the largest text size in dark mode. |

@@ -23,7 +23,6 @@ extension Probe {
         let publisher: AgentCopyPublisher
         let mcp: URL
         let key: Data
-        let protection: ContentProtection
 
         /// Sends this device's changes and brings every agent's copy up to date.
         func publish() async throws {
@@ -54,32 +53,27 @@ extension Probe {
         let grant = try await ServerClient(address: address).initialize(
             code: code, envelope: envelope, recoverySecret: recoverySecret, deviceName: "Probe Mac")
         let client = try ServerClient(address: address, token: grant.token)
-        let protection = try envelope.contentProtection
-        let store = try JournalStore(directory: root, key: master, protection: protection)
+        let store = try JournalStore(directory: root, key: master)
         guard let mcpURL = try await client.status().mcpUrl, let mcp = URL(string: mcpURL) else {
             throw ProbeFailure("the server didn't report an MCP address")
         }
         let device = AgentJournalsDevice(
             client: client, store: store, sync: SyncEngine(store: store, client: client),
-            publisher: AgentCopyPublisher(store: store, client: client), mcp: mcp, key: master, protection: protection)
+            publisher: AgentCopyPublisher(store: store, client: client), mcp: mcp, key: master)
         let kept = JournalItem(kind: "journal", title: "Default")
         try await leavingWithAllJournals(device, kept: kept)
         try await mergingIntoSelectedJournals(device, kept: kept)
         let anonymous = try ServerClient(address: address)
-        let phoneGrant =
-            envelope.requiresPassword
-            ? try await anonymous.recoverVault(
-                phrase, parameters: anonymous.recoveryParameters(), deviceName: "Probe iPhone"
-            ).grant
-            : try await anonymous.recover(secret: recoverySecret, deviceName: "Probe iPhone")
+        let phoneGrant = try await anonymous.recoverVault(
+            phrase, parameters: anonymous.recoveryParameters(), deviceName: "Probe iPhone"
+        ).grant
         let phoneClient = try ServerClient(address: address, token: phoneGrant.token)
         let phoneRoot = root.appendingPathExtension("phone")
         defer { try? FileManager.default.removeItem(at: phoneRoot) }
-        let phoneStore = try JournalStore(directory: phoneRoot, key: master, protection: protection)
+        let phoneStore = try JournalStore(directory: phoneRoot, key: master)
         let phone = AgentJournalsDevice(
             client: phoneClient, store: phoneStore, sync: SyncEngine(store: phoneStore, client: phoneClient),
-            publisher: AgentCopyPublisher(store: phoneStore, client: phoneClient), mcp: mcp, key: master,
-            protection: protection)
+            publisher: AgentCopyPublisher(store: phoneStore, client: phoneClient), mcp: mcp, key: master)
         try await allowedOnAnotherDevice(device, phone: phone, kept: kept)
     }
 
@@ -116,7 +110,7 @@ extension Probe {
         }
         // An agent with All Journals reads a journal whether or not a joining device combines into it.
         let readByAgents = try await device.client.journalsAgentsCanRead(
-            vaultKey: device.key, protection: device.protection)
+            vaultKey: device.key)
         guard readByAgents == [] else {
             throw ProbeFailure("an All Journals agent kept a joining device from combining journals")
         }

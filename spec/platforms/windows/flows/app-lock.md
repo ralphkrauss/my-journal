@@ -41,7 +41,7 @@ One interface, `IDeviceOwnerAuthenticator`, with three members (the Windows coun
 | DisabledByPolicy, DeviceNotPresent | Cannot | Cannot turn on: footers in [settings-privacy](../screens/settings-privacy.md) | Continues without authentication, as the spec's rule "a device without a passcode continues" | **App Lock pauses**, as above |
 | RetriesExhausted, DeviceBusy, anything else | Failed | Switch returns; nothing said | Nothing happens; nothing said (Add device stays on its confirmation) | `settings.lock.failed` and Use master password when there is a password |
 
-Reasons are the spec's reason keys in their capitalised form: `settings.privacy.appLock.reason.turnOn`, `settings.privacy.appLock.reason.turnOff`, `settings.privacy.appLock.reason.change`, `settings.privacy.appLock.reason.unlock`, `settings.addDevice.authReason`, `settings.backup.markdownReason`, `settings.backup.markdownReasonUnencrypted`, `settings.erase.authReason`, `settings.changePassword.authReason`. The reason is the prompt's message.
+Reasons are the spec's reason keys in their capitalised form: `settings.privacy.appLock.reason.turnOn`, `settings.privacy.appLock.reason.turnOff`, `settings.privacy.appLock.reason.change`, `settings.privacy.appLock.reason.unlock`, `settings.addDevice.authReason`, `settings.backup.markdownReason`, `settings.erase.authReason`, `settings.changePassword.authReason`. The reason is the prompt's message.
 
 **Rules of the gate.**
 

@@ -50,7 +50,7 @@ extension AppModel {
                 guard key == masterKey else { throw JournalError.invalidRecoveryKey }
             } else {
                 let folder = configuration?.storageFolder.map { directory.appendingPathComponent($0) } ?? directory
-                let candidate = try JournalStore(directory: folder, key: key, protection: .encrypted)
+                let candidate = try JournalStore(directory: folder, key: key)
                 let opened = (try? await candidate.items().isEmpty == false) ?? false
                 try? await candidate.close()
                 guard opened else { throw JournalError.invalidRecoveryKey }

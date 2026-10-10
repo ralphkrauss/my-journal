@@ -65,7 +65,6 @@ Header: `settings.connect.server`.
    | --- | --- | --- |
    | No problem | Sync Now | `messages.sync.action.syncNow` |
    | Temporary (offline, server unreachable, server unavailable) or unexpected | Try Again | `common.tryAgain` |
-   | Needs the person (the server now uses encryption or was replaced by an encrypted one) | Reconnect… | `common.reconnect` |
    | Server was reset and waits for a setup code | Reconnect… | `common.reconnect` |
    | Server was restored or replaced and doesn't know this device | Reconnect… | `common.reconnect` |
    | This device's access was removed | Reconnect… | `common.reconnect` |
@@ -73,7 +72,7 @@ Header: `settings.connect.server`.
 
 Footer (only one, the first that applies):
 1. Connected and an entry couldn't be saved: `messages.sync.pausedForSaveFailure`.
-2. The last sync left a message: that message. It is the sync state's message, `messages.sync.<state>` (`messages.sync.offline`, `messages.sync.unreachable` (or `messages.sync.unreachableTailscale` for hosts ending in `.ts.net`), `messages.sync.unavailable`, `messages.sync.signInNeeded`, `messages.sync.serverNotSetUp`, `messages.sync.serverReplaced`, `messages.sync.accessRemoved`, `messages.sync.appUpdateNeeded`, `messages.sync.serverUpdateNeeded`, `messages.sync.certificateInvalid`, `messages.sync.notJournalServer`, `messages.sync.localDataUnreadable`, `messages.sync.unexpected`), or, when every other change synced, the message about a single entry or image the server didn't accept (`messages.sync.*`, owned by `screens/sync-status`).
+2. The last sync left a message: that message. It is the sync state's message, `messages.sync.<state>` (`messages.sync.offline`, `messages.sync.unreachable` (or `messages.sync.unreachableTailscale` for hosts ending in `.ts.net`), `messages.sync.unavailable`, `messages.sync.serverNotSetUp`, `messages.sync.serverReplaced`, `messages.sync.accessRemoved`, `messages.sync.appUpdateNeeded`, `messages.sync.serverUpdateNeeded`, `messages.sync.certificateInvalid`, `messages.sync.notJournalServer`, `messages.sync.localDataUnreadable`, `messages.sync.unexpected`), or, when every other change synced, the message about a single entry or image the server didn't accept (`messages.sync.*`, owned by `screens/sync-status`).
 3. Not connected:
    - Computer that stopped syncing with the server earlier versions ran on it: `settings.sync.footer.formerMacServer`, then on a new line the link `settings.sync.footer.learnMore`.
    - Otherwise: `settings.sync.footer.notConnected`, then on a new line the link `settings.sync.footer.howToSetUp` ("How to Set Up a Server").
@@ -116,7 +115,7 @@ The section is absent, not dimmed, when the device isn't connected (the Server s
 | Action | Command | Enabled | Result |
 | --- | --- | --- | --- |
 | Connect to a Server… | `connect-to-server` | Always (unlocked) | Opens Connect to a Server (`flows/connect-to-server`) as a sheet over Settings. |
-| Sync Now / Try Again | `sync-now` | Not while a sync the person started runs; not while locked, while the journals are being replaced (connecting, importing, encrypting), while a save has failed, or without a working connection. | Syncs once, also resending records and images the server refused before. See Rules. |
+| Sync Now / Try Again | `sync-now` | Not while a sync the person started runs; not while locked, while the journals are being replaced (connecting, importing), while a save has failed, or without a working connection. | Syncs once, also resending records and images the server refused before. See Rules. |
 | Check Again | `sync-now` | As Sync Now | Syncs once; the state is checked again. |
 | Reconnect… | `sync-reconnect` | Not while a sync the person started runs | Opens Reconnect, which goes straight to this server's next step (`flows/reconnect-to-server`). |
 | Stop Syncing… | `stop-syncing` | Not while the journals are being replaced | Asks first (below), then `flows/stop-syncing`. |

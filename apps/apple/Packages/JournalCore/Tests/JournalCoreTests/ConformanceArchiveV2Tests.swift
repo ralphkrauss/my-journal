@@ -357,7 +357,7 @@ final class ConformanceArchiveV2Tests: XCTestCase {
         _ = try await expected()
         let credentials = try passwordCredentials()
         let source = Conformance.url("\(Self.base)/encrypted.zip")
-        XCTAssertTrue(try VaultArchive.requiresPassword(at: source))
+        XCTAssertNoThrow(try VaultArchive.checkHeader(at: source))
         let restored = try await VaultArchive.restore(
             from: source, to: root.appendingPathComponent("restored"), phrase: credentials.password)
         XCTAssertEqual(restored.key, credentials.vaultKey)

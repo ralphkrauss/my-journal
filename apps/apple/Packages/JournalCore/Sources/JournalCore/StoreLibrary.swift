@@ -37,7 +37,6 @@ struct LibraryEffects {
 /// methods, so opening a store can convert what older versions left before anything else runs.
 struct LibraryStore: Sendable {
     let key: Data
-    let protection: ContentProtection
     /// "1" once this library has synchronized with a server, which takes the library record. 1.0 also wrote "0" for
     /// a server that could not; that value is read as "not yet" and replaced at the next synchronization.
     static let syncedSetting = "server-record-kinds"
@@ -54,12 +53,12 @@ struct LibraryStore: Sendable {
     var context: String { VaultCrypto.recordContext(id: LibraryRecord.id, kind: LibraryRecord.kind) }
     func content(_ payload: String) -> LibraryContent {
         guard let data = Data(base64Encoded: payload),
-            let plaintext = try? protection.decode(data, key: key, context: context)
+            let plaintext = try? VaultCrypto.open(data, key: key, context: context)
         else { return .held }
         return LibraryRecord.read(plaintext)
     }
     func seal(_ record: LibraryRecord) throws -> String {
-        try protection.encode(record.encoded(modifiedAt: Date()), key: key, context: context).base64EncodedString()
+        try VaultCrypto.seal(record.encoded(modifiedAt: Date()), key: key, context: context).base64EncodedString()
     }
     func stored(_ db: Database) throws -> Stored? {
         try Row.fetchOne(
@@ -81,14 +80,14 @@ struct LibraryStore: Sendable {
             return LibraryChanges(damaged: true)
         }
         let decoder = JournalCoding.decoder()
-        if let opened = try? protection.decode(bytes, key: key, context: LibraryChanges.context),
+        if let opened = try? VaultCrypto.open(bytes, key: key, context: LibraryChanges.context),
             let changes = try? decoder.decode(LibraryChanges.self, from: opened)
         {
             return Self.readable(changes)
         }
         // Left readable by a version that turned on encryption without knowing this value: accepted, and sealed
         // the next time it's stored.
-        if protection == .encrypted, let changes = try? decoder.decode(LibraryChanges.self, from: bytes) {
+        if let changes = try? decoder.decode(LibraryChanges.self, from: bytes) {
             return Self.readable(changes)
         }
         return LibraryChanges(damaged: true)
@@ -111,7 +110,7 @@ struct LibraryStore: Sendable {
             try db.execute(sql: "DELETE FROM settings WHERE key=?", arguments: [LibraryChanges.setting])
             return
         }
-        let sealed = try protection.encode(
+        let sealed = try VaultCrypto.seal(
             JournalCoding.encoder().encode(changes), key: key, context: LibraryChanges.context)
         try db.execute(
             sql: "INSERT INTO settings(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -211,7 +210,7 @@ struct LibraryStore: Sendable {
             else { continue }
             let item = try JournalStore.decode(
                 row["payload"], id: identity, kind: row["kind"], version: JournalStore.version(of: row["payload"]),
-                key: key, protection: protection)
+                key: key)
             if item.isPermanentlyDeleted { deleted.insert(identity) }
         }
         return deleted
@@ -347,17 +346,15 @@ struct LibraryStore: Sendable {
 
     // MARK: What older versions left (rule 5)
 
-    /// Whether this store's key opens its records. Without encryption there's nothing to check; with no records,
-    /// there's nothing to convert either.
+    /// Whether this store's key opens its records. With no records, there's nothing to convert either.
     private func keyOpensRecords(_ db: Database) throws -> Bool {
-        guard protection == .encrypted else { return true }
         let rows = try Row.fetchAll(db, sql: "SELECT id,kind,payload FROM records ORDER BY id LIMIT 3")
         return rows.contains { row in
             guard let id = UUID(uuidString: row["id"]), let data = Data(base64Encoded: row["payload"] as String) else {
                 return false
             }
             return
-                (try? protection.decode(data, key: key, context: VaultCrypto.recordContext(id: id, kind: row["kind"])))
+                (try? VaultCrypto.open(data, key: key, context: VaultCrypto.recordContext(id: id, kind: row["kind"])))
                 != nil
         }
     }
@@ -422,7 +419,7 @@ struct LibraryStore: Sendable {
 }
 
 extension JournalStore {
-    var library: LibraryStore { LibraryStore(key: key, protection: protection) }
+    var library: LibraryStore { LibraryStore(key: key) }
 
     func record(_ effects: LibraryEffects) {
         for operation in effects.queued { unsentOperations[operation] = Date() }
@@ -698,11 +695,11 @@ extension JournalStore {
         try db.write { db in record(try library.change(db, sets: values)) }
     }
     func sealedPayload(_ plaintext: Data, id: UUID, kind: String) throws -> String {
-        try protection.encode(plaintext, key: key, context: VaultCrypto.recordContext(id: id, kind: kind))
+        try VaultCrypto.seal(plaintext, key: key, context: VaultCrypto.recordContext(id: id, kind: kind))
             .base64EncodedString()
     }
     func openedPayload(_ payload: String, id: UUID, kind: String) throws -> Data {
         guard let data = Data(base64Encoded: payload) else { throw JournalError.invalidData }
-        return try protection.decode(data, key: key, context: VaultCrypto.recordContext(id: id, kind: kind))
+        return try VaultCrypto.open(data, key: key, context: VaultCrypto.recordContext(id: id, kind: kind))
     }
 }

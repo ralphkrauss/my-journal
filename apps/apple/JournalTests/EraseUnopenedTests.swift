@@ -119,7 +119,7 @@ final class EraseUnopenedTests: XCTestCase {
         first.preferences = UserDefaults(suiteName: "Half-" + UUID().uuidString) ?? .standard
         first.sweepsKeychain = true
         first.keychainListing = { [] }
-        await first.start(encrypted: false)
+        await first.start()
         let old = try XCTUnwrap(first.configuration)
         let oldFolder = try XCTUnwrap(old.storageFolder)
         let oldKey = try XCTUnwrap(old.keyID)
@@ -129,7 +129,7 @@ final class EraseUnopenedTests: XCTestCase {
         _ = try LocalErasure.commit(list, in: directory)
 
         let second = AppModel(directory: directory)
-        await second.start(encrypted: false)
+        await second.start()
         let current = try XCTUnwrap(second.configuration)
         let currentFolder = try XCTUnwrap(current.storageFolder)
         let currentKey = try XCTUnwrap(current.keyID)

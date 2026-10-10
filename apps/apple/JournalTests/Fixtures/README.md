@@ -1,6 +1,6 @@
 # Libraries written by earlier builds
 
-Six libraries, written by the real code of two TestFlight builds, for tests that prove a newer version still opens them. Every name, text, image, password and token in them is synthetic. Nothing here comes from a real journal, device or server.
+Six libraries, written by the real code of two TestFlight builds, for tests that prove a newer version still opens the encrypted ones and leaves the unencrypted ones exactly as they are (version 1.1 opens only encrypted libraries; an unencrypted one ends in the screen that says the journals can't be opened, and its files, settings and Keychain items stay byte for byte as the build wrote them). Every name, text, image, password and token in them is synthetic. Nothing here comes from a real journal, device or server.
 
 | Build | Commit | Why it is here |
 | --- | --- | --- |
@@ -12,7 +12,7 @@ Per build there are three libraries, one flat JSON file each (the test target bu
 | Variant | Library |
 | --- | --- |
 | `password` | Format 2: a master password, encrypted journals, local only. The password has been typed correctly, so the configuration holds `"passwordChecked":true`. |
-| `unencrypted` | Format 4: the old “Continue Without Encryption” (`AppModel.start(encrypted: false)`), local only. Records are not sealed; the library holds readable content. |
+| `unencrypted` | Format 4: the old “Continue Without Encryption” (`AppModel.start(encrypted: false)` of that build), local only. Records are not sealed; the library holds readable content. 1.1 never opens it. |
 | `unencrypted-synced` | Format 4 with a saved server connection, a server position and an acknowledged history, as after real syncs against an unencrypted server. |
 
 ## How they were made
@@ -52,7 +52,7 @@ There is no server in this repository that a test target can start, so the test 
 - **Checkpoint times** of the first four checkpoints are earlier than the creation time, as described above.
 - **The sync history is two syncs against a stand-in**, not months of use against a real server.
 - **The saved connection's address** was rewritten after the syncs, so the position is real but the server it names is not.
-- **Unencrypted records are Base64.** In format 4 the store writes each record as Base64 text of its JSON, so the marker is not visible as plain text in `journal.sqlite`; images are stored as the exact PNG bytes. `manifest.markerNeedles` lists the marker and the three Base64 forms of it (one for each position within a Base64 group) that occur in the unencrypted files, so a test can look for readable text before and after encrypting. In the `password` files no form occurs.
+- **Unencrypted records are Base64.** In format 4 the store writes each record as Base64 text of its JSON, so the marker is not visible as plain text in `journal.sqlite`; images are stored as the exact PNG bytes. `manifest.markerNeedles` lists the marker and the three Base64 forms of it (one for each position within a Base64 group) that occur in the unencrypted files, so a test could look for readable text. In the `password` files no form occurs.
 - The `-shm` file was left out; it holds no data, and the empty `-wal` file was left out too.
 
 ## Schema

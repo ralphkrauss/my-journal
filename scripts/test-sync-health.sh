@@ -99,23 +99,9 @@ probe health-stop-reset "$address" "$data/setup-code" "$state"
 reset_server
 probe health-replaced "$address" "$data/setup-code" "$state"
 # Single cases: the password changed elsewhere, a credential not accepted, rate limiting, damaged data on this device
-# and an entry too large to sync (password format, which can change).
+# and an entry too large to sync.
 reset_server
 JOURNAL_TEST_RECOVERY_VERSION=2 probe health-cases "$address" "$data/setup-code" "$task_dir/cases-state"
-stop_server
-
-# Row 10 without a password: reconnecting needs the server's one-time recovery code.
-plain="$task_dir/plain-state"
-start_server "$task_dir/plain"
-JOURNAL_TEST_RECOVERY_VERSION=4 probe health-plain-setup "$address" "$data/setup-code" "$plain"
-probe health-stop-before-reset "$address" "$plain"
-stop_server
-Journal__DataDirectory="$data" "$package/Journal.Api" --recovery-code | tail -1 >"$task_dir/recovery-code"
-start_server "$data"
-probe health-plain-reconnect "$address" "$task_dir/recovery-code" "$plain"
-# Case 10: the server is set up again by an encrypted library while this one has no encryption.
-reset_server
-JOURNAL_TEST_RECOVERY_VERSION=4 probe health-plain-replaced "$address" "$data/setup-code" "$plain"
 stop_server
 
 # Cases 4 to 6: a certificate that isn't valid, an address that doesn't resolve, and another web server.

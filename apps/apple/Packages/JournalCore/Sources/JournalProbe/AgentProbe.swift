@@ -38,7 +38,7 @@ extension Probe {
         let grant = try await ServerClient(address: address).initialize(
             code: code, envelope: envelope, recoverySecret: recoverySecret, deviceName: "Probe Mac")
         let device = try ServerClient(address: address, token: grant.token)
-        let store = try JournalStore(directory: root, key: master, protection: try envelope.contentProtection)
+        let store = try JournalStore(directory: root, key: master)
         let sync = SyncEngine(store: store, client: device)
         let shared = JournalItem(kind: "journal", title: "Shared work")
         let unshared = JournalItem(kind: "journal", title: "Private thoughts")
@@ -78,11 +78,10 @@ extension Probe {
         print("PASS: an approved agent is sent back as soon as its first copy is uploaded")
         // Merging another device's journals never combines them into a journal an agent reads
         // (docs/design/join-with-local-journals.md), so a device joining must learn which ones those are.
-        let protection = try envelope.contentProtection
-        let readByAgents = try await device.journalsAgentsCanRead(vaultKey: master, protection: protection)
+        let readByAgents = try await device.journalsAgentsCanRead(vaultKey: master)
         let unreadable = try await device.journalsAgentsCanRead(
-            vaultKey: try VaultCrypto.generateKey(), protection: protection)
-        guard readByAgents == [shared.id], protection == .plaintext || unreadable == nil else {
+            vaultKey: try VaultCrypto.generateKey())
+        guard readByAgents == [shared.id], unreadable == nil else {
             throw ProbeFailure("a joining device can't tell which journals agents read")
         }
         print("PASS: a device joining can tell which journals agents read")

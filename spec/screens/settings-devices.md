@@ -68,7 +68,7 @@ A confirmation with a visible title:
   - approved by another device still known to the server (even if since revoked): `settings.devices.added.byDevice` ("Added by {device} on {when}");
   - with a pairing code whose approver isn't known: `settings.devices.added.pairingCode`;
   - when the server was set up: `settings.devices.added.setup` ("Added during server setup on {when}");
-  - by signing in with the credential: `settings.devices.added.recoveryKey` (recovery key), `settings.devices.added.accessPassword` (access password), `settings.devices.added.recoveryCode` (one-time recovery code, servers without encryption), `settings.devices.added.masterPassword` (master password);
+  - by signing in with the credential: `settings.devices.added.recoveryKey` (recovery key), `settings.devices.added.masterPassword` (master password);
   - unknown: `settings.devices.added.unknown` ("Added on {when}").
 - **{when}** is the abbreviated date (“28 Sep 2026”). When two listed devices would read exactly the same (same name and sentence), both add the time (“28 Sep 2026 at 14:05”); if still the same, both add the first eight characters of their identifier after “ · ”.
 - This device can't revoke itself here; Stop Syncing in Settings ▸ Sync gives up its own access.

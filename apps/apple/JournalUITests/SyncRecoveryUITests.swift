@@ -162,7 +162,7 @@ final class SyncRecoveryUITests: XCTestCase {
             password, parameters: anonymous.recoveryParameters(), deviceName: "Fixture check")
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = try JournalStore(directory: root, key: recovered.key, protection: .encrypted)
+        let store = try JournalStore(directory: root, key: recovered.key)
         try await SyncEngine(store: store, client: ServerClient(address: address, token: recovered.grant.token))
             .synchronize()
         let items = try await store.items().filter { $0.deletedAt == nil }

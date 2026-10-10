@@ -86,7 +86,7 @@ final class ConnectionSetupUITests: XCTestCase {
         let (address, code) = try server("PLAIN")
         // An earlier version's device sets the server up without a password.
         _ = try await ServerClient(address: address).initialize(
-            code: code, envelope: .unprotected,
+            code: code, envelope: RecoveryEnvelope(salt: "", wrappedKey: "", iterations: 0, formatVersion: 4),
             recoverySecret: VaultCrypto.random(32).map { String(format: "%02x", $0) }
                 .joined(), deviceName: "Fixture Mac")
         let app = launchFresh()

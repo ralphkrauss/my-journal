@@ -21,7 +21,7 @@ struct JournalCommands: Commands {
                 .disabled(!model.canCreateEntry)
             Button("New Journal…") { inJournalWindow { model.newJournalRequested = true } }
                 .keyboardShortcut("n", modifiers: [.command, .option])
-                .disabled(!model.isReady || model.locked || model.writingPausedForEncryption)
+                .disabled(!model.isReady || model.locked)
             // The same chooser as the link in an empty entry, so it is available exactly when that link is shown.
             Button("Use a Template…") {
                 // The chooser appears at once, without the sheet's animation, as the formatting controls do.

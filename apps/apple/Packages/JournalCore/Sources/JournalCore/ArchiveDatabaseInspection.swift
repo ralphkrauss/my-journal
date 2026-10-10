@@ -368,14 +368,14 @@ enum ArchiveStaging {
     /// Inspects the staged database, then opens it as a library and runs the checks that need a store. The caller
     /// owns `directory` and removes it if this throws.
     static func open(
-        _ directory: URL, key: Data, recovery: RecoveryEnvelope, protection: ContentProtection,
+        _ directory: URL, key: Data, recovery: RecoveryEnvelope,
         options: ArchiveOptions = .standard
     ) async throws -> VaultArchive.Restored {
         try await ArchiveDatabaseInspection.inspect(
             directory.appendingPathComponent(ArchiveNames.database), options: options)
         var opened: JournalStore?
         do {
-            let store = try JournalStore(directory: directory, key: key, protection: protection)
+            let store = try JournalStore(directory: directory, key: key)
             opened = store
             try await store.validateSchema()
             try await store.validateSnapshot()

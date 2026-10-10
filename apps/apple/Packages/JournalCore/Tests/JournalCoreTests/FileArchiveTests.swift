@@ -52,7 +52,7 @@ final class FileArchiveTests: XCTestCase {
         let archive = root.appendingPathComponent("library.journalarchive")
         try await VaultArchive.exportFile(
             store: library.store, recovery: library.recovery, key: library.key, to: archive)
-        XCTAssertTrue(try VaultArchive.requiresPassword(at: archive))
+        XCTAssertNoThrow(try VaultArchive.checkHeader(at: archive))
 
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: library.phrase)
@@ -209,8 +209,12 @@ final class FileArchiveTests: XCTestCase {
 
     /// The directory archive of 1.0 needs the same room: twice the listed files plus the reserve.
     func testADirectoryArchiveNeedsRoomToo() async throws {
-        let source = Conformance.url("archive/v1/plaintext")
-        var listed: UInt64 = 86_016
+        let source = Conformance.url("archive/v1/encrypted")
+        let password = try XCTUnwrap(
+            (try Conformance.object("crypto/encryption-v2.json")["recovery"] as? [String: Any])?["password"] as? String)
+        var listed = UInt64(
+            try FileManager.default.attributesOfItem(
+                atPath: source.appendingPathComponent("journal.sqlite").path)[.size] as? UInt64 ?? 0)
         let images = try FileManager.default.contentsOfDirectory(
             atPath: source.appendingPathComponent("attachments").path)
         for name in images {
@@ -223,13 +227,14 @@ final class FileArchiveTests: XCTestCase {
         let destination = root.appendingPathComponent("directory-restore")
         do {
             _ = try await VaultArchive.restore(
-                from: source, to: destination, phrase: "",
+                from: source, to: destination, phrase: password,
                 options: ArchiveOptions(availableSpace: { _ in needed - 1 }))
             XCTFail("A restore without room must be refused")
         } catch ArchiveError.notEnoughSpace {}
         XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path))
         let restored = try await VaultArchive.restore(
-            from: source, to: destination, phrase: "", options: ArchiveOptions(availableSpace: { _ in needed }))
+            from: source, to: destination, phrase: password,
+            options: ArchiveOptions(availableSpace: { _ in needed }))
         try await restored.store.close()
     }
 
@@ -241,14 +246,16 @@ final class FileArchiveTests: XCTestCase {
         return try ArchiveManifest.parse(bytes).declaredBytes
     }
 
-    func testAnArchiveForALibraryWithoutAPasswordIsNotWritten() async throws {
+    func testAnArchiveForAnEnvelopeOfALibraryWithoutEncryptionIsNotWritten() async throws {
         let key = try VaultCrypto.generateKey()
-        let store = try JournalStore(directory: root.appendingPathComponent("plain"), key: key, protection: .plaintext)
+        let store = try JournalStore(directory: root.appendingPathComponent("library"), key: key)
         let archive = root.appendingPathComponent("plain.journalarchive")
+        var envelope = try VaultCrypto.makeRecovery(masterKey: key, phrase: "a password", formatVersion: 2).0
+        envelope.formatVersion = 4
         do {
-            try await VaultArchive.exportFile(store: store, recovery: .unprotected, key: key, to: archive)
+            try await VaultArchive.exportFile(store: store, recovery: envelope, key: key, to: archive)
             XCTFail("1.1 writes only encrypted archives")
-        } catch JournalError.invalidData {}
+        } catch JournalError.notEncrypted {}
         XCTAssertFalse(FileManager.default.fileExists(atPath: archive.path))
         try await store.close()
     }

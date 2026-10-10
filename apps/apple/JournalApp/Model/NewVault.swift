@@ -9,7 +9,7 @@ struct NewVault: Sendable {
     let folder: String
 
     /// A new library is always encrypted, with a master password the person chose (docs/design/
-    /// 1-1-encryption-and-passwords.md §3.3). Libraries without encryption exist only from earlier versions.
+    /// 1-1-encryption-and-passwords.md §3.3). This version has no libraries without encryption.
     static func prepare(in directory: URL, password: String) async throws -> NewVault {
         guard password.count >= VaultCrypto.minimumPasswordLength else {
             throw JournalError.server("Enter a master password.")
@@ -22,7 +22,7 @@ struct NewVault: Sendable {
         let path = directory.appendingPathComponent(folder)
         var staged: JournalStore?
         do {
-            let storage = try JournalStore(directory: path, key: key, protection: envelope.contentProtection)
+            let storage = try JournalStore(directory: path, key: key)
             staged = storage
             let journal = JournalItem(kind: "journal", title: "Default")
             // No templates: a new library has only what the person makes (no-built-in-templates-2026-10-04.md).

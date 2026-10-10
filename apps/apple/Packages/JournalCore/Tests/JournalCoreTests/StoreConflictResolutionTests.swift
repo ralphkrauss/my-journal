@@ -751,43 +751,42 @@ final class StoreConflictResolutionTests: ConflictTestCase {
         XCTAssertTrue(state.notes.contains { $0.id == rename.id })
     }
 
-    func testTheNotesSurviveEncryptingTheLibraryAndAnArchive() async throws {
-        let plain = try JournalStore(directory: root.appendingPathComponent("plain"), key: key, protection: .plaintext)
-        addTeardownBlock { try? await plain.close() }
+    func testTheNotesSurviveAnArchive() async throws {
+        let store = try JournalStore(directory: root.appendingPathComponent("source"), key: key)
+        addTeardownBlock { try? await store.close() }
         let work = journal("Work")
-        try await settle(work, in: plain)
+        try await settle(work, in: store)
         var mine = work
         mine.title = "Mine"
-        try await plain.save(mine)
+        try await store.save(mine)
         var theirs = work
         theirs.title = "Theirs"
-        let payload = try PortableRecord.encode(theirs).base64EncodedString()
-        try await plain.recordConflict(
-            RemoteChange(
-                cursor: 2, recordId: work.id, revision: 2, kind: "journal", payload: payload, deviceId: UUID(),
-                modifiedAt: Date()))
-        let report = try await plain.resolveConflicts(at: .completedPull)
+        try await deliver(theirs, revision: 2, to: store)
+        let report = try await store.resolveConflicts(at: .completedPull)
         XCTAssertEqual(report.resolved.count, 1)
-        let newKey = Data((0..<32).map { UInt8($0 &+ 128) })
-        let encrypted = try await plain.reencryptedCopy(
-            to: root.appendingPathComponent("encrypted"), key: newKey, baseline: .restart)
-        addTeardownBlock { try? await encrypted.close() }
-        let notes = try await encrypted.keptNotes()
-        XCTAssertEqual(notes.map(\.kind), [.journalRenamed], "Sealed under the new key like library-changes")
-        let raw = try await encrypted.setting("kept-notes")
-        let sealed = try XCTUnwrap(Data(base64Encoded: String(decoding: try XCTUnwrap(raw), as: UTF8.self)))
-        XCTAssertNil(try? JSONSerialization.jsonObject(with: sealed))
         // An archive carries the key, and a reader that doesn't know it accepts the database.
-        try await encrypted.validateSchema()
         let phrase = "kept notes archive fixture"
-        let recovery = try VaultCrypto.makeRecovery(masterKey: newKey, phrase: phrase).0
+        let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
         let archive = root.appendingPathComponent("notes.journalarchive")
-        try await VaultArchive.exportFile(store: encrypted, recovery: recovery, key: newKey, to: archive)
+        try await VaultArchive.exportFile(store: store, recovery: recovery, key: key, to: archive)
         let restored = try await VaultArchive.restore(
             from: archive, to: root.appendingPathComponent("restored"), phrase: phrase)
         addTeardownBlock { try? await restored.store.close() }
         let restoredNotes = try await restored.store.keptNotes()
         XCTAssertEqual(restoredNotes.map(\.kind), [.journalRenamed])
+    }
+
+    /// Libraries encrypted by builds that didn't seal this value still carry it readable (1.0 turned encryption on
+    /// for libraries made without it); the notes are read, and sealed the next time they are stored.
+    func testNotesAnEarlierBuildLeftReadableAreStillRead() async throws {
+        let store = try JournalStore(directory: root.appendingPathComponent("earlier"), key: key)
+        addTeardownBlock { try? await store.close() }
+        var state = KeptNotesState()
+        state.add(KeptNote(kind: .journalRenamed, recordID: UUID(), name: "A", otherName: "B", created: Date()))
+        let readable = try JournalCoding.encoder().encode(state)
+        try await store.setSetting("kept-notes", value: Data(readable.base64EncodedString().utf8))
+        let notes = try await store.keptNotes()
+        XCTAssertEqual(notes.map(\.kind), [.journalRenamed])
     }
 }
 

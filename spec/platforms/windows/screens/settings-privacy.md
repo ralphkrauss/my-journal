@@ -2,7 +2,7 @@
 id: settings-privacy
 title: Settings ▸ Privacy (Windows)
 spec: screens/settings-privacy.md
-features: [encryption-status, encrypt-existing-journals, change-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
+features: [encryption-status, change-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/uwp/api/windows.security.credentials.ui.userconsentverifier
@@ -12,7 +12,7 @@ sources:
 
 # Settings ▸ Privacy (Windows)
 
-Encryption status and its next step, and App Lock with Windows Hello. Behaviour and copy keys are the spec's [Settings ▸ Privacy](../../../screens/settings-privacy.md); App Lock itself (when it locks, what counts as use, the results of the Windows Hello prompt) is in [flows/app-lock](../flows/app-lock.md), which this page links to rather than repeats. The shell and patterns are in [settings](settings.md#card-patterns).
+The encryption status and Change password, and App Lock with Windows Hello. Behaviour and copy keys are the spec's [Settings ▸ Privacy](../../../screens/settings-privacy.md); App Lock itself (when it locks, what counts as use, the results of the Windows Hello prompt) is in [flows/app-lock](../flows/app-lock.md), which this page links to rather than repeats. The shell and patterns are in [settings](settings.md#card-patterns).
 
 ## Controls
 
@@ -28,7 +28,7 @@ Header `settings.privacy.encryption.header`. One `SettingsCard`:
 | `Description` | `settings.privacy.encryption.footerOn`, the credential's name in lower case |
 | Trailing `Button` | `settings.privacy.changePassword` ([change-password](change-password.md)). Libraries from early versions (recovery key) show no button |
 
-Windows libraries are always encrypted, so the card never shows Encryption Is Off (`settings.privacy.encryption.off`), `common.unencryptedWarning`, the Reconnect button and `messages.encryption.turnedOnElsewhere` that go with it, or Turn On Encryption… (`settings.privacy.encryption.turnOn`). There is no Encrypt Your Journals task page on Windows ([screens/encrypt-journals](encrypt-journals.md)).
+Every library this version opens is encrypted, so the card shows this one state. Windows never creates or reads an unencrypted library: a library that version 1.0 made without encryption (recovery format 3 or 4) is refused by the Windows client the same way as by every other, with the library problem screen ([unavailable-content](unavailable-content.md)), so Settings never reaches this page for it.
 
 ### App lock group
 
@@ -72,7 +72,6 @@ A failed save of App Lock or of Lock when inactive shows `ContentDialog` with th
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `turn-on-encryption` | Not offered | — | No unencrypted library exists on Windows |
 | `change-password` | Button in the encryption card | — | Unlocked |
 | `toggle-app-lock` | Switch in the expander header | — | Not while Windows Hello is being asked; turning on needs Windows Hello available; turning off is always possible |
 | `set-inactivity-lock` | Combo box in the expander | — | App Lock on; not while Windows Hello is being asked |
@@ -109,7 +108,6 @@ Sentence case applies ("App lock", "Lock when inactive", "Your journals are encr
 
 ## Different by design
 
-- **No Encryption Is Off state and no Turn On Encryption….** Apple shows them for libraries made before 1.1 without encryption; Windows has no such libraries ([flows/encrypt-journals](../flows/encrypt-journals.md)).
 - **Windows Hello only.** Apple offers Face ID, Touch ID, Optic ID, the device passcode or the login password, and an app PIN was retired. Windows offers the one system prompt, Windows Hello (face, fingerprint or PIN), and a PC account with no Hello set up cannot turn App Lock on ([platform.md, 13](../platform.md#13-device-authentication-and-app-lock), D25). The footer says how to set Hello up and links to the Settings page.
 - **Lock when inactive and the sleep and screen-lock triggers** exist on Windows as on the Mac, since a PC is a computer.
 - **Footer states.** Windows has a policy-disabled state of its own, and an App Lock that pauses when Hello cannot be used (D42).

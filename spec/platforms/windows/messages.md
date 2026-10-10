@@ -60,7 +60,6 @@ The announcements of the spec are raised with `AutomationPeer.RaiseNotificationE
 | `messages.announce.pinned`, `messages.announce.unpinned` | ActionCompleted | MostRecent | pin |
 | `messages.announce.journalMovedAbove`, `messages.announce.journalMovedBelow` | ActionCompleted | MostRecent | journal-order |
 | `messages.announce.restoredIn` (with `{name}`; only when Restore put an entry in a journal other than its own) | ActionCompleted | MostRecent | restore |
-| `messages.encryption.announce.turningOn`, `messages.encryption.announce.updatingServer`, `messages.encryption.announce.done` | Other | ImportantAll, so "You can't stop this now" is never cut | encryption |
 | `common.saveFailed` for a failure that began while typing (the Apple alert is not shown, [save-failure](flows/save-failure.md)) | ActionAborted | ImportantMostRecent | save-failure |
 | An error in an open dialog or page | None of its own: the inline `InfoBar` opens and announces itself | | |
 | Pressing Copy for an address or code | ActionCompleted, the spec's copy confirmation where it has one | MostRecent | copy |
@@ -74,9 +73,8 @@ The messages and actions are the spec's table; this adds the Windows severity an
 | Key | Severity | Page | Flyout |
 | --- | --- | --- | --- |
 | `messages.sync.offline`, `messages.sync.unreachable`, `messages.sync.unreachableTailscale`, `messages.sync.unavailable` | Informational | Always; action `common.tryAgain` | Only after the long wait |
-| `messages.sync.signInNeeded` | Warning | Action `common.reconnect` | Yes |
 | `messages.sync.serverNotSetUp` | Warning | Action `common.reconnect` | Yes |
-| `messages.sync.serverReplaced`, `messages.sync.accessRemoved`, `messages.sync.accessRemovedNoPassword` | Warning | Action `common.reconnect` | Yes |
+| `messages.sync.serverReplaced`, `messages.sync.accessRemoved` | Warning | Action `common.reconnect` | Yes |
 | `messages.sync.appUpdateNeeded`, `messages.sync.serverUpdateNeeded`, `messages.sync.certificateInvalid`, `messages.sync.notJournalServer` | Warning | Action `messages.sync.action.checkAgain`; the app-update message adds a "Get updates" link (D51) | Yes |
 | `messages.sync.localDataUnreadable` | Error | Action `common.tryAgain` | Yes |
 | `messages.sync.unexpected` | Warning | Action `common.tryAgain` | Yes |
@@ -90,18 +88,19 @@ The failure itself is [save-failure](flows/save-failure.md). The "save first" re
 
 ### Writing paused
 
-`messages.writingPaused.connecting` and `messages.writingPaused.connectionFailed` are the Informational `InfoBar` of [entry-editor](screens/entry-editor.md), without an action: Show connection is not offered because the flow's page is modal over the only window. The bar is what stays visible behind the page's overlay. The page cannot be left while the work is unfinished ([connect-to-server](screens/connect-to-server.md)), so the bar needs no action of its own; after a crash the bar shows without an action until the person opens Settings. `messages.writingPaused.encrypting` is never shown on Windows, which runs no encryption ([encrypt-journals](screens/encrypt-journals.md)). `messages.writingPaused.updating` is the alert dialog (an archive was opened while the library is replaced).
+`messages.writingPaused.connecting` and `messages.writingPaused.connectionFailed` are the Informational `InfoBar` of [entry-editor](screens/entry-editor.md), without an action: Show connection is not offered because the flow's page is modal over the only window. The bar is what stays visible behind the page's overlay. The page cannot be left while the work is unfinished ([connect-to-server](screens/connect-to-server.md)), so the bar needs no action of its own; after a crash the bar shows without an action until the person opens Settings. `messages.writingPaused.updating` is the alert dialog (an archive was opened while the library is replaced).
 
 ### Library cannot be opened, saved but not displayed, other alerts
 
 | Messages | Windows surface |
 | --- | --- |
 | `messages.library.deviceKeyUnavailable`, `messages.library.cannotOpen`, `messages.error.newerVersion` | The lock page's `InfoBar`: Warning for `messages.library.deviceKeyUnavailable`, Error for the others ([unavailable-content](screens/unavailable-content.md), [lock-screen](screens/lock-screen.md)) |
+| `library.problem.cantOpen.message` with `library.problem.notEncrypted.message` (a library made without encryption by version 1.0) | The library problem screen, which is not mapped yet ([unavailable-content](screens/unavailable-content.md)): text on the screen, not a message in an `InfoBar` or dialog |
 | `messages.refresh.*`, `common.entryMovedNotDisplayed`, `messages.connection.connectedNotDisplayed` | The alert dialog (Close `common.ok`), or the error bar of the operation's dialog while it is still open. They say what was saved and tell the person to reopen My Journal; nothing is described as failed that was stored |
 | `messages.generic.*` | The alert dialog |
 | `messages.export.*`, `messages.import.*` | Inline error bar of the export dialog or the Import archive page, or of the Backup page for exports that start there ([export-archive](flows/export-archive.md), [export-markdown](flows/export-markdown.md), [import-archive](flows/import-archive.md)) |
 | `messages.image.*` | The error dialog of [insert-image](flows/insert-image.md) (the editor's image-import `InfoBar` is only the progress notice); `messages.image.descriptionsNeedSource` is inline on the Image descriptions page |
-| `messages.connection.*`, `messages.pairing.*`, `messages.password.*`, `messages.encryption.*`, `messages.server.*`, `messages.error.*` where they name a field or step | Inline next to the field when they are about one field (wrong password, setup code, address); otherwise the dialog's error bar |
+| `messages.connection.*`, `messages.pairing.*`, `messages.password.*`, `messages.server.*`, `messages.error.*` where they name a field or step | Inline next to the field when they are about one field (wrong password, setup code, address); otherwise the dialog's error bar |
 | `messages.entry.*`, `messages.history.*`, `messages.lifecycle.*`, `common.journalGone`, `messages.journal.nameTaken` | Inline in the dialog or page that raised them, with the recovery buttons the spec names; `messages.journal.nameTaken` is inline under the name field (the Apple Name Taken alert becomes the field's own error) |
 
 Messages marked unreachable or rare in the spec's notes are mapped like their group but need no design work.

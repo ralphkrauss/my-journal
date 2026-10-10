@@ -16,7 +16,7 @@ The last group of General and the dialogs it opens. Behaviour and copy keys are 
 
 ### The group
 
-The group sits last on [General](settings-general.md), 24 epx below the other cards, with no header. An [action card](settings.md#card-patterns): `Header` `settings.erase.button` (icon Delete E74D, no red) with a real standard `Button` `settings.erase.button` in its content (the card is not clickable on its own, so it cannot be hit by accident), `Description` the footer: `settings.erase.footerConnected` or `settings.erase.footerLocal`. The Mac-only sentence `settings.erase.footerFormerServer` is never shown. The card is disabled with the spec's rules: no library, or the library is being changed (connecting, importing, encrypting, Delete all running, a failed save, another erase), and while the count is being made (the "checking" state).
+The group sits last on [General](settings-general.md), 24 epx below the other cards, with no header. An [action card](settings.md#card-patterns): `Header` `settings.erase.button` (icon Delete E74D, no red) with a real standard `Button` `settings.erase.button` in its content (the card is not clickable on its own, so it cannot be hit by accident), `Description` the footer: `settings.erase.footerConnected` or `settings.erase.footerLocal`. The Mac-only sentence `settings.erase.footerFormerServer` is never shown. The card is disabled with the spec's rules: no library, or the library is being changed (connecting, importing, Delete all running, a failed save, another erase), and while the count is being made (the "checking" state).
 
 ### Warning dialog
 

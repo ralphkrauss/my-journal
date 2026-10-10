@@ -18,13 +18,13 @@ final class PrivacyManifestTests: XCTestCase {
                 }
             } as [String: Set<String>]
         // UserDefaults; contentModificationDate (ServerJoining); volumeAvailableCapacityForImportantUsage
-        // (EncryptionOperations), whose shortfall the message shows.
+        // (ArchiveLimits), checked before an archive is written or restored; no message shows the amount.
         XCTAssertEqual(
             declared,
             [
                 "NSPrivacyAccessedAPICategoryUserDefaults": ["CA92.1"],
                 "NSPrivacyAccessedAPICategoryFileTimestamp": ["C617.1"],
-                "NSPrivacyAccessedAPICategoryDiskSpace": ["E174.1", "85F4.1"],
+                "NSPrivacyAccessedAPICategoryDiskSpace": ["E174.1"],
             ])
     }
 }

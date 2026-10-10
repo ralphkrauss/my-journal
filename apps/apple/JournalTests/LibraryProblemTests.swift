@@ -130,7 +130,7 @@ final class LibraryProblemTests: XCTestCase {
         XCTAssertEqual(try fixture.digest(), before, "The file is byte for byte as it was, and so is everything else.")
 
         // Nothing that replaces the configuration goes ahead.
-        await model.start(encrypted: false)
+        await model.start()
         XCTAssertNil(model.configuration)
         XCTAssertNil(model.store)
         do {

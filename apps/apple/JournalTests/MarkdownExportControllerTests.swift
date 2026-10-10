@@ -15,7 +15,7 @@ import XCTest
             try? await model.store?.close()
             try? FileManager.default.removeItem(at: root)
         }
-        await model.start(encrypted: false)
+        await model.start()
         let store = try XCTUnwrap(model.store)
         let journal = try await store.save(JournalItem(kind: "journal", title: "Notes"))
         try await store.save(

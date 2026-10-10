@@ -23,7 +23,7 @@ Saves every journal as Markdown files, with their images, in a folder other apps
 ## Steps
 
 1. Export as Markdown….
-2. **When App Lock is on:** the device owner authenticates first, with the reason `settings.backup.markdownReason` ("Export your journals as files that aren’t encrypted") for encrypted journals, or `settings.backup.markdownReasonUnencrypted` ("Export your journals as Markdown files"). Cancelled: nothing happens, nothing is said. Failed (for example biometrics locked out): nothing is exported and `settings.backup.verifyFailed` shows in the place where the export's own errors show.
+2. **When App Lock is on:** the device owner authenticates first, with the reason `settings.backup.markdownReason` ("Export your journals as files that aren’t encrypted"). Cancelled: nothing happens, nothing is said. Failed (for example biometrics locked out): nothing is exported and `settings.backup.verifyFailed` shows in the place where the export's own errors show.
 3. **Preparing:** the open entry is saved (if it can't be: `messages.save.before.goBack`); the folder is written to a temporary place excluded from backups. Indicator after 0.3 seconds.
 4. **Save dialog** with the folder, suggesting `settings.backup.markdownFolderName` ("Journal Markdown {yyyy-MM-dd}").
    - Saved: if something was left out, a note appears under the button (below) and is announced.
@@ -54,7 +54,7 @@ Errors are announced and shown in red under the button.
 
 - One Markdown export at a time.
 - Locking cancels; leftovers are removed at the next launch.
-- The files aren't encrypted, whatever the journals are; the footer says so for encrypted journals.
+- The files aren't encrypted; the footer says so.
 
 ## Accessibility
 

@@ -48,26 +48,29 @@ What the app shows when it can't open the library (and what it offers instead of
 
 At launch the app reads its settings, the key from this device's secure store, and the library. If any step fails, or the first read of the journals after opening fails, **nothing of the library stays open** (no store, no key, no connection, no sync) and the window shows the **library problem screen**. It is not the lock screen: it needs no authentication, shows nothing of the journals or the server, and a person who can't unlock learns only that something is wrong. It is also shown when a configuration names a library whose database file is missing; nothing is created for it.
 
-The window shows, in this order: `library.app.loading` with a progress indicator until loading has finished; the lock screen; the library problem screen; the first-launch screen when there is no library; a saved encryption marker or a run in progress (the journals, read-only, with the encryption notice); Encrypt Your Journals for a library that isn't encrypted ([screens/encrypt-journals](encrypt-journals.md)); the recovery key; the journals.
+The window shows, in this order: `library.app.loading` with a progress indicator until loading has finished; the lock screen; the library problem screen; the first-launch screen when there is no library; the recovery key; the journals.
 
 | Problem | When | Screen |
 | --- | --- | --- |
 | **Can't open** | The library the settings name doesn't open (the database is missing or damaged, busy or unavailable; the key or saved connection can't be read or decoded; a crypto error), or the first read of the journals fails. Only a newer version is told apart from the rest, because the person's choices are the same and the app can't reliably tell a permanent fault from a temporary one | the library problem screen |
 | **Settings unreadable** | The settings file exists but can't be read or decoded. (A missing file means first launch.) | the library problem screen |
 | **Newer version** | The journals, or the format their settings name, were saved by a newer version of My Journal | the library problem screen (update form) |
+| **Not encrypted** | The library on this device was made by version 1.0 without encryption (recovery format 3 or 4). This version opens only encrypted journals. It is known from the settings alone, so nothing of the library is opened, read or changed | the library problem screen (not-encrypted form) |
 | **Missing device key** | The library needs a password and its key isn't in this device's secure store (for example after restoring the device from a backup) | the lock screen with the credential form, below |
 
 The library problem screen is centred and scrolls at large text sizes, like the lock screen and the first-launch screen:
 
-| | Can't open, settings unreadable | Newer version |
-| --- | --- | --- |
-| Symbol (decorative) | a warning triangle | a down-arrow into an app |
-| Heading | `library.problem.title` | `library.problem.updateTitle` |
-| Paragraphs | Can't open: `library.problem.cantOpen.message`, then `library.problem.cantOpen.advice`. Settings unreadable: `library.problem.settingsUnread.message`, then `library.problem.settingsUnread.advice`. {device} is the device's name | `library.problem.newerVersion.message` |
-| After one failed Try Again | `library.problem.mayBeFine` in secondary text | — |
-| Buttons | Try Again (prominent, default); Import Archive… (can't open only); Erase Journals and Settings… (after a failed Try Again); Learn More | Learn More only (the default) |
+| | Can't open, settings unreadable | Newer version | Not encrypted |
+| --- | --- | --- | --- |
+| Symbol (decorative) | a warning triangle | a down-arrow into an app | a warning triangle |
+| Heading | `library.problem.title` | `library.problem.updateTitle` | `library.problem.title` |
+| Paragraphs | Can't open: `library.problem.cantOpen.message`, then `library.problem.cantOpen.advice`. Settings unreadable: `library.problem.settingsUnread.message`, then `library.problem.settingsUnread.advice`. {device} is the device's name | `library.problem.newerVersion.message` | `library.problem.cantOpen.message`, then `library.problem.notEncrypted.message` in place of the advice |
+| After one failed Try Again | `library.problem.mayBeFine` in secondary text | — | — |
+| Buttons | Try Again (prominent, default); Import Archive… (can't open only); Erase Journals and Settings… (after a failed Try Again); Learn More | Learn More only (the default) | Erase Journals and Settings… at once (there is no Try Again, because trying again changes nothing); Learn More (the default). No Try Again, no Import Archive… |
 
 While Try Again runs, the buttons give way to `library.app.loading` with a progress indicator; the heading and paragraphs stay. When it ends in a problem again, the line `library.problem.stillClosed` appears directly under Try Again (plain text, announced once) until the next attempt starts, and focus returns to Try Again.
+
+**Not encrypted.** A library that version 1.0 created without encryption can't be opened by this version, which opens only encrypted journals. The screen is the can't-open screen with one honest sentence in place of the advice, no Try Again and no Import Archive…: Erase Journals and Settings… is offered at once, because there is nothing to retry. The library's files stay on the device byte-for-byte as they were; this version never migrates, rewrites or deletes them, and only Erase removes them. The person can keep using version 1.0 to read the journals, or export them from 1.0 before updating (the guide says so: `docs/guide/troubleshooting.md`). No flow is new: it is the library problem screen of this page.
 
 **Missing device key.** The lock screen ([lock-screen.md](lock-screen.md)) with the credential form and the error `messages.library.deviceKeyUnavailable`. Below the form is a group captioned `library.problem.missingKey.caption` ("Don’t have your {credential}?") with Import Archive… and Erase Journals and Settings…, for a person who no longer has the credential. Entering the credential unlocks the journals and saves the device key again. A wrong credential shows `messages.error.invalidRecoveryKey`.
 
@@ -120,9 +123,9 @@ While App Lock is on and the app isn't active, a plain cover in the system backg
 
 | Action | Command | What it does |
 | --- | --- | --- |
-| Try Again | `retry-opening` | Clears the problem and runs the whole opening again, re-reading the settings. Not offered for a newer version. A tap that ends in a problem again counts once; only a person's tap counts (see Rules). |
-| Import Archive… | `import-archive` | Can't open, at once; also on the missing-key lock screen. Opens the archive flow ([flows/import-archive](../flows/import-archive.md)), which reads and checks the archive before it replaces the library that couldn't be opened. |
-| Erase Journals and Settings… | `erase-unopened` | After one failed Try Again (can't open, settings unreadable), or at once on the missing-key lock screen. Authenticates, then the warning `settings.erase.alert.unopened` ([flows/erase](../flows/erase.md)). |
+| Try Again | `retry-opening` | Clears the problem and runs the whole opening again, re-reading the settings. Not offered for a newer version or for a library that isn't encrypted. A tap that ends in a problem again counts once; only a person's tap counts (see Rules). |
+| Import Archive… | `import-archive` | Can't open (not a library that isn't encrypted), at once; also on the missing-key lock screen. Opens the archive flow ([flows/import-archive](../flows/import-archive.md)), which reads and checks the archive before it replaces the library that couldn't be opened. |
+| Erase Journals and Settings… | `erase-unopened` | After one failed Try Again (can't open, settings unreadable), or at once on the missing-key lock screen and on the not-encrypted form. Authenticates, then the warning `settings.erase.alert.unopened` ([flows/erase](../flows/erase.md)). |
 | Learn More | `open-library-guide` | Opens the troubleshooting guide on the web. It needs a connection; the screen's text stands on its own without one. |
 | Unlock with the credential | `unlock-with-credential` | Reads the key from the master password or recovery key, saves it to the secure store, and opens the library (missing-key lock screen). |
 | Try Syncing Again | `try-syncing-again` | Runs a sync now, also resending refused items. |
@@ -143,8 +146,9 @@ While App Lock is on and the app isn't active, a plain cover in the system backg
 - A library opened by a newer version is not opened at all, because the newer version may have changed what its tables mean.
 - The app never replaces a settings file it couldn't read, never switches to another library without recording the one it leaves, never tells the person more than it knows (“Nothing has been removed” is all it promises), never turns App Lock off on its own, and Erase Journals and Settings removes everything the app stored, whatever it could or couldn't read ([flows/erase](../flows/erase.md)).
 - Connecting to a server, pairing and starting a journal replace the library, so they refuse while there is a problem or Try Again runs (`messages.library.notOpen`). Journals a newer version wrote, and settings that couldn't be read, are never imported over (Import Archive… is not offered for them).
-- **Erase waits for one failed Try Again; Import doesn't.** Erase removes the journals, so it is held back until a retry has failed: a restart or a few seconds fixes most causes, and the launch's own failed open is the first failure, so one failed tap is two failures in a row. Some causes are permanent, so Try Again must not be the only choice. Import removes nothing until the archive has been read and checked and the person has confirmed a sheet that says what is lost (`library.problem.importNote`). The count lives in memory and starts again at each launch.
+- **Erase waits for one failed Try Again (except for a library that isn't encrypted and the missing key); Import doesn't.** Erase removes the journals, so it is held back until a retry has failed: a restart or a few seconds fixes most causes, and the launch's own failed open is the first failure, so one failed tap is two failures in a row. Some causes are permanent, so Try Again must not be the only choice. Import removes nothing until the archive has been read and checked and the person has confirmed a sheet that says what is lost (`library.problem.importNote`). The count lives in memory and starts again at each launch.
 - Import Archive… asks for the device's own authentication when App Lock is on, and Erase when App Lock is on **or its setting can't be known** (settings unreadable), so a stranger can't use them; a device without a passcode goes on.
+- A library that isn't encrypted is refused by its settings alone: no store, key or connection is opened for it and nothing is written. Its files are never changed by this version; only Erase removes them.
 - Unavailable entries are never deleted or moved by the app on its own.
 - The cover is applied before the system takes its snapshot.
 

@@ -14,7 +14,7 @@ private actor HealthServer: SyncServer {
     var pageFailure: Error?
     var pushFailures: [UUID: Error] = [:]
     var uploadFailures: [UUID: Error] = [:]
-    var protection: ContentProtection? = .plaintext
+    var encrypted: Bool? = true
     /// Pages from a database with another identity than the status reports, as while the server changes again.
     var pageServerID: String?
     private var log: [RemoteChange] = []
@@ -26,14 +26,14 @@ private actor HealthServer: SyncServer {
 
     func set(
         initialized: Bool? = nil, protocolVersion: Int? = nil, serverID: String?? = nil, statusFailure: Error?? = nil,
-        pageFailure: Error?? = nil, protection: ContentProtection?? = nil
+        pageFailure: Error?? = nil, encrypted: Bool?? = nil
     ) {
         if let initialized { self.initialized = initialized }
         if let protocolVersion { self.protocolVersion = protocolVersion }
         if let serverID { self.serverID = serverID }
         if let statusFailure { self.statusFailure = statusFailure }
         if let pageFailure { self.pageFailure = pageFailure }
-        if let protection { self.protection = protection }
+        if let encrypted { self.encrypted = encrypted }
     }
     func failPush(of record: UUID, with error: Error?) { pushFailures[record] = error }
     func failUpload(of image: UUID, with error: Error?) { uploadFailures[image] = error }
@@ -74,7 +74,7 @@ private actor HealthServer: SyncServer {
         guard let image = images[id] else { throw JournalError.server("Image unavailable.") }
         return image
     }
-    func contentProtection() -> ContentProtection? { protection }
+    func storesEncryptedJournals() -> Bool? { encrypted }
 }
 
 final class SyncHealthTests: XCTestCase {
@@ -82,10 +82,10 @@ final class SyncHealthTests: XCTestCase {
     override func tearDown() {
         try? FileManager.default.removeItem(at: root)
     }
-    private func library(protection: ContentProtection = .plaintext) throws -> JournalStore {
+    private func library() throws -> JournalStore {
         let store = try JournalStore(
             directory: root.appendingPathComponent(UUID().uuidString),
-            key: SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }, protection: protection)
+            key: SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) })
         addTeardownBlock { try? await store.close() }
         return store
     }
@@ -120,7 +120,7 @@ final class SyncHealthTests: XCTestCase {
         }
         let stopping = cases.map(\.1).filter(\.stopsAutomaticSync)
         XCTAssertEqual(Set(stopping.map { "\($0)" }), ["accessRemoved", "appUpdateNeeded", "serverNotSetUp"])
-        for health: SyncHealth in [.signInNeeded, .serverReplaced] { XCTAssertTrue(health.stopsAutomaticSync) }
+        XCTAssertTrue(SyncHealth.serverReplaced.stopsAutomaticSync)
         for (_, health) in cases {
             let message = health.message(host: "journal.example.ts.net")
             for detail in ["request", "HTTP", "SQL", "error", "401", "500"] {
@@ -129,27 +129,17 @@ final class SyncHealthTests: XCTestCase {
         }
     }
 
-    /// The device was removed on purpose, so the message says what signing in again needs: a library without a
-    /// password has none, and the way back is a connected device or the server's recovery code. Every state that
-    /// stops sync names the one Reconnect action, never a button that no longer exists.
-    func testRemovedAccessSaysWhatReconnectingNeedsForTheLibrarysMode() {
+    /// The device was removed on purpose, so the message says what signing in again needs. Every state that stops
+    /// sync names the one Reconnect action, never a button that no longer exists.
+    func testRemovedAccessSaysWhatReconnectingNeeds() {
         XCTAssertEqual(
             SyncHealth.accessRemoved.message(),
             "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need your password or a connected device."
         )
-        XCTAssertEqual(
-            SyncHealth.accessRemoved.message(hasPassword: false),
-            "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need a connected device or a recovery code."
-        )
-        XCTAssertEqual(
-            SyncHealth.signInNeeded.message(),
-            "The server now uses encryption or was replaced. Reconnect to keep syncing.")
-        for health: SyncHealth in [.signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved] {
-            for hasPassword in [true, false] {
-                let message = health.message(hasPassword: hasPassword)
-                for oldLabel in ["Sign in", "Connect again", "Set up the server again"] {
-                    XCTAssertFalse(message.contains(oldLabel), "“\(message)” names an action that is now Reconnect")
-                }
+        for health: SyncHealth in [.serverNotSetUp, .serverReplaced, .accessRemoved] {
+            let message = health.message()
+            for oldLabel in ["Sign in", "Connect again", "Set up the server again"] {
+                XCTAssertFalse(message.contains(oldLabel), "“\(message)” names an action that is now Reconnect")
             }
         }
     }
@@ -198,9 +188,13 @@ final class SyncHealthTests: XCTestCase {
         state = await health(engine)
         XCTAssertEqual(state, .serverReplaced, "Another identity means the server was restored or replaced")
 
-        await server.set(protection: .some(.encrypted))
+        // A server that now stores readable journals is not one this library sends encrypted journals to.
+        await server.set(encrypted: .some(false))
+        let pushesBefore = await server.pushes.count
         state = await health(engine)
-        XCTAssertEqual(state, .signInNeeded, "An encrypted server may be encryption turned on elsewhere")
+        XCTAssertEqual(state, .serverReplaced)
+        let pushesAfter = await server.pushes.count
+        XCTAssertEqual(pushesAfter, pushesBefore)
     }
 
     func testARecordThatTimesOutEndsThePassAndIsSentAgainWithoutWaiting() async throws {

@@ -163,7 +163,7 @@ final class ArchiveTests: XCTestCase {
         try await store.save(entry)
         let folder = root.appendingPathComponent("Journal Archive.journalarchive")
         try await DirectoryArchiveFixture.write(store: store, recovery: recovery, key: key, to: folder)
-        XCTAssertTrue(try VaultArchive.requiresPassword(at: folder))
+        XCTAssertNoThrow(try VaultArchive.checkHeader(at: folder))
         let restored = try await VaultArchive.restore(
             from: folder, to: root.appendingPathComponent("restored"), phrase: phrase)
         let restoredEntry = try await restored.store.item(entry.id)

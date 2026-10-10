@@ -49,29 +49,4 @@ final class ServerRefusalTests: XCTestCase {
             XCTAssertEqual(devices?.localizedDescription, JournalError.unauthorized.localizedDescription)
         }
     }
-
-    /// A server without encryption takes a one-time recovery code. One that is wrong or already used is explained
-    /// as such.
-    func testAWrongServerRecoveryCodeIsExplained() async throws {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Refusal-" + UUID().uuidString)
-        let model = AppModel(directory: directory)
-        // A server without encryption is joined only by a device whose own library is unencrypted (from 1.0).
-        await model.startLegacyUnencrypted()
-        addTeardownBlock { @MainActor in
-            try? await model.store?.close()
-            if let account = model.configuration?.keyID { try? Keychain.remove(account) }
-            try? FileManager.default.removeItem(at: directory)
-        }
-        let envelope = try JournalCoding.encoder().encode(RecoveryEnvelope.unprotected)
-        let refusal = problem(401, "invalid_recovery_secret")
-        let server = try await FakeJournalServer { request in
-            request.method == "GET" ? (200, envelope) : (401, refusal)
-        }
-        let failure = await error {
-            try await model.recoverServer(
-                address: server.address, phrase: String(repeating: "a", count: 64), uploadLocal: true,
-                shown: RecoveryParameters(.unprotected))
-        }
-        XCTAssertEqual(failure as? ServerConnectionError, .invalidRecoveryCode)
-    }
 }

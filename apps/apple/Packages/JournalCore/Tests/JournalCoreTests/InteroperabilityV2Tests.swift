@@ -135,11 +135,18 @@ final class InteroperabilityV2Tests: XCTestCase {
             let combined = try XCTUnwrap(Data(base64Encoded: envelope.wrappedKey))
             XCTAssertEqual(
                 try seal(recovery.vaultKey, key: derived, nonceOf: combined, context: wrapped.context), combined)
-            let opened = try VaultCrypto.recover(envelope, phrase: recovery.password)
-            XCTAssertEqual(opened.0, recovery.vaultKey)
-            XCTAssertEqual(opened.1, recovery.recoverySecret)
-            XCTAssertEqual(
-                try envelope.contentProtection, envelope.formatVersion == 2 ? .encrypted : .plaintext)
+            if envelope.formatVersion == 2 {
+                let opened = try VaultCrypto.recover(envelope, phrase: recovery.password)
+                XCTAssertEqual(opened.0, recovery.vaultKey)
+                XCTAssertEqual(opened.1, recovery.recoverySecret)
+                XCTAssertNoThrow(try envelope.requireEncrypted())
+            } else {
+                // Format 3 (an access password for journals stored readable) stays in the corpus for other readers
+                // and the server. This client refuses it.
+                XCTAssertThrowsError(try VaultCrypto.recover(envelope, phrase: recovery.password)) {
+                    XCTAssertEqual($0 as? JournalError, .notEncrypted)
+                }
+            }
         }
     }
 
@@ -168,16 +175,17 @@ final class InteroperabilityV2Tests: XCTestCase {
         XCTAssertEqual(try VaultCrypto.recover(created.0, phrase: normalized).1, created.1)
     }
 
-    func testPasswordlessEnvelopeCarriesNoKeyMaterial() throws {
+    /// The passwordless envelope (recovery format 4) stays in the corpus for other readers; this client refuses it.
+    func testPasswordlessEnvelopeIsRefused() throws {
         let fixture = try corpus().passwordless.envelope
-        // What this app sends at setup for a library without encryption or password.
-        let unprotected = RecoveryEnvelope.unprotected
-        XCTAssertEqual(fixture.salt, unprotected.salt)
-        XCTAssertEqual(fixture.wrappedKey, unprotected.wrappedKey)
-        XCTAssertEqual(fixture.iterations, unprotected.iterations)
-        XCTAssertEqual(fixture.formatVersion, unprotected.formatVersion)
-        XCTAssertFalse(fixture.recovery.requiresPassword)
-        XCTAssertEqual(try fixture.recovery.contentProtection, .plaintext)
+        XCTAssertEqual(fixture.formatVersion, 4)
+        XCTAssertTrue(fixture.salt.isEmpty && fixture.wrappedKey.isEmpty && fixture.iterations == 0)
+        XCTAssertThrowsError(try fixture.recovery.requireEncrypted()) {
+            XCTAssertEqual($0 as? JournalError, .notEncrypted)
+        }
+        XCTAssertThrowsError(try RecoveryParameters(fixture.recovery).requireEncrypted()) {
+            XCTAssertEqual($0 as? JournalError, .notEncrypted)
+        }
     }
 
     func testPairingGrantMatchesKeyAgreementCheckCodeAndSealing() throws {

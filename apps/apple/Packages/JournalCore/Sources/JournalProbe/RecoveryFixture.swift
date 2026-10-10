@@ -5,14 +5,10 @@ import JournalCore
 extension Probe {
     static func recoveryFixture() throws -> (Data, String, RecoveryEnvelope, String) {
         let version = Int(ProcessInfo.processInfo.environment["JOURNAL_TEST_RECOVERY_VERSION"] ?? "1") ?? 0
-        guard (1...4).contains(version) else {
-            throw ProbeFailure("JOURNAL_TEST_RECOVERY_VERSION must be 1, 2, 3 or 4")
+        guard (1...2).contains(version) else {
+            throw ProbeFailure("JOURNAL_TEST_RECOVERY_VERSION must be 1 or 2")
         }
         let key = try VaultCrypto.generateKey()
-        if version == 4 {
-            let code = try VaultCrypto.random(32).map { String(format: "%02x", $0) }.joined()
-            return (key, code, .unprotected, code)
-        }
         let phrase = version == 1 ? try VaultCrypto.recoveryPhrase() : "  disposable integration password  "
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase, formatVersion: version)
         return (key, phrase, recovery.0, recovery.1)

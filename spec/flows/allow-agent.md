@@ -53,7 +53,6 @@ An agent asks for access from its own app; the person allows it in My Journal by
 - **Change** name, journals or end date in the agent's detail (`screens/agent-detail`).
 - **Revoke** in the detail; the agent keeps what it already read.
 - **Reconnect:** an agent that signed out appears as a request “{agent} wants to reconnect.”.
-- **Encrypting a synced library** (`flows/encrypt-journals`) removes every agent's access; they must be allowed again.
 
 ## Rules
 

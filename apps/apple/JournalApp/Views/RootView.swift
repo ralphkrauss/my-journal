@@ -81,8 +81,6 @@ struct RootView: View {
             case .libraryProblem:
                 if let problem = model.shownLibraryProblem { LibraryProblemView(problem: problem) }
             case .welcome: welcome
-            // An unencrypted library is asked once per launch (docs/design/1-1-encryption-and-passwords.md §3.4).
-            case .encryptForm: EncryptJournalsView(upgrade: model.encryption, presentation: .root)
             case .recoveryKey:
                 if let key = model.recoveryKey { RecoveryView(key: key) }
             case .journals: journals
@@ -212,7 +210,6 @@ struct RootView: View {
         .onValueChange(of: model.libraryProblem) { _ in openPendingArchive() }
         .onValueChange(of: model.committingMutation) { _ in openPendingArchive() }
         .onValueChange(of: model.windowRouting.screen) { _ in openPendingArchive() }
-        .onValueChange(of: model.encryption.inProgress) { _ in openPendingArchive() }
         // Someone who gave up unlocking isn't shown the archive hours later.
         .onValueChange(of: scenePhase) { if $0 == .background { pendingArchive = nil } }
         .sheet(isPresented: Binding(get: { archiveToImport != nil }, set: { if !$0 { archiveToImport = nil } })) {
@@ -264,11 +261,9 @@ struct RootView: View {
             .deleteAllPrompt($deleteAllRequested)
     }
     /// Opens a waiting archive once the journals are shown, as after unlocking, and after a change being stored. While
-    /// connecting or turning on encryption replaces the journals, it can't be imported, and the person is told so.
+    /// connecting replaces the journals, it can't be imported, and the person is told so.
     private func openPendingArchive() {
         guard let url = pendingArchive, model.loaded, !model.committingMutation, !model.retryingOpen else { return }
-        // Encrypting the journals comes first: the archive waits until the form and any run are over.
-        guard !model.showsEncryptionForm, !model.encryption.inProgress else { return }
         // Journals a newer version wrote, and settings that couldn't be read, are never imported over. Locked: it
         // waits for the unlock (the lock screen of a missing device key offers the import itself).
         guard model.refusesImport || !model.lockBlocksImport else { return }
@@ -280,18 +275,7 @@ struct RootView: View {
         }
         archiveToImport = url
     }
-    /// The journals, with the notice above them while they are being encrypted (iPhone and iPad; the Mac's notice is
-    /// at the top of its journal window).
-    @ViewBuilder private var journals: some View {
-        #if os(iOS)
-            VStack(spacing: 0) {
-                EncryptionNotice(upgrade: model.encryption)
-                mainNavigation
-            }
-        #else
-            mainNavigation
-        #endif
-    }
+    private var journals: some View { mainNavigation }
     @ViewBuilder private var mainNavigation: some View {
         #if os(macOS)
             editorOnlyBehavior(macJournalWindow)
@@ -540,7 +524,6 @@ struct RootView: View {
                 if model.isRecentlyDeleted(entry), model.restoreOffer(for: entry)?.returnsToOwnJournal == true {
                     // Only into the entry's own journal: a full swipe never files an entry somewhere unexpected.
                     Button("Restore", systemImage: "arrow.uturn.backward") { restore(entry) }.tint(.accentColor)
-                        .disabled(model.writingPausedForEncryption)
                 } else if model.canPin(entry) {
                     let pinned = model.isPinned(entry)
                     Button(pinned ? "Unpin" : "Pin", systemImage: pinned ? "pin.slash" : "pin") {
@@ -555,8 +538,6 @@ struct RootView: View {
     /// An entry's actions, in its row's context menu and the Entry Actions menu.
     func entryActionCatalog(_ entry: JournalItem) -> [MenuAction] {
         let editable = model.offersDelete(entry)
-        // Disabled, with the notice above the journals as the reason, while they are being encrypted.
-        let writable = !model.writingPausedForEncryption
         var actions: [MenuAction] = []
         // First in the entry's group, as Pin Note is in Notes.
         if entry.kind == "entry", model.canPin(entry) {
@@ -568,15 +549,15 @@ struct RootView: View {
         }
         if editable, entry.kind == "entry" {
             actions.append(
-                .command("Change Date…", symbol: "calendar", enabled: writable) {
+                .command("Change Date…", symbol: "calendar") {
                     performRowAction(entry.id) { entryToDate = model.draft }
                 })
             actions.append(
-                .command("Move Entry…", symbol: "folder", enabled: writable) {
+                .command("Move Entry…", symbol: "folder") {
                     performRowAction(entry.id) { entryToMove = model.draft }
                 })
             actions.append(
-                .command("Save as Template…", symbol: "doc.badge.plus", enabled: writable) {
+                .command("Save as Template…", symbol: "doc.badge.plus") {
                     performRowAction(entry.id) {
                         templateName = model.draft?.title ?? ""
                         saveTemplate = true
@@ -599,7 +580,7 @@ struct RootView: View {
         if model.isRecentlyDeleted(entry) {
             if let offer = model.restoreOffer(for: entry) {
                 actions.append(
-                    .command(offer.title, symbol: "arrow.uturn.backward", enabled: writable) { restore(entry) })
+                    .command(offer.title, symbol: "arrow.uturn.backward") { restore(entry) })
             }
             actions.append(.separator("restore"))
             actions.append(
@@ -608,13 +589,13 @@ struct RootView: View {
                 })
         } else if entry.kind == "entry", let offer = model.restoreOffer(for: entry) {
             // An entry deleted by itself whose journal is gone, in Unavailable Journals: never on a swipe.
-            actions.append(.command(offer.title, symbol: "arrow.uturn.backward", enabled: writable) { restore(entry) })
+            actions.append(.command(offer.title, symbol: "arrow.uturn.backward") { restore(entry) })
         }
         if editable {
             actions.append(.separator("delete"))
             actions.append(
                 .command(
-                    entry.kind == "template" ? "Delete Template" : "Delete Entry", symbol: "trash", enabled: writable,
+                    entry.kind == "template" ? "Delete Template" : "Delete Entry", symbol: "trash",
                     destructive: true
                 ) {
                     delete(entry.id)
@@ -627,7 +608,6 @@ struct RootView: View {
             Button("Delete", systemImage: "trash", role: .destructive) { swipePermanentDeletion(entry.id) }
         } else if model.offersDelete(entry) {
             Button("Delete", systemImage: "trash", role: .destructive) { delete(entry.id) }
-                .disabled(model.writingPausedForEncryption)
         }
     }
     private func deleteSelectedFromList() {

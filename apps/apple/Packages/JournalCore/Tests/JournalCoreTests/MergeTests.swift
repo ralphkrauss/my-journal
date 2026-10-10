@@ -101,10 +101,8 @@ final class MergeTests: XCTestCase {
     }
     override func tearDownWithError() throws { try? FileManager.default.removeItem(at: root) }
 
-    func store(
-        _ name: String = UUID().uuidString, key: Data? = nil, protection: ContentProtection = .encrypted
-    ) throws -> JournalStore {
-        try JournalStore(directory: root.appendingPathComponent(name), key: key ?? serverKey, protection: protection)
+    func store(_ name: String = UUID().uuidString, key: Data? = nil) throws -> JournalStore {
+        try JournalStore(directory: root.appendingPathComponent(name), key: key ?? serverKey)
     }
     /// Another device already on the server, such as the Mac that set it up.
     func otherDevice(_ server: MergeServer) async throws -> (JournalStore, SyncEngine) {
@@ -213,7 +211,7 @@ final class MergeTests: XCTestCase {
     /// The server has "Default", "Work" (which an agent reads), built-in templates, an edited "Gratitude" and a
     /// custom "Standup". This device has "default " with entries (one archived, one in Recently Deleted, one with
     /// an image), "Work", "Travel", unedited built-ins, the same "Standup", a different "Gratitude" and "Ideas".
-    private func scenario(_ server: MergeServer, localProtection: ContentProtection = .encrypted) async throws
+    private func scenario(_ server: MergeServer) async throws
         -> Scenario
     {
         let (mac, macSync) = try await otherDevice(server)
@@ -230,9 +228,7 @@ final class MergeTests: XCTestCase {
         try await mac.save(JournalItem(kind: "template", title: "Standup", document: .plain("Yesterday, today")))
         try await macSync.synchronize()
 
-        let local = try store(
-            key: localProtection == .encrypted ? deviceKey : serverKey,
-            protection: localProtection)
+        let local = try store(key: deviceKey)
         let journal = JournalItem(kind: "journal", title: " default ")
         try await local.save(journal)
         try await local.save(JournalItem(kind: "journal", title: "Work"))
@@ -380,25 +376,6 @@ final class MergeTests: XCTestCase {
                 XCTAssertEqual(lisbon.map { snapshot.location(of: $0) }, .recentlyDeleted)
             }
         }
-    }
-
-    func testAnUnencryptedLibraryIsEncryptedWithTheServersKey() async throws {
-        let server = MergeServer()
-        let setup = try await scenario(server, localProtection: .plaintext)
-        try await merge(setup.local, into: server)
-        let result = try await downloaded(server).items()
-        let entry = try XCTUnwrap(result.first { $0.title == "Local thought" })
-        XCTAssertEqual(entry.document.attachmentIDs.count, 1)
-        let record = await server.records[entry.id]
-        let stored = try XCTUnwrap(record)
-        XCTAssertFalse(
-            String(decoding: Data(base64Encoded: stored.payload) ?? Data(), as: UTF8.self).contains("Written"),
-            "The server only receives ciphertext.")
-        let imageID = try XCTUnwrap(entry.document.attachmentIDs.first)
-        let uploaded = await server.images[imageID]
-        XCTAssertNotNil(uploaded)
-        XCTAssertNotEqual(uploaded, setup.image, "The image is uploaded as ciphertext too.")
-        XCTAssertFalse(uploaded.map { $0.range(of: setup.image.prefix(64)) != nil } ?? true)
     }
 
     // MARK: Failures and retries

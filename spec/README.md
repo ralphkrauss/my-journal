@@ -91,7 +91,7 @@ Describe behaviour as people see it, in neutral words:
 
 ## Master passwords
 
-Every screen that chooses a master password asks twice (Master Password and Verify), uses new-password fields, and checks only that the two match; there is no minimum length, so the note under the fields and the Done line carry the safety weight. The screens are Start a Journal, Connect to a Server's Choose a Master Password, Encrypt Your Journals, Change Password's new fields and the new fields after Forgot Password?. Existing passwords of any length keep working everywhere. Whether the system offers and saves a strong password for an app with no associated web domain is unverified, so no screen promises it ([open-questions.md](open-questions.md), D61). The owner's decisions are open question C8 (2026-09-29, 2026-10-09). Windows and Android follow this rule.
+Every screen that chooses a master password asks twice (Master Password and Verify), uses new-password fields, and checks only that the two match; there is no minimum length, so the note under the fields and the Done line carry the safety weight. The screens are Start a Journal, Connect to a Server's Choose a Master Password, Change Password's new fields and the new fields after Forgot Password?. Existing passwords of any length keep working everywhere. Whether the system offers and saves a strong password for an app with no associated web domain is unverified, so no screen promises it ([open-questions.md](open-questions.md), D61). The owner's decisions are open question C8 (2026-09-29, 2026-10-09). Windows and Android follow this rule.
 
 ## Command ids
 

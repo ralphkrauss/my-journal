@@ -170,7 +170,7 @@ extension JournalStore {
     }
 
     var copyIdentity: ConflictCopyIdentity {
-        ConflictCopyIdentity(vaultKey: protection == .encrypted ? key : nil)
+        ConflictCopyIdentity(vaultKey: key)
     }
 
     /// Whether a record being written is left to a later call at `point`. The other points have a caller that decides
@@ -325,7 +325,7 @@ extension JournalStore {
     /// The authenticated plaintext of a stored payload.
     func plaintext(_ payload: String, id recordID: UUID, kind: String) throws -> Data {
         guard let data = Data(base64Encoded: payload) else { throw JournalError.invalidData }
-        return try protection.decode(data, key: key, context: VaultCrypto.recordContext(id: recordID, kind: kind))
+        return try VaultCrypto.open(data, key: key, context: VaultCrypto.recordContext(id: recordID, kind: kind))
     }
 
     func settleConflict(_ recordID: UUID) throws -> ConflictSettlement {
@@ -519,7 +519,7 @@ extension JournalStore {
             db, sql: "SELECT EXISTS(SELECT 1 FROM records WHERE id=?)", arguments: [id(parked.id)])
         guard exists != true else { return parked.id }
         let plaintext = try PortableRecord.encode(parked)
-        let payload = try protection.encode(
+        let payload = try VaultCrypto.seal(
             plaintext, key: key, context: VaultCrypto.recordContext(id: parked.id, kind: parked.kind)
         ).base64EncodedString()
         try db.execute(

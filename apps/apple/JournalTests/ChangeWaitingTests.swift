@@ -18,7 +18,7 @@ final class ChangeWaitingTests: XCTestCase {
             }
             try? FileManager.default.removeItem(at: directory)
         }
-        await model.start(password: nil, encrypted: false)
+        await model.start()
         let connection = SyncConnection(address: address, deviceID: UUID(), token: "synthetic-token")
         let account = "ChangeWaitingTests-" + UUID().uuidString
         try Keychain.write(JournalCoding.encoder().encode(connection), account: account)
@@ -80,7 +80,7 @@ final class ChangeWaitingTests: XCTestCase {
             case ("PUT", let path) where path.hasPrefix("/v1/sync/"):
                 return log.withLock { Self.accept(request, log: &$0) }
             case ("GET", "/v1/recovery"):
-                return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.unprotected))) ?? Data())
+                return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.placeholder))) ?? Data())
             default: return (503, Data("{}".utf8))
             }
         }
@@ -116,7 +116,7 @@ final class ChangeWaitingTests: XCTestCase {
             case ("PUT", let path) where path.hasPrefix("/v1/sync/"):
                 return log.withLock { Self.accept(request, log: &$0) }
             case ("GET", "/v1/recovery"):
-                return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.unprotected))) ?? Data())
+                return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.placeholder))) ?? Data())
             default: return (503, Data("{}".utf8))
             }
         }

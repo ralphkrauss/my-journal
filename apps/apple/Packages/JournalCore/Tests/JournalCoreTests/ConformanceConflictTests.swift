@@ -67,20 +67,25 @@ final class ConformanceConflictTests: XCTestCase {
         let key = try vaultKey()
         return try Conformance.fixture(identitiesPath) {
             let encrypted = ConflictCopyIdentity(vaultKey: key)
-            let plain = ConflictCopyIdentity(vaultKey: nil)
+            // Libraries without encryption (version 1.0) derive from a public constant. This client no longer opens
+            // them, so the vectors for other readers are computed here from the primitives, not by the client.
+            let plain = plainSubkey()
             let cases = ConformanceConflictCases.identityCases.map { testCase -> [String: Any] in
-                let identity = testCase.protection == "encrypted" ? encrypted : plain
+                let subkey = testCase.protection == "encrypted" ? SymmetricKey(data: encrypted.subkeyBytes) : plain
                 let record = UUID(uuidString: testCase.recordID) ?? UUID()
                 let bytes = Data(testCase.text.utf8)
                 let digest = hex(SHA256.hash(data: bytes))
                 let message = "\(testCase.label.rawValue)\n\(testCase.recordID)\n\(digest)"
-                let tag = HMAC<SHA256>.authenticationCode(
-                    for: Data(message.utf8), using: SymmetricKey(data: identity.subkeyBytes))
+                let tag = HMAC<SHA256>.authenticationCode(for: Data(message.utf8), using: subkey)
+                let id =
+                    testCase.protection == "encrypted"
+                    ? encrypted.copyID(testCase.label, record: record, plaintext: bytes)
+                    : Self.copyID(Data(tag))
                 return [
                     "name": testCase.name, "note": testCase.note, "protection": testCase.protection,
                     "label": testCase.label.rawValue, "recordID": testCase.recordID, "text": testCase.text,
                     "textSha256": digest, "message": message, "tag": hex(tag),
-                    "id": identity.copyID(testCase.label, record: record, plaintext: bytes).uuidString.lowercased(),
+                    "id": id.uuidString.lowercased(),
                 ]
             }
             return [
@@ -93,11 +98,26 @@ final class ConformanceConflictTests: XCTestCase {
                         "vaultKeyFrom": "crypto/encryption-v2.json recovery.vaultKey",
                         "hkdfOutput": hex(encrypted.subkeyBytes),
                     ],
-                    "plaintext": ["sha256OfInfo": hex(plain.subkeyBytes)],
+                    "plaintext": ["sha256OfInfo": hex(plain.withUnsafeBytes { Data($0) })],
                 ],
                 "cases": cases,
             ]
         }
+    }
+
+    private static func plainSubkey() -> SymmetricKey {
+        SymmetricKey(data: Data(SHA256.hash(data: Data(ConflictCopyIdentity.info.utf8))))
+    }
+    /// The first 16 bytes of the tag with the version nibble 8 and the variant bits set.
+    private static func copyID(_ tag: Data) -> UUID {
+        var bytes = Array(tag.prefix(16))
+        bytes[6] = (bytes[6] & 0x0F) | 0x80
+        bytes[8] = (bytes[8] & 0x3F) | 0x80
+        return UUID(
+            uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8], bytes[9],
+                bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+            ))
     }
 
     /// The vectors follow the contract when computed with the primitives directly, not only with this app's function.

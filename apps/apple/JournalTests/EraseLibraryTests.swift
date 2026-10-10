@@ -29,7 +29,7 @@ import os
             case ("GET", "/v1/status"):
                 return (200, HealthyStatus.json(serverId: "erase-server"))
             case ("GET", "/v1/recovery"):
-                return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.unprotected))) ?? Data())
+                return (200, (try? JournalCoding.encoder().encode(RecoveryParameters(.placeholder))) ?? Data())
             case ("DELETE", _): return (204, Data())
             case ("HEAD", let path) where path.hasPrefix("/v1/attachments/"): return (404, Data())
             case ("PUT", let path) where path.hasPrefix("/v1/attachments/"): return (200, Data())
@@ -75,7 +75,7 @@ import os
             }
             try? FileManager.default.removeItem(at: directory)
         }
-        await model.start(encrypted: false)
+        await model.start()
         XCTAssertNotNil(model.store)
         if let server {
             let connection = SyncConnection(address: server.address, deviceID: UUID(), token: "synthetic-token")
@@ -166,7 +166,7 @@ import os
         XCTAssertEqual(
             after.filter { !$0.hasPrefix("GET ") }, ["DELETE /v1/devices/\(deviceID.uuidString.lowercased())"])
 
-        await model.start(encrypted: false)
+        await model.start()
         XCTAssertNotNil(model.store)
         XCTAssertNil(model.connection)
         XCTAssertEqual(model.journals.map(\.title), ["Default"])
@@ -258,7 +258,7 @@ import os
         let relaunched = AppModel(directory: model.directory)
         await relaunched.load()
         XCTAssertNil(relaunched.configuration)
-        await relaunched.start(encrypted: false)
+        await relaunched.start()
         let current = try XCTUnwrap(relaunched.configuration)
         addTeardownBlock { @MainActor in
             try? await relaunched.store?.close()

@@ -15,6 +15,8 @@ enum SpecLibraryFixtures {
         case settingsUnread
         case cantOpen
         case newerVersion
+        /// As version 1.0 left a library made with Continue Without Encryption (recovery format 4).
+        case notEncrypted
     }
 
     private struct Seeded: Decodable {
@@ -24,33 +26,6 @@ enum SpecLibraryFixtures {
 
     /// The other device's id, fixed so the screens are the same each time.
     private static let otherDevice = UUID(uuidString: "00000000-0000-0000-0000-0000000000a2") ?? UUID()
-
-    // MARK: - An earlier version's library
-
-    private struct EarlierConfiguration: Codable {
-        let recovery: RecoveryEnvelope
-        var recoveryConfirmed = true
-        let lastJournalID: UUID
-        let lastEntryID: UUID
-    }
-
-    /// A library as version 1.0 made it with Continue Without Encryption, in `library`: no password, one journal and
-    /// one entry. Version 1.1 asks it to encrypt before it opens (Encrypt Your Journals).
-    static func unencryptedLibrary(in library: URL) async throws {
-        let store = try JournalStore(directory: library, key: VaultCrypto.generateKey(), protection: .plaintext)
-        let journal = JournalItem(kind: "journal", title: "Personal")
-        let entry = JournalItem(
-            kind: "entry", journalID: journal.id, title: "Slow Sunday",
-            document: .plain("Woke up early and walked to the river before breakfast."),
-            date: Date(timeIntervalSince1970: 1_700_000_000))
-        try await store.save(journal)
-        try await store.save(entry)
-        try await store.close()
-        let configuration = EarlierConfiguration(
-            recovery: .unprotected, lastJournalID: journal.id, lastEntryID: entry.id)
-        try JournalCoding.encoder().encode(configuration).write(
-            to: library.appendingPathComponent("configuration.json"))
-    }
 
     // MARK: - Problems
 
@@ -66,6 +41,17 @@ enum SpecLibraryFixtures {
         case .newerVersion:
             for folder in try storageFolders(in: library) {
                 try run("INSERT INTO grdb_migrations(identifier) VALUES ('from-a-newer-version')", on: folder)
+            }
+        case .notEncrypted:
+            // Version 1.0's settings for a library without encryption: format 4, no salt and no wrapped key. This
+            // version never opens such a library, so the sample library's database stands in for its files.
+            let file = library.appendingPathComponent("configuration.json")
+            guard var settings = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any]
+            else { throw Failure("The sample library's settings didn't read.") }
+            settings["recovery"] = ["salt": "", "wrappedKey": "", "iterations": 0, "formatVersion": 4] as [String: Any]
+            try JSONSerialization.data(withJSONObject: settings).write(to: file)
+            for folder in try storageFolders(in: library) {
+                try run("UPDATE settings SET value = 'plaintext' WHERE key = 'content-protection'", on: folder)
             }
         }
     }
@@ -95,9 +81,7 @@ enum SpecLibraryFixtures {
         let seeded = try JournalCoding.decoder().decode(
             Seeded.self, from: Data(contentsOf: library.appendingPathComponent("configuration.json")))
         let (key, _) = try VaultCrypto.recover(seeded.recovery, phrase: password)
-        let store = try JournalStore(
-            directory: library.appendingPathComponent(seeded.storageFolder), key: key,
-            protection: seeded.recovery.contentProtection)
+        let store = try JournalStore(directory: library.appendingPathComponent(seeded.storageFolder), key: key)
         let items = try await store.items()
         guard let sunday = items.first(where: { $0.kind == "entry" && $0.title == "Slow Sunday" }),
             let gratitude = items.first(where: { $0.kind == "entry" && $0.title == "Gratitude" })

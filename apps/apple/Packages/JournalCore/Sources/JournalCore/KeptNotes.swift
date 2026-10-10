@@ -158,7 +158,6 @@ struct KeptNotesState: Codable, Equatable, Sendable {
 /// Reads and writes `kept-notes`, sealed like `library-changes`.
 struct KeptNotesStore {
     let key: Data
-    let protection: ContentProtection
 
     func state(_ db: Database) throws -> KeptNotesState {
         guard
@@ -167,15 +166,15 @@ struct KeptNotesStore {
             let text = String(data: stored, encoding: .utf8), let bytes = Data(base64Encoded: text)
         else { return KeptNotesState() }
         let decoder = JournalCoding.decoder()
-        let opened = try? protection.decode(bytes, key: key, context: KeptNotesState.context)
+        let opened = try? VaultCrypto.open(bytes, key: key, context: KeptNotesState.context)
         // Left readable by a version that turned on encryption without knowing this value.
-        let readable = opened ?? (protection == .encrypted ? bytes : nil)
-        guard let readable, let state = try? decoder.decode(KeptNotesState.self, from: readable), state.version == 1
+        let readable = opened ?? bytes
+        guard let state = try? decoder.decode(KeptNotesState.self, from: readable), state.version == 1
         else { return KeptNotesState() }
         return state
     }
     func save(_ db: Database, _ state: KeptNotesState) throws {
-        let sealed = try protection.encode(
+        let sealed = try VaultCrypto.seal(
             JournalCoding.encoder().encode(state), key: key, context: KeptNotesState.context)
         try db.execute(
             sql: "INSERT INTO settings(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -184,7 +183,7 @@ struct KeptNotesStore {
 }
 
 extension JournalStore {
-    var keptNotesStore: KeptNotesStore { KeptNotesStore(key: key, protection: protection) }
+    var keptNotesStore: KeptNotesStore { KeptNotesStore(key: key) }
     func keptNotesState() throws -> KeptNotesState { try db.read { try keptNotesStore.state($0) } }
 
     /// The notes to show: the 20 most recent, newest first, without those older than 30 days (rename notes don't

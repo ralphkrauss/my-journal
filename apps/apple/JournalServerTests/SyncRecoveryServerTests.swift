@@ -75,7 +75,7 @@
         func testAServerReplacedByAnotherLibraryMergesOnlyAfterMergeJournals() async throws {
             let (server, model) = try await connectedLibrary()
             try await server.wipe()
-            try await setUpAnotherLibrary(server, encrypted: true)
+            try await setUpAnotherLibrary(server)
             await model.syncNow()
             XCTAssertEqual(model.syncHealth, .serverReplaced)
             XCTAssertEqual(model.syncStatusAction, .reconnect)
@@ -100,7 +100,7 @@
             XCTAssertNil(model.connection)
             try await write("While not syncing", model)
             try await server.wipe()
-            try await setUpAnotherLibrary(server, encrypted: true)
+            try await setUpAnotherLibrary(server)
 
             XCTAssertTrue(model.joinsByMerging, "Merge Journals is asked before signing in")
             try await model.recoverServer(address: server.address, phrase: otherPassword, uploadLocal: true)
@@ -118,42 +118,20 @@
             try await expectOnce(["Before", "While not syncing"], server: server, password: password)
         }
 
-        func testSignInAfterAnEncryptedLibraryReplacedTheServer() async throws {
-            let (server, model) = try await connectedLibrary(encrypted: false)
-            try await server.wipe()
-            try await setUpAnotherLibrary(server, encrypted: true)
-            await model.syncNow()
-            XCTAssertEqual(model.syncHealth, .signInNeeded)
-            XCTAssertEqual(model.syncStatusAction, .reconnect)
-
-            do {
-                try await model.recoverServer(address: server.address, phrase: otherPassword, uploadLocal: true)
-                XCTFail("Another library's journals merge only after Merge Journals")
-            } catch {
-                XCTAssertTrue(error is MergeConsentNeeded, "\(error)")
-            }
-            model.agreedMergeHost = ServerAddress.host(server.address)
-            try await model.recoverServer(address: server.address, phrase: otherPassword, uploadLocal: true)
-            try expectSyncing(model)
-            XCTAssertEqual(model.configuration?.encrypted, true)
-            try await expectOnce(["Before", "Other library's entry"], server: server, password: otherPassword)
-        }
-
         // MARK: Support
 
         /// A library as this build creates it, without templates, with one entry, set up on a new server from the app.
-        private func connectedLibrary(encrypted: Bool = true) async throws -> (DisposableServer, AppModel) {
+        private func connectedLibrary() async throws -> (DisposableServer, AppModel) {
             let server = try DisposableServer()
             self.server = server
             try await server.start()
             let model = AppModel(
                 directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
             models.append(model)
-            await model.start(password: encrypted ? password : nil, encrypted: encrypted)
+            await model.start(password: password)
             try await write("Before", model)
             try await model.initializeServer(
-                address: server.address, code: server.setupCode(), phrase: encrypted ? password : "",
-                uploadLocal: true)
+                address: server.address, code: server.setupCode(), phrase: password, uploadLocal: true)
             try expectSyncing(model)
             return (server, model)
         }
@@ -183,16 +161,13 @@
         }
         /// Another library, made by an earlier build with its built-in templates, a Default journal and an entry, sets
         /// the server up.
-        private func setUpAnotherLibrary(_ server: DisposableServer, encrypted: Bool) async throws {
+        private func setUpAnotherLibrary(_ server: DisposableServer) async throws {
             let key = try VaultCrypto.generateKey()
-            let recovery =
-                encrypted
-                ? try VaultCrypto.makeRecovery(masterKey: key, phrase: otherPassword, formatVersion: 2)
-                : (RecoveryEnvelope.unprotected, String(repeating: "a", count: 64))
+            let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: otherPassword, formatVersion: 2)
             let grant = try await ServerClient(address: server.address).initialize(
                 code: server.setupCode(), envelope: recovery.0, recoverySecret: recovery.1, deviceName: "Other")
             let directory = server.root.appendingPathComponent("other-library")
-            let store = try JournalStore(directory: directory, key: key, protection: try recovery.0.contentProtection)
+            let store = try JournalStore(directory: directory, key: key)
             for template in BuiltInTemplates.asEarlierBuildsCreated() { try await store.save(template) }
             let journal = JournalItem(kind: "journal", title: "Default")
             try await store.save(journal)
@@ -207,7 +182,7 @@
             let recovered = try await anonymous.recoverVault(
                 password, parameters: anonymous.recoveryParameters(), deviceName: "Check")
             let directory = server.root.appendingPathComponent("check-" + UUID().uuidString)
-            let store = try JournalStore(directory: directory, key: recovered.key, protection: .encrypted)
+            let store = try JournalStore(directory: directory, key: recovered.key)
             try await SyncEngine(
                 store: store, client: ServerClient(address: server.address, token: recovered.grant.token)
             )

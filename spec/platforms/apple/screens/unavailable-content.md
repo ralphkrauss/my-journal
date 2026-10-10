@@ -48,18 +48,20 @@ Maps [screens/unavailable-content.md](../../../screens/unavailable-content.md). 
 
 ### Library that cannot be opened
 
-`RootView.window` (the `Group` in `Views/RootView.swift`) picks one view in this order: `ProgressView("Opening Journal…")` until loaded; `UnlockView` when `model.locked`; `LibraryProblemView(problem:)` when `model.showsLibraryProblem`; the welcome screen without a store; in 1.1 the journals with the encryption notice (saved marker or run in progress), then Encrypt Your Journals for an unencrypted library (`Model/EncryptionRouting.swift`, `screens/encrypt-journals`); `RecoveryView`; the journals. A problem state is never locked, so no authentication precedes the screen and it shows nothing of the journals or the server.
+`RootView.window` (the `Group` in `Views/RootView.swift`) picks one view in this order: `ProgressView("Opening Journal…")` until loaded; `UnlockView` when `model.locked`; `LibraryProblemView(problem:)` when `model.showsLibraryProblem`; the welcome screen without a store; `RecoveryView`; the journals. A problem state is never locked, so no authentication precedes the screen and it shows nothing of the journals or the server.
 
-Model: `AppModel.libraryProblem` (`Model/LibraryProblem.swift`) with four values. `failOpening` classifies a failure at launch or at the first read of the journals: only a newer version is told apart (`newerVersion`), everything else is `cantOpen`; `settingsUnread` is set by `openSavedLibrary` (`Model/LibraryOpening.swift`) when `configuration.json` exists but does not decode; `needsKey` is set by `lockForMissingDeviceKey`. Failing closes the store, the key and the connection, so a problem state never has a live store. `retryOpening` runs the opening again.
+Model: `AppModel.libraryProblem` (`Model/LibraryProblem.swift`) with five values (1.1). `failOpening` classifies a failure at launch or at the first read of the journals: only a newer version is told apart (`newerVersion`), everything else is `cantOpen`; `settingsUnread` is set by `openSavedLibrary` (`Model/LibraryOpening.swift`) when `configuration.json` exists but does not decode; `notEncrypted` (state not-encrypted) is set by `openSavedLibrary` when the decoded settings name a library made by version 1.0 without encryption (recovery format 3 or 4), before any store, key or connection is opened; `needsKey` is set by `lockForMissingDeviceKey`. Failing closes the store, the key and the connection, so a problem state never has a live store. `retryOpening` runs the opening again.
 
 `LibraryProblemView`, in a `GeometryReader` and `ScrollView` with `padding(32)`, centered, `multilineTextAlignment(.center)`, the same layout as the lock and welcome screens:
-- Symbol: `exclamationmark.triangle`, or `arrow.down.app` for a newer version; `.largeTitle`, secondary, hidden from accessibility.
+- Symbol: `exclamationmark.triangle` (also for not encrypted), or `arrow.down.app` for a newer version; `.largeTitle`, secondary, hidden from accessibility.
 - Title (`.title2`, header trait, takes VoiceOver focus on appearing) and one or two paragraphs; the keys per problem are in the spec page and in Copy differences.
 - After a failed Try Again, a secondary paragraph saying the journals may still be fine.
-- Try Again: `.borderedProminent`, `.controlSize(.large)`, `.keyboardShortcut(.defaultAction)`; for `cantOpen` and `settingsUnread` only. While it runs, the buttons give way to `ProgressView("Opening Journal…")` and the text stays. When it ends in a problem again, the line "Still can't be opened." appears under it (also announced) and VoiceOver focus returns to the button.
-- Import Archive…: `.bordered`, for `cantOpen` only; sets `model.archiveImportRequested`, which the window's `.fileImporter` answers (command `import-archive`). It is hidden on iPhone and iPad while protected data is unavailable.
-- Erase Journals and Settings…: `UnopenedEraseButton` (plain red Button, `role: .destructive`; asks for the device's authentication when App Lock is on or unknown, then an `.alert` with Erase and Cancel). Offered only after one failed Try Again (`failedRetries > 0`), when protected data is available, and not for a newer version.
-- Learn More: plain Button in the tint colour, opens the troubleshooting guide (`AboutLink.cantOpenGuide`) with `openURL`; accessibility hint says it opens a browser. It is the only button for a newer version, and on the Mac takes Return there (`.keyboardShortcut(.defaultAction)` for that case only).
+- Try Again: `.borderedProminent`, `.controlSize(.large)`, `.keyboardShortcut(.defaultAction)`; for `cantOpen` and `settingsUnread` only (not for `notEncrypted`, where trying again changes nothing). While it runs, the buttons give way to `ProgressView("Opening Journal…")` and the text stays. When it ends in a problem again, the line "Still can't be opened." appears under it (also announced) and VoiceOver focus returns to the button.
+- Import Archive…: `.bordered`, for `cantOpen` only (not for `notEncrypted`); sets `model.archiveImportRequested`, which the window's `.fileImporter` answers (command `import-archive`). It is hidden on iPhone and iPad while protected data is unavailable.
+- Erase Journals and Settings…: `UnopenedEraseButton` (plain red Button, `role: .destructive`; asks for the device's authentication when App Lock is on or unknown, then an `.alert` with Erase and Cancel). Offered only after one failed Try Again (`failedRetries > 0`), when protected data is available, and not for a newer version; for `notEncrypted` it is offered at once (there is no Try Again to fail), when protected data is available.
+- Learn More: plain Button in the tint colour, opens the troubleshooting guide (`AboutLink.cantOpenGuide`) with `openURL`; accessibility hint says it opens a browser. It is the only button for a newer version, and on the Mac takes Return there (`.keyboardShortcut(.defaultAction)` for that case and for not encrypted).
+
+**Not encrypted (`notEncrypted`, state not-encrypted).** The same screen as can't open with these differences: title `library.problem.title`; first paragraph `library.problem.cantOpen.message`, then `library.problem.notEncrypted.message` in place of `library.problem.cantOpen.advice`; buttons Erase Journals and Settings… (plain red, offered at once) and Learn More; no Try Again, no Import Archive…, and no "Still can't be opened." or may-be-fine line. The library's files are not opened, read or changed by this version (never migrated, rewritten or deleted except by Erase). No new flow. There is no screenshot yet; the capture is listed under Screenshots pending.
 
 On iPhone and iPad, `AppModel` listens for the protected-data notifications: a launch before the first unlock fails to open for a reason that ends by itself, so `protectedDataBecameAvailable` runs `retryOpening(tapped: false)`; that attempt never counts toward Erase.
 
@@ -102,10 +104,10 @@ Settings in a problem state: `SettingsView` shows only secondary text that setti
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `import-archive` | Problem screen button (cantOpen); lock screen of a missing key; File menu on the Mac | none on the buttons; File ▸ Import Archive… | `AppModel.canImportArchive`: with a problem, only cantOpen and needsKey, and not while retrying |
-| `erase-unopened` | Problem screen and missing-key lock screen (`UnopenedEraseButton`) | none | After one failed Try Again (problem screen), protected data available; at once on the lock screen |
-| `retry-opening` | Try Again on the problem screen | Return (default action) | Not for a newer version; not while retrying |
-| `open-library-guide` | Learn More on the problem screen | Return on the Mac for a newer version | Always |
+| `import-archive` | Problem screen button (cantOpen only); lock screen of a missing key; File menu on the Mac | none on the buttons; File ▸ Import Archive… | `AppModel.canImportArchive`: with a problem, only cantOpen and needsKey, and not while retrying |
+| `erase-unopened` | Problem screen and missing-key lock screen (`UnopenedEraseButton`) | none | After one failed Try Again (problem screen), protected data available; at once on the lock screen and on the not-encrypted screen |
+| `retry-opening` | Try Again on the problem screen | Return (default action) | Not for a newer version or a library that is not encrypted; not while retrying |
+| `open-library-guide` | Learn More on the problem screen | Return on the Mac for a newer version and for not encrypted | Always |
 | `unlock-with-credential`, `use-credential`, `unlock-with-device` | Missing-key lock screen | Return in the credential field (`onSubmit`); the device-unlock Button has `.defaultAction` | As in [commands.md](../commands.md) |
 | `restore` | Recovery notice (Restore to “{name}”) | none | As in [commands.md](../commands.md) |
 | `try-syncing-again` | Recovery notice | none | Journal missing and the library syncs |
@@ -113,12 +115,12 @@ Settings in a problem state: `SettingsView` shows only secondary text that setti
 | `choose-collection` | The Unavailable Journals row | arrow keys in the focused Mac sidebar | Not in journal edit mode |
 | `view-source` | Reading bar and Mac toolbar | ⌥⌘U (View menu) | View Preview dimmed for an entry that cannot be previewed |
 
-Keyboard: Return runs Try Again (the default action), or Learn More on the Mac for a newer version.
+Keyboard: Return runs Try Again (the default action), or Learn More on the Mac for a newer version and for a library that is not encrypted.
 
 ## Copy differences
 
 The text is the spec's. Where it is written in code:
-- Problem screen titles `library.problem.title` and `library.problem.updateTitle`; paragraphs `library.problem.cantOpen.message` and `.advice`, `library.problem.settingsUnread.message` and `.advice`, `library.problem.newerVersion.message`. `{device}` is `DeviceUnlockMethod.deviceName`: iPhone, iPad or Mac. The strings are literals in `LibraryProblemView`.
+- Problem screen titles `library.problem.title` and `library.problem.updateTitle`; paragraphs `library.problem.cantOpen.message` and `.advice`, `library.problem.settingsUnread.message` and `.advice`, `library.problem.newerVersion.message`, `library.problem.notEncrypted.message` (after `library.problem.cantOpen.message`, in place of the advice). `{device}` is `DeviceUnlockMethod.deviceName`: iPhone, iPad or Mac. The strings are literals in `LibraryProblemView`.
 - After a failed Try Again: `library.problem.mayBeFine` and `library.problem.stillClosed`; buttons `common.tryAgain`, `common.importArchive`, `settings.erase.button`, `library.problem.learnMore`.
 - Settings, in a problem state: `settings.libraryProblem`. Missing-key lock screen: `library.problem.missingKey.caption` with the credential's name (such as Master Password).
 - The erase warning is `settings.erase.alert.unopened` (built in `EraseSection.message` from `.reasonCantOpen` or `.reasonNeedsKey`, and `.serverKnown` or `.serverUnknown`).
@@ -158,7 +160,7 @@ The text is the spec's. Where it is written in code:
 
 The read-only entry, the Unavailable Journals list and the privacy cover have no screenshots: the capture set holds only the library problem screens for this page (the recovery notice is shown on [recently-deleted](recently-deleted.md)).
 
-**Screenshots pending** (a capture run is needed; none made by hand): unavailable-content-library-cant-open-retried (cantOpen after one failed Try Again: "Still can't be opened.", the secondary paragraph, the red Erase Journals and Settings… button), unavailable-content-erase-unopened-alert (the erase warning for journals that can't be opened, per device), unavailable-content-import-note (the Import Archive sheet with the extra sentence) and unavailable-content-settings-problem (Settings with the one line of text). The missing-key lock screen is already in the lock-screen captures (master-password, wrong-password). Until then the page is `draft`.
+**Screenshots pending** (a capture run is needed; none made by hand): unavailable-content-library-not-encrypted (the not-encrypted screen: triangle, title, the two paragraphs, Erase Journals and Settings…, Learn More; no Try Again, no Import Archive…), unavailable-content-library-cant-open-retried (cantOpen after one failed Try Again: "Still can't be opened.", the secondary paragraph, the red Erase Journals and Settings… button), unavailable-content-erase-unopened-alert (the erase warning for journals that can't be opened, per device), unavailable-content-import-note (the Import Archive sheet with the extra sentence) and unavailable-content-settings-problem (Settings with the one line of text). The missing-key lock screen is already in the lock-screen captures (master-password, wrong-password). Until then the page is `draft`.
 
 ## Source files
 

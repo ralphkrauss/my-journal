@@ -18,7 +18,6 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `change-password` | screen | `screens/change-password.md` | draft | Change Password |
 | `connect-to-server` | screen | `screens/connect-to-server.md` | draft | Connect to a Server (sheet and its steps) |
 | `destination-journal` | screen | `screens/destination-journal.md` | draft | New Journal (from Move Entry and Version History) |
-| `encrypt-journals` | screen | `screens/encrypt-journals.md` | draft | Encrypt Your Journals (form, notice, Done sheet) |
 | `entry-editor` | screen | `screens/entry-editor.md` | verified | Entry editor |
 | `entry-list` | screen | `screens/entry-list.md` | verified | Entry list (a journal, All Entries, Unavailable Journals) |
 | `format-sheet` | screen | `screens/format-sheet.md` | verified | Formatting (Format panel and popover) |
@@ -61,7 +60,6 @@ Pages live in `platforms/apple/screens/<id>.md`, `platforms/apple/flows/<id>.md`
 | `delete-and-restore` | flow | `flows/delete-and-restore.md` | verified | Delete, restore and delete permanently |
 | `edit-table` | flow | `flows/edit-table.md` | verified | Edit a table |
 | `editing-rules` | flow | `flows/editing-rules.md` | draft | Editing rules |
-| `encrypt-journals` | flow | `flows/encrypt-journals.md` | draft | Encrypt your journals |
 | `erase` | flow | `flows/erase.md` | draft | Erase journals and settings |
 | `export-archive` | flow | `flows/export-archive.md` | draft | Export an archive |
 | `export-markdown` | flow | `flows/export-markdown.md` | verified | Export journals as Markdown |

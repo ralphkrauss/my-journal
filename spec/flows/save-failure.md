@@ -12,7 +12,6 @@ sources:
   - apps/apple/JournalApp/Views/EntryHeaderView.swift
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
-  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - docs/design/save-failure-retry.md
   - docs/design/save-failure-retry-review.md
   - docs/design/owner-decisions-2026-09-25.md
@@ -27,7 +26,7 @@ Writing is saved on this device after every edit, quietly. When a save fails, th
 ## Entry points
 
 - Any save of the open entry or template: after each edit, when leaving the entry, before an operation that needs it saved, before locking, and on the Mac before closing the window or quitting.
-- The library is replaced or changed as a whole: connecting to a server, encrypting the journals, importing an archive, committing an entry action (Move, Change Date, Restore).
+- The library is replaced or changed as a whole: connecting to a server, importing an archive, committing an entry action (Move, Change Date, Restore).
 
 ## Steps
 
@@ -79,8 +78,6 @@ While the library is being replaced or changed as a whole, the editor is read-on
 | --- | --- | --- |
 | Connecting to a server | Connect to a Server covers the app as a sheet | After 1 second: `messages.writingPaused.connecting` with `messages.writingPaused.showConnection` |
 | A failed connection's copy waits for Try Again or Cancel | The sheet stays | `messages.writingPaused.connectionFailed` with `messages.writingPaused.showConnection` |
-| Encrypting the journals (`screens/encrypt-journals`) | The encryption notice above the content of every stacked screen and column: `messages.writingPaused.encrypting`, the progress and Cancel | The same notice at the top of the journal window |
-| Encryption reached the server but this device couldn't finish | The same notice with `messages.encryption.unfinished`, Try Again and Stop Syncing… | The same |
 | Importing an archive, committing an entry action | Brief; no notice | Brief; no notice |
 | An archive is opened from Finder or Files meanwhile | Generic alert `messages.writingPaused.updating` | Same |
 
@@ -104,7 +101,7 @@ While the library is being replaced or changed as a whole, the editor is read-on
 
 - The notice's place differs: top of the entry's header on iPhone and iPad (the header scrolls with the text, and the bottom of the screen is the keyboard's), below the editor on the Mac.
 - Only the Mac guards closing the window and quitting. On iPhone and iPad the system can end the app at any time; a draft that couldn't be saved is then lost (see [open-questions.md](../open-questions.md), D17).
-- The connection notices are Mac only: on iPhone and iPad the connection sheet covers the app, so there is nothing to explain behind it. The encryption notice is device-neutral and is shown on every device, because the journals stay visible and read-only while encryption works (`screens/encrypt-journals`); its text, `messages.writingPaused.encrypting`, says "your journals", not "this Mac" (resolves open question A45, B17).
+- The connection notices are Mac only: on iPhone and iPad the connection sheet covers the app, so there is nothing to explain behind it.
 
 ## Open questions
 

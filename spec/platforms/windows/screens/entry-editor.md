@@ -50,7 +50,7 @@ All are inline, non-modal and not closable ([9.1](../platform.md#91-notices)); e
 | Order | Notice | Severity | Message | Action |
 | --- | --- | --- | --- | --- |
 | 1 | Save failure | Error | Title `messages.save.notSaved`; while retrying `messages.save.saving` with an indeterminate `ProgressBar` in the content and the action disabled | `ActionButton` `common.tryAgain` |
-| 2 | Writing paused (library being replaced; the entry is read-only meanwhile) | Informational | `messages.writingPaused.connecting` (only after 1 s), `messages.writingPaused.connectionFailed` | None: Show Connection is not offered because the flow's page is modal over the only window. `messages.writingPaused.encrypting` is never shown: Windows runs no encryption |
+| 2 | Writing paused (library being replaced; the entry is read-only meanwhile) | Informational | `messages.writingPaused.connecting` (only after 1 s), `messages.writingPaused.connectionFailed` | None: Show Connection is not offered because the flow's page is modal over the only window. |
 | 3 | Recovery or unavailable | Informational | [recently-deleted](recently-deleted.md), [unavailable-content](unavailable-content.md) | As those files |
 | 4 | Other version kept | Informational, closable | `messages.conflict.kept.notice.entry`, `.entryNewer`, `.template` or `.templateNewer`; a held version shows `messages.conflict.kept.noticeUpdate`; the entry stays editable | `ActionButton` `messages.conflict.kept.showOther`; the close button is `common.dismiss` ([kept-version-notice](kept-version-notice.md)) |
 

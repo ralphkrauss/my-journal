@@ -76,7 +76,7 @@ public actor AgentCopyPublisher {
                 continue
             }
             let settings = try? AgentCopyCrypto.openSettings(
-                agent.metadata, grantID: agent.id, vaultKey: store.key, protection: store.protection)
+                agent.metadata, grantID: agent.id, vaultKey: store.key)
             result.append(LibraryAgent(server: agent, settings: settings))
         }
         // What this device knew of a copy whose settings changed since is read again.
@@ -107,7 +107,7 @@ public actor AgentCopyPublisher {
             name: clean, clientName: request.clientName, allJournals: allJournals, journalIDs: journalIDs,
             expiresAt: expiresAt, key: key)
         let metadata = try AgentCopyCrypto.sealSettings(
-            settings, grantID: grantID, vaultKey: store.key, protection: store.protection)
+            settings, grantID: grantID, vaultKey: store.key)
         let secret = try VaultCrypto.random(32)
         let wrapped = try AgentCopyCrypto.wrapCopyKey(key, secret: secret, grantID: grantID)
         try await client.approveAgentRequest(
@@ -163,7 +163,7 @@ public actor AgentCopyPublisher {
             name: clean, clientName: old.clientName, allJournals: allJournals, journalIDs: journalIDs,
             expiresAt: expiresAt, key: old.key)
         let metadata = try AgentCopyCrypto.sealSettings(
-            settings, grantID: agent.id, vaultKey: store.key, protection: store.protection)
+            settings, grantID: agent.id, vaultKey: store.key)
         let source = try await store.agentCopySource()
         let keys = try AgentCopyKeys(old.key)
         // Narrowing from all journals can't be worked out from this device's journals alone (another device may have

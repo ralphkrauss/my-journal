@@ -34,15 +34,15 @@ final class AgentCopyTests: XCTestCase {
         let settings = AgentCopySettings(
             name: "Claude", clientName: "Claude Code", journalIDs: [UUID()], expiresAt: nil, key: Data(count: 32))
         let metadata = try AgentCopyCrypto.sealSettings(
-            settings, grantID: grant, vaultKey: vaultKey, protection: .encrypted)
+            settings, grantID: grant, vaultKey: vaultKey)
         XCTAssertEqual(
-            try AgentCopyCrypto.openSettings(metadata, grantID: grant, vaultKey: vaultKey, protection: .encrypted),
+            try AgentCopyCrypto.openSettings(metadata, grantID: grant, vaultKey: vaultKey),
             settings)
         XCTAssertThrowsError(
             try AgentCopyCrypto.openSettings(
-                metadata, grantID: grant, vaultKey: VaultCrypto.generateKey(), protection: .encrypted))
+                metadata, grantID: grant, vaultKey: VaultCrypto.generateKey()))
         XCTAssertThrowsError(
-            try AgentCopyCrypto.openSettings(metadata, grantID: UUID(), vaultKey: vaultKey, protection: .encrypted))
+            try AgentCopyCrypto.openSettings(metadata, grantID: UUID(), vaultKey: vaultKey))
     }
 
     /// Only synchronized state reaches the copy: shared journals' live entries are published, and an entry with a
@@ -126,12 +126,12 @@ final class AgentCopyTests: XCTestCase {
             "version": 1, "name": "Claude", "clientName": "Claude Code", "journalIds": [journal.uuidString],
             "key": key.base64EncodedString(),
         ]
-        let sealed = try ContentProtection.encrypted.encode(
+        let sealed = try VaultCrypto.seal(
             JSONSerialization.data(withJSONObject: version1), key: vaultKey,
             context: AgentCopyCrypto.settingsContext(grantID: grant)
         ).base64EncodedString()
         let opened = try AgentCopyCrypto.openSettings(
-            sealed, grantID: grant, vaultKey: vaultKey, protection: .encrypted)
+            sealed, grantID: grant, vaultKey: vaultKey)
         XCTAssertEqual(opened.journalIDs, [journal])
         XCTAssertFalse(opened.allJournals)
         XCTAssertTrue(opened.shares(journal))
@@ -140,8 +140,8 @@ final class AgentCopyTests: XCTestCase {
         let everything = AgentCopySettings(
             name: "Claude", clientName: "Claude Code", allJournals: true, journalIDs: [], expiresAt: nil, key: key)
         let reopened = try AgentCopyCrypto.openSettings(
-            AgentCopyCrypto.sealSettings(everything, grantID: grant, vaultKey: vaultKey, protection: .encrypted),
-            grantID: grant, vaultKey: vaultKey, protection: .encrypted)
+            AgentCopyCrypto.sealSettings(everything, grantID: grant, vaultKey: vaultKey),
+            grantID: grant, vaultKey: vaultKey)
         XCTAssertEqual(reopened, everything)
         XCTAssertTrue(reopened.shares(UUID()))
         let unknown = UUID()
@@ -149,8 +149,8 @@ final class AgentCopyTests: XCTestCase {
             name: "Claude", clientName: "Claude Code", journalIDs: [journal, unknown], expiresAt: nil, key: key)
         XCTAssertEqual(
             try AgentCopyCrypto.openSettings(
-                AgentCopyCrypto.sealSettings(chosen, grantID: grant, vaultKey: vaultKey, protection: .plaintext),
-                grantID: grant, vaultKey: vaultKey, protection: .plaintext
+                AgentCopyCrypto.sealSettings(chosen, grantID: grant, vaultKey: vaultKey),
+                grantID: grant, vaultKey: vaultKey
             ).journalIDs, [journal, unknown])
     }
 
@@ -329,7 +329,7 @@ final class AgentCopyTests: XCTestCase {
             name: "Claude", clientName: "Claude Code", journalIDs: [work.id], expiresAt: nil,
             key: try VaultCrypto.random(32))
         let metadata = try AgentCopyCrypto.sealSettings(
-            settings, grantID: grant, vaultKey: await store.key, protection: .encrypted)
+            settings, grantID: grant, vaultKey: await store.key)
         let server = RecordingAgentServer(grant: grant, metadata: metadata)
         let publisher = AgentCopyPublisher(store: store, server: server)
         try await publisher.publishAll()

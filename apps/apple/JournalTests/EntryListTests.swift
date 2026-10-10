@@ -51,7 +51,7 @@ final class EntryListTests: XCTestCase {
         for item in [journal, older, newer] { try await store.save(item) }
         let model = AppModel(directory: root)
         model.store = store
-        model.configuration = LocalConfiguration(recovery: .unprotected, recoveryConfirmed: true)
+        model.configuration = LocalConfiguration(recovery: .placeholder, recoveryConfirmed: true)
         try await model.refresh()
         model.selectedJournalID = journal.id
         XCTAssertEqual(model.entries.map(\.id), [newer.id, older.id])
@@ -83,7 +83,7 @@ final class EntryListTests: XCTestCase {
         for item in [journal, template] { try await store.save(item) }
         let model = AppModel(directory: root)
         model.store = store
-        model.configuration = LocalConfiguration(recovery: .unprotected, recoveryConfirmed: true)
+        model.configuration = LocalConfiguration(recovery: .placeholder, recoveryConfirmed: true)
         try await model.refresh()
         model.showingTrash = true
         func listKey() -> EntryListKey {
@@ -123,7 +123,7 @@ final class EntryListTests: XCTestCase {
     func testLockingForgetsTheTextKeptForSearch() async throws {
         let model = AppModel(directory: root)
         model.configuration = LocalConfiguration(
-            recovery: .unprotected, recoveryConfirmed: true, appLock: true)
+            recovery: .placeholder, recoveryConfirmed: true, appLock: true)
         let journal = JournalItem(kind: "journal", title: "Daily")
         let secret = JournalItem(kind: "entry", journalID: journal.id, document: .plain("A private thought"))
         model.items = [journal, secret]
@@ -147,9 +147,7 @@ final class EntryListTests: XCTestCase {
             for item in [journal, entry, template] { try await store.save(item) }
             let model = AppModel(directory: root)
             model.store = store
-            model.configuration = LocalConfiguration(recovery: .unprotected, recoveryConfirmed: true)
-            // Not asked to encrypt: the window shows the list.
-            model.encryption.notNow()
+            model.configuration = LocalConfiguration(recovery: .placeholder, recoveryConfirmed: true)
             model.loaded = true
             try await model.refresh()
             model.showingAllEntries = true

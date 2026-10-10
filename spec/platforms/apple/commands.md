@@ -191,7 +191,7 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | --- | --- | --- | --- |
 | `connect-to-server` | Settings ▸ Sync, Devices, Agent Access (not connected); first-launch screen | — |  |
 | `sync-now` | Settings ▸ Sync | — |  |
-| `sync-reconnect` | Settings ▸ Sync (Reconnect…); Sync Status; Settings ▸ Privacy (Reconnect…); Settings ▸ Agent Access (no access) | — |  |
+| `sync-reconnect` | Settings ▸ Sync (Reconnect…); Sync Status; Settings ▸ Agent Access (no access) | — |  |
 | `stop-syncing` | Settings ▸ Sync | — |  |
 | `open-setup-guide` | Settings ▸ Sync footer; Set Up Server footer | — |  |
 | `open-former-server-guide` | Settings ▸ Sync footer (Mac only) | — | Mac only (the footer of Settings ▸ Sync). |
@@ -212,7 +212,6 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 | `connect-copy-code` | — |  |
 | `connect-confirm-check-code` | ⌘↩ (not ↩) |  |
 | `connect-new-code` | — |  |
-| `connect-use-recovery-code` | — |  |
 | `connect-merge` | ⌘↩ (not ↩) |  |
 | `connect-retry` | — |  |
 | `connect-cancel` | ⎋ |  |
@@ -239,13 +238,6 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 
 | id | Shortcut | Notes |
 | --- | --- | --- |
-| `turn-on-encryption` | — | Settings ▸ Privacy button; opens the Encrypt Your Journals form as a sheet. |
-| `encrypt-journals` | ↩ in Verify (the Mac's default button is Encrypt) | The form's primary button; Try Again after an error. |
-| `encrypt-journals-not-now` | — | Plain button under the primary button. |
-| `encrypt-journals-stop-syncing` | — | Plain button under the primary button, and on the unfinished notice. |
-| `encryption-finish` | — | Try Again on the unfinished notice. |
-| `encryption-cancel` | ⎋ | Cancel on the working notice (accessible name “Cancel encryption”) and Cancel of the form as a sheet. |
-| `encryption-done` | ↩, ⎋ | Done sheet. |
 | `change-password` | — | Also the pointer under the archive footer in Settings ▸ Backup and the Export Archive sheet. |
 | `change-password-submit` | ↩ in Confirm |  |
 | `change-password-retry` | — |  |
@@ -282,9 +274,9 @@ The Settings tables place the commands of [commands.md](../../commands.md#settin
 
 | id | Placement | Shortcut | Notes |
 | --- | --- | --- | --- |
-| `retry-opening` | Button on the library problem screen (prominent, large; not for a newer version) | Return (default action) | Replaced by a progress indicator while it runs. |
-| `erase-unopened` | Plain red button on the library problem screen (after one failed Try Again) and under Import Archive… on the missing-key lock screen | — | On the problem screen, not offered on iPhone and iPad while protected data is unavailable; the lock screen has no such gate. |
-| `open-library-guide` | Plain tinted button, last on the library problem screen | Return on the Mac, for a newer version only | The only button for a newer version. |
+| `retry-opening` | Button on the library problem screen (prominent, large; not for a newer version and not for a library that is not encrypted) | Return (default action) | Replaced by a progress indicator while it runs. |
+| `erase-unopened` | Plain red button on the library problem screen (after one failed Try Again, or at once for a library that is not encrypted) and under Import Archive… on the missing-key lock screen | — | On the problem screen, not offered on iPhone and iPad while protected data is unavailable; the lock screen has no such gate. |
+| `open-library-guide` | Plain tinted button, last on the library problem screen | Return on the Mac, for a newer version and for a library that is not encrypted | The only button for a newer version; beside Erase Journals and Settings… for a library that is not encrypted. |
 
 ### Agent Access
 

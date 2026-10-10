@@ -223,13 +223,6 @@
   },
   {
     "keys": [
-      "messages.encryption.announce.turningOn",
-      "settings.encryption.progressLabel"
-    ],
-    "reason": "Announcement when encryption starts versus the accessibility label of the progress."
-  },
-  {
-    "keys": [
       "messages.failure.damagedReading",
       "messages.sync.localDataUnreadable"
     ],

@@ -96,8 +96,7 @@ extension AppModel {
             guard !FileManager.default.fileExists(atPath: path.path) else { throw JournalError.invalidData }
             staged.directory = path
             try await store.snapshot(to: path)
-            let destination = try JournalStore(
-                directory: path, key: masterKey, protection: configuration.recovery.contentProtection)
+            let destination = try JournalStore(directory: path, key: masterKey)
             staged.store = destination
             try await destination.importAsNewJournals(from: restored.store)
             var next = configuration
@@ -112,7 +111,7 @@ extension AppModel {
         if let unopened = configuration {
             next.appLock = unopened.appLock
             next.inactivityLockMinutes = unopened.inactivityLockMinutes
-            next.supersededLibraries = librariesSuperseded(by: unopened, includingEncryptionCopy: true)
+            next.supersededLibraries = librariesSuperseded(by: unopened)
         }
         return InstalledLibrary(store: restored.store, key: restored.key, configuration: next, isNew: true)
     }

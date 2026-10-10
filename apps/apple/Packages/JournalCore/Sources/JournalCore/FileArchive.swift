@@ -17,10 +17,7 @@ enum FileArchive {
         store: JournalStore, recovery: RecoveryEnvelope, key: Data, to destination: URL, options: ArchiveOptions
     ) async throws {
         try Task.checkCancellation()
-        let archivable = recovery.formatVersion == 1 || recovery.formatVersion == 2
-        guard archivable, store.protection == .encrypted, try recovery.contentProtection == .encrypted else {
-            throw JournalError.invalidData
-        }
+        try recovery.requireEncrypted()
         let manager = FileManager.default
         guard !manager.fileExists(atPath: destination.path) else { throw CocoaError(.fileWriteFileExists) }
         try options.requireSpace(try await store.archiveBytesEstimate(), at: destination.deletingLastPathComponent())
@@ -100,11 +97,10 @@ enum FileArchive {
 
     // MARK: Reading
 
-    /// Reads the header: its bounds are checked, no password needed. A file archive always needs one.
-    static func requiresPassword(at source: URL) throws -> Bool {
+    /// Reads the header: its bounds are checked, no password needed.
+    static func checkHeader(at source: URL) throws {
         let container = try ArchiveContainer(at: source)
         _ = try FileArchiveHeader.parse(try container.headerData())
-        return true
     }
 
     /// Recovers the key, authenticates the manifest, checks space, extracts the listed entries into a new
@@ -127,7 +123,7 @@ enum FileArchive {
             try container.extract(plan, manifest: manifest, into: destination)
             try Task.checkCancellation()
             return try await ArchiveStaging.open(
-                destination, key: recovered.0, recovery: header.recovery, protection: .encrypted, options: options)
+                destination, key: recovered.0, recovery: header.recovery, options: options)
         } catch {
             try? manager.removeItem(at: destination)
             throw error

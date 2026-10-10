@@ -236,8 +236,7 @@ final class PermanentDeletionLifecycleTests: XCTestCase {
     /// deletion that is running. An item that stays keeps Recently Deleted non-empty throughout.
     func testDeleteAllStartsOnlyInANonEmptyRecentlyDeletedAndOneAtATime() async throws {
         let (model, store) = try await recentlyDeletedModel()
-        model.configuration = LocalConfiguration(recovery: .unprotected, recoveryConfirmed: true)
-        model.encryption.notNow()
+        model.configuration = LocalConfiguration(recovery: .placeholder, recoveryConfirmed: true)
         let journal = JournalItem(kind: "journal", title: "Personal")
         var deleted = (1...2).map { JournalItem(kind: "entry", journalID: journal.id, title: "Deleted \($0)") }
         var changed = JournalItem(kind: "entry", journalID: journal.id, title: "Changed elsewhere")

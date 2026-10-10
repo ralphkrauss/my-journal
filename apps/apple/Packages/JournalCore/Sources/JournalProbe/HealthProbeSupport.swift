@@ -9,13 +9,10 @@ struct HealthState: Codable {
         var key: Data
         var token: String?
         var deviceID: UUID?
-        /// How this device's library is stored, when it differs from the first library's.
-        var protection: String?
     }
     var phrase: String
     var envelope: RecoveryEnvelope
     var recoverySecret: String
-    var protection: String
     var devices: [String: Device] = [:]
     /// Every entry title written on any device, each of which must exist exactly once everywhere.
     var written: [String] = []
@@ -46,9 +43,7 @@ struct HealthDevice {
 extension Probe {
     static func open(_ name: String, _ state: HealthState, root: URL) throws -> HealthDevice {
         guard let device = state.devices[name] else { throw ProbeFailure("no state for \(name)") }
-        let store = try JournalStore(
-            directory: root.appendingPathComponent(device.folder), key: device.key,
-            protection: ContentProtection(rawValue: device.protection ?? state.protection) ?? .encrypted)
+        let store = try JournalStore(directory: root.appendingPathComponent(device.folder), key: device.key)
         return HealthDevice(name: name, store: store, client: nil)
     }
 
@@ -76,8 +71,8 @@ extension Probe {
         throw ProbeFailure("\(situation): \(device.name) synced")
     }
 
-    /// Reconnect with the password, as the app does: access is granted, lineage finds this library on the
-    /// server, and a copy of the library keeping its identities syncs (docs/design/sync-health-and-recovery.md §3.3).
+    /// Reconnect with the password, as the app does: access is granted, the server's key is this library's key, and a
+    /// copy of the library keeping its identities syncs (docs/design/sync-health-and-recovery.md §3.3).
     static func connectAgain(
         _ device: HealthDevice, state: inout HealthState, root: URL, address: String
     ) async throws -> HealthDevice {
@@ -85,9 +80,6 @@ extension Probe {
         let recovered = try await anonymous.recoverVault(
             state.phrase, parameters: anonymous.recoveryParameters(), deviceName: "Probe \(device.name)")
         let client = try ServerClient(address: address, token: recovered.grant.token)
-        guard try await SyncLineage.serverHoldsLibrary(device.store, client: client) else {
-            throw ProbeFailure("\(device.name)'s own server wasn't recognized as holding its library")
-        }
         return try await rejoinByIdentity(
             device, grant: recovered.grant, key: recovered.key, client: client, state: &state, root: root)
     }
@@ -107,9 +99,7 @@ extension Probe {
         saved.token = grant.token
         saved.deviceID = grant.deviceId
         state.devices[device.name] = saved
-        let copy = try JournalStore(
-            directory: root.appendingPathComponent(folder), key: key,
-            protection: ContentProtection(rawValue: state.protection) ?? .encrypted)
+        let copy = try JournalStore(directory: root.appendingPathComponent(folder), key: key)
         let rejoined = HealthDevice(name: device.name, store: copy, client: client)
         try await rejoined.synchronize()
         return rejoined

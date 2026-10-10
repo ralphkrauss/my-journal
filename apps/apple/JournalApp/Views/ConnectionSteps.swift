@@ -28,7 +28,7 @@ struct ConnectionStepView: View {
             #endif
             content
             if flow.busy && showsBusyRow {
-                Section { ConnectionBusyRow(activity: flow.activityLabel, upgrade: model.encryption) }
+                Section { connectionStatus(flow.activityLabel) }
             }
             if let error = flow.errorMessage(on: step) {
                 Section { Text(error).foregroundStyle(.red).font(.callout) }
@@ -62,7 +62,6 @@ struct ConnectionStepView: View {
         case .serverReady: return "Server Is Ready"
         case .signIn: return "Enter \(flow.credentialName)"
         case .addThisDevice: return "Add This Device"
-        case .recoveryCode: return "Use a Recovery Code"
         case .merge: return "Merge Journals"
         // The instruction below carries "Finish on Your Other Device", as on the first screen before; a title that
         // long is cut off beside Cancel and Scan Again.
@@ -77,7 +76,6 @@ struct ConnectionStepView: View {
         case .serverReady: serverReady
         case .signIn: signIn
         case .addThisDevice: addThisDevice
-        case .recoveryCode: recoveryCode
         case .merge: MergeJournalsContent(flow: flow)
         case .finish: finishOnOtherDevice
         }
@@ -122,11 +120,6 @@ struct ConnectionStepView: View {
             Button("Set Up") { flow.setUp() }.disabled(flow.busy || flow.phrase.isEmpty)
         case .signIn:
             Button(flow.mergeInterrupted && flow.errorMessage(on: step) != nil ? "Try Again" : "Sign In") {
-                flow.signIn()
-            }.disabled(flow.busy || flow.phrase.isEmpty)
-        case .recoveryCode:
-            // The one-time code was spent; Try Again continues with the access it gave.
-            Button(model.retryGrant != nil && flow.errorMessage(on: step) != nil ? "Try Again" : "Connect") {
                 flow.signIn()
             }.disabled(flow.busy || flow.phrase.isEmpty)
         case .addThisDevice:
@@ -187,18 +180,13 @@ struct ConnectionStepView: View {
                 Text("Enter the code your server shows when it starts. To see it again, run setup-code on the server.")
                 if let guide = Self.setupGuide { Link("How to Set Up a Server", destination: guide) }
                 if flow.stepAfterSetupCode == nil && model.store != nil && !flow.createdJournalHere {
-                    Text(uploadWithoutPassword)
+                    Text("The journals on this device will be uploaded to \(flow.host).")
                 }
             }
         }
     }
     static let setupGuide = URL(
         string: "https://github.com/ralphkrauss/my-journal/blob/main/docs/guide/sync.md#use-your-own-server")
-    private var uploadWithoutPassword: String {
-        let upload = "The journals on this device will be uploaded to \(flow.host)."
-        return model.configuration?.encrypted == false
-            ? upload + " They aren’t encrypted, so anyone with access to the server can read them." : upload
-    }
     @ViewBuilder private var choosePassword: some View {
         intro("Your master password encrypts your journals on this device before they’re sent to \(flow.host).")
         Section {
@@ -261,11 +249,9 @@ struct ConnectionStepView: View {
         Section {
             Button("Add Another Device…") { addingDevice = true }
         } footer: {
-            if model.configuration?.requiresPassword == true {
-                Text(
-                    "You can also sign in on your other devices with your \(model.configuration?.credentialName.lowercased() ?? "master password")."
-                )
-            }
+            Text(
+                "You can also sign in on your other devices with your \(model.configuration?.credentialName.lowercased() ?? "master password")."
+            )
         }
     }
 
@@ -273,44 +259,19 @@ struct ConnectionStepView: View {
 
     @ViewBuilder private var signIn: some View {
         let credential = flow.credentialName.lowercased()
-        let rejoining = model.encryption.offersSignIn
-        if rejoining {
-            // True whether encryption was turned on elsewhere or the server was replaced by an encrypted library
-            // (docs/design/sync-health-and-recovery.md §7.1).
-            intro("The server now uses encryption. Enter its master password.")
-        } else {
-            intro(
-                flow.envelope?.formatVersion == 1
-                    ? "Enter the recovery key you saved when you set up \(flow.host)."
-                    : "Enter the \(credential) you chose when you set up \(flow.host).")
-        }
+        intro(
+            flow.envelope?.formatVersion == 1
+                ? "Enter the recovery key you saved when you set up \(flow.host)."
+                : "Enter the \(credential) you chose when you set up \(flow.host).")
         Section {
             phraseField(flow.credentialName).onSubmit { if !flow.phrase.isEmpty && !flow.busy { flow.signIn() } }
             fieldError(.phrase)
             Toggle("Show \(flow.credentialName)", isOn: $showPassword)
         } footer: {
-            if rejoining {
-                Text("The journals on this device will be encrypted too. Changes that haven’t synced are kept.")
-            } else if let footer = flow.downloadFooter {
-                Text(footer)
-            }
+            if let footer = flow.downloadFooter { Text(footer) }
         }
         Section {
             Button("Use a Connected Device Instead…") { flow.path.append(.addThisDevice) }.disabled(flow.busy)
-        }
-    }
-    @ViewBuilder private var recoveryCode: some View {
-        Section {
-            if let notice = flow.codeUsedNotice {
-                Text(notice).font(.callout).fixedSize(horizontal: false, vertical: true)
-            }
-            phraseField("Recovery Code").onSubmit { if !flow.phrase.isEmpty && !flow.busy { flow.signIn() } }
-            fieldError(.phrase)
-            Toggle("Show Recovery Code", isOn: $showPassword)
-        } footer: {
-            Text(
-                ["Ask your server administrator for a one-time recovery code.", flow.downloadFooter].compactMap { $0 }
-                    .joined(separator: " "))
         }
     }
     @ViewBuilder private var addThisDevice: some View {
@@ -326,14 +287,6 @@ struct ConnectionStepView: View {
             }
         } footer: {
             if let footer = flow.downloadFooter { Text(footer) }
-        }
-        if flow.passwordless {
-            Section {
-                Button("Use a Recovery Code Instead…") {
-                    flow.abandon()
-                    flow.path.append(.recoveryCode)
-                }.disabled(flow.installing)
-            }
         }
     }
     private func pairingCodeView(_ ticket: PairingTicket) -> some View {

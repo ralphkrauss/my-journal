@@ -23,12 +23,7 @@ extension AppModel {
                 connectingToServer = false
             }
             let recoveryPhrase = recoveryKey ?? phrase
-            let recovered = try await Task.detached {
-                if !envelope.requiresPassword {
-                    return (key, try VaultCrypto.random(32).map { String(format: "%02x", $0) }.joined())
-                }
-                return try VaultCrypto.recover(envelope, phrase: recoveryPhrase)
-            }.value
+            let recovered = try await Task.detached { try VaultCrypto.recover(envelope, phrase: recoveryPhrase) }.value
             guard recovered.0 == key else { throw JournalError.invalidRecoveryKey }
             try Task.checkCancellation()
             guard !locked else { throw JournalError.locked }
@@ -62,7 +57,7 @@ extension AppModel {
         connection = value
         configureSync()
     }
-    /// Connects to an initialized server with its password, recovery key or one-time recovery code. `shown` is what
+    /// Connects to an initialized server with its password or recovery key. `shown` is what
     /// the server published about its recovery envelope when the person chose what to type; it must not change.
     /// `replacingEmptyLibrary` replaces a library with nothing written in it instead of uploading it.
     func recoverServer(
@@ -79,41 +74,16 @@ extension AppModel {
         let client = try ServerClient(address: address)
         let parameters = try await client.recoveryParameters()
         try checkServerEnvelope(parameters, shown: shown)
-        if parameters.requiresPassword {
-            let recovered: RecoveredVault
-            do {
-                recovered = try await client.recoverVault(phrase, parameters: parameters, deviceName: deviceName)
-            } catch is RecoveryEnvelopeChanged { throw ServerConnectionError.serverChanged }
-            try await installServerVault(
-                address: address, key: recovered.key, envelope: recovered.envelope, grant: recovered.grant,
-                uploadLocal: uploadLocal, replacingEmptyLibrary: replacingEmptyLibrary)
-            return
-        }
-        // A known connection belongs to this library. Retain its plaintext record IDs, revision baselines and
-        // pending edits when replacing a device credential.
-        let retainedKey = configuration?.recovery.formatVersion == 4 && connection != nil ? masterKey : nil
-        let key: Data
-        let grant: DeviceGrant
-        if let pending = retryGrant, pending.address == address {
-            // The one-time code was spent by the attempt that failed; Try Again continues with its access.
-            (key, grant) = (pending.key, pending.grant)
-        } else {
-            // Only the server's own recovery code is ever sent as typed; a password never is.
-            guard let code = Self.serverRecoveryCode(phrase) else { throw ServerConnectionError.invalidRecoveryCode }
-            do { grant = try await client.recover(secret: code, deviceName: deviceName) } catch JournalError
-                .invalidRecoveryKey
-            {
-                // The server's one-time code was wrong or already used.
-                throw ServerConnectionError.invalidRecoveryCode
-            }
-            key = try retainedKey ?? VaultCrypto.generateKey()
-        }
-        try await installKeepingGrant(
-            address: address, key: key, envelope: .unprotected, grant: grant, uploadLocal: uploadLocal,
-            replacingEmptyLibrary: replacingEmptyLibrary)
+        let recovered: RecoveredVault
+        do {
+            recovered = try await client.recoverVault(phrase, parameters: parameters, deviceName: deviceName)
+        } catch is RecoveryEnvelopeChanged { throw ServerConnectionError.serverChanged }
+        try await installServerVault(
+            address: address, key: recovered.key, envelope: recovered.envelope, grant: recovered.grant,
+            uploadLocal: uploadLocal, replacingEmptyLibrary: replacingEmptyLibrary)
     }
-    /// Installs with access that can't be asked for again, keeping it and the staged copy for Try Again until the
-    /// flow is left (`giveUpRetry`).
+    /// Installs with access that can't be asked for again (a pairing's), keeping it and the staged copy for Try Again
+    /// until the flow is left (`giveUpRetry`).
     private func installKeepingGrant(
         address: String, key: Data, envelope: RecoveryEnvelope, grant: DeviceGrant, uploadLocal: Bool,
         replacingEmptyLibrary: Bool
@@ -237,16 +207,13 @@ extension AppModel {
                 stagedVault.folder, stagedVault.store, stagedVault.merges, stagedVault.key
             )
         } else {
-            let protection = try envelope.contentProtection
-            (merges, key) = try await joinPlan(
-                address: address, key: serverKey, protection: protection, grant: grant, uploadLocal: uploadLocal)
+            try envelope.requireEncrypted()
+            (merges, key) = try await joinPlan(address: address, key: serverKey, uploadLocal: uploadLocal)
             folder = "vault-" + UUID().uuidString.lowercased()
             if merges, let old = store {
-                destination = try await stageMerge(
-                    old, in: folder, key: key, protection: protection, address: address, grant: grant)
+                destination = try await stageMerge(old, in: folder, key: key, address: address, grant: grant)
             } else {
-                destination = try await stageCopy(
-                    in: folder, key: key, protection: protection, uploadLocal: uploadLocal)
+                destination = try await stageCopy(in: folder, key: key, uploadLocal: uploadLocal)
             }
             stagedVault = (grant.deviceId, folder, destination, merges, key)
         }
@@ -316,7 +283,6 @@ extension AppModel {
         guard let configuration else { return }
         var named = Set((configuration.supersededLibraries ?? []).compactMap(\.storageFolder))
         if let folder = configuration.storageFolder { named.insert(folder) }
-        if let upgrade = configuration.encryptionUpgrade { named.insert(upgrade.storageFolder) }
         let manager = FileManager.default
         let folders = (try? manager.contentsOfDirectory(atPath: directory.path)) ?? []
         for folder in folders where folder.hasPrefix("vault-") && !named.contains(folder) {
@@ -333,36 +299,24 @@ extension AppModel {
     /// joined library uses. Merging a connected library, whose server was replaced, needs the person's agreement
     /// first; nothing has been sent when `MergeConsentNeeded` is thrown.
     func joinPlan(
-        address: String, key: Data, protection: ContentProtection, grant: DeviceGrant, uploadLocal: Bool
+        address: String, key: Data, uploadLocal: Bool
     ) async throws -> (merges: Bool, key: Data) {
-        guard uploadLocal, let store else { return (false, key) }
-        let merges: Bool
-        var joinedKey = key
-        if protection == .encrypted, configuration?.encrypted == true {
-            // Encrypted on both sides: the same vault key is the same library.
-            merges = masterKey != key
-        } else {
-            joinPhase = .checking
-            let client = try ServerClient(address: address, token: grant.token)
-            merges = try await !SyncLineage.serverHoldsLibrary(store, client: client)
-            // Without encryption on the server, the key only protects this device's copy: the library keeps its own,
-            // so its stored records are used as they are.
-            if !merges, protection == .plaintext, let masterKey { joinedKey = masterKey }
-        }
+        guard uploadLocal, store != nil else { return (false, key) }
+        // Both sides are encrypted: the same vault key is the same library.
+        let merges = masterKey != key
         if merges, connection != nil, agreedMergeHost != ServerAddress.host(address) { throw MergeConsentNeeded() }
-        return (merges, joinedKey)
+        return (merges, key)
     }
     /// A new folder holding everything the server has, then this library's journals merged into it
     /// (docs/design/join-with-local-journals.md §2.1). Sending them is the next synchronization. A copy that fails part
     /// way is removed; merging again derives the same identities, so nothing is duplicated.
     private func stageMerge(
-        _ source: JournalStore, in folder: String, key: Data, protection: ContentProtection, address: String,
-        grant: DeviceGrant
+        _ source: JournalStore, in folder: String, key: Data, address: String, grant: DeviceGrant
     ) async throws -> JournalStore {
         let destinationURL = directory.appendingPathComponent(folder)
         var staged: JournalStore?
         do {
-            let destination = try JournalStore(directory: destinationURL, key: key, protection: protection)
+            let destination = try JournalStore(directory: destinationURL, key: key)
             staged = destination
             let client = try ServerClient(address: address, token: grant.token)
             joinPhase = .downloading
@@ -371,7 +325,7 @@ extension AppModel {
             joinPhase = .merging
             let server = try await client.status().serverId ?? client.address.absoluteString
             // A journal an agent reads is never combined, so the agent can't read this device's entries.
-            let readByAgents = try await client.journalsAgentsCanRead(vaultKey: key, protection: protection)
+            let readByAgents = try await client.journalsAgentsCanRead(vaultKey: key)
             try await destination.importMerging(from: source, server: server, readByAgents: readByAgents)
             return destination
         } catch {
@@ -382,24 +336,16 @@ extension AppModel {
     }
     /// A new folder for the server's vault key and mode, holding this library's journals when they're uploaded.
     /// A copy that fails part way is removed, so Try Again never continues from an incomplete one.
-    private func stageCopy(
-        in folder: String, key: Data, protection: ContentProtection, uploadLocal: Bool
-    ) async throws -> JournalStore {
+    private func stageCopy(in folder: String, key: Data, uploadLocal: Bool) async throws -> JournalStore {
         let destinationURL = directory.appendingPathComponent(folder)
         var staged: JournalStore?
         do {
-            // Joining by identity (`joinPlan`): a library without encryption is encrypted with the server's key,
-            // whether it's still connected (encryption turned on elsewhere) or connects again after Stop Syncing.
-            if uploadLocal, let old = store, configuration?.encrypted == false, protection == .encrypted {
-                // Encryption was turned on from another device: this library's journals keep their identities.
-                return try await reencryptForRejoin(old, to: destinationURL, key: key)
-            }
             if uploadLocal, let old = store, masterKey == key {
                 // Re-encrypting an existing image would violate the server's immutable-byte contract.
                 // Preserve the exact ciphertext, revision baseline and retry receipts for the same vault.
                 try await old.snapshot(to: destinationURL)
             }
-            let destination = try JournalStore(directory: destinationURL, key: key, protection: protection)
+            let destination = try JournalStore(directory: destinationURL, key: key)
             staged = destination
             return destination
         } catch {
@@ -433,10 +379,9 @@ extension AppModel {
 
 /// What joining a server is doing while it reads the server and merges this library's journals.
 enum JoinPhase: Equatable {
-    case checking, downloading, merging
+    case downloading, merging
     var label: String {
         switch self {
-        case .checking: return "Checking…"
         case .downloading: return "Downloading…"
         case .merging: return "Merging…"
         }

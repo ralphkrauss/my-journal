@@ -21,12 +21,10 @@ struct Probe {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("journal-probe-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }
         let (master, phrase, envelope, recoverySecret) = try recoveryFixture()
-        let protection = try envelope.contentProtection
         let anonymous = try ServerClient(address: address)
         let first = try await setUp(anonymous, code: code, envelope: envelope, recoverySecret: recoverySecret)
         let firstClient = try ServerClient(address: address, token: first.token)
-        let firstStore = try JournalStore(
-            directory: root.appendingPathComponent("mac"), key: master, protection: protection)
+        let firstStore = try JournalStore(directory: root.appendingPathComponent("mac"), key: master)
         let firstSync = SyncEngine(store: firstStore, client: firstClient)
         let journal = JournalItem(kind: "journal", title: "Private work")
         try await firstStore.save(journal)
@@ -35,7 +33,7 @@ struct Probe {
         var entry = entryFixture(journalID: journal.id, imageID: imageID)
         try await firstStore.save(entry)
         try await firstSync.synchronize()
-        print("PASS: journal, entry and attachment uploaded with \(protection.rawValue) protection")
+        print("PASS: journal, entry and attachment uploaded")
         let (contents, phoneID) = try await pair(
             anonymous, approver: firstClient, master: master, version: envelope.formatVersion, name: "Probe iPhone")
         guard contents.masterKey == master, contents.recoveryVersion == envelope.formatVersion else {
@@ -44,8 +42,7 @@ struct Probe {
         print("PASS: both devices show the same check code before the key is sent")
         try await verifyDeviceOrigins(firstClient, setUp: first.deviceId, paired: phoneID)
         let phone = try ServerClient(address: address, token: contents.token)
-        let phoneStore = try JournalStore(
-            directory: root.appendingPathComponent("phone"), key: contents.masterKey, protection: protection)
+        let phoneStore = try JournalStore(directory: root.appendingPathComponent("phone"), key: contents.masterKey)
         let phoneSync = SyncEngine(store: phoneStore, client: phone)
         try await phoneSync.synchronize()
         guard try await phoneStore.item(entry.id)?.title == entry.title,
@@ -71,9 +68,9 @@ struct Probe {
         }
         print("PASS: concurrent offline edits are both kept as entries and converge")
         let (published, third, recoveredKey) = try await recoverReplacement(
-            anonymous, phrase: phrase, envelope: envelope, recoverySecret: recoverySecret, master: master)
+            anonymous, phrase: phrase, envelope: envelope)
         let replacementStore = try JournalStore(
-            directory: root.appendingPathComponent("replacement"), key: recoveredKey, protection: protection)
+            directory: root.appendingPathComponent("replacement"), key: recoveredKey)
         let replacement = try ServerClient(address: address, token: third.token)
         try await SyncEngine(store: replacementStore, client: replacement).synchronize()
         guard try await replacementStore.items().count == 3 else {
@@ -85,13 +82,12 @@ struct Probe {
             throw ProbeFailure("a revoked device could still list devices")
         } catch JournalError.unauthorized {}
         print("PASS: recovery on a new client and device revocation")
-        let reconnectGrant =
-            try await published.requiresPassword
-            ? anonymous.recoverVault(phrase, parameters: published, deviceName: "Reconnected Phone").grant
-            : pairingGrant(anonymous, approver: firstClient, master: master, version: envelope.formatVersion)
+        let reconnectGrant = try await anonymous.recoverVault(
+            phrase, parameters: published, deviceName: "Reconnected Phone"
+        ).grant
         let snapshotURL = root.appendingPathComponent("reconnected")
         try await phoneStore.snapshot(to: snapshotURL)
-        let reconnectedStore = try JournalStore(directory: snapshotURL, key: recoveredKey, protection: protection)
+        let reconnectedStore = try JournalStore(directory: snapshotURL, key: recoveredKey)
         let reconnectedClient = try ServerClient(address: address, token: reconnectGrant.token)
         try await SyncEngine(store: reconnectedStore, client: reconnectedClient).synchronize()
         let reconnectedConflicts = try await reconnectedStore.conflicts()
@@ -120,7 +116,6 @@ struct Probe {
         if try await runRollbackPhase() { return true }
         if try await runAgentProbe() { return true }
         if try await runAgentJournalsProbe() { return true }
-        if try await runEncryptionSwitchProbe() { return true }
         if try await runHealthCases() { return true }
         if try await runHealthProbe() { return true }
         if try await runWaitProbe() { return true }
@@ -137,16 +132,11 @@ struct Probe {
     /// Adds a device the way a new one recovers: anyone can read only what deriving the recovery secret needs, and
     /// the server sends the envelope once the secret is verified.
     private static func recoverReplacement(
-        _ anonymous: ServerClient, phrase: String, envelope: RecoveryEnvelope, recoverySecret: String, master: Data
+        _ anonymous: ServerClient, phrase: String, envelope: RecoveryEnvelope
     ) async throws -> (RecoveryParameters, DeviceGrant, Data) {
         let published = try await anonymous.recoveryParameters()
         guard published.wrappedKey == nil, published.describes(envelope) else {
             throw ProbeFailure("anyone can read the wrapped vault key, or the published parameters differ")
-        }
-        guard published.requiresPassword else {
-            return (
-                published, try await anonymous.recover(secret: recoverySecret, deviceName: "Replacement Mac"), master
-            )
         }
         let recovered = try await anonymous.recoverVault(phrase, parameters: published, deviceName: "Replacement Mac")
         guard RecoveryParameters(recovered.envelope) == RecoveryParameters(envelope) else {

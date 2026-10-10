@@ -2,7 +2,7 @@
 id: connect-to-server
 title: Connect to a server (Windows)
 spec: flows/connect-to-server.md
-features: [sync-connect, server-discovery, server-setup, join-with-local-journals, pair-device-scan, pair-device-code, recovery-code-join]
+features: [sync-connect, server-discovery, server-setup, join-with-local-journals, pair-device-scan, pair-device-code]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/uwp/api/windows.networking.servicediscovery.dnssd.dnssdservicewatcher
@@ -12,7 +12,7 @@ sources:
 
 # Connect to a server (Windows)
 
-Every way a PC starts syncing: setting up a new server, joining one with a password, a recovery code or another device, with or without journals already on the PC. The decision tree, every branch and every message are the spec's [flow](../../../flows/connect-to-server.md); the task page and its steps are [connect-to-server (screen)](../screens/connect-to-server.md). This file says what Windows does at each point and where it differs.
+Every way a PC starts syncing: setting up a new server, joining one with a password or another device, with or without journals already on the PC. The decision tree, every branch and every message are the spec's [flow](../../../flows/connect-to-server.md); the task page and its steps are [connect-to-server (screen)](../screens/connect-to-server.md). This file says what Windows does at each point and where it differs.
 
 ## Controls
 
@@ -21,7 +21,7 @@ Every way a PC starts syncing: setting up a new server, joining one with a passw
 The flow runs on one task page ([platform.md, 9](../platform.md#9-sheets-popovers-and-notices)) with a `Frame` for its steps. The spec's steps map one to one onto the steps of the screen file; the spec's overview diagram holds, with these Windows changes:
 
 - The scanned-code branches (spec step 2, "Finish on Your Other Device", `Scan Again`, the scanned-code row in the error tables) do not exist on Windows. Everything the spec says there is for a phone or tablet.
-- A server whose recovery format is 3 or 4 (set up without encryption by an earlier version) is refused with `messages.connection.encryptionOff`: for a typed or nearby address on the first step, and when finishing a pairing. Nothing is sent. Windows has no unencrypted library, so the spec's branch for a device with one (Add This Device and Use a Recovery Code for a server without encryption, then Encrypt Your Journals) never runs here ([encrypt-journals](encrypt-journals.md)).
+- A server whose recovery format is 3 or 4 (set up without encryption by an earlier version) is refused with `messages.connection.encryptionOff`: for a typed or nearby address on the first step, and when finishing a pairing. Nothing is sent. Windows never creates or reads unencrypted libraries, and a Windows client refuses recovery formats 3 and 4 the same way every other client does.
 - A device that has journals reaches Merge journals before anything is sent, as in the spec; Merge records consent for this server for the rest of the flow; consent is checked again just before installing.
 
 ### Windows details of the spec's steps
@@ -35,9 +35,8 @@ The flow runs on one task page ([platform.md, 9](../platform.md#9-sheets-popover
 | 7 Merge journals (this flow's step, not Merge into) | As in the spec; Ctrl+Enter, no default button |
 | 8 Sign in | As in the spec, with its field errors and the Merge branch |
 | 9 Add this device | The nine-digit code with Copy (clipboard options of [platform.md, 15](../platform.md#15-clipboard)); polling every second, slowing to every 16 seconds when the server asks; the check code announced; Connect with Ctrl+Enter |
-| 10 Recovery code | Anything that is not 64 hexadecimal digits is refused without sending (`messages.connection.recoveryCodeIncorrect`); a refused code gives the same message; `messages.server.rateLimited` for too many attempts |
-| 11 Installing | Saves first; a library with nothing written is replaced by the server's; a library with journals continues by identity or merges into a new copy, with phases `settings.connect.busy.checking`, `settings.connect.busy.downloading`, `common.merging`; only when everything synced does the library switch, then the page shows Server is ready or returns. Writing is paused meanwhile |
-| 12 Safeguards | The spec's list is shown if it ever occurs: `messages.connection.chooseUpload`, `messages.connection.createJournalFirst`, `messages.connection.alreadyHasJournals`, `messages.error.locked`, `messages.error.invalidData`, `messages.error.unauthorized`, `messages.error.invalidSetupCode`, as an error row of the current step |
+| 10 Installing | Saves first; a library with nothing written is replaced by the server's; a library with journals continues by identity or merges into a new copy, with phases `settings.connect.busy.checking`, `settings.connect.busy.downloading`, `common.merging`; only when everything synced does the library switch, then the page shows Server is ready or returns. Writing is paused meanwhile |
+| 11 Safeguards | The spec's list is shown if it ever occurs: `messages.connection.chooseUpload`, `messages.connection.createJournalFirst`, `messages.connection.alreadyHasJournals`, `messages.error.locked`, `messages.error.invalidData`, `messages.error.unauthorized`, `messages.error.invalidSetupCode`, as an error row of the current step |
 
 ### Windows adds
 
@@ -75,7 +74,7 @@ Only what the screen file lists; no copy of the spec's messages changes except s
 
 ## Different by design
 
-- **Servers without encryption are refused** (`messages.connection.encryptionOff`), with no Protect step, no choice of encryption and no Use a Recovery Code path: Windows has no unencrypted library to keep working with one.
+- **Servers without encryption are refused** (`messages.connection.encryptionOff`), with no Protect step and no choice of encryption: Windows never creates or reads an unencrypted library.
 - **No scanned-code path.** The scanned-code steps, errors and `messages.pairing.inviteNewerVersion`, `messages.pairing.inviteUnreachable`, `messages.pairing.inviteUsed` belong to phones and tablets (D24).
 - **No Local Network permission** and no message about it.
 - **Closing the window is Cancel** (after the current atomic step); the PC is kept awake while installing; one task page replaces the Mac's Settings window plus journal-window notices.

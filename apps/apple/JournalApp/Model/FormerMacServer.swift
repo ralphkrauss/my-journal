@@ -24,7 +24,7 @@ enum FormerMacServer {
             let manager = FileManager.default
             let marker = directory.appendingPathComponent(FormerMacServer.markerName)
             guard manager.fileExists(atPath: directory.appendingPathComponent(FormerMacServer.settingsName).path),
-                !manager.fileExists(atPath: marker.path), !encryptionUnfinished
+                !manager.fileExists(atPath: marker.path)
             else { return }
             if connection?.address == FormerMacServer.address {
                 stopSyncing(revoking: false)

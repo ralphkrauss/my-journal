@@ -15,7 +15,7 @@ final class SyncNowTests: XCTestCase {
             if let account = model.configuration?.keyID { try? Keychain.remove(account) }
             try? FileManager.default.removeItem(at: directory)
         }
-        await model.start(encrypted: false)
+        await model.start()
         model.connection = SyncConnection(address: address, deviceID: UUID(), token: "synthetic-token")
         model.configureSync()
         return model

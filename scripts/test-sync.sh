@@ -64,18 +64,16 @@ PY
 stop_server
 
 # Restoring an older backup must not lose edits made after it.
-if [[ "${JOURNAL_TEST_RECOVERY_VERSION:-1}" != 4 ]]; then
-  mkdir "$task_dir/restore-probe"
-  start_server "$task_dir/restore-server"
-  probe restore-before "$address" "$task_dir/restore-server/setup-code" "$task_dir/restore-probe"
-  Journal__DataDirectory="$task_dir/restore-server" dotnet "$server_dll" --backup "$task_dir/older-backup"
-  probe restore-after "$address" "$task_dir/restore-probe"
-  stop_server
-  dotnet "$server_dll" --restore "$task_dir/older-backup" "--Journal:DataDirectory=$task_dir/restored-older"
-  start_server "$task_dir/restored-older"
-  probe restore-verify "$address" "$task_dir/restore-probe"
-  stop_server
-fi
+mkdir "$task_dir/restore-probe"
+start_server "$task_dir/restore-server"
+probe restore-before "$address" "$task_dir/restore-server/setup-code" "$task_dir/restore-probe"
+Journal__DataDirectory="$task_dir/restore-server" dotnet "$server_dll" --backup "$task_dir/older-backup"
+probe restore-after "$address" "$task_dir/restore-probe"
+stop_server
+dotnet "$server_dll" --restore "$task_dir/older-backup" "--Journal:DataDirectory=$task_dir/restored-older"
+start_server "$task_dir/restored-older"
+probe restore-verify "$address" "$task_dir/restore-probe"
+stop_server
 
 # A server whose data folder is replaced by an older copy keeps its identity, and the Mac's edits take the positions,
 # records and revision numbers of the phone's lost ones: whether the phone had read past its edits or not, and edited
@@ -121,11 +119,4 @@ stop_server
 # devices at once are merged without a review.
 start_server "$task_dir/library-server"
 probe library "$address" "$task_dir/library-server/setup-code"
-stop_server
-
-# Turning on encryption for a synced library (docs/design/enable-encryption.md): a sync of the unencrypted library
-# after the server switched sends nothing readable, and another device that signs in again first doesn't leave the
-# switching device with reviews of identical journals or images that never sync.
-start_server "$task_dir/encryption-server"
-probe encryption-switch "$address" "$task_dir/encryption-server/setup-code"
 stop_server

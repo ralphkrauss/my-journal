@@ -45,25 +45,4 @@ final class SpecDataCaptureTests: SpecCaptureCase {
         try tapButton("Change Password…", in: app)
         try shot(app, "change-password-default")
     }
-
-    /// The form that asks a library from an earlier version to encrypt before its journals open, and the sheet that
-    /// follows it.
-    @MainActor func testEncryptYourJournals() async throws {
-        let library = emptyLibraryFolder()
-        try await SpecLibraryFixtures.unencryptedLibrary(in: library)
-        let app = try launch(library: library, unlocking: false)
-        try require(app.staticTexts["Encrypt Your Journals"], app: app, timeout: 20)
-        try shot(app, "encrypt-journals-default")
-        let password = app.secureTextFields["Master Password"]
-        try require(password, app: app, timeout: 10)
-        password.tap()
-        password.typeText(samplePassword)
-        NavigationTestSupport.dismissKeyboardTips(app)
-        let verify = app.secureTextFields["Verify"]
-        verify.tap()
-        verify.typeText(samplePassword)
-        try tapButton("Encrypt journals", in: app)
-        try require(app.staticTexts["Your Journals Are Encrypted"], app: app, timeout: 30)
-        try shot(app, "encrypt-journals-done")
-    }
 }

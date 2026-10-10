@@ -38,7 +38,10 @@ struct LibraryProblemView: View {
     private var offersTryAgain: Bool { problem.offersTryAgain }
     /// Erase waits for one failed Try Again, and neither it nor Import is offered while the iPhone's protected data
     /// isn't available: opening fails then for a reason that ends by itself.
-    private var offersErase: Bool { problem.allowsErase && model.failedRetries > 0 && model.protectedDataAvailable }
+    private var offersErase: Bool {
+        problem.allowsErase && (model.failedRetries > 0 || !problem.erasesAfterFailedRetry)
+            && model.protectedDataAvailable
+    }
     private var offersImport: Bool { problem.offersImport && model.protectedDataAvailable }
 
     private var content: some View {
@@ -68,6 +71,11 @@ struct LibraryProblemView: View {
         case .newerVersion:
             return [
                 "These journals were saved by a newer version of My Journal. Update My Journal to open them."
+            ]
+        case .notEncrypted:
+            return [
+                "My Journal can’t open the journals on this device. Nothing has been removed.",
+                "These journals aren’t encrypted, and this version of My Journal opens only encrypted journals.",
             ]
         case .settingsUnread:
             return [

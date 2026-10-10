@@ -24,13 +24,13 @@ enum DeviceUnlockMethod: Equatable {
         switch self {
         case .passcode: return "your \(DeviceUnlockMethod.deviceName) passcode"
         case .loginPassword: return "your login password"
-        case .touchID:
+        default:
+            // A Mac falls back to the login password whatever its biometrics are (Touch ID or Face ID).
             #if os(macOS)
-                return "Touch ID or your login password"
+                return "\(name) or your login password"
             #else
-                return "Touch ID or your \(DeviceUnlockMethod.deviceName) passcode"
+                return "\(name) or your \(DeviceUnlockMethod.deviceName) passcode"
             #endif
-        default: return "\(name) or your \(DeviceUnlockMethod.deviceName) passcode"
         }
     }
     /// "iPhone", "iPad" or "Mac".

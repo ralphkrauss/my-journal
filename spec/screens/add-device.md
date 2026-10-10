@@ -25,7 +25,6 @@ On a device that's already connected, lets a new device join: by showing a code 
 
 - Settings ▸ Sync ▸ Devices ▸ Add Device… (`screens/settings-devices`).
 - Connect to a Server ▸ Server Is Ready ▸ Add Another Device….
-- Encrypt Your Journals ▸ the Done sheet ▸ Add Another Device… (synced libraries, `screens/encrypt-journals`).
 
 ## Content
 

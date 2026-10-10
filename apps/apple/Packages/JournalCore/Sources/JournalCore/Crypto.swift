@@ -37,14 +37,9 @@ public struct RecoveryParameters: Codable, Sendable, Equatable {
 }
 
 extension RecoveryParameters {
-    public var requiresPassword: Bool { formatVersion != 4 }
-    public var contentProtection: ContentProtection {
-        get throws {
-            try RecoveryEnvelope(
-                salt: salt, wrappedKey: wrappedKey ?? "", iterations: iterations, formatVersion: formatVersion
-            ).contentProtection
-        }
-    }
+    /// Throws unless the journals these parameters describe are encrypted (formats 1 and 2). See
+    /// `RecoveryEnvelope.requireEncrypted()`.
+    public func requireEncrypted() throws { try RecoveryEnvelope.requireEncryptedFormat(formatVersion) }
     /// The whole envelope, when the server published it (servers without `private-envelope`).
     public var envelope: RecoveryEnvelope? {
         wrappedKey.map {
@@ -65,36 +60,18 @@ public struct RecoveryDerivation: Sendable {
     public let secret: String
 }
 
-public enum ContentProtection: String, Sendable {
-    case encrypted, plaintext
-
-    func encode(_ data: Data, key: Data, context: String) throws -> Data {
-        switch self {
-        case .encrypted: return try VaultCrypto.seal(data, key: key, context: context)
-        case .plaintext: return data
-        }
-    }
-    func decode(_ data: Data, key: Data, context: String) throws -> Data {
-        switch self {
-        case .encrypted: return try VaultCrypto.open(data, key: key, context: context)
-        case .plaintext: return data
-        }
-    }
-}
-
 extension RecoveryEnvelope {
-    public static var unprotected: Self { Self(salt: "", wrappedKey: "", iterations: 0, formatVersion: 4) }
-    public var requiresPassword: Bool { formatVersion != 4 }
-    public var contentProtection: ContentProtection {
-        get throws {
-            switch formatVersion {
-            case 1, 2: return .encrypted
-            case 3: return .plaintext
-            case 4:
-                guard salt.isEmpty, wrappedKey.isEmpty, iterations == 0 else { throw JournalError.invalidData }
-                return .plaintext
-            default: throw JournalError.unsupportedFormat
-            }
+    /// Throws unless the journals this envelope protects are encrypted: formats 1 (recovery key) and 2 (master
+    /// password). Formats 3 and 4 hold readable journals, which version 1.0 made when asked to work without
+    /// encryption; this version never opens, creates or syncs them (`JournalError.notEncrypted`). Any other format
+    /// was made by a newer version (`JournalError.unsupportedFormat`).
+    public func requireEncrypted() throws { try Self.requireEncryptedFormat(formatVersion) }
+
+    static func requireEncryptedFormat(_ formatVersion: Int) throws {
+        switch formatVersion {
+        case 1, 2: return
+        case 3, 4: throw JournalError.notEncrypted
+        default: throw JournalError.unsupportedFormat
         }
     }
 }
@@ -164,7 +141,7 @@ public enum VaultCrypto {
     public static func makeRecovery(masterKey: Data, phrase: String, formatVersion: Int = 1) throws -> (
         RecoveryEnvelope, String
     ) {
-        guard (1...3).contains(formatVersion) else { throw JournalError.unsupportedFormat }
+        try RecoveryEnvelope.requireEncryptedFormat(formatVersion)
         let salt = try random(16)
         let credential = credentials(phrase, formatVersion: formatVersion)[0]
         let derived = try derive(credential, salt: salt, trim: formatVersion == 1)
@@ -176,7 +153,7 @@ public enum VaultCrypto {
             recoverySecret(derivedKey: derived)
         )
     }
-    /// The texts a typed credential may have been derived from, in the order to try them. Passwords (formats 2 and 3)
+    /// The texts a typed credential may have been derived from, in the order to try them. Passwords (format 2)
     /// are derived from their Unicode NFC form, so the same password typed or pasted as composed or decomposed
     /// characters opens the same envelope. Envelopes made before that rule used the exact typed text, which comes
     /// second when it differs. Generated recovery keys (format 1) are trimmed and otherwise used as typed.
@@ -189,7 +166,7 @@ public enum VaultCrypto {
     public static func recoveryDerivations(_ phrase: String, for parameters: RecoveryParameters) throws
         -> [RecoveryDerivation]
     {
-        guard (1...3).contains(parameters.formatVersion) else { throw JournalError.unsupportedFormat }
+        try parameters.requireEncrypted()
         guard let salt = Data(base64Encoded: parameters.salt) else { throw JournalError.invalidData }
         return try credentials(phrase, formatVersion: parameters.formatVersion).map { credential in
             let derived = try derive(
@@ -199,7 +176,7 @@ public enum VaultCrypto {
     }
     /// The vault key in `envelope`, if `derivation` wraps it.
     public static func unwrap(_ envelope: RecoveryEnvelope, with derivation: RecoveryDerivation) throws -> Data {
-        guard (1...3).contains(envelope.formatVersion) else { throw JournalError.unsupportedFormat }
+        try envelope.requireEncrypted()
         guard let wrapped = Data(base64Encoded: envelope.wrappedKey) else { throw JournalError.invalidData }
         do {
             return try open(
@@ -207,7 +184,7 @@ public enum VaultCrypto {
         } catch { throw JournalError.invalidRecoveryKey }
     }
     public static func recover(_ envelope: RecoveryEnvelope, phrase: String) throws -> (Data, String) {
-        guard (1...3).contains(envelope.formatVersion) else { throw JournalError.unsupportedFormat }
+        try envelope.requireEncrypted()
         guard Data(base64Encoded: envelope.wrappedKey) != nil else { throw JournalError.invalidData }
         for derivation in try recoveryDerivations(phrase, for: RecoveryParameters(envelope)) {
             if let key = try? unwrap(envelope, with: derivation) { return (key, derivation.secret) }

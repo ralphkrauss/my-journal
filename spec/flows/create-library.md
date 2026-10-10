@@ -55,12 +55,12 @@ One sheet, one step: **Choose a Master Password**. In a left-aligned column (at 
 
 ## Rules
 
-- **Choosing a master password** follows the shared rule in `spec/README.md` (Master passwords): two fields, both new-password fields, the two must match, no minimum length and no strength meter. The note under the fields (`library.createLibrary.advice`) and, later, the line on the Encrypt Your Journals Done sheet carry the safety weight.
+- **Choosing a master password** follows the shared rule in `spec/README.md` (Master passwords): two fields, both new-password fields, the two must match, no minimum length and no strength meter. The note under the fields (`library.createLibrary.advice`) carries the safety weight.
 - The two fields are compared only on Create, not while typing.
 - The password fields offer the system's password manager suggestions for a new password where the system does so, and turn off autocorrection and autocapitalization. Whether the system offers a strong password for an app with no associated web domain is unverified ([open-questions.md](../open-questions.md), D61), so the spec promises nothing.
 - A library created here is confirmed at once (no recovery-key step). The library's key is stored in the device's secure storage; the password protects the copy used for recovery, backups and sync.
 - New libraries start without templates (no-built-in-templates-2026-10-04.md).
-- Nothing creates an unencrypted library: Start a Journal, Connect to a Server and restoring an archive all end encrypted. A library made by an earlier version without encryption is encrypted by `screens/encrypt-journals`. Encryption can't be turned off.
+- Nothing creates an unencrypted library: Start a Journal, Connect to a Server and restoring an archive all end encrypted, and this version doesn't open a library that version 1.0 made without encryption ([screens/unavailable-content](../screens/unavailable-content.md)). Encryption can't be turned off.
 
 ## Accessibility
 

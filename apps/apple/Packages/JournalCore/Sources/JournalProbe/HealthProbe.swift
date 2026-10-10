@@ -17,7 +17,7 @@ extension Probe {
         let code =
             arguments.count == 4
             ? try String(contentsOfFile: arguments[2]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
-        if phase == "health-setup" || phase == "health-plain-setup" {
+        if phase == "health-setup" {
             try await healthSetUp(address: address, code: code, root: root)
             return true
         }
@@ -33,11 +33,7 @@ extension Probe {
         case "health-stop-before-reset": try await stopSyncing(address: address, state: &state, root: root)
         case "health-stop-reset": try await setUpAfterStopping(address: address, code: code, state: &state, root: root)
         case "health-replaced":
-            try await replacedByAnotherLibrary(address: address, code: code, state: &state, root: root, encrypted: nil)
-        case "health-plain-reconnect":
-            try await plainReconnect(address: address, recoveryCode: code, state: &state, root: root)
-        case "health-plain-replaced":
-            try await replacedByAnotherLibrary(address: address, code: code, state: &state, root: root, encrypted: true)
+            try await replacedByAnotherLibrary(address: address, code: code, state: &state, root: root)
         default: throw ProbeFailure("unknown phase \(phase)")
         }
         try state.save(root)
@@ -45,13 +41,11 @@ extension Probe {
     }
 
     /// A, a library an earlier build made with its built-in templates, sets up the server with a journal, an entry and
-    /// an image; B joins (with the password, or by pairing on a server without one). Both sync.
+    /// an image; B joins with the password. Both sync.
     static func healthSetUp(address: String, code: String, root: URL) async throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let (master, phrase, envelope, secret) = try recoveryFixture()
-        var state = HealthState(
-            phrase: phrase, envelope: envelope, recoverySecret: secret,
-            protection: try envelope.contentProtection.rawValue)
+        var state = HealthState(phrase: phrase, envelope: envelope, recoverySecret: secret)
         let anonymous = try ServerClient(address: address)
         let grant = try await anonymous.initialize(
             code: code, envelope: envelope, recoverySecret: secret, deviceName: "Probe a")
@@ -72,17 +66,10 @@ extension Probe {
                 ])))
         state.written.append("A1 with an image")
         try await deviceA.synchronize()
-        let joined: DeviceGrant
-        let key: Data
-        if envelope.requiresPassword {
-            let recovered = try await anonymous.recoverVault(
-                phrase, parameters: anonymous.recoveryParameters(), deviceName: "Probe b")
-            (joined, key) = (recovered.grant, recovered.key)
-        } else {
-            guard let client = deviceA.client else { throw ProbeFailure("a has no access") }
-            joined = try await pairingGrant(anonymous, approver: client, master: master, version: 4)
-            key = master
-        }
+        let recovered = try await anonymous.recoverVault(
+            phrase, parameters: anonymous.recoveryParameters(), deviceName: "Probe b")
+        let joined = recovered.grant
+        let key = recovered.key
         state.devices["b"] = .init(folder: "b", key: key, token: joined.token, deviceID: joined.deviceId)
         let deviceB = try open("b", state, root: root, address: address)
         try await converge([deviceA, deviceB], state: state, "set up")

@@ -7,7 +7,7 @@ import XCTest
 
 @MainActor
 final class PasswordOnboardingTests: XCTestCase {
-    func testPasswordlessLibraryReopensWithItsProtectionAndMetadataEditsRemainOrdered() async throws {
+    func testNewLibraryReopensAndMetadataEditsRemainOrdered() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let account = "master-" + SHA256.hash(data: Data(root.path.utf8)).map { String(format: "%02x", $0) }.joined()
         defer {
@@ -21,11 +21,11 @@ final class PasswordOnboardingTests: XCTestCase {
         {
             add(preview)
         }
-        await model.start(password: nil, encrypted: false)
+        await model.start()
         XCTAssertNil(model.error)
         XCTAssertNil(model.recoveryKey)
         XCTAssertEqual(model.configuration?.recoveryConfirmed, true)
-        XCTAssertEqual(model.configuration?.recovery.formatVersion, 4)
+        XCTAssertEqual(model.configuration?.recovery.formatVersion, 2)
         let journal = try XCTUnwrap(model.journals.first)
         XCTAssertEqual(journal.title, "Default")
         if ProcessInfo.processInfo.environment["JOURNAL_CAPTURE_DESIGN"] == "1" {
@@ -52,10 +52,7 @@ final class PasswordOnboardingTests: XCTestCase {
         await reopened.load()
         XCTAssertNil(reopened.error)
         XCTAssertEqual(reopened.journals.first?.title, "Work")
-        let store = try XCTUnwrap(reopened.store)
-        let protection = await store.protection
-        XCTAssertEqual(protection, .plaintext)
-        try await store.close()
+        try await reopened.store?.close()
     }
 
     func testFailedInitialCommitDoesNotExposePartialLibraryAndCanRetry() async throws {

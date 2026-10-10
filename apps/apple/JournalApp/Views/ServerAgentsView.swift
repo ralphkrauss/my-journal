@@ -51,8 +51,7 @@ struct ServerAgentsSections: View {
     private var leadingHost: String { ServerAgentText.leadingHost(model.connection?.address) }
     /// With encryption, whoever runs a server other than this Mac's could read what agents read.
     private var exposure: String? {
-        guard model.configuration?.encrypted != false,
-            let server = model.connection.flatMap({ URL(string: $0.address)?.host }),
+        guard let server = model.connection.flatMap({ URL(string: $0.address)?.host }),
             !ServerAgentText.isLoopback(host: server)
         else { return nil }
         return "While an agent has access, anyone who controls \(host) could read the journals it reads."

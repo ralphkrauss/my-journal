@@ -84,8 +84,7 @@ private struct ConnectionSheet: View {
         .onAppear {
             if flow.address.isEmpty { flow.address = model.connection?.address ?? "" }
             browse(choosing)
-            // Reconnecting to this device's server (after it was set up again, access was removed, or encryption was
-            // turned on elsewhere) goes to its next step straight away.
+            // Reconnecting to this device's server (after it was set up again, or access was removed) goes to its next step straight away.
             if model.reconnectsOnConnect, flow.path.isEmpty, !flow.address.isEmpty { flow.check() }
         }
     }

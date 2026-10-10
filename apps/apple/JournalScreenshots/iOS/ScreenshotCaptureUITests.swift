@@ -144,9 +144,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
         let grant = try await ServerClient(address: address).initialize(
             code: setupCode, envelope: configuration.recovery, recoverySecret: secret, deviceName: "MacBook Pro")
         let owner = try ServerClient(address: address, token: grant.token)
-        let store = try JournalStore(
-            directory: folder.appendingPathComponent(configuration.storageFolder), key: key,
-            protection: configuration.recovery.contentProtection)
+        let store = try JournalStore(directory: folder.appendingPathComponent(configuration.storageFolder), key: key)
         try await SyncEngine(store: store, client: owner).synchronize()
         try await store.close()
         let version = configuration.recovery.formatVersion

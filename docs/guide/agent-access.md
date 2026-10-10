@@ -55,7 +55,7 @@ To stop sharing a journal, choose the agent and turn the journal off, or choose 
 
 ## How it works
 
-When you allow an agent, your device keeps a copy of the chosen journals on your server for that agent, and updates it whenever one of your devices syncs. With encryption on, the copy is encrypted with a key that only the agent’s access can unlock: the server can read the shared journals only while it answers the agent, and your other journals stay end-to-end encrypted. Anyone who controls your server could read the journals you shared while that agent has access. See [SECURITY.md](../../SECURITY.md#agent-access-through-mcp).
+When you allow an agent, your device keeps a copy of the chosen journals on your server for that agent, and updates it whenever one of your devices syncs. The copy is encrypted with a key that only the agent’s access can unlock: the server can read the shared journals only while it answers the agent, and your other journals stay end-to-end encrypted. Anyone who controls your server could read the journals you shared while that agent has access. See [SECURITY.md](../../SECURITY.md#agent-access-through-mcp).
 
 ## Agents on the same Mac
 

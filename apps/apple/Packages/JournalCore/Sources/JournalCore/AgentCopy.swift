@@ -137,20 +137,19 @@ public enum AgentCopyCrypto {
     static func grantContext(grantID: UUID) -> String {
         "journal:v1:agent-grant:\(grantID.uuidString.lowercased())"
     }
-    /// Seals a grant's settings like a record of this library: encrypted under the vault key, or readable in a library
-    /// without encryption, as its records are.
+    /// Seals a grant's settings like a record of this library: encrypted under the vault key.
     public static func sealSettings(
-        _ settings: AgentCopySettings, grantID: UUID, vaultKey: Data, protection: ContentProtection
+        _ settings: AgentCopySettings, grantID: UUID, vaultKey: Data
     ) throws -> String {
-        try protection.encode(
+        try VaultCrypto.seal(
             JournalCoding.encoder().encode(settings), key: vaultKey, context: settingsContext(grantID: grantID)
         ).base64EncodedString()
     }
     public static func openSettings(
-        _ sealed: String, grantID: UUID, vaultKey: Data, protection: ContentProtection
+        _ sealed: String, grantID: UUID, vaultKey: Data
     ) throws -> AgentCopySettings {
         guard let data = Data(base64Encoded: sealed) else { throw JournalError.invalidData }
-        let plaintext = try protection.decode(data, key: vaultKey, context: settingsContext(grantID: grantID))
+        let plaintext = try VaultCrypto.open(data, key: vaultKey, context: settingsContext(grantID: grantID))
         let settings = try JournalCoding.decoder().decode(AgentCopySettings.self, from: plaintext)
         guard (1...AgentCopySettings.formatVersion).contains(settings.version), settings.key.count == 32,
             settings.allJournals || !settings.journalIds.isEmpty

@@ -40,26 +40,18 @@ struct MergeJournalsContent: View {
         var lines = [
             "Journals already on the server are kept. A journal with the same name as one there is combined with it, unless you chose that journal for an agent. Then yours is added with a number, such as “Default 2”."
         ]
-        if let encryption { lines.append(encryption) }
+        if let afterward { lines.append(afterward) }
         lines.append("To leave something out, cancel and delete it first, including from Recently Deleted.")
         lines.append("Merge only if \(flow.host) is your server.")
         return lines
     }
-    /// What happens to this device's encryption (§2.5). An encrypted device never reaches this step for a server
-    /// without encryption.
-    private var encryption: String? {
-        guard let envelope = flow.envelope else { return nil }
-        let serverEncrypts = [1, 2].contains(envelope.formatVersion)
-        let deviceEncrypts = model.configuration?.encrypted == true
-        switch (deviceEncrypts, serverEncrypts) {
-        case (false, true): return "They’ll be encrypted before they’re uploaded."
-        case (true, true):
-            let server = flow.credentialName.lowercased()
-            let device = flow.existingCredentialName.lowercased()
-            return
-                "Afterward, this device uses the same \(server) as your other devices. Archives you exported earlier still open with the \(device) you use now."
-        case (false, false): return "They aren’t encrypted, so anyone with access to the server can read them."
-        case (true, false): return nil
-        }
+    /// What happens to this device's password (§2.5). A device never reaches this step for a server without
+    /// encryption.
+    private var afterward: String? {
+        guard flow.envelope != nil else { return nil }
+        let server = flow.credentialName.lowercased()
+        let device = flow.existingCredentialName.lowercased()
+        return
+            "Afterward, this device uses the same \(server) as your other devices. Archives you exported earlier still open with the \(device) you use now."
     }
 }

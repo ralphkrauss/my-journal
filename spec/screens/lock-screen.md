@@ -37,9 +37,9 @@ The whole window, scrolling at large text sizes, centred:
    - an error, in red, when there is one: the app's error, or after a failed attempt `settings.lock.failed` ("My Journal couldn’t be unlocked. Try again.");
    - a prominent default button `settings.lock.unlockWith` ("Unlock with {method}", for example “Unlock with Face ID”; {method} from `library.lock.method.*`), disabled while the system is asking;
    - after App Lock moved from an old app PIN to the device's authentication, until the first unlock: `settings.lock.pinRetired` ("App Lock now uses {phrase} instead of a PIN.", {phrase} from `library.lock.phrase.*`) in secondary text;
-   - after a failed attempt, when the journals have a password: a link-style button `settings.lock.useCredential` ("Use {credential}", for example “Use Master Password”).
+   - after a failed attempt: a link-style button `settings.lock.useCredential` ("Use {credential}", for example “Use Master Password”).
 4. **Unlocking with the credential** (device key unavailable, or Use {credential} chosen):
-   - a secure field labelled with the credential's name (`common.masterPassword`, `library.lock.credential.recoveryKey`, `library.lock.credential.accessPassword`, `common.recoveryCode`; `common.passwordOrRecoveryKey` "Password or Recovery Key" when the name isn't known), with password autofill; Return unlocks;
+   - a secure field labelled with the credential's name (`common.masterPassword`, `library.lock.credential.recoveryKey`; `common.passwordOrRecoveryKey` "Password or Recovery Key" when the name isn't known), with password autofill; Return unlocks;
    - an error in red, when there is one;
    - a prominent button `settings.lock.unlock` ("Unlock"), disabled while the field is empty;
    - when the device can still unlock: a link-style button `settings.lock.useMethod` ("Use {method}") to go back;

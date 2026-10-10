@@ -34,7 +34,7 @@ There is no minimum age of the installation and no limit per app version: five w
 1. The person edits an entry, then leaves it: chooses another entry, or goes back to the list.
 2. Two seconds later, if nothing happened meanwhile, and:
    - the app is active and unlocked, and the system's own authentication isn't in front;
-   - nothing is running: no connecting, importing, encrypting, erasing, deleting all, creating an entry, or opening journals;
+   - nothing is running: no connecting, importing, erasing, deleting all, creating an entry, or opening journals;
    - no failed save, no error, no change from another device waiting for a newer version;
    - Sync Status isn't showing: no sync state needs the person, and sync has not been failing for a day while changes wait ([screens/sync-status](../screens/sync-status.md));
    - no sheet or panel is open (Settings, template chooser, export or import, New Journal), and nothing covers the window (alert, popover, menu);

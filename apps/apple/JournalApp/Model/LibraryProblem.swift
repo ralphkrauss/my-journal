@@ -15,6 +15,9 @@ enum LibraryProblem: Equatable {
     case newerVersion
     /// The library needs a password and its device key is gone: the lock screen, with the credential field.
     case needsKey
+    /// The library on this device isn't encrypted: version 1.0 made it when asked to work without encryption. This
+    /// version never opens, changes or syncs one, so its files stay as they are until the person erases them.
+    case notEncrypted
 
     /// Try Again re-reads the settings and opens the library again.
     var offersTryAgain: Bool { self == .cantOpen || self == .settingsUnread }
@@ -22,6 +25,8 @@ enum LibraryProblem: Equatable {
     var offersImport: Bool { self == .cantOpen || self == .needsKey }
     /// Erase Journals and Settings… is the one way out of an unreadable library or settings.
     var allowsErase: Bool { self != .newerVersion }
+    /// Erase waits for one failed Try Again, so it is offered at once where there is no Try Again.
+    var erasesAfterFailedRetry: Bool { offersTryAgain }
     /// Whether the problem is shown by the problem screen. The missing key keeps the lock screen.
     var hasOwnScreen: Bool { self != .needsKey }
 }
@@ -57,12 +62,13 @@ extension AppModel {
     /// wrote, which updating opens.
     var canImportArchive: Bool {
         guard store == nil, let problem = libraryProblem else {
-            return !locked && !showsEncryptionForm && !writingPausedForEncryption
+            return !locked
         }
         return problem.offersImport && !retryingOpen
     }
 
-    /// Journals a newer version wrote, and settings that couldn't be read, are never imported over.
+    /// Journals a newer version wrote, settings that couldn't be read and journals that aren't encrypted are never
+    /// imported over.
     var refusesImport: Bool { libraryProblem.map { !$0.offersImport } ?? false }
 
     /// Whether the lock screen is in the way of importing: not for the missing key, whose lock screen offers it.
@@ -124,7 +130,12 @@ extension AppModel {
     /// Opening failed, or the first read did: a newer version shows its own screen, everything else one screen.
     func failOpening(_ failure: Error) async {
         let kind = LocalDataFailure(classifying: failure)
-        let problem: LibraryProblem = kind == .needsUpdate ? .newerVersion : .cantOpen
+        let problem: LibraryProblem
+        if failure as? JournalError == .notEncrypted {
+            problem = .notEncrypted
+        } else {
+            problem = kind == .needsUpdate ? .newerVersion : .cantOpen
+        }
         let failed = failure as NSError
         Logger(subsystem: "org.privatejournal", category: "library").error(
             "The journals couldn’t be opened: \(failed.domain, privacy: .private), \(failed.code, privacy: .private).")

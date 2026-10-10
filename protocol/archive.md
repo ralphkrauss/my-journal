@@ -12,6 +12,8 @@ There are two kinds, and prose and specs call them by these words, never by numb
 | Libraries | With a password: recovery formats 1 and 2 only. The manifest is always sealed | Any recovery format 1 to 4. The manifest is sealed for formats 1 to 3 and readable for format 4 |
 | Clients read it | All | Apple clients, so 1.0 archives still import. Windows and Android never write or read one |
 
+Note, 2026-10-10 (documentation only, no contract change): My Journal 1.1 clients do not support recovery formats 3 and 4, so they refuse a directory archive whose recovery format is 3 or 4 (the manifest is readable for format 4 and sealed for format 3). The formats stay defined for 1.0 clients and for the conformance fixtures, which are unchanged.
+
 A reader tells the kinds apart by what it is handed: a folder is a directory archive and a regular file is a file archive. There is no sniffing by name or extension. A file that is not a ZIP file, or whose `archive.json` has no `archiveVersion`, is damaged. A folder without `archive.json` is damaged, and so is a folder whose `archive.json` has `archiveVersion` (what a person gets from unpacking a file archive with an archive tool). A symbolic link in place of `archive.json`, `journal.sqlite` or `attachments/` inside a folder is damaged, and a reader never follows one.
 
 [Conformance fixtures](conformance/archive/README.md) pin every rule below that says "damaged" or "ignored".

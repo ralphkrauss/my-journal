@@ -5,7 +5,8 @@ import Foundation
 /// - A **file archive**, one ZIP file, is what 1.1 writes (`exportFile`). Only libraries with a password have one.
 /// - A **directory archive**, a folder, is what 1.0 wrote. It is only read: nothing writes one any more.
 ///
-/// `restore` and `requiresPassword` read either kind.
+/// `restore` and `checkHeader` read either kind. Both are encrypted: a directory archive of a library 1.0 made
+/// without encryption is refused (`JournalError.notEncrypted`).
 public enum VaultArchive {
     public struct Restored: Sendable {
         public let store: JournalStore
@@ -43,11 +44,13 @@ public enum VaultArchive {
         }
     }
 
-    public static func requiresPassword(at source: URL) throws -> Bool {
+    /// Reads the archive's header, which needs no password, so an item that isn't an archive, or holds journals that
+    /// aren't encrypted, is refused before a password is asked for.
+    public static func checkHeader(at source: URL) throws {
         let (kind, resolved) = try identify(source)
         switch kind {
-        case .directory: return try DirectoryArchive.requiresPassword(at: resolved)
-        case .file: return try FileArchive.requiresPassword(at: resolved)
+        case .directory: try DirectoryArchive.checkHeader(at: resolved)
+        case .file: try FileArchive.checkHeader(at: resolved)
         }
     }
 

@@ -197,7 +197,6 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 | `connect-copy-code` | `settings.connect.addThisDevice.copyCode` | Task page: Copy button next to the digits | — | — | Copied with the clipboard options in [15](platform.md#15-clipboard). |
 | `connect-confirm-check-code` | `common.connect` | Task page: primary button, no default button | `Ctrl+Enter` | dialog | Enter alone does not choose it ([8](platform.md#8-dialogs)). |
 | `connect-new-code` | `settings.connect.addThisDevice.getNewCode` | Task page: button | — | — |  |
-| `connect-use-recovery-code` | `settings.connect.addThisDevice.useRecoveryCode` | Task page: link button | — | — |  |
 | `connect-merge` | `common.merge` | Task page: primary button, no default button | `Ctrl+Enter` | dialog | Enter alone does not choose it. |
 | `connect-retry` | `common.tryAgain` / `settings.connect.scanAgain` | Task page: button | — | — | `settings.connect.scanAgain` is not offered (no scanner). |
 | `connect-cancel` | `common.cancel` | Task page: Cancel button | — | — | Stops, withdraws requests, gives up unused access, discards a staged copy and returns to where the flow started. Esc is not bound (Esc is not Back). Disabled while the staged copy is being installed; closing the window then waits for that atomic step and discards the copy ([3](platform.md#3-windows-and-instances)). |
@@ -224,13 +223,6 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `turn-on-encryption` | `settings.privacy.encryption.turnOn` | Not offered | — | — | Windows has no unencrypted libraries, so Settings ▸ Privacy never shows Encryption Is Off or this button ([screens/encrypt-journals](screens/encrypt-journals.md)). |
-| `encrypt-journals` | `library.encrypt.action` / `common.tryAgain` | Not offered | — | — | Windows never shows the Encrypt Your Journals form: it has no unencrypted libraries and never creates one ([flows/encrypt-journals](flows/encrypt-journals.md)). |
-| `encrypt-journals-not-now` | `library.encrypt.notNow` | Not offered | — | — | Same reason: there is no form to leave. |
-| `encrypt-journals-stop-syncing` | `settings.sync.stopSyncing` | Not offered | — | — | Same reason: no encrypting without a master password on this PC. A server whose recovery format is 3 or 4 is refused instead (`messages.connection.encryptionOff`, [screens/connect-to-server](screens/connect-to-server.md)). |
-| `encryption-finish` | `common.tryAgain` | Not offered | — | — | No encryption run exists on Windows. |
-| `encryption-cancel` | `common.cancel` | Not offered | — | — | No encryption run exists on Windows. |
-| `encryption-done` | `common.done` | Not offered | — | — | No Done step exists on Windows. |
 | `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the Export Archive footer) | Button in the Privacy page; link button in the Export Archive card | — | — | Opens the dialog ([flows/change-password](flows/change-password.md)). |
 | `change-password-submit` | `settings.changePassword.change` | Dialog: primary button | `Enter` | dialog | Enter in the last field. |
 | `change-password-retry` | `common.tryAgain` | Dialog: button | — | — |  |

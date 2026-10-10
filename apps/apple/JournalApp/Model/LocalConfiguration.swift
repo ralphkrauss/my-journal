@@ -28,8 +28,8 @@ struct LocalConfiguration: Codable {
     /// once this library has opened (and, when connected, synchronized); an interrupted removal is tried again.
     var supersededLibraries: [SupersededLibrary]?
     // Build 16 to 19 saved `passwordChecked` here; it is no longer used or written, and an old file's value is ignored.
-    /// Turning on encryption that hasn't finished (EncryptionOperations.swift).
-    var encryptionUpgrade: EncryptionUpgradeMarker?
+    // Version 1.0 also saved `encryptionUpgrade` here while it turned on encryption for a library without it; such a
+    // library isn't opened any more, and Erase removes whatever that left.
     /// This Mac stopped syncing with the server earlier Mac builds ran (FormerMacServer.swift); Sync explains it
     /// until the library connects to a server.
     var stoppedSyncingWithFormerMacServer: Bool?
@@ -39,13 +39,11 @@ extension LocalConfiguration {
     var credentialName: String {
         switch recovery.formatVersion {
         case 1: return "Recovery Key"
-        case 3: return "Access Password"
-        case 4: return "Recovery Code"
         default: return "Master Password"
         }
     }
+    /// Whether the library is encrypted: formats 3 and 4 are the libraries version 1.0 made without encryption.
     var encrypted: Bool { ![3, 4].contains(recovery.formatVersion) }
-    var requiresPassword: Bool { recovery.requiresPassword }
 }
 
 extension AppModel {

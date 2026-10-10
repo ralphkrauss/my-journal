@@ -10,7 +10,7 @@ sources:
 
 # Keep your recovery key, early libraries (Windows)
 
-Libraries made by early Apple versions were protected by a generated recovery key instead of a master password, and the window shows that key until the person confirms they saved it. The spec's [recovery-key](../../../screens/recovery-key.md) describes it. **Not offered on Windows.** `parity.yaml` already marks `legacy-recovery-key` not applicable: current versions create libraries with a master password or without encryption, and early libraries exist only on Apple devices. This file records what Windows does instead so nobody builds the screen by accident, and what to do if the owner decides otherwise (D11 in [open-questions.md](../../../open-questions.md)).
+Libraries made by early Apple versions were protected by a generated recovery key instead of a master password, and the window shows that key until the person confirms they saved it. The spec's [recovery-key](../../../screens/recovery-key.md) describes it. **Not offered on Windows.** `parity.yaml` already marks `legacy-recovery-key` not applicable: current versions create libraries with a master password, and early libraries exist only on Apple devices. This file records what Windows does instead so nobody builds the screen by accident, and what to do if the owner decides otherwise (D11 in [open-questions.md](../../../open-questions.md)).
 
 ## Controls
 
@@ -18,7 +18,7 @@ Not applicable. The launch precedence of [welcome](welcome.md) skips this step: 
 
 | Question | Windows answer |
 | --- | --- |
-| Can a Windows PC have a library with an unconfirmed generated recovery key? | Not through its own creation: [create-library](../flows/create-library.md) makes a master password or no encryption. It could arrive only by importing or restoring an archive from an early Apple build, and an archive restores the library with its password or recovery key, which the person already has |
+| Can a Windows PC have a library with an unconfirmed generated recovery key? | Not through its own creation: [create-library](../flows/create-library.md) makes a master password. It could arrive only by importing or restoring an archive from an early Apple build, and an archive restores the library with its password or recovery key, which the person already has |
 | What if such a library does arrive? | The spec says restoring an archive makes the archive's library this device's library with the archive's password, which then counts as checked, so the unconfirmed state is not expected to arrive. If it did, Windows would need the screen after all: that is D11, and this file is the place to design it |
 | Where would a key be copied or saved if the screen were ever added? | Copy through the clipboard options that keep it out of Windows clipboard history and cloud clipboard and clear it after two minutes ([15](../platform.md#15-clipboard)); save through the save picker as a text file named `settings.recoveryKey.filename`; failure shown as an error dialog titled `settings.recoveryKey.saveFailed` |
 

@@ -2,9 +2,10 @@ import CryptoKit
 import Foundation
 
 /// The directory archive that version 1.0 writes and later versions still read: `archive.json`, `journal.sqlite` and
-/// `attachments/<uuid>` in a folder (protocol/archive.md, Directory archive). Its manifest is plain for a library without a
-/// password, so a folder anyone hands over is hostile input: the reader applies the limits of a file archive, never
-/// follows a link, and builds every path from a UUID it checked.
+/// `attachments/<uuid>` in a folder (protocol/archive.md, Directory archive). Only archives of encrypted libraries are
+/// read (header version 1, sealed manifest); the plain manifest of a library 1.0 made without encryption is refused
+/// (`JournalError.notEncrypted`). A folder anyone hands over is hostile input: the reader applies the limits of a file
+/// archive, never follows a link, and builds every path from a UUID it checked.
 enum DirectoryArchive {
     struct Header {
         let version: UInt64
@@ -33,8 +34,9 @@ enum DirectoryArchive {
             let sealed = Data(base64Encoded: manifest)
         else { throw JournalError.invalidData }
         let envelope = try envelope(recovery)
-        guard version == (envelope.requiresPassword ? 1 : 2) else { throw JournalError.unsupportedFormat }
-        _ = try envelope.contentProtection
+        // Before the version: an archive of a library without encryption is refused as that, not as a newer format.
+        try envelope.requireEncrypted()
+        guard version == 1 else { throw JournalError.unsupportedFormat }
         return Header(version: version, recovery: envelope, manifest: sealed)
     }
 
@@ -49,12 +51,10 @@ enum DirectoryArchive {
             salt: salt, wrappedKey: wrapped, iterations: Int(iterations), formatVersion: Int(format))
     }
 
-    static func requiresPassword(at source: URL) throws -> Bool {
-        try readHeader(in: source).recovery.requiresPassword
-    }
+    static func checkHeader(at source: URL) throws { _ = try readHeader(in: source) }
 
-    /// The manifest, whose keys become file names: every key must be a lower-case UUID before any file operation, since
-    /// a plain manifest is unauthenticated and a name such as `../x` must not reach outside the staging folder.
+    /// The manifest, whose keys become file names: every key must be a lower-case UUID before any file operation, so a
+    /// name such as `../x` must not reach outside the staging folder.
     static func parseManifest(_ data: Data) throws -> Manifest {
         let parsed = try StrictJSON.parse(
             data, keeping: ["database", "attachments"], maximumValues: ArchiveLimits.manifestJSONValues)
@@ -77,17 +77,11 @@ enum DirectoryArchive {
     ) async throws -> VaultArchive.Restored {
         try Task.checkCancellation()
         let header = try readHeader(in: source)
-        let recovered =
-            header.recovery.requiresPassword
-            ? try VaultCrypto.recover(header.recovery, phrase: phrase) : (try VaultCrypto.generateKey(), "")
+        let recovered = try VaultCrypto.recover(header.recovery, phrase: phrase)
         let manifestBytes: Data
-        if header.recovery.requiresPassword {
-            do {
-                manifestBytes = try VaultCrypto.open(header.manifest, key: recovered.0, context: "journal:v1:archive")
-            } catch { throw JournalError.invalidData }
-        } else {
-            manifestBytes = header.manifest
-        }
+        do {
+            manifestBytes = try VaultCrypto.open(header.manifest, key: recovered.0, context: "journal:v1:archive")
+        } catch { throw JournalError.invalidData }
         let manifest = try parseManifest(manifestBytes)
         let total = try measure(manifest, in: source)
         try options.requireSpace(try total.multiplying(by: 2), at: destination.deletingLastPathComponent())
@@ -97,8 +91,7 @@ enum DirectoryArchive {
             try copy(manifest, from: source, to: destination, options: options)
             try Task.checkCancellation()
             return try await ArchiveStaging.open(
-                destination, key: recovered.0, recovery: header.recovery,
-                protection: header.recovery.contentProtection, options: options)
+                destination, key: recovered.0, recovery: header.recovery, options: options)
         } catch {
             // Only this newly created directory is owned by the failed restore.
             try? manager.removeItem(at: destination)

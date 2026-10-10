@@ -88,8 +88,7 @@ extension AppModel {
                 wasActive = applicationActive
                 handleWatcher(
                     .conditions(
-                        allowWaiting: !replacingVault && !saveFailure && !automaticSyncStopped
-                            && !encryptionHoldsSynchronization))
+                        allowWaiting: !replacingVault && !saveFailure && !automaticSyncStopped))
                 await checkQuiet()
                 handleWatcher(.tick)
                 // While the watcher waits for changes, it decides when to sync; otherwise the usual pace applies.
@@ -98,7 +97,7 @@ extension AppModel {
                     ? syncTiming.watcherSyncDue
                     : Date() >= nextAttempt && syncTiming.watcher.allowsRequest(at: .now)
                 // While a save or library change is pending, sync() does nothing; that isn't a failed attempt.
-                if due, !replacingVault, !saveFailure, !waitsForPerson, !encryptionHoldsSynchronization {
+                if due, !replacingVault, !saveFailure, !waitsForPerson {
                     syncTiming.watcherSyncDue = false
                     // A record or image that can't sync sets syncError while the rest succeeds; that isn't a failure.
                     failures = await sync(waitingForWritingPause: true) ? 0 : failures + 1
@@ -125,7 +124,7 @@ extension AppModel {
         case .syncNow: syncTiming.watcherSyncDue = true
         case .markSynced(let sent): syncActivity.syncedByWait(at: sent)
         case .publishAgentCopies:
-            if !encryptionHoldsSynchronization, let agentCopies { Task { await agentCopies.requestPublishing() } }
+            if let agentCopies { Task { await agentCopies.requestPublishing() } }
         case .forgetStatus:
             if let syncEngine { Task { await syncEngine.forgetStatus() } }
         }
@@ -135,7 +134,7 @@ extension AppModel {
     /// settled synchronization. An answer counts only while that is still true and the library is the same.
     private func startWait(id: Int, mark: QuietMark) {
         syncTiming.waitTask?.cancel()
-        guard let store, let syncEngine, !encryptionHoldsSynchronization else {
+        guard let store, let syncEngine else {
             return handleWatcher(.quietBroken(waitID: id))
         }
         syncTiming.waitTask = Task { [weak self] in
@@ -247,9 +246,7 @@ extension AppModel {
     /// Sends saved writing now: when leaving an entry, locking, going to the background or quitting. The journals
     /// may already be locked; nothing is shown then.
     func sendWriting() async {
-        guard !replacingVault, !saveFailure, !automaticSyncStopped, !encryptionHoldsSynchronization,
-            let syncEngine
-        else { return }
+        guard !replacingVault, !saveFailure, !automaticSyncStopped, let syncEngine else { return }
         syncTiming.afterWriting?.cancel()
         if !locked {
             await sync()

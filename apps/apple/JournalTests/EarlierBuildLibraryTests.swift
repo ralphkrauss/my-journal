@@ -5,8 +5,10 @@ import XCTest
 @testable import Journal
 
 /// Libraries written by the real code of TestFlight builds 16 and 19 (JournalTests/Fixtures/README.md). Version 1.1
-/// must open every one with everything intact, ask the unencrypted ones to encrypt without losing or leaving anything
-/// readable, and let a master password library change its password and travel through an archive.
+/// opens every encrypted one with everything intact and lets it change its password and travel through an archive. It
+/// opens none of the unencrypted ones: each ends in the screen that says the journals can't be opened, and its files
+/// stay on disk byte for byte as the earlier build left them (docs/design/1-1-encryption-and-passwords.md, owner
+/// decision of 2026-10-10).
 @MainActor
 final class EarlierBuildLibraryTests: XCTestCase {
     private struct Fixture: Decodable {
@@ -52,9 +54,11 @@ final class EarlierBuildLibraryTests: XCTestCase {
         let manifest: Manifest
     }
 
-    private static let names = ["password", "unencrypted", "unencrypted-synced"].flatMap { variant in
-        [16, 19].map { "build\($0)-\(variant)" }
+    private static func names(_ variants: [String]) -> [String] {
+        variants.flatMap { variant in [16, 19].map { "build\($0)-\(variant)" } }
     }
+    private static let encryptedNames = names(["password"])
+    private static let unencryptedNames = names(["unencrypted", "unencrypted-synced"])
 
     /// Writes the fixture as its build left it: the folder, the exact configuration text, and the Keychain items (in
     /// the test keychain).
@@ -89,9 +93,7 @@ final class EarlierBuildLibraryTests: XCTestCase {
         await model.load()
         addTeardownBlock { @MainActor in
             try? await model.store?.close()
-            for account in [model.configuration?.keyID, model.configuration?.encryptionUpgrade?.keyID] {
-                if let account { try? Keychain.remove(account) }
-            }
+            if let account = model.configuration?.keyID { try? Keychain.remove(account) }
         }
         return model
     }
@@ -140,68 +142,92 @@ final class EarlierBuildLibraryTests: XCTestCase {
         XCTAssertGreaterThan(versions.count, 1, "Version History is kept.", file: file, line: line)
     }
 
-    func testEveryLibraryAnEarlierBuildWroteOpensWithEverythingIntact() async throws {
-        for name in Self.names {
+    func testEveryEncryptedLibraryAnEarlierBuildWroteOpensWithEverythingIntact() async throws {
+        for name in Self.encryptedNames {
             let (directory, fixture) = try install(name)
             let model = await open(directory)
             XCTAssertNil(model.libraryProblem, name)
             XCTAssertNil(model.error, name)
             XCTAssertEqual(model.configuration?.recovery.formatVersion, fixture.manifest.recoveryFormatVersion, name)
+            XCTAssertEqual(model.windowRouting.screen, .journals, name)
             try await assertHolds(fixture, in: model)
-            if fixture.variant == "unencrypted-synced" {
-                XCTAssertNotNil(model.connection, "\(name) keeps its server connection.")
-                let position = try await XCTUnwrap(model.store).syncedPosition()
-                XCTAssertEqual(position.cursor, fixture.manifest.syncedPositionCursor, "\(name) keeps its position.")
-            }
             try await model.store?.close()
         }
     }
 
-    /// An unencrypted library of either build goes through Encrypt Your Journals: everything equals the manifest,
-    /// and nothing readable is left in the data folder, however it is searched.
-    func testEveryUnencryptedLibraryIsEncryptedWithEverythingIntactAndNothingReadableLeft() async throws {
-        for name in Self.names where name.contains("unencrypted") {
+    /// A digest of every file under `directory` (the shared-memory index, rebuilt each time a database is opened,
+    /// holds no data), to show that nothing was changed, created or removed.
+    private func digest(of directory: URL) throws -> String {
+        let manager = FileManager.default
+        var parts: [String] = []
+        let paths = manager.enumerator(atPath: directory.path)?.allObjects as? [String] ?? []
+        for path in paths.sorted() where !path.hasSuffix("-shm") {
+            var isDirectory: ObjCBool = false
+            let url = directory.appendingPathComponent(path)
+            manager.fileExists(atPath: url.path, isDirectory: &isDirectory)
+            parts.append(isDirectory.boolValue ? path + "/" : path + " " + sha256(try Data(contentsOf: url)))
+        }
+        return parts.joined(separator: "\n")
+    }
+
+    /// A library of either build made without encryption can't be opened by this version: the screen says so, with no
+    /// Try Again and no Import Archive, and Erase Journals and Settings… is the one way on. Its files, settings and
+    /// Keychain items are byte for byte as the build left them, also after more launches and a Try Again that is
+    /// refused, so version 1.0 can still read them.
+    func testEveryUnencryptedLibraryIsTheCantBeOpenedProblemAndItsFilesStayByteForByte() async throws {
+        for name in Self.unencryptedNames {
             let (directory, fixture) = try install(name)
-            // The synced library's server is gone; a stand-in takes its place at the saved address.
-            var server: EncryptionServer?
-            if let item = fixture.connectionItem {
-                let stand = try await EncryptionServer.start()
-                addTeardownBlock { stand.release() }
-                server = stand
-                let address = stand.address.replacingOccurrences(of: "/", with: "\\/")
-                let moved = item.replacingOccurrences(of: "http:\\/\\/127.0.0.1:9", with: address)
-                XCTAssertNotEqual(moved, item)
-                try Keychain.write(Data(moved.utf8), account: fixture.connectionKeyID)
-            }
+            let before = try digest(of: directory)
+            let key = try Keychain.read(fixture.keyID)
+            let connection = try Keychain.read(fixture.connectionKeyID)
+            XCTAssertEqual(fixture.manifest.recoveryFormatVersion, 4, name)
+
             let model = await open(directory)
-            XCTAssertEqual(model.windowRouting.screen, .encryptForm, "\(name) is asked to encrypt.")
-            let readable = try Self.readableFiles(in: directory, containing: fixture.manifest.markerNeedles)
-            XCTAssertFalse(readable.isEmpty, "\(name) starts readable, so the search below can find something.")
-            try await model.turnOnEncryption(password: "a new master password", current: nil) { _ in }
-            await model.supersededRemoval?.value
-            try await model.refresh()
-            XCTAssertEqual(model.configuration?.recovery.formatVersion, 2, name)
-            if let server {
-                XCTAssertEqual(server.count("POST", "/v1/recovery/encrypt"), 1, "\(name) switched its server once.")
-            }
-            try await assertHolds(fixture, in: model)
-            if server != nil {
-                // A connected library keeps the plaintext copy until the encrypted one has synchronized.
-                let ok = await model.sync()
-                XCTAssertTrue(ok, "\(name) synced after encrypting: \(String(describing: model.syncError))")
-            }
-            await model.supersededRemoval?.value
+            XCTAssertEqual(model.libraryProblem, .notEncrypted, name)
+            XCTAssertEqual(model.windowRouting.screen, .libraryProblem, name)
+            XCTAssertNil(model.store, name)
+            XCTAssertNil(model.masterKey, name)
+            XCTAssertNil(model.connection, "\(name) doesn't sync.")
+            XCTAssertFalse(model.locked, name)
+            XCTAssertNil(model.error, name)
+            XCTAssertFalse(LibraryProblem.notEncrypted.offersTryAgain, name)
+            XCTAssertFalse(LibraryProblem.notEncrypted.offersImport, name)
+            XCTAssertTrue(LibraryProblem.notEncrypted.allowsErase, name)
+            XCTAssertFalse(LibraryProblem.notEncrypted.erasesAfterFailedRetry, "Erase is offered at once.")
+            XCTAssertFalse(model.canImportArchive, name)
+            XCTAssertTrue(model.refusesImport, name)
+
+            await model.retryOpening()
             XCTAssertEqual(
-                try Self.readableFiles(in: directory, containing: fixture.manifest.markerNeedles), [],
-                "\(name) leaves nothing readable.")
-            XCTAssertEqual(model.windowRouting.screen, .journals)
-            try await model.store?.close()
+                model.libraryProblem, .notEncrypted, "There is no Try Again, and a refused one changes nothing.")
+            do {
+                try model.requireJournalsOpen()
+                XCTFail("\(name) started or joined something over journals that can't be opened")
+            } catch is LibraryNotOpenError {}
+            await model.start()
+            XCTAssertNil(model.store, "No new library replaces it.")
+
+            let relaunched = await open(directory)
+            XCTAssertEqual(relaunched.libraryProblem, .notEncrypted, name)
+            XCTAssertEqual(try digest(of: directory), before, "\(name): every file is as the build left it.")
+            XCTAssertEqual(try Keychain.read(fixture.keyID), key, name)
+            XCTAssertEqual(try Keychain.read(fixture.connectionKeyID), connection, name)
+
+            // Erase Journals and Settings… is the one way on: it removes the library, and the first-launch screen follows.
+            let outcome = await relaunched.eraseUnopenedLibrary()
+            XCTAssertEqual(outcome, .erased, name)
+            XCTAssertNil(relaunched.libraryProblem, name)
+            XCTAssertEqual(relaunched.windowRouting.screen, .welcome, name)
+            XCTAssertFalse(
+                FileManager.default.fileExists(atPath: directory.appendingPathComponent(fixture.storageFolder).path),
+                "\(name): the library is gone.")
+            XCTAssertNil(try Keychain.read(fixture.keyID), name)
         }
     }
 
     /// A master password library changes its password, and an archive made afterwards restores everything.
     func testAMasterPasswordLibraryChangesItsPasswordAndTravelsThroughAnArchive() async throws {
-        for name in Self.names where name.hasSuffix("password") {
+        for name in Self.encryptedNames {
             let (directory, fixture) = try install(name)
             let model = await open(directory)
             let phrase = try XCTUnwrap(fixture.phrase)
@@ -219,61 +245,5 @@ final class EarlierBuildLibraryTests: XCTestCase {
             try await restored.store.close()
             try await model.store?.close()
         }
-    }
-
-    /// Mixed versions: another device (1.0 or 1.1) encrypted the server, which purged it and revoked this device, a
-    /// device whose state build 19 wrote. It is asked to sign in, never switches the server itself, signs in with the
-    /// master password and loses nothing.
-    func testADeviceBuild19WroteRejoinsAServerAnotherDeviceEncryptedWithTheMasterPassword() async throws {
-        let (directory, fixture) = try install("build19-unencrypted-synced")
-        let password = "the other device's master password"
-        let (envelope, _) = try VaultCrypto.makeRecovery(
-            masterKey: VaultCrypto.generateKey(), phrase: password, formatVersion: 2)
-        let published = RecoveryParameters(envelope)
-        let item = try XCTUnwrap(fixture.connectionItem)
-        let oldToken = try XCTUnwrap(
-            (try JSONSerialization.jsonObject(with: Data(item.utf8)) as? [String: Any])?["token"] as? String)
-        let server = try await EncryptionServer.start {
-            $0.parameters = published
-            $0.revokedTokens = [oldToken]
-            $0.grantsRecovery = true
-        }
-        addTeardownBlock { server.release() }
-        let address = server.address.replacingOccurrences(of: "/", with: "\\/")
-        try Keychain.write(
-            Data(item.replacingOccurrences(of: "http:\\/\\/127.0.0.1:9", with: address).utf8),
-            account: fixture.connectionKeyID)
-        let model = await open(directory)
-        model.encryption.notNow()
-
-        // The check finds a server that already uses encryption: sign in, no purge.
-        model.encryption.formAppeared()
-        await model.encryption.finishedChecking()
-        XCTAssertEqual(model.encryption.variant, .signIn)
-        XCTAssertEqual(server.count("POST", "/v1/recovery/encrypt"), 0)
-
-        try await model.recoverServer(address: server.address, phrase: password, uploadLocal: true, shown: published)
-        XCTAssertEqual(
-            model.configuration?.recovery.formatVersion, 2, "Its own journals are encrypted with the server's key.")
-        XCTAssertEqual(model.configuration?.encrypted, true)
-        XCTAssertEqual(server.count("POST", "/v1/recovery/encrypt"), 0)
-        try await model.refresh()
-        try await assertHolds(fixture, in: model)
-        try await model.store?.close()
-    }
-
-    /// The paths of files under `directory` that hold any of `needles` as bytes.
-    private static func readableFiles(in directory: URL, containing needles: [String]) throws -> [String] {
-        let manager = FileManager.default
-        let paths = manager.enumerator(atPath: directory.path)?.allObjects as? [String] ?? []
-        var found: [String] = []
-        for path in paths {
-            let url = directory.appendingPathComponent(path)
-            var isDirectory: ObjCBool = false
-            manager.fileExists(atPath: url.path, isDirectory: &isDirectory)
-            guard !isDirectory.boolValue, let data = try? Data(contentsOf: url) else { continue }
-            if needles.contains(where: { data.range(of: Data($0.utf8)) != nil }) { found.append(path) }
-        }
-        return found
     }
 }

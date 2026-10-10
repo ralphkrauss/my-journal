@@ -15,7 +15,7 @@ extension JournalStore {
     func decode(_ payload: String, id: UUID, kind: String) throws -> JournalItem {
         let version = Self.version(of: payload)
         if let known = decodedRecords[id], known.storedVersion == version, known.kind == kind { return known }
-        return try Self.decode(payload, id: id, kind: kind, version: version, key: key, protection: protection)
+        return try Self.decode(payload, id: id, kind: kind, version: version, key: key)
     }
     /// Decodes a payload stored as a record, and remembers it while the journals are open.
     func decodeRecord(_ payload: String, id: UUID, kind: String) throws -> JournalItem {
@@ -28,12 +28,11 @@ extension JournalStore {
     func decodeRecords(_ records: [StoredRecord], complete: Bool) throws -> [JournalItem] {
         let known = remembersDecodedRecords ? decodedRecords : [:]
         let key = key
-        let protection = protection
         let items = try Parallel.map(records) { record in
             let version = Self.version(of: record.payload)
             if let item = known[record.id], item.storedVersion == version, item.kind == record.kind { return item }
             return try Self.decode(
-                record.payload, id: record.id, kind: record.kind, version: version, key: key, protection: protection)
+                record.payload, id: record.id, kind: record.kind, version: version, key: key)
         }
         if remembersDecodedRecords {
             if complete { decodedRecords = [:] }
@@ -50,10 +49,10 @@ extension JournalStore {
     public func rememberDecodedRecords() { remembersDecodedRecords = true }
     /// Decrypts and decodes a stored payload.
     static func decode(
-        _ payload: String, id: UUID, kind: String, version: StoredVersion, key: Data, protection: ContentProtection
+        _ payload: String, id: UUID, kind: String, version: StoredVersion, key: Data
     ) throws -> JournalItem {
         guard let data = Data(base64Encoded: payload) else { throw JournalError.invalidData }
-        let plaintext = try protection.decode(data, key: key, context: VaultCrypto.recordContext(id: id, kind: kind))
+        let plaintext = try VaultCrypto.open(data, key: key, context: VaultCrypto.recordContext(id: id, kind: kind))
         var item: JournalItem
         do {
             item = try PortableRecord.decode(plaintext)

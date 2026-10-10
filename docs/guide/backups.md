@@ -2,8 +2,6 @@
 
 An archive is a copy of all your journals in one file: entries, templates, images, earlier versions and Recently Deleted. It’s encrypted and opens only with your master password, so you can attach it to a message, send it by AirDrop or copy it to an external drive as it is.
 
-An archive needs encrypted journals. If yours were created without encryption and are not encrypted yet, My Journal offers to encrypt them when it opens; the archive is available after that.
-
 An archive doesn’t include your server connection, your devices, App Lock or agent access. Set those up again after a restore.
 
 Your server is not a backup: it can fail or lose data too. Export an archive regularly and before you update, and keep it somewhere other than the device, such as an external drive.
@@ -19,12 +17,12 @@ Keep your master password separate from your archives. An archive opens only wit
 
 Exporting needs room for the archive on the device first, and on the place you save it to. If either is too full, My Journal says so and saves nothing.
 
-Archives made by My Journal 1.0 were folders. 1.1 still opens them. But 1.0 can’t open the single file that 1.1 saves, so update My Journal on every device before you move an archive between them.
+Archives made by My Journal 1.0 were folders. 1.1 still opens them when they are encrypted; a folder archive made by 1.0 for journals without encryption doesn’t open (My Journal says it couldn’t open the archive). But 1.0 can’t open the single file that 1.1 saves, so update My Journal on every device before you move an archive between them.
 
 ## Restore journals on a new device
 
 1. Open My Journal and choose **Import Archive…** on the first screen. You can also open the archive file itself with My Journal.
-2. If the archive is encrypted, enter its password. Choose **Continue**. My Journal shows what the archive contains.
+2. Enter the archive’s password and choose **Continue**. My Journal shows what the archive contains.
 3. Choose **Restore Journals**.
 
 To sync the restored journals, [set up sync](sync.md) in Settings.
@@ -32,7 +30,7 @@ To sync the restored journals, [set up sync](sync.md) in Settings.
 ## Import into your current journals
 
 1. Choose Settings > Backup > **Import Archive…** (on the Mac, also File > **Import Archive…**).
-2. If the archive is encrypted, enter its password. Choose **Continue**.
+2. Enter the archive’s password and choose **Continue**.
 3. Choose **Import as New Journals**.
 
 Your current journals are kept, and the ones from the archive are added as separate journals. If you sync, they’re uploaded to your server too.

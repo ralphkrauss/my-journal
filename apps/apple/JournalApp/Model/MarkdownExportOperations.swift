@@ -7,32 +7,31 @@ extension AppModel {
     /// for the save dialog to copy. Removes it if anything fails or the journals lock meanwhile.
     func prepareMarkdownExport() async throws -> (folder: URL, summary: MarkdownExportSummary) {
         let session = vaultSessionID
-        try validateVaultSession(session, readingWhileEncrypting: true)
+        try validateVaultSession(session)
         guard let store else { throw JournalError.locked }
         let destination = directory.appendingPathComponent(
             ArchiveExportLeftovers.markdownPrefix + UUID().uuidString.lowercased(), isDirectory: true)
         do {
             let saved = await finishPendingSave()
-            try validateVaultSession(session, readingWhileEncrypting: true)
+            try validateVaultSession(session)
             guard saved else { throw JournalError.saveRequired }
             let summary = try await MarkdownExport.write(store: store, to: destination)
             var excluded = URLResourceValues()
             excluded.isExcludedFromBackup = true
             var folder = destination
             try folder.setResourceValues(excluded)
-            try validateVaultSession(session, readingWhileEncrypting: true)
+            try validateVaultSession(session)
             return (destination, summary)
         } catch {
             try? FileManager.default.removeItem(at: destination)
-            try validateVaultSession(session, readingWhileEncrypting: true)
+            try validateVaultSession(session)
             throw error
         }
     }
 
     /// The reason the device's authentication gives before journals leave the app as readable files.
     var markdownExportReason: String {
-        configuration?.encrypted == false
-            ? "Export your journals as Markdown files" : "Export your journals as files that aren’t encrypted"
+        "Export your journals as files that aren’t encrypted"
     }
 }
 
@@ -115,9 +114,9 @@ extension AppModel {
         }
         let filename = MarkdownExport.folderName()
         do {
-            try model.validateVaultSession(session, readingWhileEncrypting: true)
+            try model.validateVaultSession(session)
             let (folder, summary) = try await model.prepareMarkdownExport()
-            guard !Task.isCancelled, (try? model.validateVaultSession(session, readingWhileEncrypting: true)) != nil
+            guard !Task.isCancelled, (try? model.validateVaultSession(session)) != nil
             else {
                 try? FileManager.default.removeItem(at: folder)
                 return
@@ -128,7 +127,7 @@ extension AppModel {
             presenting = true
         } catch {
             guard !Task.isCancelled, !(error is CancellationError),
-                (try? model.validateVaultSession(session, readingWhileEncrypting: true)) != nil
+                (try? model.validateVaultSession(session)) != nil
             else { return }
             self.error = Self.message(for: error)
         }

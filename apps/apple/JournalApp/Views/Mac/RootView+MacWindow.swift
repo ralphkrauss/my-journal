@@ -32,7 +32,7 @@
         private var toolbarConfiguration: JournalToolbarConfiguration {
             var configuration = JournalToolbarConfiguration()
             configuration.editorOnly = windowColumns.editorOnly
-            configuration.canCreateJournal = model.isReady && !model.locked && !model.writingPausedForEncryption
+            configuration.canCreateJournal = model.isReady && !model.locked
             let creating = model.isReady && !model.locked && !model.replacingVault
             configuration.canCreateEntry = creating
             configuration.canEdit = model.canEdit
@@ -66,7 +66,7 @@
             }
             configuration.journalActions = journalActionCatalog
             configuration.syncAction = {
-                model.perform(model.syncStatusAction) { model.encryption.signInRequested = true }
+                model.perform(model.syncStatusAction) { model.reconnectRequested = true }
             }
             configuration.syncSettings = { model.openSyncSettings() }
             configuration.setQuery = { model.query = $0 }
@@ -121,7 +121,7 @@
             var actions: [MenuAction] = [
                 .command(
                     "New Journal…", symbol: "folder.badge.plus",
-                    enabled: model.isReady && !model.locked && !model.writingPausedForEncryption
+                    enabled: model.isReady && !model.locked
                 ) {
                     model.newJournalRequested = true
                 }

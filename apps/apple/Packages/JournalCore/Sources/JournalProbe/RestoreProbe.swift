@@ -10,7 +10,6 @@ extension Probe {
         var phrase: String
         var key: Data
         var token: String
-        var protection: String
         var firstEntry: UUID
         var secondEntry: UUID?
         var firstImage: UUID
@@ -50,21 +49,14 @@ extension Probe {
         ])
     }
     private static func openStore(_ state: RestoreState, _ directory: URL) throws -> JournalStore {
-        try JournalStore(
-            directory: directory, key: state.key,
-            protection: ContentProtection(rawValue: state.protection) ?? .encrypted)
+        try JournalStore(directory: directory, key: state.key)
     }
     private static func restoreBefore(address: String, setupCodeFile: String, state directory: URL) async throws {
         let code = try String(contentsOfFile: setupCodeFile).trimmingCharacters(in: .whitespacesAndNewlines)
         let (master, phrase, envelope, secret) = try recoveryFixture()
-        guard envelope.requiresPassword else {
-            throw ProbeFailure("the restore probe needs a password-protected recovery version (1, 2 or 3)")
-        }
         let grant = try await ServerClient(address: address).initialize(
             code: code, envelope: envelope, recoverySecret: secret, deviceName: "Restore Mac")
-        let protection = try envelope.contentProtection
-        let store = try JournalStore(
-            directory: directory.appendingPathComponent("mac"), key: master, protection: protection)
+        let store = try JournalStore(directory: directory.appendingPathComponent("mac"), key: master)
         let journal = JournalItem(kind: "journal", title: "Restored work")
         try await store.save(journal)
         let image = try await store.addAttachment(Data(repeating: 3, count: 2048))
@@ -77,7 +69,7 @@ extension Probe {
         try await store.save(purgedEntry)
         try await SyncEngine(store: store, client: ServerClient(address: address, token: grant.token)).synchronize()
         let state = RestoreState(
-            phrase: phrase, key: master, token: grant.token, protection: protection.rawValue, firstEntry: entry.id,
+            phrase: phrase, key: master, token: grant.token, firstEntry: entry.id,
             firstImage: image, purgedJournal: purged.id, purgedEntry: purgedEntry.id)
         try JournalCoding.encoder().encode(state).write(to: directory.appendingPathComponent("state.json"))
         print("PASS: restore probe synchronized before the backup")

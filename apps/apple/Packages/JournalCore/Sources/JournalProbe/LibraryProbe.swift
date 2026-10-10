@@ -22,16 +22,17 @@ extension Probe {
         let sync: SyncEngine
     }
 
-    /// Two devices of a new library without encryption, the second added with the recovery code.
+    /// Two devices of a new library, the second added with the password.
     private static func libraryDevices(address: String, code: String, root: URL) async throws
         -> (mac: LibraryDevice, phone: LibraryDevice)
     {
         let anonymous = try ServerClient(address: address)
-        let secret = try VaultCrypto.random(32).map { String(format: "%02x", $0) }.joined()
+        let (key, phrase, envelope, secret) = try recoveryFixture()
         let macGrant = try await anonymous.initialize(
-            code: code, envelope: .unprotected, recoverySecret: secret, deviceName: "Probe Mac")
-        let phoneGrant = try await anonymous.recover(secret: secret, deviceName: "Probe iPhone")
-        let key = try VaultCrypto.generateKey()
+            code: code, envelope: envelope, recoverySecret: secret, deviceName: "Probe Mac")
+        let phoneGrant = try await anonymous.recoverVault(
+            phrase, parameters: anonymous.recoveryParameters(), deviceName: "Probe iPhone"
+        ).grant
         return (
             try libraryDevice("mac", token: macGrant.token, address: address, key: key, root: root),
             try libraryDevice("phone", token: phoneGrant.token, address: address, key: key, root: root)
@@ -40,7 +41,7 @@ extension Probe {
     private static func libraryDevice(_ name: String, token: String, address: String, key: Data, root: URL) throws
         -> LibraryDevice
     {
-        let store = try JournalStore(directory: root.appendingPathComponent(name), key: key, protection: .plaintext)
+        let store = try JournalStore(directory: root.appendingPathComponent(name), key: key)
         return LibraryDevice(
             store: store, sync: SyncEngine(store: store, client: try ServerClient(address: address, token: token)))
     }

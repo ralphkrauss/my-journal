@@ -103,6 +103,8 @@ The Compose files build the checked-out source by default. To use a published im
 
 ## Recovering an unencrypted library
 
+This section is for apps of version 1.0, which could create libraries without encryption. Version 1.1 of the app supports only encrypted libraries: it has no **Use a Recovery Code** step and refuses a server that holds unencrypted data. The server still serves 1.0 apps unchanged.
+
 New unencrypted libraries have no master password. Add another device by approving its pairing code on a connected device. If no connected device remains, a server administrator can generate a one-time code:
 
 ```sh

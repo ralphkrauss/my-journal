@@ -19,12 +19,11 @@ extension Probe {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("journal-merge-probe-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }
         let (master, _, envelope, recoverySecret) = try recoveryFixture()
-        let protection = try envelope.contentProtection
         let anonymous = try ServerClient(address: address)
         let setUp = try await anonymous.initialize(
             code: code, envelope: envelope, recoverySecret: recoverySecret, deviceName: "Probe Mac")
         let macClient = try ServerClient(address: address, token: setUp.token)
-        let mac = try JournalStore(directory: root.appendingPathComponent("mac"), key: master, protection: protection)
+        let mac = try JournalStore(directory: root.appendingPathComponent("mac"), key: master)
         let macSync = SyncEngine(store: mac, client: macClient)
         let macJournal = JournalItem(kind: "journal", title: "Default")
         try await mac.save(macJournal)
@@ -33,7 +32,7 @@ extension Probe {
 
         // This device's own library: its own key when the server encrypts, none when it doesn't.
         let local = try JournalStore(
-            directory: root.appendingPathComponent("phone"), key: try VaultCrypto.generateKey(), protection: protection)
+            directory: root.appendingPathComponent("phone"), key: try VaultCrypto.generateKey())
         let journal = JournalItem(kind: "journal", title: "default")
         let travel = JournalItem(kind: "journal", title: "Travel")
         try await local.save(journal)
@@ -53,11 +52,11 @@ extension Probe {
         let first = try await pairingGrant(
             anonymous, approver: macClient, master: master, version: envelope.formatVersion)
         try await interruptedAttempt(
-            local, address: address, grant: first, key: master, protection: protection, root: root)
+            local, address: address, grant: first, key: master, root: root)
         let second = try await pairingGrant(
             anonymous, approver: macClient, master: master, version: envelope.formatVersion)
         let staged = try await stagedMerge(
-            local, address: address, grant: second, key: master, protection: protection,
+            local, address: address, grant: second, key: master,
             folder: root.appendingPathComponent("second"))
         let report = try await SyncEngine(store: staged, client: ServerClient(address: address, token: second.token))
             .synchronize()
@@ -80,7 +79,7 @@ extension Probe {
         let phoneSync = SyncEngine(store: staged, client: try ServerClient(address: address, token: second.token))
         try await sameNamesOnTwoDevices(mac: (mac, macSync), phone: (staged, phoneSync))
         let rejoin = RejoinContext(
-            address: address, anonymous: anonymous, recoverySecret: recoverySecret, key: master, protection: protection,
+            address: address, anonymous: anonymous, recoverySecret: recoverySecret, key: master,
             folder: root.appendingPathComponent("third"))
         try await deletedThenJoinedAgain(local, phone: (staged, phoneSync), mac: (mac, macSync), rejoin: rejoin)
     }
@@ -114,7 +113,6 @@ extension Probe {
         let anonymous: ServerClient
         let recoverySecret: String
         let key: Data
-        let protection: ContentProtection
         let folder: URL
     }
     /// The phone deletes a merged journal permanently; the Mac and the server keep it deleted. Joining again from the
@@ -143,7 +141,7 @@ extension Probe {
         try await local.save(JournalItem(kind: "entry", journalID: travel.id, title: "Porto"))
         let grant = try await rejoin.anonymous.recover(secret: rejoin.recoverySecret, deviceName: "Probe iPhone")
         let staged = try await stagedMerge(
-            local, address: rejoin.address, grant: grant, key: rejoin.key, protection: rejoin.protection,
+            local, address: rejoin.address, grant: grant, key: rejoin.key,
             folder: rejoin.folder)
         try await SyncEngine(store: staged, client: ServerClient(address: rejoin.address, token: grant.token))
             .synchronize()
@@ -164,12 +162,12 @@ extension Probe {
 
     /// Stops after the images and a journal were sent, then gives up its access, as the app does.
     private static func interruptedAttempt(
-        _ local: JournalStore, address: String, grant: DeviceGrant, key: Data, protection: ContentProtection,
+        _ local: JournalStore, address: String, grant: DeviceGrant, key: Data,
         root: URL
     ) async throws {
         let folder = root.appendingPathComponent("first")
         let staged = try await stagedMerge(
-            local, address: address, grant: grant, key: key, protection: protection, folder: folder)
+            local, address: address, grant: grant, key: key, folder: folder)
         let client = try ServerClient(address: address, token: grant.token)
         for image in try await staged.pendingAttachments() + staged.attachmentsToVerify() {
             try await client.upload(staged.encryptedAttachment(image), id: image)
@@ -193,14 +191,14 @@ extension Probe {
 
     /// Downloads everything the server has into a new staged store, then merges this device's library into it.
     private static func stagedMerge(
-        _ local: JournalStore, address: String, grant: DeviceGrant, key: Data, protection: ContentProtection,
+        _ local: JournalStore, address: String, grant: DeviceGrant, key: Data,
         folder: URL
     ) async throws -> JournalStore {
         let client = try ServerClient(address: address, token: grant.token)
-        let staged = try JournalStore(directory: folder, key: key, protection: protection)
+        let staged = try JournalStore(directory: folder, key: key)
         try await SyncEngine(store: staged, client: client).synchronize()
         let server = try await client.status().serverId ?? client.address.absoluteString
-        let readByAgents = try await client.journalsAgentsCanRead(vaultKey: key, protection: protection)
+        let readByAgents = try await client.journalsAgentsCanRead(vaultKey: key)
         try await staged.importMerging(from: local, server: server, readByAgents: readByAgents)
         return staged
     }

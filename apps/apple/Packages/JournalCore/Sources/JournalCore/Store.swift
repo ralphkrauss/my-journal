@@ -47,7 +47,6 @@ public actor JournalStore {
     let db: DatabaseQueue
     /// The vault key; only this store and its extensions use it.
     let key: Data
-    public let protection: ContentProtection
     let deletionScopeID = UUID()
     public let directory: URL
     /// Counts writes that came from elsewhere: synchronized records and images, and versions kept for review.
@@ -80,11 +79,13 @@ public actor JournalStore {
     var checkpointPeriods: [UUID: Date] = [:]
     /// The largest image file, encrypted; the server accepts no larger upload.
     static let maximumAttachmentBytes = 25 * 1024 * 1024
-    public init(directory: URL, key: Data, protection: ContentProtection = .encrypted) throws {
+    /// What the `content-protection` setting holds in every library this version makes; earlier versions also wrote
+    /// `plaintext` there for libraries without encryption, which this version doesn't open.
+    static let encryptedSetting = "encrypted"
+    public init(directory: URL, key: Data) throws {
         guard key.count == 32 else { throw JournalError.invalidData }
         self.directory = directory
         self.key = key
-        self.protection = protection
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         try FileManager.default.createDirectory(
@@ -110,19 +111,18 @@ public actor JournalStore {
             let stored = try String.fetchOne(
                 database, sql: "SELECT value FROM settings WHERE key = 'content-protection'")
             if let stored {
-                guard stored == protection.rawValue else { throw JournalError.invalidData }
+                // A library version 1.0 made without encryption is never opened here (`JournalError.notEncrypted`).
+                guard stored == Self.encryptedSetting else { throw JournalError.notEncrypted }
             } else {
-                let count = try Int.fetchOne(database, sql: "SELECT COUNT(*) FROM records") ?? 0
-                guard count == 0 || protection == .encrypted else { throw JournalError.invalidData }
                 try database.execute(
                     sql: "INSERT INTO settings(key,value) VALUES ('content-protection',?)",
-                    arguments: [protection.rawValue])
+                    arguments: [Self.encryptedSetting])
             }
         }
         // What an older version kept for the library record, before anything synchronizes (pinned-entries.md, rule 5).
         // Opening never writes otherwise, so a library damaged where records are kept still opens and reports that
         // its data can't be read: only leftovers that can be read are converted, and a failed conversion leaves them.
-        let library = LibraryStore(key: key, protection: protection)
+        let library = LibraryStore(key: key)
         if (try? db.read { try library.hasLeftovers($0) }) == true {
             do { try db.write { library.convertLeftovers($0) } } catch {
                 LibraryStore.logger.error("Couldn’t convert what an older version kept for the library record.")
@@ -166,7 +166,7 @@ public actor JournalStore {
     }
     func id(_ uuid: UUID) -> String { uuid.uuidString.lowercased() }
     func encode(_ item: JournalItem) throws -> String {
-        try protection.encode(
+        try VaultCrypto.seal(
             PortableRecord.encode(item), key: key,
             context: VaultCrypto.recordContext(id: item.id, kind: item.kind)
         ).base64EncodedString()
@@ -729,11 +729,9 @@ public actor JournalStore {
         }
         try Task.checkCancellation()
         let key = key
-        let protection = protection
         return try Parallel.map(records) { record in
             try Self.decode(
-                record.payload, id: record.id, kind: record.kind, version: Self.version(of: record.payload), key: key,
-                protection: protection)
+                record.payload, id: record.id, kind: record.kind, version: Self.version(of: record.payload), key: key)
         }
     }
     func contentForImport(for purpose: ContentImport.Purpose = .archive) throws -> ContentImport {
@@ -850,13 +848,13 @@ public actor JournalStore {
         guard bytes.count <= 25 * 1024 * 1024 - 28 else {
             throw JournalError.server("Choose an image smaller than 25 MB.")
         }
-        let encrypted = try protection.encode(bytes, key: key, context: VaultCrypto.attachmentContext(id: uuid))
+        let encrypted = try VaultCrypto.seal(bytes, key: key, context: VaultCrypto.attachmentContext(id: uuid))
         try cacheAttachment(encrypted, id: uuid, uploaded: false)
         return uuid
     }
     public func cacheAttachment(_ encrypted: Data, id uuid: UUID, uploaded: Bool = true) throws {
         guard encrypted.count <= Self.maximumAttachmentBytes else { throw JournalError.invalidData }
-        _ = try protection.decode(encrypted, key: key, context: VaultCrypto.attachmentContext(id: uuid))
+        _ = try VaultCrypto.open(encrypted, key: key, context: VaultCrypto.attachmentContext(id: uuid))
         try encrypted.write(to: attachmentURL(uuid), options: .atomic)
         try db.write {
             try $0.execute(
@@ -867,7 +865,7 @@ public actor JournalStore {
         if uploaded { receivedChanges += 1 }
     }
     public func attachment(_ uuid: UUID) throws -> Data {
-        try protection.decode(encryptedAttachment(uuid), key: key, context: VaultCrypto.attachmentContext(id: uuid))
+        try VaultCrypto.open(encryptedAttachment(uuid), key: key, context: VaultCrypto.attachmentContext(id: uuid))
     }
     public func encryptedAttachment(_ uuid: UUID) throws -> Data {
         try Self.encryptedAttachment(at: attachmentURL(uuid))

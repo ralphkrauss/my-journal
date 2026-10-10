@@ -14,7 +14,6 @@ sources:
   - apps/apple/JournalApp/JournalApp.swift
   - apps/apple/JournalApp/Model/AppModel.swift
   - apps/apple/JournalApp/Model/SyncHealthOperations.swift
-  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - docs/design/owner-decisions-2026-09-25.md
   - docs/design/ios-delete-all-and-settings-2026-10-03.md
   - docs/design/erase-device-2026-10-04.md
@@ -41,8 +40,7 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 **Root (`SettingsView.body`).** A `Group` that shows, in order of precedence:
 1. Locked (`model.locked`): one secondary-coloured `Text`, copy key `settings.locked`, with padding. Nothing else is built.
 2. Library problem screen showing (`model.showsLibraryProblem`): one secondary `Text`, copy key `settings.libraryProblem` ("Settings are available once your journals open."), the spec's library problem state. **Screenshot pending:** settings-library-problem.
-3. Encrypt Your Journals showing as the root screen (an unencrypted library at launch, no Not Now yet, no marker): one secondary `Text`, copy key `settings.encryptFirst` ("Choose a master password to encrypt your journals first."), in place of the panes on every device. Once Not Now is chosen, or when the form is only a sheet, Settings is normal.
-4. Otherwise the shell below.
+3. Otherwise the shell below.
 
 **iPhone and iPad shell.**
 - `NavigationStack(path: $panes)` with a `List` as root. `panes` is `[AppSettingsTab]`; a requested pane is pushed by setting it. The navigation title is `settings.title`, `.navigationBarTitleDisplayMode(.inline)`. The sheet is `.sheet(isPresented: $model.settingsPresented) { SettingsView() }` on `RootView`.
@@ -55,10 +53,10 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 **Mac shell.**
 - A `Settings { SettingsView().environmentObject(model) }` scene in `JournalApp.swift`. The system supplies the My Journal ▸ Settings… item and ⌘, (`open-settings`).
 - `TabView(selection: $model.settingsTab)` whose children carry `.tabItem { Label(title, systemImage:) }`: General `gearshape`, Sync, Privacy, Backup and Agent Access with the same symbols as the iPhone list. The window title is the selected tab's name (standard Settings scene behaviour). Tab titles are the English words in the view.
-- Opening it from code (Sync Status, Show Connection): `SettingsPresenter` (a zero-size `Color.clear` in the journal window's `.background`) watches `model.settingsPresented`, calls `openSettings()` (the `\.openSettings` environment action, macOS 14 and later) and resets the flag; `showSettingsWindow:` is the fallback below macOS 14. The tab to show is set first: `openSyncSettings()` sets `settingsTab = .sync`; the journal window's "Show Connection" notice (`Views/SaveFailureNotice.swift`) sets `.sync`, where the Connect to a Server sheet it brings forward belongs. There is no Show Progress in 1.1: the encryption notice carries its own progress and Cancel.
+- Opening it from code (Sync Status, Show Connection): `SettingsPresenter` (a zero-size `Color.clear` in the journal window's `.background`) watches `model.settingsPresented`, calls `openSettings()` (the `\.openSettings` environment action, macOS 14 and later) and resets the flag; `showSettingsWindow:` is the fallback below macOS 14. The tab to show is set first: `openSyncSettings()` sets `settingsTab = .sync`; the journal window's "Show Connection" notice (`Views/SaveFailureNotice.swift`) sets `.sync`, where the Connect to a Server sheet it brings forward belongs.
 - `model.settingsTab` is an `AppModel` property, so the window reopens on the last selected tab for the life of the process. Its initial value is `.general`.
 
-**Sheets owned by the Settings view on both platforms:** `.sheet(item: $connect, onDismiss:) { ConnectionView() }` (Connect to a Server and Reconnect, opened by the Sync and Privacy panes; its `onDismiss` raises `devicesReload`, which makes the Devices section read its list again; Agent Access has its own sheet).
+**Sheets owned by the Settings view on both platforms:** `.sheet(item: $connect, onDismiss:) { ConnectionView() }` (Connect to a Server and Reconnect, opened by the Sync pane; its `onDismiss` raises `devicesReload`, which makes the Devices section read its list again; Agent Access has its own sheet).
 
 **States.**
 - Empty: no pane has an empty state of its own here; the Privacy pane builds nothing when `model.configuration` is nil (just after Erase, while Settings closes).
@@ -70,7 +68,7 @@ Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `
 
 - **iPhone (compact width).** The sheet is the system's page sheet covering the screen below the status area; the list is a single column of grouped rows. The entry point is a toolbar button at the top left of the Journals screen (`CompactJournalNavigation`, `ToolbarItem(placement: .topBarLeading)`, `Label("Settings", systemImage: "gearshape")`). The Erase section is below the fold; scroll to reach it.
 - **iPad (regular width).** The same sheet, drawn by the system as a centred form sheet (about 580 by 650 points in the capture) over the three-column library. The entry is the last row of the journals sidebar (`JournalSidebarView`, `#if os(iOS)`, a `Button` with `Label("Settings", systemImage: "gearshape")`). While the sidebar is in edit mode that row is replaced by a dimmed, disabled `Label`. In the capture the About section is cut off at the sheet's bottom edge: the list scrolls. In compact width on iPad (Slide Over, narrow Stage Manager window) or at accessibility Dynamic Type sizes, `RootView.usesStackedNavigation` is true and the entry point is the iPhone's top-left button instead. How the system sizes the sheet in those widths is system behaviour and was not captured.
-- **Mac.** A window titled by the selected tab. Each tab pane is `.frame(width: 560)` with `.frame(minHeight: 440 (General: none), maxHeight: min screen height minus 120, alignment: .top)` and `.fixedSize()`, so the window resizes to each tab (as Apple's own Settings windows do) and longer content scrolls. The Sync tab alone has one height, `min(640, screen height minus 120)` (`syncPaneHeight`, `paneContent(_:)`), because it gains and loses sections (Devices, Changed on Two Devices) as the connection changes and the device list arrives, and the window must not jump; it scrolls inside that height. The 440-point minimum keeps sheets (Connect to a Server, Turn On Encryption, Add Device, the password check) inside the window. `BouncesOnlyWhenScrollable` applies `.scrollBounceBehavior(.basedOnSize)` so a pane that fits does not rubber-band. The window opens independently of the journal window.
+- **Mac.** A window titled by the selected tab. Each tab pane is `.frame(width: 560)` with `.frame(minHeight: 440 (General: none), maxHeight: min screen height minus 120, alignment: .top)` and `.fixedSize()`, so the window resizes to each tab (as Apple's own Settings windows do) and longer content scrolls. The Sync tab alone has one height, `min(640, screen height minus 120)` (`syncPaneHeight`, `paneContent(_:)`), because it gains and loses sections (Devices, Changed on Two Devices) as the connection changes and the device list arrives, and the window must not jump; it scrolls inside that height. The 440-point minimum keeps sheets (Connect to a Server, Add Device, the password check) inside the window. `BouncesOnlyWhenScrollable` applies `.scrollBounceBehavior(.basedOnSize)` so a pane that fits does not rubber-band. The window opens independently of the journal window.
 - **Dynamic Type.** Standard `List` and `Form` rows grow and wrap; no custom layout in this file. At accessibility sizes the stacked navigation of the library applies, not a change inside Settings.
 
 ## Commands and shortcuts
@@ -128,7 +126,7 @@ View:
 
 Model:
 - `apps/apple/JournalApp/Model/AppModel.swift`: `AppSettingsTab`, `settingsPresented`, `settingsTab`, `settingsRequestedTab`.
-- `apps/apple/JournalApp/Model/SyncHealthOperations.swift`: `openSyncSettings()`. `Model/EncryptionUpgrade.swift`: the encryption state (`settings.encryptFirst` replaces the panes while the form is the root screen: `SettingsView` reads it from `Model/EncryptionRouting.swift`).
+- `apps/apple/JournalApp/Model/SyncHealthOperations.swift`: `openSyncSettings()`.
 
 Design records: `docs/design/owner-decisions-2026-09-25.md`, `ios-delete-all-and-settings-2026-10-03.md`, `erase-device-2026-10-04.md`, `about-and-ratings-2026-10-05.md`, `client-only-mac-lists-markdown-2026-10-05.md`.
 

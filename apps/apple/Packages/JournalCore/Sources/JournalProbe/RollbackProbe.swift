@@ -16,7 +16,6 @@ extension Probe {
         var phrase: String
         var secret: String
         var key: Data
-        var protection: String
         var phoneToken: String
         var macToken: String
         var entries: [UUID]
@@ -55,8 +54,7 @@ extension Probe {
         -> RollbackDevice
     {
         let store = try JournalStore(
-            directory: directory.appendingPathComponent(name), key: state.key,
-            protection: ContentProtection(rawValue: state.protection) ?? .encrypted)
+            directory: directory.appendingPathComponent(name), key: state.key)
         let token = name == "phone" ? state.phoneToken : state.macToken
         return RollbackDevice(store: store, client: try ServerClient(address: address, token: token))
     }
@@ -66,21 +64,15 @@ extension Probe {
         let anonymous = try ServerClient(address: address)
         let phoneGrant = try await anonymous.initialize(
             code: code, envelope: envelope, recoverySecret: secret, deviceName: "Rollback Phone")
-        let macGrant: DeviceGrant
-        if envelope.requiresPassword {
-            let parameters = try await anonymous.recoveryParameters()
-            macGrant = try await anonymous.recoverVault(phrase, parameters: parameters, deviceName: "Rollback Mac")
-                .grant
-        } else {
-            macGrant = try await anonymous.recover(secret: secret, deviceName: "Rollback Mac")
-        }
-        let protection = try envelope.contentProtection
+        let parameters = try await anonymous.recoveryParameters()
+        let macGrant = try await anonymous.recoverVault(phrase, parameters: parameters, deviceName: "Rollback Mac")
+            .grant
         let journal = JournalItem(kind: "journal", title: "Notes")
         let entries = (1...3).map {
             JournalItem(kind: "entry", journalID: journal.id, document: .plain("Entry \($0) before the copy"))
         }
         let state = RollbackState(
-            phrase: phrase, secret: secret, key: master, protection: protection.rawValue, phoneToken: phoneGrant.token,
+            phrase: phrase, secret: secret, key: master, phoneToken: phoneGrant.token,
             macToken: macGrant.token, entries: entries.map(\.id))
         try JournalCoding.encoder().encode(state).write(to: directory.appendingPathComponent("state.json"))
         let phone = try rollbackDevice("phone", state: state, address: address, directory: directory)

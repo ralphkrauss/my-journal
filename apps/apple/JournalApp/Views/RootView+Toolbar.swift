@@ -69,7 +69,7 @@ extension RootView {
                 Text(syncStatusMessage)
                 let action = model.syncStatusAction
                 Button(action.title) {
-                    model.perform(action) { model.encryption.signInRequested = true }
+                    model.perform(action) { model.reconnectRequested = true }
                 }
                 Button("Sync Settings…") { model.openSyncSettings() }
             } label: {

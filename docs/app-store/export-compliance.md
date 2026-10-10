@@ -14,7 +14,7 @@ From a search of the code on 2026-10-05:
 
 | Where | Algorithms | Provided by |
 | --- | --- | --- |
-| Journal content, images and archives (`JournalCore/Crypto.swift`, `Archive.swift`, `StoreReencryption.swift`) | AES-256-GCM | CryptoKit |
+| Journal content, images and archives (`JournalCore/Crypto.swift`, `Archive.swift`, `StoreDecoding.swift`) | AES-256-GCM | CryptoKit |
 | Master password (`CJournalCrypto/JournalCrypto.c`) | PBKDF2-HMAC-SHA256, 600,000 iterations | CommonCrypto (`CCKeyDerivationPBKDF`) |
 | Key wrapping, server authentication secret | AES-GCM, HKDF-SHA256 | CryptoKit |
 | Adding a device (`Pairing.swift`, `PairingInvite.swift`) | Curve25519 key agreement, HKDF-SHA256, AES-GCM, SHA-256, HMAC-SHA256 | CryptoKit |

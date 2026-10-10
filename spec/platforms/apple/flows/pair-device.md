@@ -49,7 +49,7 @@ Server calls are `ServerClient` methods in `Packages/JournalCore/Sources/Journal
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `add-device` | Settings ▸ Sync ▸ Devices, Server Is Ready, Turn On Encryption: opens the connected side | none | connected, unlocked |
+| `add-device` | Settings ▸ Sync ▸ Devices, Server Is Ready: opens the connected side | none | connected, unlocked |
 | `add-device-enter-code` | Connected device, code step | none | showing a code |
 | `add-device-look-up` | Connected device, typed-code step | Return in the field | code not empty |
 | `add-device-approve` | Connected device, confirmation | Command-Return | a request is confirmable |
@@ -62,7 +62,7 @@ Placements and the rest are in [commands.md](../commands.md). Approve and Connec
 
 ## Copy differences
 
-`settings.addDevice.authReason` is lower-case on the Mac ("add “{device}” to your journals") because the system's prompt reads "My Journal is trying to …". Nothing else differs between devices. Two new-device strings are `settings.connect.announce.newCode` ("New code.") and `settings.connect.codeUsed` ("That code was used. Enter a new one."); the code holds them as literals.
+`settings.addDevice.authReason` is lower-case on the Mac ("add “{device}” to your journals") because the system's prompt reads "My Journal is trying to …". Nothing else differs between devices. One new-device string is `settings.connect.announce.newCode` ("New code."); the code holds it as a literal.
 
 ## Accessibility
 
@@ -83,7 +83,7 @@ Placements and the rest are in [commands.md](../commands.md). Approve and Connec
 
 | Device | State | Capture |
 | --- | --- | --- |
-| iPad | The new device's side of typed-code pairing: Add This Device with the nine-digit code (grouped 957 832 285), Copy Code, instructions, "Waiting for approval…", "Your journals will download to this device." and a Cancel button; no Use a Recovery Code Instead… row (that row appears only when `flow.passwordless` is true, which it is not for this capture) | ![iPad new device waiting](../screenshots/ipad/pair-device-default.png) |
+| iPad | The new device's side of typed-code pairing: Add This Device with the nine-digit code (grouped 957 832 285), Copy Code, instructions, "Waiting for approval…", "Your journals will download to this device." and a Cancel button | ![iPad new device waiting](../screenshots/ipad/pair-device-default.png) |
 
 The connected side is captured under [add-device](../screens/add-device.md) (iPhone, iPad; the Mac sheet is hidden from capture). The check-code, confirmation and finished states were not captured.
 

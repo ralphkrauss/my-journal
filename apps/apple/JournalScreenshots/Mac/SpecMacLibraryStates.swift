@@ -48,7 +48,7 @@ extension SpecMacCapture {
     private func problems(_ sample: URL) async throws {
         for (problem, name) in [
             (SpecLibraryFixtures.Problem.settingsUnread, "settings-unread"), (.cantOpen, "cant-open"),
-            (.newerVersion, "newer-version"),
+            (.newerVersion, "newer-version"), (.notEncrypted, "not-encrypted"),
         ] {
             let folder = try copy(of: sample)
             let first = AppModel(directory: folder)

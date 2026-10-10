@@ -43,18 +43,17 @@ A sync reads the server's status first (reused for up to a minute when there is 
 | 3 | The status reports a protocol older than this app's, or a sync request answers 404 or 405 | server update needed | Update or fix |
 | 4 | The status says the server isn't set up | server not set up | Server changed (stops) |
 | 5 | This device is refused, and the server's identity is the one this library last synced with, or either has none | access removed | No access (stops) |
-| 6 | This device is refused, the identity changed, this library isn't encrypted and the server is | sign-in needed | Needs you (stops) |
-| 7 | This device is refused and the identity changed otherwise | restored or replaced | Server changed (stops) |
-| 8 | The server's identity changed twice within one sync | busy | Temporary |
-| 9 | The server's data was rolled back (it lost revisions or its log changed) | none: everything is compared again and what the server lost is sent back | Syncing normally |
-| 10 | No network: not connected, data not allowed, roaming off, a call in progress | offline | Temporary |
-| 11 | Certificate or secure-connection error | certificate not valid | Update or fix |
-| 12 | Server error (5xx), rate limited (429), or an answer that can't be parsed | busy | Temporary |
-| 13 | Any other network error: refused, timed out, host not found, connection lost | can't reach | Temporary |
-| 14 | This device's own database is damaged (malformed or not a database, or the store's own validation failed) | this device's data | Unexpected |
-| 14b | This device's own database can't be used right now (busy or locked, the device is locked, a failing or full disk) | this device's data, temporary | Temporary |
-| 15 | Content or a recovery format from a newer version | update My Journal | Update or fix (stops) |
-| 16 | Anything else | unexpected | Unexpected |
+| 6 | This device is refused and the identity changed otherwise | restored or replaced | Server changed (stops) |
+| 7 | The server's identity changed twice within one sync | busy | Temporary |
+| 8 | The server's data was rolled back (it lost revisions or its log changed) | none: everything is compared again and what the server lost is sent back | Syncing normally |
+| 9 | No network: not connected, data not allowed, roaming off, a call in progress | offline | Temporary |
+| 10 | Certificate or secure-connection error | certificate not valid | Update or fix |
+| 11 | Server error (5xx), rate limited (429), or an answer that can't be parsed | busy | Temporary |
+| 12 | Any other network error: refused, timed out, host not found, connection lost | can't reach | Temporary |
+| 13 | This device's own database is damaged (malformed or not a database, or the store's own validation failed) | this device's data | Unexpected |
+| 13b | This device's own database can't be used right now (busy or locked, the device is locked, a failing or full disk) | this device's data, temporary | Temporary |
+| 14 | Content or a recovery format from a newer version | update My Journal | Update or fix (stops) |
+| 15 | Anything else | unexpected | Unexpected |
 
 Item-level problems are not states: one record too large or refused, or one image refused, is set aside with its own message while everything else syncs (step 4 below). A record whose push fails with a server error three times in a row, while other requests succeed, is refused at item level.
 
@@ -66,10 +65,9 @@ Item-level problems are not states: one record too large or refused, or one imag
 | Offline | `messages.sync.offline` | `common.tryAgain` | hidden until the long wait | backoff; at once when the network returns |
 | Can't reach | `messages.sync.unreachable`, or `messages.sync.unreachableTailscale` for a `.ts.net` host | `common.tryAgain` | hidden until the long wait | backoff; at once when the network returns |
 | Busy | `messages.sync.unavailable` | `common.tryAgain` | hidden until the long wait | backoff, at least the server's Retry-After |
-| Sign-in needed | `messages.sync.signInNeeded` | `common.reconnect` | shown | stops |
 | Not set up | `messages.sync.serverNotSetUp` | `common.reconnect` | shown | stops |
 | Restored or replaced | `messages.sync.serverReplaced` | `common.reconnect` | shown | stops |
-| Access removed | `messages.sync.accessRemoved`, or `messages.sync.accessRemovedNoPassword` for a library without a password | `common.reconnect` | shown | stops |
+| Access removed | `messages.sync.accessRemoved` | `common.reconnect` | shown | stops |
 | Update My Journal | `messages.sync.appUpdateNeeded` | `messages.sync.action.checkAgain` | shown | stops |
 | Server update needed | `messages.sync.serverUpdateNeeded` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
 | Certificate not valid | `messages.sync.certificateInvalid` | `messages.sync.action.checkAgain` | shown | every 5 minutes |
@@ -104,7 +102,7 @@ The message appears in the footer of Settings ▸ Sync's Server section, and in 
 - Syncing normally: every 3 seconds while My Journal is the active app; every 30 seconds while it is open but another app is active; at once when it becomes active again or returns from the background. After each pause in writing, and when leaving an entry, saved writing is sent without waiting. When the server supports waiting for changes, the device waits for them instead of polling.
 - After a failure (Temporary and Unexpected): 3 seconds, doubling after each failure in a row, up to 5 minutes; at least the server's Retry-After. When the network comes back the waiting retry runs at once. Returning from the background syncs at once.
 - Update or fix needed (except update My Journal): checked every 5 minutes.
-- **States that stop automatic sync** (sign-in needed, not set up, restored or replaced, access removed, update My Journal): no automatic sync, no sync after writing pauses or on leaving an entry; a pause in writing only updates Not on Server Yet. One check runs at launch and when the app becomes active, at most every 10 minutes. The state's action, or Sync Now, always runs.
+- **States that stop automatic sync** (not set up, restored or replaced, access removed, update My Journal): no automatic sync, no sync after writing pauses or on leaving an entry; a pause in writing only updates Not on Server Yet. One check runs at launch and when the app becomes active, at most every 10 minutes. The state's action, or Sync Now, always runs.
 - Sync never runs while locked (saved writing is still sent on locking), while the library is being replaced, or while a save has failed.
 
 **Long wait.** When the last sync failed, changes are waiting, and more than 24 hours passed since Last Synced (or since the first failure, when this connection never synced), Sync Status shows in any state with that state's own message. It's checked after every sync, including automatic retries and the sync when the app becomes active, so changes left from days ago don't flash it at launch.

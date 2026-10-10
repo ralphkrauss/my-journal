@@ -202,8 +202,6 @@ struct DeviceDescriptions {
         case .recovery:
             switch recoveryVersion {
             case 1: return "Added with your recovery key on \(when)"
-            case 3: return "Added with your access password on \(when)"
-            case 4: return "Added with a recovery code on \(when)"
             default: return "Added with your master password on \(when)"
             }
         case .unknown: return "Added on \(when)"

@@ -11,7 +11,7 @@
         private func library(connectedTo address: String) async throws -> URL {
             let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Former-" + UUID().uuidString)
             let model = AppModel(directory: directory)
-            await model.start(encrypted: false)
+            await model.start()
             let account = try XCTUnwrap(model.configuration?.connectionKeyID)
             let keyAccount = model.configuration?.keyID
             addTeardownBlock {

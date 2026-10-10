@@ -8,14 +8,14 @@ protocol SyncServer: Sendable {
     func upload(_ bytes: Data, id: UUID) async throws
     func hasAttachment(_ id: UUID) async throws -> Bool?
     func downloadAttachment(_ id: UUID) async throws -> Data
-    /// How the server stores journals, from its recovery format; nil when it can't say.
-    func contentProtection() async throws -> ContentProtection?
+    /// Whether the server stores journals encrypted, from its recovery format; nil when it can't say.
+    func storesEncryptedJournals() async throws -> Bool?
     /// Waits for the server's log to move past `position`. Throws only on cancellation.
     func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer
 }
 extension SyncServer {
     /// A server that can't say how it stores journals.
-    func contentProtection() async throws -> ContentProtection? { nil }
+    func storesEncryptedJournals() async throws -> Bool? { nil }
     /// A server that can't hold a wait.
     func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer { .failed }
 }
@@ -23,8 +23,13 @@ extension ServerClient: SyncServer {
     func waitForChange(_ position: QuietPosition, digest: Bool) async throws -> WaitAnswer {
         try await waitForChange(position, digest: digest, timeout: Self.waitSeconds)
     }
-    func contentProtection() async throws -> ContentProtection? {
-        try await recoveryParameters().contentProtection
+    func storesEncryptedJournals() async throws -> Bool? {
+        do {
+            try await recoveryParameters().requireEncrypted()
+            return true
+        } catch JournalError.notEncrypted {
+            return false
+        }
     }
 }
 
@@ -179,7 +184,7 @@ public actor SyncEngine {
             // A synchronization that reused the status reads it now, so a failure is explained as it would have been
             // had the status been read first (docs/design/sync-health-and-recovery.md §2).
             let current = reused == nil ? status : try await checkedStatus()
-            if case JournalError.unauthorized = error { throw await lostAccess(status: current, syncedID: syncedID) }
+            if case JournalError.unauthorized = error { throw lostAccess(status: current, syncedID: syncedID) }
             throw error
         }
     }
@@ -220,14 +225,9 @@ public actor SyncEngine {
         return status
     }
     /// Why the server refused this device's credential. A server with another identity than the one this library
-    /// last synchronized with was restored or replaced; the same server removed this device. A library without
-    /// encryption facing an encrypted server can't tell encryption turned on elsewhere from a replaced server, and
-    /// signing in decides.
-    private func lostAccess(status: ServerStatus, syncedID: String?) async -> SyncFailure {
+    /// last synchronized with was restored or replaced; the same server removed this device.
+    private func lostAccess(status: ServerStatus, syncedID: String?) -> SyncFailure {
         guard let syncedID, status.serverId != syncedID else { return SyncFailure(.accessRemoved) }
-        if store.protection == .plaintext, (try? await server.contentProtection()) == .encrypted {
-            return SyncFailure(.signInNeeded)
-        }
         return SyncFailure(.serverReplaced)
     }
     private func synchronizeOnce(_ request: Request, status: ServerStatus) async throws -> SyncReport {
@@ -235,7 +235,7 @@ public actor SyncEngine {
         let serverID = status.serverId
         waitingRecords = []
         var received = Set<UUID>()
-        try await confirmSameProtection(serverID: serverID)
+        try await confirmEncryptedServer(serverID: serverID)
         // Before anything is queued or read for sending: pins and journal order go to this server.
         try await store.updateLibrarySync()
         if try await store.needsReconciliation(serverID: serverID) {
@@ -310,16 +310,14 @@ public actor SyncEngine {
     public func waitForChange(from position: QuietPosition) async throws -> WaitAnswer {
         try await server.waitForChange(position, digest: true)
     }
-    /// A library never synchronizes with a server that stores journals another way. When another device turned on
-    /// encryption, the server took a new identity and kept this device's access only if it turned encryption on; a
-    /// synchronization of the unencrypted library that runs after that, such as one already running at the switch,
-    /// would otherwise compare everything again and send readable journals to the encrypted server. The format can
-    /// only change with the identity, so it's checked whenever the identity isn't the one this library last read.
-    private func confirmSameProtection(serverID: String?) async throws {
+    /// A library never synchronizes with a server that stores journals readable: that would send encrypted journals
+    /// where a server could read them. A server's format can only change with its identity, so it's checked whenever
+    /// the identity isn't the one this library last read. Nothing is sent: the server is not the one this library
+    /// knew, as after a restore or a replacement.
+    private func confirmEncryptedServer(serverID: String?) async throws {
         guard try await store.syncedServerID() != serverID else { return }
-        guard let protection = try await server.contentProtection() else { return }
-        // Like being signed out: the app asks to sign in once encryption was turned on from another device.
-        guard protection == store.protection else { throw JournalError.unauthorized }
+        guard let encrypted = try await server.storesEncryptedJournals() else { return }
+        guard encrypted else { throw SyncFailure(.serverReplaced) }
     }
     private func reconcile(serverID: String?) async throws {
         let existing = try await store.reconciliation()

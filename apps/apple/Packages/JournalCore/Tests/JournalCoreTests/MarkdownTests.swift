@@ -163,23 +163,6 @@ final class MarkdownTests: XCTestCase {
         XCTAssertTrue(document.markdown.contains("![Sketch](attachments/" + new.uuidString.lowercased() + ")"))
         XCTAssertTrue(document.markdown.contains("`" + path + "`"))
     }
-    func testPasswordlessArchiveRestoresWithoutAnyPassword() async throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let key = try VaultCrypto.generateKey()
-        let store = try JournalStore(directory: root.appendingPathComponent("source"), key: key, protection: .plaintext)
-        let entry = JournalItem(kind: "entry", title: "Readable", document: .plain("Keep my words"))
-        try await store.save(entry)
-        let archive = root.appendingPathComponent("copy.journalarchive")
-        try await DirectoryArchiveFixture.write(store: store, recovery: .unprotected, key: key, to: archive)
-        XCTAssertFalse(try VaultArchive.requiresPassword(at: archive))
-        let restored = try await VaultArchive.restore(
-            from: archive, to: root.appendingPathComponent("restore"), phrase: "")
-        let actual = try await restored.store.item(entry.id)
-        XCTAssertEqual(actual?.document, entry.document)
-        try await store.close()
-        try await restored.store.close()
-    }
     func testRichEditPreservesUntouchedMarkdownAndLegacyDecode() throws {
         let original = JournalDocument(markdown: "Heading\n=======\n\nA **bold** word.\n")
         XCTAssertFalse(original.requiresMarkdownSource)

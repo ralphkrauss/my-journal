@@ -57,9 +57,7 @@ enum EraseOutcome: Equatable {
 
 extension AppModel {
     var eraseBlock: EraseBlock? {
-        if replacingVault || connectingToServer || deleteAllPhase != .idle || saveFailure || encryption.busy
-            || erasingLibrary
-        {
+        if replacingVault || connectingToServer || deleteAllPhase != .idle || saveFailure || erasingLibrary {
             return .busy
         }
         return nil
@@ -102,7 +100,7 @@ extension AppModel {
         }
         let host = connectionHost
         let healthy =
-            syncHealth == nil && !syncFailed && !encryption.turnedOnElsewhere && syncActivity.lastSynced != nil
+            syncHealth == nil && !syncFailed && syncActivity.lastSynced != nil
         guard healthy, let unsent else { return .unconfirmed(host: host) }
         return unsent > 0 ? .unsent(count: unsent, host: host) : .onServer(host: host)
     }
@@ -200,7 +198,7 @@ extension AppModel {
     }
 
     /// What the library uses, from the configuration's own names only: its folder and Keychain accounts, with the older
-    /// path-derived names, earlier copies and an unfinished encryption copy. This is what finishing an earlier erase
+    /// path-derived names and earlier copies. This is what finishing an earlier erase
     /// protects; it is never the sweeping list, which would protect everything.
     func libraryNames(_ configuration: LocalConfiguration) -> ErasureList {
         var list = ErasureList()
@@ -212,10 +210,6 @@ extension AppModel {
         for library in configuration.supersededLibraries ?? [] {
             list.names += library.storageFolder.map { [$0] } ?? Self.legacyLibraryFiles
             list.accounts += [library.keyID, library.connectionKeyID].compactMap { $0 }
-        }
-        if let upgrade = configuration.encryptionUpgrade {
-            list.names.append(upgrade.storageFolder)
-            list.accounts.append(upgrade.keyID)
         }
         list.names = Array(Set(list.names.filter(LocalErasure.isMovable))).sorted()
         list.accounts = Array(Set(list.accounts)).sorted()

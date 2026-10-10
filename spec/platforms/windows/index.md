@@ -13,7 +13,7 @@ Three batches of about equal size. Batch 1 first: it fixes the shell and the edi
 | Batch | Pages | Covers |
 | --- | --- | --- |
 | 1. Library and editor | 23 | The window, journals, entries, search, editor, formatting, images, tables |
-| 2. Settings, connections and security | 24 | Settings pages, connecting, devices, encryption, App Lock, agents, erase |
+| 2. Settings, connections and security | 22 | Settings pages, connecting, devices, encryption, App Lock, agents, erase |
 | 3. Messages, states and flows not covered | 18 | First launch, import and export, sync states and recovery, conflicts, history, ratings, messages |
 
 ## Batch 1: library and editor
@@ -65,13 +65,11 @@ Sources: [screens/settings](../../screens/settings.md), [screens/lock-screen](..
 | `scan-code` | screen | `screens/scan-code.md` | reviewed | Not offered in version 1; records the decision and the later design. |
 | `add-device` | screen | `screens/add-device.md` | reviewed | Dialog: QR code on a white tile, typed code, check code, Windows Hello. |
 | `change-password` | screen | `screens/change-password.md` | reviewed | Dialog with three `PasswordBox` fields; Forgot password? replaces the current-password field after Windows Hello. |
-| `encrypt-journals` | screen | `screens/encrypt-journals.md` | draft | Not applicable: Windows has no unencrypted libraries; never shown. |
 | `lock-screen` | screen | `screens/lock-screen.md` | draft | Lock page, Windows Hello, App Lock paused, no privacy cover, capture exclusion; written with `platform.md` sections 13, 14 and 20. |
 | `agent-detail` | screen | `screens/agent-detail.md` | reviewed | Agent's page. |
 | `allow-agent` | screen | `screens/allow-agent.md` | reviewed | Allow access dialog. |
 | `connect-to-server` | flow | `flows/connect-to-server.md` | draft | Step by step, with the task page's states. |
 | `pair-device` | flow | `flows/pair-device.md` | reviewed | Both sides; no camera needed. |
-| `encrypt-journals` | flow | `flows/encrypt-journals.md` | draft | Not applicable: never run; a server without encryption is refused. |
 | `change-password` | flow | `flows/change-password.md` | reviewed | Steps, the failure branches and Forgot password?. |
 | `app-lock` | flow | `flows/app-lock.md` | draft | Triggers on Windows: launch, Ctrl+L, inactivity, session lock, sleep. |
 | `allow-agent` | flow | `flows/allow-agent.md` | reviewed | Connect and allow an agent. |
@@ -90,7 +88,7 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `kept-version-notice` | screen | `screens/kept-version-notice.md` | draft | The Informational `InfoBar` above the open entry or template that was kept as two versions; no review page. |
 | `version-history` | screen | `screens/version-history.md` | reviewed | Entry and template version history page with side-by-side comparison. |
 | `messages` | messages | `messages.md` | reviewed | Sync states, save failures, kept versions, unavailable content as `InfoBar`s and dialogs; severity table; announcements. |
-| `create-library` | flow | `flows/create-library.md` | reviewed | Start a Journal, encryption choices. |
+| `create-library` | flow | `flows/create-library.md` | reviewed | Start a Journal with a master password. |
 | `import-archive` | flow | `flows/import-archive.md` | draft | File activation, Open picker, preview, restore or add. |
 | `export-archive` | flow | `flows/export-archive.md` | draft | Save picker, progress, password check. |
 | `export-markdown` | flow | `flows/export-markdown.md` | draft | Folder picker, Windows-safe file names, Windows Hello when App Lock is on. |

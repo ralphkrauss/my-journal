@@ -66,7 +66,7 @@ See `screens/lock-screen`. Once per lock, while the app is active, the system is
 
 - Success: the journals open where they were.
 - Cancel: the lock screen stays; Unlock with {method} asks again.
-- Failure or unavailable: `settings.lock.failed`; Use {credential} offers the password or recovery key (journals with a password).
+- Failure or unavailable: `settings.lock.failed`; Use {credential} offers the password or recovery key.
 - No passcode any more: App Lock turns itself off, the journals open, and `settings.lock.turnedOff.*` explains once.
 
 ## Moving from the old app PIN

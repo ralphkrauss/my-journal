@@ -63,7 +63,7 @@ struct UnlockView: View {
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         // Never a dead end: when the device can't unlock, the journals' own credential still can.
-        if model.unlockState.problem && model.configuration?.requiresPassword == true {
+        if model.unlockState.problem {
             link("Use \(credentialName)") {
                 usingCredential = true
                 model.error = nil

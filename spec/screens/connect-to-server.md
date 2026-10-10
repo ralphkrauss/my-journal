@@ -1,12 +1,11 @@
 ---
 id: connect-to-server
 title: Connect to a Server (sheet and its steps)
-features: [sync-connect, server-discovery, server-setup, join-with-local-journals, pair-device-scan, pair-device-code, recovery-code-join, sync-recovery]
+features: [sync-connect, server-discovery, server-setup, join-with-local-journals, pair-device-scan, pair-device-code, sync-recovery]
 sources:
   - apps/apple/JournalApp/Views/ConnectionView.swift
   - apps/apple/JournalApp/Views/ConnectionSteps.swift
   - apps/apple/JournalApp/Views/MergeJournalsView.swift
-  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - apps/apple/JournalApp/Views/SaveFailureNotice.swift
   - apps/apple/JournalApp/Model/ConnectionFlow.swift
   - apps/apple/JournalApp/Model/ServerJoining.swift
@@ -31,7 +30,6 @@ One sheet that takes this device from "not syncing" (or "sync stopped working") 
 
 - First-launch screen: Connect to a Server… (`screens/welcome`, owned by onboarding).
 - Settings ▸ Sync: Connect to a Server… (not connected), and Reconnect… (`screens/settings-sync`).
-- Settings ▸ Privacy: Reconnect… after encryption was turned on elsewhere (`screens/settings-privacy`).
 - Settings ▸ Agent Access: Connect to a Server…, and Reconnect… when this device lost access (`screens/settings-agent-access`).
 - Sync Status's Reconnect… (`screens/sync-status`).
 
@@ -44,7 +42,7 @@ The sheet is a navigation stack: the first page chooses a server; each later ste
 ### Common to every page
 
 - An error row at the end of the page, in red, smaller text, for a failure that isn't about one field. Field errors appear under their field instead.
-- A busy row while waiting on the server (activity indicator and a label such as `settings.connect.busy.checking`), except on Add This Device and Finish, which show progress beside their instructions. While a device that signs in again encrypts its own journals, the busy row shows the encryption progress (`settings.encryption.progress`, with a progress bar).
+- A busy row while waiting on the server (activity indicator and a label such as `settings.connect.busy.checking`), except on Add This Device and Finish, which show progress beside their instructions.
 - Toolbar: a cancel button and the step's primary (confirming) button, described per page.
   - Cancel (`common.cancel`) is disabled while installing (connecting, setting up, signing in).
   - Phone/tablet: Back is shown where going back is allowed; Cancel is shown only where Back isn't. Computer: Cancel is always shown (Back is available as well where allowed).
@@ -73,7 +71,7 @@ Title `settings.connect.setUp.title`. Shown when the chosen server isn't set up 
 2. Section with header `settings.connect.setUp.code`: a monospaced field (accessibility label `settings.connect.setUp.code`, placeholder `settings.connect.setUp.codePlaceholder` "XXX-XXX"), capitalising, ASCII keyboard. Its field error appears under it. Footer, in order:
    - `settings.connect.setUp.footer`;
    - link `settings.sync.footer.howToSetUp` ("How to Set Up a Server") → `<repository>/blob/main/docs/guide/sync.md#use-your-own-server`;
-   - only when Set Up follows directly and this device already had journals before opening the sheet: `settings.connect.setUp.upload` ("The journals on this device will be uploaded to {host}."), followed by `settings.connect.merge.footerUnencrypted` when the journals aren't encrypted.
+   - only when Set Up follows directly and this device already had journals before opening the sheet: `settings.connect.setUp.upload` ("The journals on this device will be uploaded to {host}.").
 - Primary: `settings.connect.setUp.setUp` ("Set Up") when Set Up follows directly, otherwise `common.continue`. Disabled while working or when the code is empty. Return does the same.
 - Field errors: `messages.connection.setupCodeLength`, `messages.connection.setupCodeCharacters`, `messages.connection.setupCodeIncorrect`, `messages.connection.setupCodeRateLimited`.
 
@@ -102,26 +100,25 @@ Title `settings.connect.signIn.title` ("Enter {credential}", for example "Enter 
 No title in the bar.
 
 1. A centred block: a checkmark symbol (decorative), heading `settings.connect.ready.title` ("Server Is Ready"), and `settings.connect.ready.message` ("Your journals will sync with {host}.").
-2. A section with `settings.connect.ready.addDevice` ("Add Another Device…"), which opens `screens/add-device` as a sheet. Footer, only when the journals have a password: `settings.connect.ready.footer` ("You can also sign in on your other devices with your {credential}.").
+2. A section with `settings.connect.ready.addDevice` ("Add Another Device…"), which opens `screens/add-device` as a sheet. Footer: `settings.connect.ready.footer` ("You can also sign in on your other devices with your {credential}.").
 - Toolbar: only `common.done`, which closes the sheet.
 
 ### Step: Enter {credential} (sign in)
 
-Title `settings.connect.signIn.title` ("Enter {credential}"), where the credential is what the server's journals use: Master Password, Recovery Key (servers set up by early versions) or Access Password.
+Title `settings.connect.signIn.title` ("Enter {credential}"), where the credential is what the server's journals use: Master Password or Recovery Key (servers set up by early versions).
 
 1. Intro, one of:
-   - signing in after the server started using encryption: `settings.connect.signIn.introEncrypted`;
    - a server set up with a recovery key: `settings.connect.signIn.introRecoveryKey` ("Enter the recovery key you saved when you set up {host}.");
    - otherwise: `settings.connect.signIn.intro` ("Enter the {credential} you chose when you set up {host}.").
 2. A secure field (label: the credential's name) with password-manager autofill; switch `settings.connect.showCredential`. Field error under it.
-   Footer: when signing in after encryption was turned on elsewhere, `settings.connect.signIn.footerEncrypted`; otherwise, only when this device has nothing written, `settings.connect.download` ("Your journals will download to this device.").
+   Footer: only when this device has nothing written, `settings.connect.download` ("Your journals will download to this device.").
 3. A section with `settings.connect.signIn.useDevice` ("Use a Connected Device Instead…"), which pushes Add This Device. Disabled while working.
 - Primary: `settings.connect.signIn.signIn` ("Sign In"), or `common.tryAgain` after merging stopped part way. Disabled while working or empty.
 - Busy row: `settings.connect.busy.signingIn`, then the joining phases `settings.connect.busy.checking`, `settings.connect.busy.downloading`, `common.merging`.
 
 ### Step: Add This Device
 
-Title `settings.connect.addThisDevice.title`. For a server with a password, after Use a Connected Device Instead…; for a server without encryption, directly.
+Title `settings.connect.addThisDevice.title`. After Use a Connected Device Instead….
 
 One section, showing one of:
 - after a failure: nothing (the error row explains, and the primary button offers the next step);
@@ -131,19 +128,9 @@ One section, showing one of:
 
 Footer: `settings.connect.download` when this device has nothing written.
 
-For a server without encryption, a further section: `settings.connect.addThisDevice.useRecoveryCode` ("Use a Recovery Code Instead…"), which withdraws the pairing request and pushes Use a Recovery Code. Disabled while installing.
-
 - Primary:
   - while the check code is shown and not yet confirmed: `common.connect` ("Connect"), shortcut Command-Return (not Return); on the computer its help tag is `settings.connect.addThisDevice.connectHelp` and its accessibility hint `settings.connect.addThisDevice.connectHint`;
   - after a failure: `settings.connect.addThisDevice.getNewCode` ("Get New Code") if nothing was received from the other device, else `common.tryAgain`.
-
-### Step: Use a Recovery Code
-
-Title `settings.connect.recoveryCode.title`. For a server without encryption.
-
-1. A secure field `common.recoveryCode` ("Recovery Code"); switch `settings.connect.recoveryCode.show` ("Show Recovery Code"). Field error under it.
-2. Footer: `settings.connect.recoveryCode.footer`, followed by a space and `settings.connect.download` when this device has nothing written.
-- Primary: `common.connect` ("Connect"), or `common.tryAgain` when the one-time code was already used by an attempt that failed afterwards (Try Again continues with the access it gave). Disabled while working or empty.
 
 ### Step: Merge Journals
 
@@ -153,10 +140,7 @@ Title `settings.connect.merge.title`. Before anything is sent from a device that
 2. Rows: `settings.connect.server` → host (selectable); `common.onThisDevice` ("On This Device") → a summary: `common.journalCount` and `common.entryCount` always, then `common.templateCount` and `settings.connect.merge.recentlyDeleted` when non-zero, joined with “, ” (for example “3 journals, 42 entries, 2 templates, 3 recently deleted”).
 3. Footer lines, in order:
    - `settings.connect.merge.footerKept`;
-   - what happens to encryption, when it applies:
-     - device not encrypted, server encrypted: `settings.connect.merge.footerWillEncrypt`;
-     - both encrypted: `settings.connect.merge.footerSamePassword` ("Afterward, this device uses the same {serverCredential} as your other devices. Archives you exported earlier still open with the {deviceCredential} you use now.");
-     - neither encrypted: `settings.connect.merge.footerUnencrypted`;
+   - `settings.connect.merge.footerSamePassword` ("Afterward, this device uses the same {serverCredential} as your other devices. Archives you exported earlier still open with the {deviceCredential} you use now.");
    - `settings.connect.merge.footerLeaveOut`;
    - `settings.connect.merge.footerOnlyIf` ("Merge only if {host} is your server.").
 - Primary: `common.merge` ("Merge"), shortcut Command-Return (not Return); computer help `settings.connect.merge.help`, hint `settings.connect.merge.hint`. Disabled while working.
@@ -190,8 +174,6 @@ While the computer connects to a server from the Settings window, the journal wi
 | Copy Code | `connect-copy-code` | Copies the nine digits only. |
 | Connect (check code) | `connect-confirm-check-code` | Accepts the other device's approval. |
 | Get New Code | `connect-new-code` | Withdraws the old request and asks for a new code. |
-| Use a Recovery Code Instead… | `connect-use-recovery-code` | Pushes Use a Recovery Code. |
-| Connect (recovery code) | `connect-sign-in` | Signs in with the recovery code. |
 | Merge | `connect-merge` | Agrees to merge with this server; continues. |
 | Try Again / Scan Again | `connect-retry` | See `flows/connect-to-server`. |
 | Add Another Device… | `add-device` | Opens Add Device. |
@@ -204,19 +186,19 @@ While the computer connects to a server from the Settings window, the journal wi
 - **Locked:** page 1 shows `settings.connect.locked`. Locking while the sheet is open cancels everything (as Cancel) and closes it.
 - **Checking / working:** fields and choices disabled; busy row; Cancel disabled while installing; the sheet can't be swiped away while installing.
 - **Error:** shown on the step where the work started (see `flows/connect-to-server` for every message).
-- **Reconnecting:** when this device's server needs Reconnect… (set up again, access lost or restored, or encryption turned on elsewhere), and the address is known, the sheet checks the server as soon as it opens and goes straight to its next step.
+- **Reconnecting:** when this device's server needs Reconnect… (set up again, or access lost or restored), and the address is known, the sheet checks the server as soon as it opens and goes straight to its next step.
 - **Computer inactivity:** while the sheet is waiting on the server or another device, My Journal doesn't lock for inactivity.
 
 ## Rules
 
 - Searching for nearby servers runs only while page 1 is shown, unlocked and without a scanned code.
-- **Servers without encryption.** A device with an encrypted library, or with no library, never sets up, joins or keeps a server whose recovery format is 3 or 4 (set up without encryption): the check on page 1, pairing and the scanned-code check refuse it with `messages.connection.encryptionOff` and nothing is sent. A device with an unencrypted library (one that chose Not Now in Encrypt Your Journals) keeps the earlier behaviour toward its own unencrypted server, including Add This Device and Use a Recovery Code for a server without encryption; the Encrypt Your Journals form then encrypts the server ([flows/encrypt-journals](../flows/encrypt-journals.md)). Those steps and their keys stay until Not Now is removed in a later release.
+- **Servers without encryption.** No device of this version sets up, joins or keeps a server whose recovery format is 3 or 4 (set up without encryption by version 1.0 or earlier): the check on page 1, pairing and the scanned-code check refuse it with `messages.connection.encryptionOff` and nothing is sent.
 - Nearby servers are suggestions only: the address is checked exactly as a typed one. Only HTTPS announcements are listed, one row per address.
 - The setup code field formats as the person types: letters are upper-cased, spaces and dashes are removed and the hyphen is inserted after three characters (`XXX-XXX`); the code is never submitted automatically.
 - Field errors clear when the field changes. The two password fields' errors clear together.
 - After a field error, focus moves to the field and the message is announced (after focus moves, so it isn't cut off).
 - Steps take focus on their first field after the push transition.
-- A password typed here never leaves the device; only a value derived from it is sent. A recovery code is sent as typed only if it has the recovery code's exact form (64 hexadecimal digits); anything else is refused without sending.
+- A password typed here never leaves the device; only a value derived from it is sent.
 - Nothing is sent to a server for a device with journals until the person chose Merge on Merge Journals for that server.
 - The server's encryption details seen when the server was chosen must still hold when connecting; otherwise the sheet returns to page 1 with `messages.connection.serverChanged`.
 

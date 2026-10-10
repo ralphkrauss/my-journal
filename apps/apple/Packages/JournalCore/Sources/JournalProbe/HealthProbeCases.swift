@@ -22,7 +22,7 @@ extension Probe {
     private static func addresses(certificate: String, otherServer: String) async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("journal-addresses-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = try JournalStore(directory: root, key: VaultCrypto.generateKey(), protection: .plaintext)
+        let store = try JournalStore(directory: root, key: VaultCrypto.generateKey())
         let cases: [(String, SyncHealth, String)] = [
             (certificate, .certificateInvalid, "a self-signed certificate"),
             ("https://journal.invalid", .unreachable, "an address that doesn't resolve"),
@@ -90,7 +90,7 @@ extension Probe {
         guard limited else { throw ProbeFailure("the server never limited requests") }
         // A copy of the library that hasn't synced with this server yet reads how it stores journals first.
         let store = try JournalStore(
-            directory: root.appendingPathComponent("rate-limited"), key: key, protection: .encrypted)
+            directory: root.appendingPathComponent("rate-limited"), key: key)
         do {
             try await SyncEngine(store: store, client: client).synchronize()
             throw ProbeFailure("a rate-limited sync succeeded")
@@ -125,7 +125,7 @@ extension Probe {
         try bytes.write(to: file)
         let damaged: JournalStore
         do {
-            damaged = try JournalStore(directory: copy, key: state.devices["b"]?.key ?? Data(), protection: .encrypted)
+            damaged = try JournalStore(directory: copy, key: state.devices["b"]?.key ?? Data())
         } catch {
             throw ProbeFailure("the damaged copy didn't open far enough to sync: \(error)")
         }

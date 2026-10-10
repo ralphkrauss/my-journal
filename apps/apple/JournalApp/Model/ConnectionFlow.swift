@@ -8,7 +8,7 @@ import SwiftUI
 @MainActor
 final class ConnectionFlow: ObservableObject {
     enum Step: Hashable {
-        case setUpServer, choosePassword, enterPassword, serverReady, signIn, addThisDevice, recoveryCode
+        case setUpServer, choosePassword, enterPassword, serverReady, signIn, addThisDevice
         /// Merge Journals and, after a scanned code, Finish on Your Other Device
         /// (docs/design/join-with-local-journals.md).
         case merge, finish
@@ -25,23 +25,12 @@ final class ConnectionFlow: ObservableObject {
     /// What the server published about its recovery envelope, which decided what this flow asks for; connecting
     /// requires the same.
     @Published private(set) var envelope: RecoveryParameters?
-    @Published private(set) var passwordless = false
     @Published var setupCode = "" { didSet { if setupCode != oldValue { fieldErrors[.setupCode] = nil } } }
     /// A master password chosen for a journal created while setting up the server. Kept while the sheet is open, so
     /// Try Again never asks for it twice.
     @Published var newPassword = "" { didSet { if newPassword != oldValue { clearPasswordErrors() } } }
     @Published var verifyPassword = "" { didSet { if verifyPassword != oldValue { clearPasswordErrors() } } }
-    @Published var phrase = "" {
-        didSet {
-            if phrase != oldValue {
-                fieldErrors[.phrase] = nil
-                codeUsedNotice = nil
-            }
-        }
-    }
-    /// Shown above the recovery code field after Back from Merge Journals spent the code it was entered with, until
-    /// a new one is typed (docs/design/build-18-fixes-2026-10-06.md §3.2).
-    @Published private(set) var codeUsedNotice: String?
+    @Published var phrase = "" { didSet { if phrase != oldValue { fieldErrors[.phrase] = nil } } }
     /// The journal this flow created before setting up the server. Its encryption and password can't change now.
     @Published private(set) var createdJournalHere = false
     @Published private(set) var fieldErrors: [Field: String] = [:]
@@ -118,15 +107,12 @@ final class ConnectionFlow: ObservableObject {
                 }
                 try Task.checkCancellation()
                 envelope = shown
-                passwordless = shown.map { !$0.requiresPassword } ?? false
                 status = server
                 if !server.initialized {
                     path = [.setUpServer]
                     focusRequest = .setupCode
                 } else if asksToMerge {
                     path = [.merge]
-                } else if passwordless {
-                    path = [.addThisDevice]
                 } else {
                     path = [.signIn]
                     focusRequest = .phrase
@@ -143,10 +129,8 @@ final class ConnectionFlow: ObservableObject {
         if model.store == nil { return .choosePassword }
         return needsExistingPassword ? .enterPassword : nil
     }
-    /// Setting up from a library protected by a password needs it: the server's recovery secret derives from it.
-    var needsExistingPassword: Bool {
-        model.store != nil && model.configuration?.requiresPassword != false && model.recoveryKey == nil
-    }
+    /// Setting up from a library needs its password: the server's recovery secret derives from it.
+    var needsExistingPassword: Bool { model.store != nil && model.recoveryKey == nil }
     var existingCredentialName: String { model.configuration?.credentialName ?? "Master Password" }
 
     func continueFromSetupCode() {
@@ -258,11 +242,10 @@ final class ConnectionFlow: ObservableObject {
     var credentialName: String {
         switch envelope?.formatVersion {
         case 1: return "Recovery Key"
-        case 3: return "Access Password"
         default: return "Master Password"
         }
     }
-    /// How an error names a typed credential: a recovery key or code by its name, any kind of password as a password.
+    /// How an error names a typed credential: a recovery key by its name, a password as a password.
     private static func typedName(_ credentialName: String) -> String {
         credentialName.hasPrefix("Recovery") ? credentialName.lowercased() : "password"
     }
@@ -286,8 +269,6 @@ final class ConnectionFlow: ObservableObject {
         if let invite {
             path = [.finish]
             requestScannedPairing(invite)
-        } else if passwordless {
-            path.append(.addThisDevice)
         } else {
             path.append(.signIn)
             focusRequest = .phrase
@@ -299,7 +280,6 @@ final class ConnectionFlow: ObservableObject {
         installing = true
         activity = "Signing In…"
         error = nil
-        let recovering = path.last == .recoveryCode
         operation = Task {
             defer {
                 busy = false
@@ -312,11 +292,9 @@ final class ConnectionFlow: ObservableObject {
                     replacingEmptyLibrary: empty)
                 completed = true
                 finished = true
-            } catch JournalError.invalidRecoveryKey where !recovering {
+            } catch JournalError.invalidRecoveryKey {
                 fail(.phrase, Self.incorrectMessage(credentialName))
-            } catch ServerConnectionError.invalidRecoveryCode {
-                fail(.phrase, "That recovery code isn’t correct or has already been used.")
-            } catch is ServerRateLimited where !recovering {
+            } catch is ServerRateLimited {
                 fail(
                     .phrase,
                     "Too many \(Self.typedName(credentialName)) attempts on this server. Try again in a few minutes, or use a connected device."
@@ -381,7 +359,6 @@ final class ConnectionFlow: ObservableObject {
                 let current = try await client.recoveryParameters()
                 try model.checkServerEnvelope(current, shown: nil)
                 envelope = current
-                passwordless = !current.requiresPassword
                 try Task.checkCancellation()
                 if asksToMerge {
                     path = [.merge]
@@ -586,17 +563,6 @@ final class ConnectionFlow: ObservableObject {
         case .signIn:
             phrase = ""
             focusRequest = .phrase
-        case .recoveryCode:
-            phrase = ""
-            codeUsedNotice = "That code was used. Enter a new one."
-            focusRequest = .phrase
-            if let notice = codeUsedNotice {
-                // After focus moves, so VoiceOver doesn't cut the announcement off.
-                Task {
-                    try? await Task.sleep(nanoseconds: 300_000_000)
-                    announceForAccessibility(notice)
-                }
-            }
         case .addThisDevice:
             // The old code was withdrawn; its screen shows “Getting a code…” until a new one arrives.
             announcesNewCode = true

@@ -27,7 +27,7 @@ Locking replaces the window's content with a `Page` and releases the journal vie
 | Error | `InfoBar` (Error), not closable, above the button: the app's error, or after a failed attempt `settings.lock.failed` | Read when it opens |
 | Unlock with Windows Hello | An accent `Button` `settings.lock.unlockWith` ("Unlock with Windows Hello"), the page's default button; takes focus when the page appears; disabled while the prompt is open | Enter chooses it |
 | App Lock moved from a PIN | Not shown (`settings.lock.pinRetired`): Windows never had an app PIN | |
-| Use master password | A `HyperlinkButton` `settings.lock.useCredential`, after a failed attempt and when the journals have a password; {credential} is the library's (`common.masterPassword`, `library.lock.credential.recoveryKey`, `library.lock.credential.accessPassword`, `common.recoveryCode`) | |
+| Use master password | A `HyperlinkButton` `settings.lock.useCredential`, after a failed attempt and when the journals have a password; {credential} is the library's (`common.masterPassword`, `library.lock.credential.recoveryKey`) | |
 
 **Credential form** (the device key is unavailable, or Use master password was chosen): `PasswordBox`, `Header` the credential's name (`common.passwordOrRecoveryKey` when it is not known), `InputScope` Password, focused, with the built-in reveal button (the spec has no Show Password switch on the lock screen, [platform.md, 25](../platform.md#25-text-input-and-spelling)); an `InfoBar` for the error; an accent `Button` `settings.lock.unlock`, the default button, disabled while the field is empty (Enter in the field unlocks); and, when the PC can still use Windows Hello, a `HyperlinkButton` `settings.lock.useMethod` ("Use Windows Hello") that returns to the first state.
 

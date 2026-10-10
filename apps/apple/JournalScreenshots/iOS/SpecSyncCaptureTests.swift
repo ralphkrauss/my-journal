@@ -73,7 +73,7 @@ final class SpecSyncCaptureTests: SpecCaptureCase {
     @MainActor func testServerWithoutEncryptionIsRefused() async throws {
         let (address, code) = try server("PLAIN")
         _ = try await ServerClient(address: address).initialize(
-            code: code, envelope: .unprotected,
+            code: code, envelope: RecoveryEnvelope(salt: "", wrappedKey: "", iterations: 0, formatVersion: 4),
             recoverySecret: VaultCrypto.random(32).map { String(format: "%02x", $0) }.joined(),
             deviceName: "Spec Mac")
         let app = try launch(library: emptyLibraryFolder(), unlocking: false)

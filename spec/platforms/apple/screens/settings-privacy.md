@@ -2,12 +2,12 @@
 id: settings-privacy
 title: Settings ▸ Privacy (Apple)
 spec: screens/settings-privacy.md
-features: [encryption-status, encrypt-existing-journals, change-password, forgot-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
+features: [encryption-status, change-password, forgot-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
 devices: [iphone, ipad, mac]
 status: draft
 sources:
   - apps/apple/JournalApp/Views/SettingsView.swift
-  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
+  - apps/apple/JournalApp/Views/EncryptionSettingsSection.swift
   - apps/apple/JournalApp/Views/ChangePasswordView.swift
   - apps/apple/JournalApp/Views/AppLockSettings.swift
   - apps/apple/JournalApp/Views/InactivityLockSettings.swift
@@ -15,7 +15,6 @@ sources:
   - apps/apple/JournalApp/Model/DeviceAuthentication.swift
   - apps/apple/JournalApp/Model/InactivityLock.swift
   - apps/apple/JournalApp/Model/LocalConfiguration.swift
-  - apps/apple/JournalApp/Model/EncryptionUpgrade.swift
   - docs/design/enable-encryption.md
   - docs/design/sync-security-2026-09-24.md
   - docs/design/app-lock-system-auth.md
@@ -24,11 +23,9 @@ screenshots:
   - screenshots/iphone/settings-privacy-default.png
   - screenshots/iphone/settings-privacy-default-dark.png
   - screenshots/iphone/settings-privacy-app-lock-on.png
-  - screenshots/iphone/settings-privacy-encryption-off.png
   - screenshots/ipad/settings-privacy-default.png
   - screenshots/ipad/settings-privacy-default-dark.png
   - screenshots/ipad/settings-privacy-app-lock-on.png
-  - screenshots/ipad/settings-privacy-encryption-off.png
   - screenshots/mac/settings-privacy-default.png
   - screenshots/mac/settings-privacy-default-dark.png
   - screenshots/mac/settings-privacy-app-lock-on.png
@@ -36,21 +33,17 @@ screenshots:
 
 # Settings ▸ Privacy (Apple)
 
-Neutral spec: [screens/settings-privacy.md](../../../screens/settings-privacy.md). Container: `settings`. Conventions: [platform.md](../platform.md#13-device-authentication-and-app-lock). The sheets this pane opens have their own pages (`encrypt-journals`, `change-password`, `connect-to-server`); App Lock behaviour is in the neutral flow [flows/app-lock.md](../../../flows/app-lock.md).
+Neutral spec: [screens/settings-privacy.md](../../../screens/settings-privacy.md). Container: `settings`. Conventions: [platform.md](../platform.md#13-device-authentication-and-app-lock). The sheet this pane opens has its own page (`change-password`); App Lock behaviour is in the neutral flow [flows/app-lock.md](../../../flows/app-lock.md).
 
 ## Controls
 
 Built by `SettingsView.privacySettings`: a `Form` with `.formStyle(.grouped)` that contains the two sections below only when `model.configuration != nil`. With no library (just after Erase, while Settings closes) it is empty.
 
-**1. Encryption section: `EncryptionSettingsSection` (in the 1.1 encryption views, `Views/EncryptJournalsView.swift`).** Fed by `AppModel` and `model.encryption` (`EncryptionUpgrade`).
+**1. Encryption section: `EncryptionSettingsSection` (`Views/EncryptionSettingsSection.swift`).** Every library this version opens is encrypted, so the section has one state.
 - Header: `settings.privacy.encryption.header`.
-- Status `Text`: `settings.privacy.encryption.on` when `model.configuration?.encrypted != false`, otherwise `settings.privacy.encryption.off`. The Encrypt Your Journals form is attached to this `Text` as a `.sheet` (the sheet variant with Cancel; `screens/encrypt-journals`). Only an unencrypted library left by an earlier version, after Not Now, shows the off state.
-- One action `Button`, the first that applies:
-  - encrypted: `ChangePasswordButton` (`Views/ChangePasswordView.swift`): `settings.privacy.changePassword`, shown only when `configuration.recovery.formatVersion == 2` (master-password libraries; a recovery-key library shows nothing), `.disabled(model.locked)`, opens `ChangePasswordView` as a sheet.
-  - not encrypted and `upgrade.offersSignIn`: `common.reconnect`, `.disabled(model.locked)`. It calls the closure passed in by `SettingsView`, which sets `connect = ConnectionRequest()`; the Settings view presents the sheet, titled Reconnect, over the pane. When the form sheet is dismissed after a reconnect request, `onDismiss` runs the same closure.
-  - otherwise: `settings.privacy.encryption.turnOn`, `.disabled(model.locked || (model.replacingVault && !upgrade.pausesWriting))`, presents the form as a sheet with Cancel. While encryption is running the journals show the working notice instead (`Views/EncryptionNotice.swift`).
-- Footer, same order: `settings.privacy.encryption.footerOn` with the credential's name lower-cased (`credentialName`, "password" if unknown); `messages.encryption.turnedOnElsewhere`; `common.unencryptedWarning`.
-- The form as a sheet is dismissed with Cancel (Escape on the Mac); its sizes are on `encrypt-journals`.
+- Status `Text`: `settings.privacy.encryption.on`.
+- One action `Button`: `ChangePasswordButton` (`Views/ChangePasswordView.swift`): `settings.privacy.changePassword`, shown only when `configuration.recovery.formatVersion == 2` (master-password libraries; a recovery-key library shows nothing), `.disabled(model.locked)`, opens `ChangePasswordView` as a sheet.
+- Footer: `settings.privacy.encryption.footerOn` with the credential's name lower-cased (`credentialName`, "password" if unknown).
 
 **2. App Lock section: `AppLockSettingsSection` (`Views/AppLockSettings.swift`).**
 - Header: `settings.privacy.appLock.header`.
@@ -66,16 +59,14 @@ Built by `SettingsView.privacySettings`: a `Form` with `.formStyle(.grouped)` th
 
 - **iPhone.** A pushed screen titled "Privacy" inside the Settings sheet; two grouped sections, links in tint colour (screenshots).
 - **iPad.** The same pane in the centred Settings sheet; the form is the sheet's width and rows are wider, so footers wrap less.
-- **Mac.** The Privacy tab, 560 points wide, minimum height 440 (`SettingsView.tab`). Buttons are bordered buttons inside grouped rows rather than tinted text, as the system draws a `Button` in a Mac grouped form. The Lock when inactive pop-up sits between the switch and Lock My Journal. The tab is tall enough for the Turn On Encryption, Change Password and Connect to a Server sheets.
+- **Mac.** The Privacy tab, 560 points wide, minimum height 440 (`SettingsView.tab`). Buttons are bordered buttons inside grouped rows rather than tinted text, as the system draws a `Button` in a Mac grouped form. The Lock when inactive pop-up sits between the switch and Lock My Journal. The tab is tall enough for the Change Password sheet.
 - Dynamic Type: standard form rows and footers wrap; nothing custom.
 
 ## Commands and shortcuts
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `turn-on-encryption` | the action row of the Encryption section; opens the form as a sheet | none | not locked, and not while the journals are being replaced unless the work is already running |
 | `change-password` | same row | none | master-password library, not locked |
-| `sync-reconnect` | same row, labelled `common.reconnect` | none | not locked |
 | `toggle-app-lock` | the switch | none | not while the system asks; turning on needs authentication available |
 | `set-inactivity-lock` | Mac only: the pop-up | none | App Lock on, not while asking |
 | `lock-my-journal` | button below the switch (and pop-up on the Mac); the Mac also has ⌃⌘L in the application menu per [commands.md](../commands.md) | none in the pane | App Lock on |
@@ -93,7 +84,7 @@ Keyboard: no page-specific keys. The system's authentication panel takes Return 
 ## Accessibility
 
 - The switch is labelled with the method it requires ("Require Face ID"); the code adds no `.accessibility*` modifiers to this pane.
-- The status line is a plain `Text`; the action rows are buttons, with an ellipsis where they open a sheet.
+- The status line is a plain `Text`; the action row is a button, with an ellipsis because it opens a sheet.
 - While the system asks, the switch is `.disabled` and shows the requested value until the answer arrives.
 - Failures are alerts, which the system announces.
 - Lock My Journal locks and then closes Settings (iPhone and iPad), leaving the lock screen.
@@ -112,15 +103,13 @@ Keyboard: no page-specific keys. The system's authentication panel takes Return 
 | Encrypted, App Lock off, light | ![iPhone Privacy](../screenshots/iphone/settings-privacy-default.png) | ![iPad Privacy](../screenshots/ipad/settings-privacy-default.png) | ![Mac Privacy](../screenshots/mac/settings-privacy-default.png) |
 | Encrypted, App Lock off, dark | ![iPhone Privacy, dark](../screenshots/iphone/settings-privacy-default-dark.png) | ![iPad Privacy, dark](../screenshots/ipad/settings-privacy-default-dark.png) | ![Mac Privacy, dark](../screenshots/mac/settings-privacy-default-dark.png) |
 | App Lock on (Lock My Journal; on the Mac also Lock when inactive "For 30 minutes" and the longer footer) | ![iPhone App Lock on](../screenshots/iphone/settings-privacy-app-lock-on.png) | ![iPad App Lock on](../screenshots/ipad/settings-privacy-app-lock-on.png) | ![Mac App Lock on](../screenshots/mac/settings-privacy-app-lock-on.png) |
-| Encryption off ("Encryption Is Off", Turn On Encryption…, the unencrypted footer) | ![iPhone encryption off](../screenshots/iphone/settings-privacy-encryption-off.png) | ![iPad encryption off](../screenshots/ipad/settings-privacy-encryption-off.png) | not captured |
 
-The encryption-off iPad capture shows a library with one empty journal, so its sidebar differs from the other iPad captures. The Mac windows are inactive in the captures (grey controls).
+The Mac windows are inactive in the captures (grey controls).
 
 ## Source files
 
 View:
-- `apps/apple/JournalApp/Views/SettingsView.swift`: `privacySettings`, the Connect to a Server sheet.
-- `apps/apple/JournalApp/Views/EncryptJournalsView.swift`: `EncryptionSettingsSection` and the form.
+- `apps/apple/JournalApp/Views/SettingsView.swift`: `privacySettings`, including the encryption section.
 - `apps/apple/JournalApp/Views/ChangePasswordView.swift`: `ChangePasswordButton` and its sheet.
 - `apps/apple/JournalApp/Views/AppLockSettings.swift`: the App Lock section and its alerts.
 - `apps/apple/JournalApp/Views/InactivityLockSettings.swift`: Lock when inactive (Mac), `automaticLockSentence`, `keepsUnlockedWhile`.
@@ -130,9 +119,8 @@ Model:
 - `apps/apple/JournalApp/Model/DeviceAuthentication.swift`: method names and phrases, availability, `LAContext` use.
 - `apps/apple/JournalApp/Model/InactivityLock.swift`: choices, `setInactivityLock`.
 - `apps/apple/JournalApp/Model/LocalConfiguration.swift`: `appLock`, `inactivityLockMinutes`.
-- `apps/apple/JournalApp/Model/EncryptionUpgrade.swift`: form state and `offersSignIn`.
 
-Design records: `docs/design/enable-encryption.md`, `sync-security-2026-09-24.md`, `app-lock-system-auth.md`, `mac-inactivity-lock-2026-10-03.md`.
+Design records: `docs/design/1-1-encryption-and-passwords.md`, `docs/design/enable-encryption.md`, `sync-security-2026-09-24.md`, `app-lock-system-auth.md`, `mac-inactivity-lock-2026-10-03.md`.
 
 ## Open questions
 

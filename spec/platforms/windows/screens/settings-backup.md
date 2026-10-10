@@ -27,10 +27,10 @@ Header `settings.backup.archive.header`.
 | Spec element | Control | Notes |
 | --- | --- | --- |
 | Export Archive… | An [action card](settings.md#card-patterns), `Header` `common.exportArchive`, icon Export (EDE1), a standard `Button` `common.exportArchive` in its content. `Description`: while the library exists only on this PC (not syncing), the date of the last export ("Last exported {date}") or "Not exported yet" (D22, new copy), so an uninstall that removes the local data is never a surprise. Trailing a small indeterminate `ProgressBar` (about 80 epx) with `AutomationProperties.Name` `settings.backup.preparingArchive`, shown after 0.3 seconds; the card keeps its size | Pressing again while preparing, or while the picker is open, does nothing. The date is a device-only local setting written when an export completes |
-| Saved message | After a save, in the Export row's description in place of the last-export line until the next export starts: `messages.export.archiveSaved` (credential in lower case), announced with a notification event (`MostRecent`) when it appears | Windows journals are always encrypted, so it always shows |
+| Saved message | After a save, in the Export row's description in place of the last-export line until the next export starts: `messages.export.archiveSaved` (credential in lower case), announced with a notification event (`MostRecent`) when it appears | Every library is encrypted, so it always shows |
 | Error line | An `InfoBar` (Error) under the card, `Content` a selectable `TextBlock`; cleared when the next export starts | The messages are the export flow's (`messages.export.archiveFailed`, `messages.export.archiveNoSpace`, `messages.export.archiveSaveFailed`, `messages.save.before.goBack`) |
 | Import Archive… | An action card, `Header` `common.importArchive`, icon Import (E8B5), a standard `Button` `common.importArchive` | Opens the picker, then the Import archive task page ([archive-import](archive-import.md)) |
-| Footer | A `TextBlock` (Caption) under the group: `settings.backup.archive.footerEncrypted` with the credential in lower case, or `settings.backup.archive.footerUnencrypted` | |
+| Footer | A `TextBlock` (Caption) under the group: `settings.backup.archive.footerEncrypted` with the credential in lower case | |
 | Change Password pointer | A `HyperlinkButton` under the footer, `settings.backup.archive.changePassword`, opening the [Change Password](change-password.md) dialog | There is no password check before exporting; typing the current password in Change Password is the check, and the dialog's Forgot password? link resets a forgotten one when the journals exist only on this PC |
 
 ### Markdown group
@@ -42,7 +42,7 @@ Header `settings.backup.markdown.header`.
 | Export as Markdown… | An action card, `Header` `settings.backup.exportMarkdown`, icon Export, a standard `Button` with that label. A small indeterminate `ProgressBar` named `settings.backup.preparingFiles` after 0.3 seconds | Disabled while preparing or without a library |
 | Error line | An `InfoBar` (Error), as above | `messages.export.markdownFailed`, `messages.export.markdownNoSpace`, `messages.export.markdownSaveFailed`, `messages.save.before.goBack` |
 | Note after a save that left something out | An `InfoBar` (Informational), not closable, `Content` the spec's sentences joined with a space (`settings.backup.markdownNote.imagesNotDownloaded`, `settings.backup.markdownNote.imagesUnreadable`, `settings.backup.markdownNote.itemsUnreadable`, `settings.backup.markdownNote.otherVersions`); cleared when the next export starts | Announced when it opens |
-| Footer | `settings.backup.markdown.footer` for encrypted journals, `settings.backup.markdown.footerUnencrypted` otherwise | |
+| Footer | `settings.backup.markdown.footer` | |
 
 ### File menu dialogs
 
@@ -84,7 +84,7 @@ The export is prepared in a new folder under the app's temporary folder, deleted
 | `change-password` | The pointer under the archive footer | — | Unlocked |
 | `export-sheet-done` | Close button of the File menu dialogs | `Esc` | Always |
 
-Exports ask Windows Hello first for Markdown when App Lock is on (`settings.backup.markdownReason` for encrypted journals, `settings.backup.markdownReasonUnencrypted` otherwise) through [the authentication gate](settings.md#the-authentication-gate); if it is cancelled nothing happens and nothing is said; a PC without Hello continues. The archive export asks nothing (open-questions D2).
+Exports ask Windows Hello first for Markdown when App Lock is on (`settings.backup.markdownReason`) through [the authentication gate](settings.md#the-authentication-gate); if it is cancelled nothing happens and nothing is said; a PC without Hello continues. The archive export asks nothing (open-questions D2).
 
 Rules kept from the spec: one export of each kind at a time; leaving the page while preparing cancels the export, while the picker is open it stays; the inactivity timer is held while an export is prepared ([flows/app-lock](../flows/app-lock.md)).
 
@@ -95,7 +95,7 @@ Sentence case applies ("Export archive…", "Export as Markdown…", "Archive", 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
 | `settings.backup.openFailed` | Couldn’t Open Archive | Couldn’t open archive | casing (the title is kept: it names the failure) |
-| `settings.backup.markdownReason`, `settings.backup.markdownReasonUnencrypted` | {"default": "Export your journals as files that aren’t encrypted", "mac": …} | The default form | vocabulary (platform.md, 12.3) |
+| `settings.backup.markdownReason` | {"default": "Export your journals as files that aren’t encrypted", "mac": …} | The default form | vocabulary (platform.md, 12.3) |
 | The last-export line: "Last exported {date}" and "Not exported yet" | none | In [copy-proposals.md](../copy-proposals.md) | new, D22 |
 | Where an instruction names a menu path | Settings > Backup | unchanged | none needed |
 

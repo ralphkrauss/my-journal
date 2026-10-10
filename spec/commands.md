@@ -186,7 +186,7 @@ Every command in Settings and the flows it opens. Commands that live on other su
 | --- | --- | --- | --- | --- |
 | `connect-to-server` | `common.connectToServer` | Settings ▸ Sync, Agent Access (not connected); first-launch screen | unlocked | Opens Connect to a Server (`flows/connect-to-server`). |
 | `sync-now` | `messages.sync.action.syncNow` / `common.tryAgain` / `messages.sync.action.checkAgain` | Settings ▸ Sync | connected, unlocked, not replacing the journals, no failed save, no sync the person started running | Syncs once, resending refused items; announces the result. |
-| `sync-reconnect` | `common.reconnect` | Settings ▸ Sync (the Server section); Sync Status; Settings ▸ Privacy; Settings ▸ Agent Access (no access) | the sync state calls for it | Opens Reconnect at this server's next step (`flows/reconnect-to-server`). |
+| `sync-reconnect` | `common.reconnect` | Settings ▸ Sync (the Server section); Sync Status; Settings ▸ Agent Access (no access) | the sync state calls for it | Opens Reconnect at this server's next step (`flows/reconnect-to-server`). |
 | `stop-syncing` | `settings.sync.stopSyncing` | Settings ▸ Sync | connected, not replacing the journals | Confirmation, then `flows/stop-syncing`. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` (both footers) | Settings ▸ Sync footer; Set Up Server footer | always | Opens the sync guide. |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Settings ▸ Sync footer (computer only) | after the former Mac server stopped | Opens the guide's section for people who used Use This Mac. |
@@ -202,12 +202,11 @@ Every command in Settings and the flows it opens. Commands that live on other su
 | `scan-cancel` | `common.cancel` | always | Closes the scanner. |
 | `scan-open-settings` | `common.openSettings` | camera access denied | Opens the system's settings for My Journal. |
 | `connect-set-up` | `settings.connect.setUp.setUp` / `common.continue` / `common.tryAgain` | fields filled, not working | Validates and sets up the server (`flows/connect-to-server` §3–6). |
-| `connect-sign-in` | `settings.connect.signIn.signIn` / `common.connect` / `common.tryAgain` | credential typed, not working | Signs in with the credential or recovery code. |
+| `connect-sign-in` | `settings.connect.signIn.signIn` / `common.connect` / `common.tryAgain` | credential typed, not working | Signs in with the credential. |
 | `connect-use-device` | `settings.connect.signIn.useDevice` | not working | Pushes Add This Device. |
 | `connect-copy-code` | `settings.connect.addThisDevice.copyCode` | a pairing code shown | Copies the nine digits. |
 | `connect-confirm-check-code` | `common.connect` | check code shown, not yet confirmed | Accepts the approval after comparing codes. |
 | `connect-new-code` | `settings.connect.addThisDevice.getNewCode` | after a pairing failure with nothing received | Withdraws the request and gets a new code. |
-| `connect-use-recovery-code` | `settings.connect.addThisDevice.useRecoveryCode` | server without encryption, not installing | Pushes Use a Recovery Code. |
 | `connect-merge` | `common.merge` | not working | Agrees to merge with this server; continues. |
 | `connect-retry` | `common.tryAgain` / `settings.connect.scanAgain` | after a failure | Tries the same step again, or scans a new code. |
 | `connect-cancel` | `common.cancel` | not installing | Stops, withdraws requests, gives up unused access, closes. |
@@ -234,13 +233,6 @@ Every command in Settings and the flows it opens. Commands that live on other su
 
 | id | Name (copy key) | Enabled when | What it does |
 | --- | --- | --- | --- |
-| `turn-on-encryption` | `settings.privacy.encryption.turnOn` | journals not encrypted, unlocked, not replacing the journals (except to show a run in progress) | Opens the Encrypt Your Journals form as a sheet with Cancel (`screens/encrypt-journals`, `flows/encrypt-journals`). |
-| `encrypt-journals` | `library.encrypt.action` / `common.tryAgain` | the check passed; new password typed twice (and current access password if asked); not working | Encrypts. |
-| `encrypt-journals-not-now` | `library.encrypt.notNow` | only where the form can't succeed or has failed (`screens/encrypt-journals`, Exits) | Opens the journals as before this version; the form returns at the next launch. |
-| `encrypt-journals-stop-syncing` | `settings.sync.stopSyncing` | no access, server too old, access password wrong or limited; also on the unfinished notice | Confirmation, then stops syncing and encrypts locally; on the unfinished notice adopts the encrypted copy (`flows/stop-syncing`). |
-| `encryption-finish` | `common.tryAgain` | unfinished | Finishes after the server switched. |
-| `encryption-cancel` | `common.cancel` | the working notice, before the server is updated; the form as a sheet, always | Notice: stops the work, nothing changes, shows the plain form again. Sheet: closes it. |
-| `encryption-done` | `common.done` | encrypted | Closes the Done sheet. |
 | `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the archive footer) | master-password journals, unlocked | Opens Change Password (`flows/change-password`). |
 | `change-password-submit` | `settings.changePassword.change` | all fields filled, new matches confirm | Changes the password. |
 | `change-password-retry` | `common.tryAgain` | the server changed, this device didn't save | Saves on this device again. |

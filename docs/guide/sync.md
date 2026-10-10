@@ -2,7 +2,7 @@
 
 Sync keeps your journals the same on all your devices. It’s optional: without it, My Journal works fully on one device, offline.
 
-There is no My Journal account or company server. To sync, you run a small server of your own, and each device connects to it. The server is also how an AI agent you choose can [read your journals](agent-access.md). With encryption on, it stores your journals in a form it can’t read.
+There is no My Journal account or company server. To sync, you run a small server of your own, and each device connects to it. The server is also how an AI agent you choose can [read your journals](agent-access.md). It stores your journals in a form it can’t read, because every journal is encrypted.
 
 ## Choose where your server runs
 
@@ -57,7 +57,7 @@ The Mac keeps the old server’s files, and Erase Journals and Settings doesn’
 
 ## What your server can see
 
-With encryption on, your server stores your journals in a form it can’t read. It can’t see journal names, entry titles, entry dates, text, images, image descriptions or templates.
+Your server stores your journals in a form it can’t read. It can’t see journal names, entry titles, entry dates, text, images, image descriptions or templates.
 
 It, and anyone with its data or backups, can still see:
 
@@ -67,6 +67,6 @@ It, and anyone with its data or backups, can still see:
 - your devices’ names (on a Mac, often including your name), and how and when each was added;
 - network addresses, and when your devices connect.
 
-Without encryption, anyone with access to the server or its backups can read everything. The [security model](../../SECURITY.md#what-the-server-can-see) has the full list.
+The [security model](../../SECURITY.md#what-the-server-can-see) has the full list. This version doesn’t connect to a server that holds journals without encryption (set up by version 1.0 with **Continue Without Encryption**).
 
 Your master password never leaves your devices, but someone with the server’s data can try to guess it. Use a long, generated password, and prefer a server only your devices can reach, such as one on Tailscale.

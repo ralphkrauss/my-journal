@@ -11,7 +11,7 @@ import XCTest
 final class MergeJoinTests: XCTestCase {
     private let serverPassword = "the server's master password"
 
-    private func model(writing: Bool, encrypted: Bool = true) async throws -> AppModel {
+    private func model(writing: Bool) async throws -> AppModel {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("MergeJoin-" + UUID().uuidString)
         let model = AppModel(directory: directory)
         addTeardownBlock { @MainActor in
@@ -21,7 +21,7 @@ final class MergeJoinTests: XCTestCase {
             }
             try? FileManager.default.removeItem(at: directory)
         }
-        await model.start(password: encrypted ? "this device's own password" : nil, encrypted: encrypted)
+        await model.start(password: "this device's own password")
         XCTAssertTrue(model.nothingWritten, "Start a Journal writes nothing yet.")
         XCTAssertTrue(model.templates.isEmpty, "A new library has only what the person makes: no templates.")
         if writing {
@@ -149,19 +149,6 @@ final class MergeJoinTests: XCTestCase {
         XCTAssertEqual(pairingRequests(server), 0)
         XCTAssertNil(model.store, "Nothing was created for it.")
         XCTAssertFalse(server.requests.contains { $0.method != "GET" })
-        flow.close()
-    }
-
-    /// A device whose own library is unencrypted (from an earlier version, and asked to encrypt) keeps 1.0's
-    /// behaviour toward its unencrypted server.
-    func testADeviceWithAnUnencryptedLibraryStillJoinsAServerWithoutEncryption() async throws {
-        let model = try await model(writing: false, encrypted: false)
-        let server = try await scanServer(encrypted: false)
-        let flow = ConnectionFlow(model: model)
-        flow.join(try invite(server))
-        try await settle(flow) { self.pairingRequests(server) > 0 }
-        XCTAssertEqual(pairingRequests(server), 1, "The connected device is asked, as in 1.0.")
-        XCTAssertNotEqual(flow.errorMessage(on: nil), Self.encryptionOffMessage(flow.host))
         flow.close()
     }
 

@@ -70,7 +70,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.privacy.appLock.reason.unlock` | Unlock your journals (Mac: unlock your journals) | The default form: Unlock your journals | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
 | `settings.erase.authReason` | Erase journals on this device (Mac: erase journals on this device) | The default form: Erase journals on this device | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
 | `settings.backup.markdownReason` | Export your journals as files that aren’t encrypted (Mac: export your journals as files that aren’t encrypted) | The default form: Export your journals as files that aren’t encrypted | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
-| `settings.backup.markdownReasonUnencrypted` | Export your journals as Markdown files (Mac: export your journals as Markdown files) | The default form: Export your journals as Markdown files | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
 | `settings.addDevice.authReason` | Add “{device}” to your journals (Mac: add “{device}” to your journals) | The default form: Add “{device}” to your journals | vocabulary | 12.3: the default (capitalised) form, not the Mac variant |
 | `settings.changePassword.authReason` | Set a new password for your journals (Mac: set a new password for your journals) | The default form: Set a new password for your journals | vocabulary | B23, 12.3: the default (capitalised) form, not the Mac variant |
 | `library.entryActions.deletePermanently` | Delete Permanently… | Delete permanently | ellipsis | 12.2 |
@@ -93,7 +92,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `common.connectToServer` | Connect to a Server… | Connect to a server… | casing | 12.1; the ellipsis stays (12.2) |
 | `common.importArchive` | Import Archive… | Import archive… | casing | 12.1; the ellipsis stays (12.2) |
 | `settings.connect.signIn.useDevice` | Use a Connected Device Instead… | Use a connected device instead… | casing | 12.1; the ellipsis stays (12.2) |
-| `settings.connect.addThisDevice.useRecoveryCode` | Use a Recovery Code Instead… | Use a recovery code instead… | casing | 12.1; the ellipsis stays (12.2) |
 | `settings.archiveImport.title` | Import Archive | Import archive | casing | 12.1 |
 | `settings.archiveImport.restore` | Restore Journals | Restore journals | casing | 12.1 |
 | `settings.archiveImport.importAsNew` | Import as New Journals | Import as new journals | casing | 12.1 |
@@ -144,7 +142,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `messages.lifecycle.alreadyDeleted` | This journal is already in Recently Deleted. | This journal is already in Recently deleted. | label in a sentence | B27, 12.1 |
 | `settings.archiveImport.recentlyDeleted` | {count} in Recently Deleted | {count} in Recently deleted | label in a sentence | B27, 12.1 |
 | `settings.backup.markdown.footer` | Saves your journals and their images as Markdown files that other apps can open. The files aren’t encrypted. To keep a copy you can import later, use Export Archive. | Saves your journals and their images as Markdown files that other apps can open. The files aren’t encrypted. To keep a copy you can import later, use Export archive. | label in a sentence | B27, 12.1 |
-| `settings.backup.markdown.footerUnencrypted` | Saves your journals and their images as Markdown files that other apps can open. To keep a copy you can import later, use Export Archive. | Saves your journals and their images as Markdown files that other apps can open. To keep a copy you can import later, use Export archive. | label in a sentence | B27, 12.1 |
 | `settings.connect.merge.footerLeaveOut` | To leave something out, cancel and delete it first, including from Recently Deleted. | To leave something out, cancel and delete it first, including from Recently deleted. | label in a sentence | B27, 12.1 |
 | `settings.privacy.appLock.footer` | {who} is needed to open My Journal.{automatic} App Lock doesn’t change how your journals are encrypted. | {who} is needed to open My Journal.{automatic} App lock doesn’t change how your journals are encrypted. | label in a sentence | B27, 12.1 |
 | `library.toolbar.editorOnly.help` | Show Editor Only (⇧⌘D) | Not shown: Show editor only has no header button on Windows; the View menu item shows its own shortcut | removed | S15, 12.3 |
@@ -169,7 +166,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `settings.scan.*` | (the group) | Not shown: a PC does not scan (D24) | removed | D24 |
 | `settings.recoveryKey.*` | (the group) | Not shown: recovery key screen is Apple-only (D11) | removed | D11 |
 | `settings.locked` | Unlock My Journal to open Settings. | Not shown: the lock page replaces the window | removed | B30 |
-| `messages.encryption.background` | Encryption stopped because My Journal was in the background. Keep My Journal open and try again. | Not shown: desktop apps are not suspended in the background | removed | B30 |
 | `messages.writingPaused.showConnection` | Show Connection | Not shown: the flow’s dialog is modal | removed | B30 |
 | `library.templateChooser.title` | Choose a Template | Not shown: the flyout has no title or Cancel | removed | B30 |
 | `library.templateChooser.popoverTitle` | Use a Template… | Not shown: the flyout has no title or Cancel | removed | B30 |

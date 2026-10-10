@@ -22,9 +22,8 @@ extension JournalStore {
         try checkIntegrity()
         let images = Array(try referencedAttachmentIDs())
         let key = key
-        let protection = protection
         let folder = directory.appendingPathComponent("attachments", isDirectory: true)
-        try await Self.authenticateAttachments(images, in: folder, key: key, protection: protection)
+        try await Self.authenticateAttachments(images, in: folder, key: key)
     }
     private func checkIntegrity() throws {
         let integrity = try db.read { try String.fetchOne($0, sql: "PRAGMA integrity_check") }
@@ -32,10 +31,10 @@ extension JournalStore {
     }
     /// Runs outside the store, so its work doesn't hold up saving and syncing.
     private static func authenticateAttachments(
-        _ images: [UUID], in folder: URL, key: Data, protection: ContentProtection
+        _ images: [UUID], in folder: URL, key: Data
     ) async throws {
         _ = try Parallel.map(images, width: 4, cancellableEvery: 16) { identifier in
-            try authenticateAttachment(identifier, in: folder, key: key, protection: protection)
+            try authenticateAttachment(identifier, in: folder, key: key)
         }
     }
     static func encryptedAttachment(at url: URL) throws -> Data {
@@ -45,9 +44,9 @@ extension JournalStore {
         return try Data(contentsOf: url)
     }
     static func authenticateAttachment(
-        _ uuid: UUID, in folder: URL, key: Data, protection: ContentProtection
+        _ uuid: UUID, in folder: URL, key: Data
     ) throws {
         let encrypted = try encryptedAttachment(at: folder.appendingPathComponent(uuid.uuidString.lowercased()))
-        _ = try protection.decode(encrypted, key: key, context: VaultCrypto.attachmentContext(id: uuid))
+        _ = try VaultCrypto.open(encrypted, key: key, context: VaultCrypto.attachmentContext(id: uuid))
     }
 }

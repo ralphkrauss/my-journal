@@ -13,11 +13,8 @@ final class LibraryCompatibilityTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
-    private func device(_ name: String, protection: ContentProtection = .encrypted, key: Data? = nil) throws
-        -> JournalStore
-    {
-        let store = try JournalStore(
-            directory: root.appendingPathComponent(name), key: key ?? self.key, protection: protection)
+    private func device(_ name: String, key: Data? = nil) throws -> JournalStore {
+        let store = try JournalStore(directory: root.appendingPathComponent(name), key: key ?? self.key)
         addTeardownBlock { try? await store.close() }
         return store
     }
@@ -125,14 +122,14 @@ final class LibraryCompatibilityTests: XCTestCase {
 
     /// Intents written by a newer version are of unknown lineage here, never read as this version's and rewritten.
     func testIntentsFromANewerVersionAreOfUnknownLineage() async throws {
-        let mac = try device("mac", protection: .plaintext)
+        let mac = try device("mac")
         let (_, entries) = try await journalWithEntries(mac)
         let newer = try JSONSerialization.data(withJSONObject: [
             "version": 2,
             "changes": [pinKey(entries[0].id): ["value": true, "removes": false, "ifAbsent": false, "sent": false]],
         ])
         try await mac.setSetting(LibraryChanges.setting, value: Data(newer.base64EncodedString().utf8))
-        let library = LibraryStore(key: key, protection: .plaintext)
+        let library = LibraryStore(key: key)
         let damaged = try await mac.db.read { try library.changes($0).damaged }
         XCTAssertTrue(damaged)
     }

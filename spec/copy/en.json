@@ -21,7 +21,7 @@
   },
   "common.connect": {
     "text": "Connect",
-    "context": "Primary button after comparing check codes; Command-Return, never Return. Also: Primary button of Use a Recovery Code."
+    "context": "Primary button after comparing check codes; Command-Return, never Return."
   },
   "common.connectToServer": {
     "text": "Connect to a Server…",
@@ -41,7 +41,7 @@
   },
   "common.couldntReachHost": {
     "text": "Couldn’t reach {host}. Check your connection and try again.",
-    "context": "Encrypt Your Journals: checking the server or encrypting. Also: Allow Access, no connection (also when the request can't load)."
+    "context": "Allow Access: no connection (also when the request can't load)."
   },
   "common.couldntRevokeAccess": {
     "text": "Couldn’t revoke access. Check your connection and try again.",
@@ -122,7 +122,7 @@
   },
   "common.masterPassword": {
     "text": "Master Password",
-    "context": "Password step, first secure field placeholder. Also: {credential} in settings.lock.useCredential, and the lock screen's credential field placeholder. Also: Master password field (Choose a Master Password, Encrypt Your Journals)."
+    "context": "Password step, first secure field placeholder. Also: {credential} in settings.lock.useCredential, and the lock screen's credential field placeholder. Also: Master password field (Choose a Master Password)."
   },
   "common.merge": {
     "text": "Merge",
@@ -182,11 +182,7 @@
   },
   "common.reconnect": {
     "text": "Reconnect…",
-    "context": "The single action when the sync state needs the person: the server was reset, restored or replaced, encryption was turned on from another device, or this device’s access was removed. Opens Reconnect at this device’s server, which goes straight to the next step (flows/reconnect-to-server). Used in Settings ▸ Sync, the Sync Status menu, Settings ▸ Privacy ▸ Encryption, Encrypt Your Journals (variant C) and Settings ▸ Agent Access."
-  },
-  "common.recoveryCode": {
-    "text": "Recovery Code",
-    "context": "{credential} for a library set up with a one-time recovery code. Also: Recovery code field."
+    "context": "The single action when the sync state needs the person: the server was reset, restored or replaced, or this device’s access was removed. Opens Reconnect at this device’s server, which goes straight to the next step (flows/reconnect-to-server). Used in Settings ▸ Sync, the Sync Status menu and Settings ▸ Agent Access."
   },
   "common.reloadJournals": {
     "text": "Reload Journals",
@@ -258,10 +254,6 @@
   "common.unavailableJournals": {
     "text": "Unavailable Journals",
     "context": "Sidebar row and list title of the collection of entries whose journal is missing or was saved by a newer version. Shown only while such entries exist or it is open."
-  },
-  "common.unencryptedWarning": {
-    "text": "Anyone with access to your files, server, or backups can read your journals.",
-    "context": "Encryption footer for journals without encryption (Settings ▸ Privacy, for a library made by an earlier version that is still unencrypted)."
   },
   "common.untitledJournal": {
     "text": "Untitled Journal",
@@ -871,7 +863,7 @@
   },
   "library.createLibrary.advice": {
     "text": "Save this password in your password manager. If you lose it and access to your devices, you won’t be able to restore your journals. Keep a backup, too.",
-    "context": "Start a Journal and Encrypt Your Journals variant A, under the fields."
+    "context": "Start a Journal, under the fields."
   },
   "library.createLibrary.creating": {
     "text": "Creating…",
@@ -996,53 +988,6 @@
   "library.deletePermanently.titleWithEntries": {
     "text": "Delete “{name}” and Its Entries Permanently?",
     "context": "Delete Permanently alert title for a journal with entries."
-  },
-  "library.encrypt.action": {
-    "text": "Encrypt",
-    "context": "Encrypt Your Journals: primary button."
-  },
-  "library.encrypt.action.accessibilityLabel": {
-    "text": "Encrypt journals",
-    "context": "Encrypt Your Journals: accessibility name of the primary button; starts with the visible word so voice and switch commands do not collide with the heading."
-  },
-  "library.encrypt.adopt.message": {
-    "text": "Your journals are already encrypted on this device. This device won’t be able to sync with {host} again.",
-    "context": "Encrypt Your Journals, unfinished notice ▸ Stop Syncing…: message of the confirmation; fits both outcomes (the encrypted copy is adopted, or the original kept because the server did not switch)."
-  },
-  "library.encrypt.done.keepPassword": {
-    "text": "Keep your master password somewhere safe. It is the only way to open your journals on a new device.",
-    "context": "Encrypt Your Journals, Done sheet: line for everyone, under the heading."
-  },
-  "library.encrypt.duration": {
-    "text": {
-      "default": "This can take a few minutes if you have many images. Keep My Journal open.",
-      "mac": "This can take a few minutes if you have many images."
-    },
-    "context": "Encrypt Your Journals: note under the fields, below the advice. The Mac variant leaves out “Keep My Journal open.” because the Mac app is not suspended."
-  },
-  "library.encrypt.message": {
-    "text": "My Journal now encrypts every journal. Choose a master password to encrypt the journals on this device. Only your devices can read them.",
-    "context": "Encrypt Your Journals, variant A (no server): paragraph under the heading."
-  },
-  "library.encrypt.messageSignIn": {
-    "text": "{host} now uses encryption. Sign in with your master password to encrypt the journals on this device. Changes that haven’t synced are kept.",
-    "context": "Encrypt Your Journals, variant C (the server already uses encryption): paragraph under the heading, and the error when the server turns out to be encrypted already. Does not claim who turned encryption on; a replaced server looks the same (open question B6)."
-  },
-  "library.encrypt.messageSynced": {
-    "text": "My Journal now encrypts every journal. Choose a master password to encrypt the journals on this device and on {host}. Only your devices can read them.",
-    "context": "Encrypt Your Journals, variants B and D (a server that does not use encryption yet): paragraph under the heading."
-  },
-  "library.encrypt.notNow": {
-    "text": "Not Now",
-    "context": "Encrypt Your Journals: plain button that opens the journals as before this version; only where encryption cannot succeed or has failed."
-  },
-  "library.encrypt.stopSyncing.message": {
-    "text": "This device won’t be able to sync with {host} again. Your other devices keep using {host} and won’t receive changes made here. Your journals stay on this device and are encrypted next.",
-    "context": "Encrypt Your Journals ▸ Stop Syncing…: message of the confirmation, in place of settings.sync.stopSyncing.message."
-  },
-  "library.encrypt.title": {
-    "text": "Encrypt Your Journals",
-    "context": "Encrypt Your Journals: heading of the form (launch screen, or the sheet from Settings ▸ Privacy ▸ Turn On Encryption…)."
   },
   "library.entryActions.changeDate": {
     "text": "Change Date…",
@@ -1175,10 +1120,6 @@
   "library.journals.undoMove": {
     "text": "Move Journal",
     "context": "Undo action name: Edit ▸ Undo Move Journal / Redo Move Journal."
-  },
-  "library.lock.credential.accessPassword": {
-    "text": "Access Password",
-    "context": "{credential} for an unencrypted library that joined with an access password."
   },
   "library.lock.credential.recoveryKey": {
     "text": "Recovery Key",
@@ -1493,6 +1434,10 @@
   "library.problem.newerVersion.message": {
     "text": "These journals were saved by a newer version of My Journal. Update My Journal to open them.",
     "context": "The only paragraph of the update screen. Never names a store: the operating system does the update."
+  },
+  "library.problem.notEncrypted.message": {
+    "text": "These journals aren’t encrypted, and this version of My Journal opens only encrypted journals.",
+    "context": "Second paragraph of the library problem screen when the library on this device is not encrypted (made by version 1.0 without encryption). Replaces the Try Again advice."
   },
   "library.problem.settingsUnread.advice": {
     "text": "If a newer version of My Journal saved these settings, update My Journal, then try again. If this keeps happening, restart your {device}.",
@@ -1833,7 +1778,7 @@
   },
   "messages.connection.credentialIncorrect": {
     "text": "That {credential} isn’t correct.",
-    "context": "Signing in or setting up with an existing password: the credential is wrong. {credential} is “password” for any kind of password, or “recovery key” / “recovery code”."
+    "context": "Signing in or setting up with an existing password: the credential is wrong. {credential} is “password” for any kind of password, or “recovery key”."
   },
   "messages.connection.credentialRateLimited": {
     "text": "Too many {credential} attempts on this server. Try again in a few minutes, or use a connected device.",
@@ -1841,7 +1786,7 @@
   },
   "messages.connection.encryptionOff": {
     "text": "{host} doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption.",
-    "context": "Connect to a Server: a server set up without encryption, refused by a device with an encrypted library or none. One text for checking an address, a scanned code and finishing a pairing."
+    "context": "Connect to a Server: a server set up without encryption, refused by every device of this version. One text for checking an address, a scanned code and finishing a pairing."
   },
   "messages.connection.finishFailed": {
     "text": "Couldn’t finish connecting.",
@@ -1854,10 +1799,6 @@
   "messages.connection.finishFailedRetry": {
     "text": "Couldn’t finish connecting. Your local journals remain on this device. Try again, or cancel to keep writing.",
     "context": "Finishing Add This Device failed while a staged copy waits for Try Again (writing is paused)."
-  },
-  "messages.connection.invalidRecoveryCode": {
-    "text": "That recovery code isn’t valid. Check it and try again.",
-    "context": "ServerConnectionError.invalidRecoveryCode. Never shown: signing in shows messages.connection.recoveryCodeIncorrect instead."
   },
   "messages.connection.mergeFailed": {
     "text": "Couldn’t finish connecting. Your journals are still on this device. Try again, or cancel to keep writing.",
@@ -1885,15 +1826,11 @@
   },
   "messages.connection.passwordsDontMatch": {
     "text": "The passwords don’t match.",
-    "context": "Choosing a master password: the two fields differ (Start a Journal, Connect to a Server, Encrypt Your Journals, Change Password and Forgot Password?)."
+    "context": "Choosing a master password: the two fields differ (Start a Journal, Connect to a Server, Change Password and Forgot Password?)."
   },
   "messages.connection.reconnectSameServer": {
     "text": "Reconnect to the same server to keep your journals together.",
     "context": "Connecting to another address while this device is connected. (To move servers: Stop Syncing, then connect.)"
-  },
-  "messages.connection.recoveryCodeIncorrect": {
-    "text": "That recovery code isn’t correct or has already been used.",
-    "context": "Signing in with a server’s one-time recovery code: wrong, already used, or not a recovery code at all."
   },
   "messages.connection.serverChanged": {
     "text": "This server has changed since you checked it. Choose Continue to check it again.",
@@ -1901,7 +1838,7 @@
   },
   "messages.connection.serverNeedsUpdate": {
     "text": "This server needs an update before this device can connect.",
-    "context": "One message from every place that needs the server when its protocol revision is below 1 (a server from before the first 1.0 releases): Connect to a Server page 1 and a scanned code, Add This Device with a typed code, Add Device, Change Password, Encrypt Your Journals and Agent Access. Nothing on this device is changed; it clears when the server is updated."
+    "context": "One message from every place that needs the server when its protocol revision is below 1 (a server from before the first 1.0 releases): Connect to a Server page 1 and a scanned code, Add This Device with a typed code, Add Device, Change Password and Agent Access. Nothing on this device is changed; it clears when the server is updated."
   },
   "messages.connection.setUpElsewhere": {
     "text": "This server has just been set up. Choose it again to sign in.",
@@ -1930,58 +1867,6 @@
   "messages.connection.updateApp": {
     "text": "Update My Journal to connect to this server.",
     "context": "Connect to a Server: the server speaks a newer protocol, or a scanned pairing needs a newer app."
-  },
-  "messages.encryption.accessLost": {
-    "text": "This device no longer has access to {host}. You can stop syncing to encrypt your journals on this device.",
-    "context": "Encrypt Your Journals: the server refused this device."
-  },
-  "messages.encryption.announce.done": {
-    "text": "Your journals are encrypted.",
-    "context": "VoiceOver announcement when encryption finished."
-  },
-  "messages.encryption.announce.turningOn": {
-    "text": "Encrypting your journals",
-    "context": "VoiceOver announcement when encryption starts."
-  },
-  "messages.encryption.announce.updatingServer": {
-    "text": "Updating {host}. You can’t stop this now.",
-    "context": "VoiceOver announcement when the server update starts."
-  },
-  "messages.encryption.background": {
-    "text": "Encryption stopped because My Journal was in the background. Keep My Journal open and try again.",
-    "context": "Encrypt Your Journals on iPhone and iPad when background time ran out."
-  },
-  "messages.encryption.failed": {
-    "text": "Your journals couldn’t be encrypted. They are unchanged.",
-    "context": "Encrypt Your Journals: any other failure, including a copy that failed verification."
-  },
-  "messages.encryption.imagesMissing": {
-    "text": "Some images haven’t downloaded to this device yet. Keep My Journal open for a moment, then try again.",
-    "context": "Encrypt Your Journals."
-  },
-  "messages.encryption.incorrectPassword": {
-    "text": "That password isn’t correct.",
-    "context": "Encrypt Your Journals, current access password field."
-  },
-  "messages.encryption.notEnoughSpace": {
-    "text": "There isn’t enough space to encrypt your journals. Free up {size} and try again.",
-    "context": "Encrypt Your Journals; {size} is a file size such as “120 MB”."
-  },
-  "messages.encryption.rateLimited": {
-    "text": "Too many password attempts on this server. Try again in a few minutes.",
-    "context": "Encrypt Your Journals, current access password field."
-  },
-  "messages.encryption.stillSyncing": {
-    "text": "Your other devices are still syncing. Wait for them to finish, then try again.",
-    "context": "Encrypt Your Journals: other devices’ changes are still arriving, or the server changed meanwhile."
-  },
-  "messages.encryption.turnedOnElsewhere": {
-    "text": "Encryption was turned on from another device. Reconnect to keep syncing.",
-    "context": "Settings ▸ Privacy ▸ Encryption footer while Reconnect… is offered. Sync itself says messages.sync.signInNeeded."
-  },
-  "messages.encryption.unfinished": {
-    "text": "Your journals are encrypted on {host}, but this device couldn’t finish. Free up space, then try again.",
-    "context": "Encrypt Your Journals, unfinished notice: the server was updated but this device couldn’t open its encrypted copy. One text for every device."
   },
   "messages.entry.archiveChanged": {
     "text": "This entry’s archive status changed. Review it before trying again.",
@@ -2283,10 +2168,6 @@
     "text": "The date was saved. Reopen My Journal to refresh your entries.",
     "context": "The change was committed when Change Date finished, but reading the journals again for display failed."
   },
-  "messages.refresh.encryptionOn": {
-    "text": "Encryption is on, but your journals couldn’t be displayed. Reopen My Journal to try again.",
-    "context": "The change was committed when turning on encryption finished, but reading the journals again for display failed."
-  },
   "messages.refresh.imported": {
     "text": "Your journals were imported, but couldn’t be displayed. Reopen My Journal to try again.",
     "context": "The change was committed when importing an archive finished, but reading the journals again for display failed."
@@ -2393,11 +2274,7 @@
   },
   "messages.sync.accessRemoved": {
     "text": "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need your password or a connected device.",
-    "context": "Sync state No access for a library with a password: the same server refuses this device (removed in Settings ▸ Sync ▸ Devices on another device, or its credential stopped working). Automatic sync stops. A library without a password says messages.sync.accessRemovedNoPassword."
-  },
-  "messages.sync.accessRemovedNoPassword": {
-    "text": "This device no longer has access to the server. Your journals are still on this device. To reconnect, you need a connected device or a recovery code.",
-    "context": "Sync state No access for a library without a password (unencrypted libraries in 1.1 have none): the way back is a connected device or the server’s recovery code. Same situation as messages.sync.accessRemoved, worded by the library’s mode."
+    "context": "Sync state No access: the same server refuses this device (removed in Settings ▸ Sync ▸ Devices on another device, or its credential stopped working). Automatic sync stops."
   },
   "messages.sync.action.checkAgain": {
     "text": "Check Again",
@@ -2471,10 +2348,6 @@
     "text": "The server needs an update before this device can sync. Your changes are saved on this device.",
     "context": "Sync state Update or fix needed (server): the server lacks an endpoint this app needs (404 or 405 on a sync request). Checked again every 5 minutes."
   },
-  "messages.sync.signInNeeded": {
-    "text": "The server now uses encryption or was replaced. Reconnect to keep syncing.",
-    "context": "Sync state Needs you: this device was refused and the server’s identity changed to an encrypted library while this library isn’t encrypted (encryption turned on from another device, or the server replaced). Automatic sync stops."
-  },
   "messages.sync.unavailable": {
     "text": "The server isn’t available right now. Your changes are saved on this device and will sync automatically.",
     "context": "Sync state Temporary (busy): the server answered with a server error (5xx), asked this device to slow down (429), or sent an answer that couldn’t be parsed."
@@ -2523,17 +2396,13 @@
     "text": "This Mac couldn’t finish connecting to your server. Try again, or cancel to keep writing.",
     "context": "Mac journal window while a failed connection’s staged copy waits for Try Again or Cancel in the connection sheet."
   },
-  "messages.writingPaused.encrypting": {
-    "text": "Writing is paused while your journals are encrypted.",
-    "context": "The encryption notice at the top of the journals on every device while Encrypt Your Journals works."
-  },
   "messages.writingPaused.showConnection": {
     "text": "Show Connection",
     "context": "Brings the Settings window with the connection sheet forward."
   },
   "messages.writingPaused.updating": {
     "text": "My Journal is updating your journals. Try again when it’s finished.",
-    "context": "Opening an archive (from Finder or Files) while connecting or turning on encryption replaces the library."
+    "context": "Opening an archive (from Finder or Files) while connecting replaces the library."
   },
   "settings.about.header": {
     "text": "About",
@@ -3131,10 +3000,6 @@
     "text": "These entries are preserved. You can review them in Unavailable after importing.",
     "context": "Archive preview, with unavailable entries."
   },
-  "settings.archiveImport.unencryptedNote": {
-    "text": "This archive isn’t encrypted. You’ll choose a master password next.",
-    "context": "Import Archive preview, above the buttons: the archive is not encrypted and this device has no journals."
-  },
   "settings.archiveImport.willSync": {
     "text": "Imported journals will also sync to your server.",
     "context": "Archive preview on a connected device."
@@ -3145,11 +3010,7 @@
   },
   "settings.backup.archive.footerEncrypted": {
     "text": "An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your {credential}.",
-    "context": "Archive footer for encrypted journals; {credential} in lower case."
-  },
-  "settings.backup.archive.footerUnencrypted": {
-    "text": "An archive includes readable entries, images and earlier versions. Keep it private.",
-    "context": "Archive footer for journals without encryption."
+    "context": "Archive footer; {credential} in lower case."
   },
   "settings.backup.archive.header": {
     "text": "Archive",
@@ -3158,13 +3019,6 @@
   "settings.backup.archiveFilename": {
     "text": "Journal Archive {date}.journalarchive",
     "context": "Suggested archive name; {date} is yyyy-MM-dd with Western digits."
-  },
-  "settings.backup.archiveReason": {
-    "text": {
-      "default": "Export an archive of your journals",
-      "mac": "export an archive of your journals"
-    },
-    "context": "Authentication reason before Export Archive when App Lock is on and the journals aren't encrypted; the Mac form completes “My Journal is trying to …”."
   },
   "settings.backup.exportArchiveSheet.title": {
     "text": "Export Archive",
@@ -3180,11 +3034,7 @@
   },
   "settings.backup.markdown.footer": {
     "text": "Saves your journals and their images as Markdown files that other apps can open. The files aren’t encrypted. To keep a copy you can import later, use Export Archive.",
-    "context": "Markdown footer (Settings ▸ Backup and the sheet) for encrypted journals."
-  },
-  "settings.backup.markdown.footerUnencrypted": {
-    "text": "Saves your journals and their images as Markdown files that other apps can open. To keep a copy you can import later, use Export Archive.",
-    "context": "Markdown footer for journals without encryption."
+    "context": "Markdown footer (Settings ▸ Backup and the sheet)."
   },
   "settings.backup.markdown.header": {
     "text": "Markdown",
@@ -3227,14 +3077,7 @@
       "default": "Export your journals as files that aren’t encrypted",
       "mac": "export your journals as files that aren’t encrypted"
     },
-    "context": "Authentication reason before Export as Markdown when App Lock is on, for encrypted journals; the Mac form completes “My Journal is trying to …”."
-  },
-  "settings.backup.markdownReasonUnencrypted": {
-    "text": {
-      "default": "Export your journals as Markdown files",
-      "mac": "export your journals as Markdown files"
-    },
-    "context": "Authentication reason before Export as Markdown when App Lock is on, for journals without encryption."
+    "context": "Authentication reason before Export as Markdown when App Lock is on; the Mac form completes “My Journal is trying to …”."
   },
   "settings.backup.openFailed": {
     "text": "Couldn’t Open Archive",
@@ -3335,10 +3178,6 @@
     "text": "Add This Device",
     "context": "Title of the step that shows a pairing code for a connected device to type."
   },
-  "settings.connect.addThisDevice.useRecoveryCode": {
-    "text": "Use a Recovery Code Instead…",
-    "context": "Button on Add This Device for a server without encryption."
-  },
   "settings.connect.address.footer": {
     "text": "For Tailscale, use your server’s HTTPS address while connected to your tailnet.",
     "context": "Footer under the server address field."
@@ -3365,7 +3204,7 @@
   },
   "settings.connect.busy.signingIn": {
     "text": "Signing In…",
-    "context": "Busy row while signing in with a credential or recovery code."
+    "context": "Busy row while signing in with a credential."
   },
   "settings.connect.checkCode.announcement": {
     "text": "Check code {digits}. Connect only if your other device shows the same code.",
@@ -3390,10 +3229,6 @@
   "settings.connect.choosePassword.intro": {
     "text": "Your master password encrypts your journals on this device before they’re sent to {host}.",
     "context": "Intro of Choose a Master Password when the journals will sync."
-  },
-  "settings.connect.codeUsed": {
-    "text": "That code was used. Enter a new one.",
-    "context": "Line above the recovery code field after Back from Merge Journals gave up the one-time code; shown until the person types, announced when the step appears."
   },
   "settings.connect.download": {
     "text": "Your journals will download to this device.",
@@ -3429,15 +3264,7 @@
   },
   "settings.connect.merge.footerSamePassword": {
     "text": "Afterward, this device uses the same {serverCredential} as your other devices. Archives you exported earlier still open with the {deviceCredential} you use now.",
-    "context": "Merge Journals footer when both are encrypted; credentials in lower case."
-  },
-  "settings.connect.merge.footerUnencrypted": {
-    "text": "They aren’t encrypted, so anyone with access to the server can read them.",
-    "context": "Merge Journals footer when neither is encrypted. Also: Appended, after a space, to the upload sentence when the journals aren't encrypted."
-  },
-  "settings.connect.merge.footerWillEncrypt": {
-    "text": "They’ll be encrypted before they’re uploaded.",
-    "context": "Merge Journals footer when this device isn't encrypted and the server is."
+    "context": "Merge Journals footer; credentials in lower case."
   },
   "settings.connect.merge.help": {
     "text": "Merge (⌘Return)",
@@ -3480,7 +3307,7 @@
   },
   "settings.connect.ready.addDevice": {
     "text": "Add Another Device…",
-    "context": "Button after setting up a server or turning on encryption; opens Add Device."
+    "context": "Button after setting up a server; opens Add Device."
   },
   "settings.connect.ready.footer": {
     "text": "You can also sign in on your other devices with your {credential}.",
@@ -3497,18 +3324,6 @@
   "settings.connect.reconnect.title": {
     "text": "Reconnect",
     "context": "Title of the Connect to a Server sheet when it was opened by Reconnect… (fixed while the sheet is open). Opened by Connect to a Server… the title is settings.connect.title."
-  },
-  "settings.connect.recoveryCode.footer": {
-    "text": "Ask your server administrator for a one-time recovery code.",
-    "context": "Footer under the recovery code field; followed by “Your journals will download to this device.” when nothing is written here."
-  },
-  "settings.connect.recoveryCode.show": {
-    "text": "Show Recovery Code",
-    "context": "Switch showing the recovery code as plain text."
-  },
-  "settings.connect.recoveryCode.title": {
-    "text": "Use a Recovery Code",
-    "context": "Title of the step for a one-time recovery code (server without encryption)."
   },
   "settings.connect.scanAgain": {
     "text": "Scan Again",
@@ -3554,17 +3369,9 @@
     "text": "Show {credential}",
     "context": "Switch showing the credential field as plain text, for example “Show Master Password”."
   },
-  "settings.connect.signIn.footerEncrypted": {
-    "text": "The journals on this device will be encrypted too. Changes that haven’t synced are kept.",
-    "context": "Sign-in footer after the server started using encryption."
-  },
   "settings.connect.signIn.intro": {
     "text": "Enter the {credential} you chose when you set up {host}.",
     "context": "Sign-in intro; {credential} in lower case."
-  },
-  "settings.connect.signIn.introEncrypted": {
-    "text": "The server now uses encryption. Enter its master password.",
-    "context": "Sign-in intro after the server started using encryption (Reconnect…)."
   },
   "settings.connect.signIn.introRecoveryKey": {
     "text": "Enter the recovery key you saved when you set up {host}.",
@@ -3576,7 +3383,7 @@
   },
   "settings.connect.signIn.title": {
     "text": "Enter {credential}",
-    "context": "Title of the sign-in step, named after the server's credential (Master Password, Recovery Key, Access Password). Also: Title of the step asking for this device's own password before setting up a server, for example “Enter Master Password”."
+    "context": "Title of the sign-in step, named after the server's credential (Master Password, Recovery Key). Also: Title of the step asking for this device's own password before setting up a server, for example “Enter Master Password”."
   },
   "settings.connect.signIn.useDevice": {
     "text": "Use a Connected Device Instead…",
@@ -3594,10 +3401,6 @@
     "text": "Add Device…",
     "context": "Button at the end of Settings ▸ Sync ▸ Devices; opens Add Device."
   },
-  "settings.devices.added.accessPassword": {
-    "text": "Added with your access password on {when}",
-    "context": "How a device was added: signed in with the access password."
-  },
   "settings.devices.added.byDevice": {
     "text": "Added by {device} on {when}",
     "context": "How a device was added: approved by a device the server knows."
@@ -3609,10 +3412,6 @@
   "settings.devices.added.pairingCode": {
     "text": "Added with a pairing code on {when}",
     "context": "How a device was added: paired, approver unknown."
-  },
-  "settings.devices.added.recoveryCode": {
-    "text": "Added with a recovery code on {when}",
-    "context": "How a device was added: one-time recovery code (server without encryption)."
   },
   "settings.devices.added.recoveryKey": {
     "text": "Added with your recovery key on {when}",
@@ -3649,70 +3448,6 @@
   "settings.devices.revokeLabel": {
     "text": "Revoke access for {name}",
     "context": "Accessibility label of Revoke Access…; “, {how it was added}” is appended when another device has the same name."
-  },
-  "settings.encryptFirst": {
-    "text": "Choose a master password to encrypt your journals first.",
-    "context": "Replaces the whole content of Settings while Encrypt Your Journals is the root screen at launch (used instead of settings.libraryProblem)."
-  },
-  "settings.encryption.cancel.accessibilityLabel": {
-    "text": "Cancel encryption",
-    "context": "Accessibility name of Cancel in the encryption working notice, so it is not confused with cancelling something in the journals behind it."
-  },
-  "settings.encryption.checking": {
-    "text": "Checking {host}…",
-    "context": "Encrypt Your Journals: busy row while the form checks the server, and the first status of the working notice."
-  },
-  "settings.encryption.currentAccessPassword": {
-    "text": "Current Access Password",
-    "context": "Encrypt Your Journals: section header and field for libraries with an access password that are on a server."
-  },
-  "settings.encryption.done.archives": {
-    "text": "Archives and backups made before now aren’t encrypted. Anyone who has them can still read them.",
-    "context": "Footer of the Encrypt Your Journals Done sheet."
-  },
-  "settings.encryption.done.message": {
-    "text": "Only your devices can read your journals.",
-    "context": "Under the heading of the Encrypt Your Journals Done sheet."
-  },
-  "settings.encryption.done.otherDevices": {
-    "text": "On each of your other devices, choose Reconnect and enter your master password, or add it from this device.",
-    "context": "Encrypt Your Journals Done sheet, Your Other Devices, when syncing."
-  },
-  "settings.encryption.otherDevices.agents": {
-    "text": "Agents with access to your journals on {host} lose it. Give them access again afterward.",
-    "context": "Encrypt Your Journals, variant B, Your Other Devices."
-  },
-  "settings.encryption.otherDevices.header": {
-    "text": "Your Other Devices",
-    "context": "Section header in Encrypt Your Journals (variant B) and its Done sheet when syncing."
-  },
-  "settings.encryption.otherDevices.signIn": {
-    "text": "Your other devices will stop syncing until you sign in on each one with your master password. Changes they haven’t synced are kept. Any that conflict keep both versions.",
-    "context": "Encrypt Your Journals, variant B, Your Other Devices."
-  },
-  "settings.encryption.otherDevices.update": {
-    "text": "Before you encrypt, let your other devices sync.",
-    "context": "Encrypt Your Journals, variant B, Your Other Devices."
-  },
-  "settings.encryption.progress": {
-    "text": "Encrypting your journals…",
-    "context": "Encryption working notice: status text above the progress bar (also while signing in again after encryption was turned on elsewhere)."
-  },
-  "settings.encryption.progressLabel": {
-    "text": "Encrypting your journals",
-    "context": "Accessibility label of the encryption progress; its value is “{percent} percent”."
-  },
-  "settings.encryption.progressValue": {
-    "text": "{percent} percent",
-    "context": "Accessibility value of the encryption progress."
-  },
-  "settings.encryption.showPasswords": {
-    "text": "Show Passwords",
-    "context": "Encrypt Your Journals: switch showing all three password fields as plain text."
-  },
-  "settings.encryption.updatingServer": {
-    "text": "Updating {host}…",
-    "context": "Encryption working notice: status while the server switches to the encrypted copy."
   },
   "settings.erase.alert.erase": {
     "text": "Erase",
@@ -3890,7 +3625,7 @@
   },
   "settings.password.footer": {
     "text": "You’ll use this password to sign in on your other devices, restore backups, and recover your journals if you lose your devices. It can’t be reset, so save it in your password manager.",
-    "context": "Footer under a new master password (Connect to a Server, Encrypt Your Journals variant B)."
+    "context": "Footer under a new master password (Connect to a Server)."
   },
   "settings.privacy.appLock.error.message": {
     "text": "Try again.",
@@ -3997,17 +3732,9 @@
     "text": "Encryption",
     "context": "Header of the encryption section in Settings ▸ Privacy."
   },
-  "settings.privacy.encryption.off": {
-    "text": "Encryption Is Off",
-    "context": "Encryption status."
-  },
   "settings.privacy.encryption.on": {
     "text": "Your Journals Are Encrypted",
-    "context": "Encryption status. Also: Heading of the Encrypt Your Journals Done sheet."
-  },
-  "settings.privacy.encryption.turnOn": {
-    "text": "Turn On Encryption…",
-    "context": "Settings ▸ Privacy button for journals without encryption; opens Encrypt Your Journals as a sheet with Cancel."
+    "context": "Encryption status."
   },
   "settings.recoveryKey.confirmField": {
     "text": "Enter the last group to confirm",
@@ -4115,7 +3842,7 @@
   },
   "settings.sync.stopSyncing.message": {
     "text": "Your journals stay on this device. To sync again later, choose Connect to a Server in Settings ▸ Sync.",
-    "context": "Message of the Stop Syncing confirmation (Settings ▸ Sync). Encrypt Your Journals uses library.encrypt.stopSyncing.message instead."
+    "context": "Message of the Stop Syncing confirmation (Settings ▸ Sync)."
   },
   "settings.sync.stopSyncing.messageUnsent": {
     "text": {
@@ -4130,7 +3857,7 @@
   },
   "settings.sync.syncing": {
     "text": "Syncing…",
-    "context": "Value of Last Synced while a sync the person started runs. Also: Status while everything is received from the server before encrypting."
+    "context": "Value of Last Synced while a sync the person started runs."
   },
   "settings.title": {
     "text": "Settings",

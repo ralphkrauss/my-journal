@@ -37,20 +37,20 @@ final class ConformanceArchiveTests: XCTestCase {
         try queue.read { try Row.fetchAll($0, sql: sql) }
     }
 
-    private func plaintext(_ payload: String, key: Data, protection: ContentProtection, id: String, kind: String)
+    private func plaintext(_ payload: String, key: Data, encrypted: Bool, id: String, kind: String)
         throws -> String
     {
         let data = try XCTUnwrap(Data(base64Encoded: payload))
         let context = "journal:v1:record:\(kind):\(id)"
-        let opened = protection == .encrypted ? try VaultCrypto.open(data, key: key, context: context) : data
+        let opened = encrypted ? try VaultCrypto.open(data, key: key, context: context) : data
         return String(decoding: opened, as: UTF8.self)
     }
 
-    private func listing(of directory: URL, key: Data, protection: ContentProtection) throws -> [String: Any] {
+    private func listing(of directory: URL, key: Data, encrypted: Bool) throws -> [String: Any] {
         let queue = try DatabaseQueue(path: directory.appendingPathComponent("journal.sqlite").path)
         defer { try? queue.close() }
         func open(_ row: Row, _ idColumn: String) throws -> String {
-            try plaintext(row["payload"], key: key, protection: protection, id: row[idColumn], kind: row["kind"])
+            try plaintext(row["payload"], key: key, encrypted: encrypted, id: row[idColumn], kind: row["kind"])
         }
         let records = try rows(queue, "SELECT id, kind, payload, revision, dirty FROM records ORDER BY id").map { row in
             [
@@ -86,7 +86,7 @@ final class ConformanceArchiveTests: XCTestCase {
             let id: String = row["id"]
             let stored = try Data(contentsOf: directory.appendingPathComponent("attachments/" + id))
             let context = "journal:v1:attachment:\(id)"
-            let image = protection == .encrypted ? try VaultCrypto.open(stored, key: key, context: context) : stored
+            let image = encrypted ? try VaultCrypto.open(stored, key: key, context: context) : stored
             return [
                 "id": id, "uploaded": row["uploaded"] as Int64, "bytes": image.count,
                 "sha256": SHA256.hash(data: image).map { String(format: "%02x", $0) }.joined(),
@@ -112,11 +112,12 @@ final class ConformanceArchiveTests: XCTestCase {
 
     private func described(_ corpus: Corpus) throws -> [String: Any] {
         var archives: [String: Any] = [:]
-        for (name, protection) in [("encrypted", ContentProtection.encrypted), ("plaintext", .plaintext)] {
+        // Read as another client does, whatever this client can open: the plaintext archive stays in the corpus for
+        // readers (and the server) that support recovery formats 3 and 4.
+        for (name, encrypted) in [("encrypted", true), ("plaintext", false)] {
             let directory = Conformance.url("\(Self.base)/\(name)")
-            let encrypted = protection == .encrypted
             let key = corpus.recovery.vaultKey
-            var entry = try listing(of: directory, key: key, protection: protection)
+            var entry = try listing(of: directory, key: key, encrypted: encrypted)
             let head = try header(of: directory)
             entry["headerVersion"] = head["version"]
             entry["formatVersion"] = (head["recovery"] as? [String: Any])?["formatVersion"]
@@ -147,7 +148,7 @@ final class ConformanceArchiveTests: XCTestCase {
         let encrypted = try XCTUnwrap((fixture["archives"] as? [String: Any])?["encrypted"] as? [String: Any])
         let password = try XCTUnwrap(encrypted["password"] as? String)
         let source = Conformance.url("\(Self.base)/encrypted")
-        XCTAssertTrue(try VaultArchive.requiresPassword(at: source))
+        XCTAssertNoThrow(try VaultArchive.checkHeader(at: source))
         let restored = try await VaultArchive.restore(
             from: source, to: root.appendingPathComponent("restored"), phrase: password)
         let items = try await restored.store.items()
@@ -213,13 +214,18 @@ final class ConformanceArchiveTests: XCTestCase {
         }
     }
 
-    func testThePlaintextArchiveRestoresWithoutAPassword() async throws {
+    /// 1.1 reads only encrypted archives: the plaintext archive of a library 1.0 made without encryption is refused
+    /// before a password is asked for, and nothing is restored.
+    func testThePlaintextArchiveIsRefused() async throws {
         let source = Conformance.url("\(Self.base)/plaintext")
-        XCTAssertFalse(try VaultArchive.requiresPassword(at: source))
-        let restored = try await VaultArchive.restore(
-            from: source, to: root.appendingPathComponent("plain"), phrase: "")
-        let titles = try await restored.store.items().filter { $0.kind == "entry" }.map(\.title).sorted()
-        XCTAssertEqual(titles, ["Morning pages", "Written offline"])
-        try await restored.store.close()
+        XCTAssertThrowsError(try VaultArchive.checkHeader(at: source)) {
+            XCTAssertEqual($0 as? JournalError, .notEncrypted)
+        }
+        let destination = root.appendingPathComponent("plain")
+        do {
+            _ = try await VaultArchive.restore(from: source, to: destination, phrase: "")
+            XCTFail("An archive of journals that aren't encrypted was restored.")
+        } catch JournalError.notEncrypted {}
+        XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path))
     }
 }

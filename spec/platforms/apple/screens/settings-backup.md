@@ -37,19 +37,19 @@ The pane body (`SettingsView.pane(.backup)`) is a `Form` with `.formStyle(.group
 **1. Archive section** (`ArchiveControls`, `Views/ArchiveView.swift`). Header `settings.backup.archive.header`.
 - `ArchiveExportControls`: an `HStack` with a `Button` `common.exportArchive` (disabled while `export.showsProgress`), a `Spacer(minLength: 0)` and, after a 0.3 second delay (`ArchiveExport.progressDelay`), a `ProgressView().controlSize(.small)` with accessibility label `settings.backup.preparingArchive`, so the row keeps its size. Below it, when `export.error` is set, a red selectable `Text` (message keys `messages.export.archiveFailed`, `messages.export.archiveNoSpace`, `messages.export.archiveSaveFailed`, `messages.save.before.goBack`). It is cleared when the next export starts.
 - `ArchiveImportButton`: a `Button` `common.importArchive` that sets `choosing`, which presents `.fileImporter(allowedContentTypes: [.journalArchive])`. A chosen file is presented in `ArchiveImportView` as a `.sheet` (page `archive-import`). A picker failure shows `.alert` titled `settings.backup.openFailed`, `common.ok`.
-- After a save (1.1): `messages.export.archiveSaved` in the same place as the error line, as secondary selectable `Text` with `{credential}` lower-cased, until the next export starts (`ArchiveExport` holds a `savedMessage`, cleared by `start`), announced with `JournalAccessibility.announce` when it appears. Nothing for an unencrypted library.
-- Footer `settings.backup.archive.footerEncrypted` (credential name lower-cased) or `settings.backup.archive.footerUnencrypted`, chosen from `model.configuration?.encrypted`.
+- After a save (1.1): `messages.export.archiveSaved` in the same place as the error line, as secondary selectable `Text` with `{credential}` lower-cased, until the next export starts (`ArchiveExport` holds a `savedMessage`, cleared by `start`), announced with `JournalAccessibility.announce` when it appears.
+- Footer `settings.backup.archive.footerEncrypted` (credential name lower-cased).
 - Under the footer, for master-password libraries only: a borderless `Button` `settings.backup.archive.changePassword` that presents `ChangePasswordView` as a `.sheet` (the same sheet as Settings ▸ Privacy ▸ Change Password…, command `change-password`). It appears in this pane and in `ArchiveExportSheet`.
 
 **2. Markdown section** (`MarkdownExportSection`, `Views/MarkdownExportView.swift`). Header `settings.backup.markdown.header`.
 - `MarkdownExportControls`: the same row with `Button` `settings.backup.exportMarkdown`, disabled while preparing or when `model.store == nil`; indicator label `settings.backup.preparingFiles`; a red selectable error `Text` (`messages.export.markdownFailed`, `messages.export.markdownNoSpace`, `messages.export.markdownSaveFailed`, `messages.save.before.goBack`); a secondary selectable note `Text` after a successful save that left something out (`settings.backup.markdownNote.*`). Error and note changes are announced with `JournalAccessibility.announce`.
-- Footer `settings.backup.markdown.footer` (encrypted journals) or `settings.backup.markdown.footerUnencrypted`.
+- Footer `settings.backup.markdown.footer`.
 
 **Save dialogs.** Both exports end in SwiftUI `.fileExporter`: for the archive `contentType: ArchiveFileType.journalArchive` (`org.privatejournal.archive`, extension `journalarchive`) with a document `JournalFile(staged:filename:)`, whose `FileWrapper` refers to the staged regular file, and default name `settings.backup.archiveFilename`; for Markdown `contentType: .folder` with the folder name `settings.backup.markdownFolderName`. The dialogs are the system's: the Files browser sheet on iPhone and iPad, a save panel sheet on the Mac. The prepared archive file or Markdown folder is a temporary copy removed when the dialog closes (`discard()`), and at the next launch by `ArchiveExportLeftovers.removeAtLaunch` if the app quit meanwhile.
 
 **No password check (1.1).** Export Archive goes straight to preparing; the sheet `PasswordCheckView`, `passwordCheckPending` and its two commands are gone. Typing the current password in Change Password is the check, and Forgot Password? there resets a forgotten password for a local-only library.
 
-**Authentication before an archive.** `ArchiveExport.confirmOwner`: when App Lock is on and the library is not encrypted, the device owner is asked first (reason `settings.backup.archiveReason`, "Export an archive of your journals", lower-cased on the Mac); cancelled does nothing, failed shows `settings.backup.verifyFailed` ("Couldn’t verify it’s you. Try again.") as the red line. The spec now says so too. Markdown export asks whenever App Lock is on (`settings.backup.markdownReason` or `settings.backup.markdownReasonUnencrypted`); failure shows the same verification text.
+**Authentication before an export.** Export Archive does not ask for the device owner: the archive is encrypted. Markdown export asks whenever App Lock is on (reason `settings.backup.markdownReason`); cancelled does nothing, failed shows `settings.backup.verifyFailed` ("Couldn’t verify it’s you. Try again.") as the red line.
 
 **3. Export sheets** (File menu). `ArchiveExportSheet` and `MarkdownExportSheet` (same files) are each a `NavigationStack` containing a `Form` (`.formStyle(.grouped)`) with one section holding the same controls and the same footer; `.navigationTitle` `settings.backup.exportArchiveSheet.title` or `settings.backup.exportMarkdownSheet.title`; one `ToolbarItem(placement: .cancellationAction)` `Button` `common.done` that dismisses; closed by `onValueChange(of: model.locked)`. On the Mac `.frame(minWidth: 460, minHeight: 220)` (archive) or `minHeight: 240` (Markdown). They are presented by `RootView` from `model.archiveExportPresented` and `model.markdownExportPresented`, set by File ▸ Export Archive… and File ▸ Export Journals as Markdown… in `AppCommands.swift` (enabled when `model.isReady && !model.locked`). `ArchiveExportSheet` is also what the Erase warning opens (`erase`).
 
@@ -78,7 +78,7 @@ Keyboard: Return and Escape follow the standard default and cancel actions in th
 
 ## Copy differences
 
-- The Mac authentication reasons for Markdown export are lower case (`settings.backup.markdownReason` and `settings.backup.markdownReasonUnencrypted` have `mac` variants), as the system sentence reads "My Journal is trying to {reason}".
+- The Mac authentication reasons for Markdown export are lower case (`settings.backup.markdownReason` has a `mac` variant), as the system sentence reads "My Journal is trying to {reason}".
 - The File menu names the Markdown item "Export Journals as Markdown…" while Settings says `settings.backup.exportMarkdown` ("Export as Markdown…") (`export-markdown`; [open-questions.md](../../../open-questions.md), B13).
 - Everything else is the catalog default text.
 
@@ -122,4 +122,4 @@ Design records: `docs/design/archives.md`, `archive-actions-accessibility.md`, `
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), A29, B13, B43 and B44. D2 is resolved: Export Archive asks for the device's authentication when App Lock is on and the library is not encrypted (build 18), and the spec says so. The picker-failure alert shows the fixed text of `settings.archiveImport.error.couldntOpen`, not the system's message the spec describes (B44).
+See [open-questions.md](../../../open-questions.md), A29, B13, B43 and B44. D2 is closed: every library is encrypted in 1.1, so Export Archive never asks for the device's authentication (only Export as Markdown does). The picker-failure alert shows the fixed text of `settings.archiveImport.error.couldntOpen`, not the system's message the spec describes (B44).

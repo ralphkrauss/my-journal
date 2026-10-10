@@ -28,30 +28,34 @@ extension AppModel {
             Logger(subsystem: "org.privatejournal", category: "library").error("The settings couldn’t be read.")
             return
         }
+        // A library 1.0 made without encryption is never opened, and nothing of it is changed: the settings and the
+        // files stay byte for byte as they are, so version 1.0 can still read them, until the person erases them.
+        if configuration?.encrypted == false {
+            await close(becoming: .notEncrypted)
+            Logger(subsystem: "org.privatejournal", category: "library").notice(
+                "The journals on this device aren’t encrypted, so this version doesn’t open them.")
+            return
+        }
         // Before anything is shown: App Lock's PIN becomes the device's own authentication.
         retireAppLockPIN()
         // A copy staged by a connection that the app quit during is never used.
         removeAbandonedCopies()
-        // A copy made while turning on encryption that the server never saw is removed.
-        discardUnsentEncryptionCopy()
         await openConfiguredLibrary()
     }
 
     private func openConfiguredLibrary() async {
         do {
             let account = configuration?.keyID ?? keyAccount
-            var savedKey = try Keychain.read(account)
-            if savedKey == nil && configuration?.requiresPassword == false {
-                savedKey = try VaultCrypto.generateKey()
-                if let savedKey { try Keychain.write(savedKey, account: account) }
-            }
+            let savedKey = try Keychain.read(account)
             if savedKey != nil { rememberKeyAccount(account) }
             guard let key = savedKey else {
                 lockForMissingDeviceKey()
                 return
             }
             masterKey = key
-            try await openLibrary(key: key, protection: configuration?.recovery.contentProtection ?? .encrypted)
+            // A format this version doesn't know was made by a newer version (`JournalError.unsupportedFormat`).
+            try configuration?.recovery.requireEncrypted()
+            try await openLibrary(key: key)
         } catch {
             await failOpening(error)
             return
@@ -60,17 +64,11 @@ extension AppModel {
         await finishOpening()
     }
 
-    /// Once the library is open: a server that switched to encryption meanwhile is waited for, App Lock locks the
-    /// journals, and otherwise they are read, which is also the first read that can fail (`refresh`).
+    /// Once the library is open: App Lock locks the journals, and otherwise they are read, which is also the first read
+    /// that can fail (`refresh`).
     private func finishOpening() async {
         do {
-            // The server may have switched to encryption while the app last ran; writing waits until that's known.
-            if encryptionUnfinished {
-                pauseWriting(true)
-                encryption.finishAfterLaunch()
-            } else {
-                await numberDuplicateJournalsWithoutServer()
-            }
+            await numberDuplicateJournalsWithoutServer()
             locked = appLockOn
             unlockState.promptPending = locked
             if !locked {
@@ -95,14 +93,14 @@ extension AppModel {
     /// missing device key both use it, so either way the library is ready to sync. The store and the connection are
     /// assigned only when everything succeeded; a store that opened before the connection failed is closed first,
     /// so Try Again can never overlap an open handle on the same file.
-    func openLibrary(key: Data, protection: ContentProtection) async throws {
+    func openLibrary(key: Data) async throws {
         let folder = configuration?.storageFolder.map { directory.appendingPathComponent($0) } ?? directory
         // Opening never creates a library: a restore or cleanup that left the settings naming a folder that is gone
         // would otherwise give an empty library, which sync then uploads.
         guard FileManager.default.fileExists(atPath: folder.appendingPathComponent("journal.sqlite").path) else {
             throw LibraryDatabaseMissing()
         }
-        let opened = try JournalStore(directory: folder, key: key, protection: protection)
+        let opened = try JournalStore(directory: folder, key: key)
         let connectionAccount = configuration?.connectionKeyID ?? keyAccount + "-connection"
         let saved: SyncConnection?
         do {

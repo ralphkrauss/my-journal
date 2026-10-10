@@ -12,7 +12,7 @@ private final class LibraryServer {
         var serverID = "server-one"
         /// Answers every authenticated request but the status with 401, as for a removed device.
         var refusesDevices = false
-        var parameters = (try? JournalCoding.encoder().encode(RecoveryParameters(.unprotected))) ?? Data()
+        var parameters = (try? JournalCoding.encoder().encode(RecoveryParameters(.placeholder))) ?? Data()
         var grant = DeviceGrant(deviceId: UUID(), token: String(repeating: "g", count: 64))
         var log: [RemoteChange] = []
         /// Refuses every image as too large, as a server behind a proxy with a small upload limit does.
@@ -100,7 +100,7 @@ private final class LibraryServer {
 
 @MainActor
 final class SyncRecoveryTests: XCTestCase {
-    private func library(address: String, encrypted: Bool = false) async throws -> AppModel {
+    private func library(address: String) async throws -> AppModel {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
             "SyncRecovery-" + UUID().uuidString)
         let model = AppModel(directory: directory)
@@ -111,7 +111,7 @@ final class SyncRecoveryTests: XCTestCase {
             }
             try? FileManager.default.removeItem(at: directory)
         }
-        await model.start(password: encrypted ? "this device's own password" : nil, encrypted: encrypted)
+        await model.start(password: "this device's own password")
         let connection = SyncConnection(address: address, deviceID: UUID(), token: "synthetic-token")
         let account = "SyncRecoveryTests-" + UUID().uuidString
         try Keychain.write(JournalCoding.encoder().encode(connection), account: account)
@@ -137,7 +137,7 @@ final class SyncRecoveryTests: XCTestCase {
     func testAServerThatNeedsAnUpdateIsRefusedEverywhereWithOneMessageAndNothingIsLost() async throws {
         let message = "This server needs an update before this device can connect."
         let server = try await LibraryServer.start()
-        let model = try await library(address: server.address, encrypted: true)
+        let model = try await library(address: server.address)
         let envelope = try XCTUnwrap(model.configuration?.recovery)
         server.update { $0.parameters = (try? JournalCoding.encoder().encode(RecoveryParameters(envelope))) ?? Data() }
         await model.sync()
@@ -230,7 +230,8 @@ final class SyncRecoveryTests: XCTestCase {
         let model = try await library(address: server.address)
         let oldAccount = try XCTUnwrap(model.configuration?.connectionKeyID)
 
-        try await model.initializeServer(address: server.address, code: "ABC-234", phrase: "", uploadLocal: true)
+        try await model.initializeServer(
+            address: server.address, code: "ABC-234", phrase: "this device's own password", uploadLocal: true)
 
         XCTAssertEqual(model.connection?.deviceID, server.state.withLock { $0.grant.deviceId })
         XCTAssertNil(try Keychain.read(oldAccount), "The connection it replaced leaves nothing behind")
@@ -254,6 +255,7 @@ final class SyncRecoveryTests: XCTestCase {
             try FileManager.default.contentsOfDirectory(atPath: model.directory.path).filter { $0.hasPrefix("vault-") }
         }
         let before = try folders()
+        let putsBefore = server.requests.filter { $0.method == "PUT" }.count
 
         let flow = ConnectionFlow(model: model)
         flow.address = server.address
@@ -269,54 +271,11 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertTrue(
             server.requests.contains { $0.method == "DELETE" && $0.path == "/v1/devices/\(grant)" },
             "The access received before asking is given up; signing in again asks for new access")
-        XCTAssertFalse(server.requests.contains { $0.method == "PUT" }, "Nothing is sent before Merge")
+        XCTAssertEqual(server.requests.filter { $0.method == "PUT" }.count, putsBefore, "Nothing is sent before Merge")
         XCTAssertEqual(try folders(), before)
         XCTAssertEqual(model.connection?.token, "synthetic-token")
         flow.cancel()
         XCTAssertNil(model.agreedMergeHost)
-    }
-
-    /// Back from Merge Journals gives up the access obtained before it asked, so the person is asked for a new one
-    /// instead of the step reusing a spent one-time code (docs/design/sync-health-and-recovery.md §3.2).
-    func testBackFromMergeJournalsGivesUpTheAccessAndAsksForANewRecoveryCode() async throws {
-        let server = try await LibraryServer.start()
-        server.update {
-            $0.refusesDevices = true
-            $0.serverID = "another-library"
-        }
-        let model = try await library(address: server.address)
-        let flow = ConnectionFlow(model: model)
-        flow.address = server.address
-        flow.check()
-        try await settle(flow)
-        flow.path = [.addThisDevice, .recoveryCode]
-        let code = String(repeating: "ab", count: 32)
-        let requests = { (method: String, prefix: String) in
-            server.requests.filter { $0.method == method && $0.path.hasPrefix(prefix) }.count
-        }
-        flow.phrase = code
-        flow.signIn()
-        try await settle(flow) { flow.path.last == .merge }
-        XCTAssertEqual(flow.path, [.addThisDevice, .recoveryCode, .merge])
-        XCTAssertNotNil(model.retryGrant, "The one-time code's access waits for the person to agree.")
-        XCTAssertEqual(requests("POST", "/v1/recovery"), 1)
-        XCTAssertEqual(requests("DELETE", "/v1/devices/"), 0)
-
-        flow.path.removeLast()
-        for _ in 0..<100 where requests("DELETE", "/v1/devices/") == 0 { try await Task.sleep(nanoseconds: 25_000_000) }
-        XCTAssertEqual(requests("DELETE", "/v1/devices/"), 1, "Back gives the access up.")
-        XCTAssertNil(model.retryGrant)
-        XCTAssertEqual(flow.phrase, "", "The spent code isn't left in the field.")
-        XCTAssertEqual(flow.codeUsedNotice, "That code was used. Enter a new one.")
-        XCTAssertEqual(flow.path, [.addThisDevice, .recoveryCode])
-        flow.phrase = "typing a new code"
-        XCTAssertNil(flow.codeUsedNotice, "The line stays only until a new code is typed.")
-
-        flow.phrase = code
-        flow.signIn()
-        try await settle(flow) { flow.path.last == .merge }
-        XCTAssertEqual(requests("POST", "/v1/recovery"), 2, "A new code is spent, not the old access reused.")
-        flow.close()
     }
 
     /// The password step starts again too: nothing typed stays, and nothing is said about a wrong password.
@@ -343,7 +302,6 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertEqual(flow.path, [.signIn])
         XCTAssertEqual(flow.phrase, "")
         XCTAssertNil(flow.errorMessage(on: .signIn))
-        XCTAssertNil(flow.codeUsedNotice)
         flow.phrase = password
         flow.signIn()
         try await settle(flow) { flow.path.last == .merge }
@@ -351,52 +309,27 @@ final class SyncRecoveryTests: XCTestCase {
         flow.close()
     }
 
-    func testTheSameLibraryRejoinsByIdentityAndAnotherOnlyWithAgreement() async throws {
+    func testTheSameLibraryRejoinsByKeyAndAnotherOnlyWithAgreement() async throws {
         let server = try await LibraryServer.start()
         let model = try await library(address: server.address)
         await model.sync()
         XCTAssertNil(model.syncHealth)
         let ownKey = try XCTUnwrap(model.masterKey)
-        let grant = server.state.withLock { $0.grant }
 
-        // Without a password on the server, a new key means nothing: the library's records decide.
-        let same = try await model.joinPlan(
-            address: server.address, key: VaultCrypto.generateKey(), protection: .plaintext, grant: grant,
-            uploadLocal: true)
+        // The same vault key is the same library: it joins as it is.
+        let same = try await model.joinPlan(address: server.address, key: ownKey, uploadLocal: true)
         XCTAssertFalse(same.merges)
-        XCTAssertEqual(same.key, ownKey, "The library keeps its key and its records as they are")
+        XCTAssertEqual(same.key, ownKey)
 
-        // An empty server, as after encryption was turned on elsewhere and before that device sent its copy, combines
-        // nothing: the library joins it by identity.
-        server.update {
-            $0.serverID = "another-identity"
-            $0.log = []
-        }
-        let empty = try await model.joinPlan(
-            address: server.address, key: VaultCrypto.generateKey(), protection: .plaintext, grant: grant,
-            uploadLocal: true)
-        XCTAssertFalse(empty.merges)
-
-        server.update {
-            $0.serverID = "another-library"
-            $0.log = [
-                RemoteChange(
-                    cursor: 1, recordId: UUID(), revision: 1, kind: "entry", payload: "another library's entry",
-                    deviceId: UUID(), modifiedAt: Date())
-            ]
-        }
+        // Another key is another library: it merges only after Merge Journals.
         do {
-            _ = try await model.joinPlan(
-                address: server.address, key: VaultCrypto.generateKey(), protection: .plaintext, grant: grant,
-                uploadLocal: true)
+            _ = try await model.joinPlan(address: server.address, key: VaultCrypto.generateKey(), uploadLocal: true)
             XCTFail("Another library merges only after Merge Journals")
         } catch {
             XCTAssertTrue(error is MergeConsentNeeded, "\(error)")
         }
         model.agreedMergeHost = ServerAddress.host(server.address)
-        let other = try await model.joinPlan(
-            address: server.address, key: VaultCrypto.generateKey(), protection: .plaintext, grant: grant,
-            uploadLocal: true)
+        let other = try await model.joinPlan(address: server.address, key: VaultCrypto.generateKey(), uploadLocal: true)
         XCTAssertTrue(other.merges)
     }
 
@@ -484,7 +417,7 @@ final class SyncRecoveryTests: XCTestCase {
         let model = try await library(address: "http://127.0.0.1:9")
         model.pendingSync = true
         let states: [SyncHealth] = [
-            .offline, .unreachable, .unavailable, .signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved,
+            .offline, .unreachable, .unavailable, .serverNotSetUp, .serverReplaced, .accessRemoved,
             .appUpdateNeeded, .serverUpdateNeeded, .certificateInvalid, .notJournalServer, .localDataUnreadable,
             .localDataUnavailable, .unexpected,
         ]
@@ -516,7 +449,6 @@ final class SyncRecoveryTests: XCTestCase {
         let encrypted = try JournalCoding.encoder().encode(
             RecoveryParameters(try VaultCrypto.makeRecovery(masterKey: VaultCrypto.generateKey(), phrase: "password").0)
         )
-        let plain = try JournalCoding.encoder().encode(RecoveryParameters(.unprotected))
         let replacedByEncrypted: @Sendable (inout LibraryServer.State) -> Void = {
             $0.serverID = "an-encrypted-library"
             $0.parameters = encrypted
@@ -524,7 +456,7 @@ final class SyncRecoveryTests: XCTestCase {
         }
         server.update(replacedByEncrypted)
         await model.sync()
-        XCTAssertEqual(model.syncHealth, .signInNeeded)
+        XCTAssertEqual(model.syncHealth, .serverReplaced)
         XCTAssertEqual(model.syncStatusAction, .reconnect)
 
         server.update { $0.initialized = false }
@@ -535,7 +467,7 @@ final class SyncRecoveryTests: XCTestCase {
         server.update {
             $0.initialized = true
             $0.serverID = "another-library"
-            $0.parameters = plain
+            $0.parameters = encrypted
         }
         await model.syncNow()
         XCTAssertEqual(model.syncHealth, .serverReplaced)
@@ -551,13 +483,12 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertEqual(model.syncStatusAction, .reconnect)
         server.update {
             $0.serverID = "server-one"
-            $0.parameters = plain
+            $0.parameters = encrypted
             $0.refusesDevices = false
         }
         await model.syncNow()
         XCTAssertNil(model.syncHealth)
         XCTAssertEqual(model.syncStatusAction, .syncNow)
-        XCTAssertFalse(model.encryption.offersSignIn)
         XCTAssertFalse(model.syncNeedsAttention)
         XCTAssertFalse(model.showsSyncStatus)
     }
@@ -567,13 +498,13 @@ final class SyncRecoveryTests: XCTestCase {
     func testEveryStateThatNeedsAReconnectOffersTheSameAction() async throws {
         let model = try await library(address: "http://127.0.0.1:9")
         let states: [SyncHealth] = [
-            .signInNeeded, .serverNotSetUp, .serverReplaced, .accessRemoved, .offline, .unreachable, .unavailable,
+            .serverNotSetUp, .serverReplaced, .accessRemoved, .offline, .unreachable, .unavailable,
             .appUpdateNeeded, .serverUpdateNeeded, .certificateInvalid, .notJournalServer, .localDataUnreadable,
             .localDataUnavailable, .unexpected,
         ]
         for state in states {
             model.syncHealth = state
-            let reconnects = [.needsYou, .serverChanged, .noAccess].contains(state.kind)
+            let reconnects = [.serverChanged, .noAccess].contains(state.kind)
             XCTAssertEqual(model.syncStatusAction == .reconnect, reconnects, "\(state)")
             XCTAssertEqual(model.syncStatusAction.connects, reconnects, "\(state)")
             XCTAssertEqual(model.serverRefusesThisDevice, reconnects, "\(state)")
@@ -598,24 +529,20 @@ final class SyncRecoveryTests: XCTestCase {
         XCTAssertEqual(model.syncError, model.syncMessage(of: .accessRemoved))
         XCTAssertEqual(model.syncStatusAction, .reconnect)
 
-        let plain = try JournalCoding.encoder().encode(RecoveryParameters(.unprotected))
+        let other = try JournalCoding.encoder().encode(RecoveryParameters(.placeholder))
         server.update {
             $0.serverID = "another-library"
-            $0.parameters = plain
+            $0.parameters = other
         }
         await model.learnWhyAccessWasRefused()
         XCTAssertEqual(model.syncHealth, .serverReplaced, "The sync's answer is kept, not replaced by a guess")
         XCTAssertEqual(model.syncError, model.syncMessage(of: .serverReplaced))
     }
 
-    /// The message after a removal follows the library on this device: a password, or a recovery code without one.
-    func testTheRemovedMessageFollowsTheLibrarysMode() async throws {
-        let withPassword = try await library(address: "http://127.0.0.1:9", encrypted: true)
-        XCTAssertTrue(
-            withPassword.syncMessage(of: .accessRemoved).hasSuffix("you need your password or a connected device."))
-        let without = try await library(address: "http://127.0.0.1:9")
-        XCTAssertTrue(
-            without.syncMessage(of: .accessRemoved).hasSuffix("you need a connected device or a recovery code."))
+    /// The message after a removal says what reconnecting needs.
+    func testTheRemovedMessageSaysWhatReconnectingNeeds() async throws {
+        let model = try await library(address: "http://127.0.0.1:9")
+        XCTAssertTrue(model.syncMessage(of: .accessRemoved).hasSuffix("you need your password or a connected device."))
     }
 
     /// A stopped state doesn't retry on unlock, so its own sentence must still be there afterwards.

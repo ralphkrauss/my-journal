@@ -105,12 +105,12 @@ extension ServerClient {
     /// another journal into one of them would let that agent read more (docs/design/journal-name-uniqueness.md §4.5).
     /// Agents with All Journals add nothing: they read a journal whether it's combined or added. Nil when an agent's
     /// settings can't be read, so which journals it reads isn't known.
-    public func journalsAgentsCanRead(vaultKey: Data, protection: ContentProtection) async throws -> Set<UUID>? {
+    public func journalsAgentsCanRead(vaultKey: Data) async throws -> Set<UUID>? {
         var journals = Set<UUID>()
         for agent in try await agents() {
             guard
                 let settings = try? AgentCopyCrypto.openSettings(
-                    agent.metadata, grantID: agent.id, vaultKey: vaultKey, protection: protection)
+                    agent.metadata, grantID: agent.id, vaultKey: vaultKey)
             else { return nil }
             if !settings.allJournals { journals.formUnion(settings.journalIds) }
         }

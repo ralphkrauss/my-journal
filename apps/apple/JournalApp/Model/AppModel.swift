@@ -37,14 +37,6 @@ final class AppModel: ObservableObject {
     var preferences = UserDefaults.standard
     /// Lists the Keychain's accounts for Erase; replaced by tests.
     var keychainListing: () throws -> [String] = { try Keychain.accounts() }
-    /// How long the encryption form's check and the unfinished state's questions to the server may take; tests set it
-    /// shorter.
-    var serverQuestionSeconds: TimeInterval = 10
-    /// The bytes free for important use on the volume that holds `directory`; tests replace it.
-    var availableStorage: (URL) -> Int64? = {
-        (try? $0.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]))?
-            .volumeAvailableCapacityForImportantUsage
-    }
     /// The library is being replaced (connecting, pairing or importing); this starts a new vault session.
     /// Set while connecting (ServerJoining.swift) or importing replaces the library.
     @Published var vaultReplacement = false {
@@ -74,7 +66,7 @@ final class AppModel: ObservableObject {
     @Published var connectingToServer = false
     /// What joining a server is doing while it merges this library's journals (docs/design/join-with-local-journals.md).
     @Published var joinPhase: JoinPhase?
-    /// Access a join received and kept for Try Again, as a one-time recovery code can't be used twice; given up when
+    /// Access a join received and kept for Try Again, as a pairing's access can't be asked for twice; given up when
     /// the connection flow is left (`giveUpRetry`).
     var retryGrant: (address: String, key: Data, grant: DeviceGrant)?
     /// Merging has started sending this device's journals, so some may already be on the server.
@@ -259,8 +251,8 @@ final class AppModel: ObservableObject {
     /// Whether the app is active, kept current from the system; a success is applied only while it is.
     var applicationActive = false
     private var activitySubscriptions: [AnyCancellable] = []
-    /// Turn On Encryption, which outlasts the sheet that shows it (EncryptionUpgrade.swift).
-    lazy var encryption = EncryptionUpgrade(model: self)
+    /// Reconnect was chosen from a sync message (Sync Status): Connect to a Server opens over the window.
+    @Published var reconnectRequested = false
     /// The system's rating request at a pause in writing (ReviewRequestTiming.swift).
     lazy var reviewRequests: ReviewRequests = {
         let requests = ReviewRequests.forApp(hostsTests: Self.hostsTests)
@@ -292,7 +284,7 @@ final class AppModel: ObservableObject {
             updateImageLoading()
         }
     }
-    /// Replaced when the library is (connecting in ServerJoining.swift, importing, turning on encryption).
+    /// Replaced when the library is (connecting in ServerJoining.swift, importing).
     var masterKey: Data?
     private var saveTask: Task<Void, Never>?
     /// Settles the conflicts a library without a server holds once writing pauses (ConflictNotes.swift).
@@ -707,8 +699,7 @@ final class AppModel: ObservableObject {
             // Any synchronization that ran does what one the watcher asked for would.
             if finished.outcome != .declined { syncTiming.watcherSyncDue = false }
         }
-        // Nothing reaches a server while an unencrypted library waits for the person's decision to encrypt.
-        guard !locked, !replacingVault, !saveFailure, !encryptionHoldsSynchronization, let store, let syncEngine
+        guard !locked, !replacingVault, !saveFailure, let store, let syncEngine
         else { return false }
         // The floor between requests counts from every synchronization, not only the loop's.
         handleWatcher(.syncStarted)
@@ -810,7 +801,7 @@ final class AppModel: ObservableObject {
             return
         }
         if store == nil {
-            do { try await openLibrary(key: result.0, protection: envelope.contentProtection) } catch {
+            do { try await openLibrary(key: result.0) } catch {
                 await failOpening(error)
                 return
             }
@@ -828,34 +819,6 @@ final class AppModel: ObservableObject {
             try await readJournalsAfterUnlocking()
             if draft == nil { selectInitialEntry(reveal: true) }
         } catch { report(error, .reading) }
-    }
-
-}
-
-extension AppModel {
-    /// Pauses writing while another operation replaces the library, as connecting does (turning on encryption).
-    func pauseWriting(_ paused: Bool) {
-        if vaultReplacement != paused { vaultReplacement = paused }
-    }
-    /// Opens `destination` with `key` in place of the current library once the configuration names it. Used by
-    /// turning on encryption (EncryptionOperations.swift); the journals keep their identities.
-    func openReplacedLibrary(_ destination: JournalStore, key: Data) async {
-        masterKey = key
-        let previous = store
-        store = destination
-        configureSync()
-        selectedID = nil
-        draft = nil
-        selectedJournalID = nil
-        items = []
-        imageLoader.clear()
-        do {
-            try await refresh()
-            selectInitialEntry()
-        } catch {
-            self.error = "Encryption is on, but your journals couldn’t be displayed. Reopen My Journal to try again."
-        }
-        try? await previous?.close()
     }
 }
 
@@ -916,7 +879,7 @@ extension AppModel {
         firstReadPending = false
         saveFailure = false
         syncActivity.pendingItems = 0
-        encryption.reset()
+        reconnectRequested = false
         retryGrant = nil
         agreedMergeHost = nil
         mergeSending = false

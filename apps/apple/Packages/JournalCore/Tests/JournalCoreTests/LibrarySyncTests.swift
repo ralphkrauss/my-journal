@@ -15,11 +15,8 @@ final class LibrarySyncTests: XCTestCase {
 
     // MARK: Helpers
 
-    private func device(_ name: String, protection: ContentProtection = .encrypted, key: Data? = nil) throws
-        -> JournalStore
-    {
-        let store = try JournalStore(
-            directory: root.appendingPathComponent(name), key: key ?? self.key, protection: protection)
+    private func device(_ name: String, key: Data? = nil) throws -> JournalStore {
+        let store = try JournalStore(directory: root.appendingPathComponent(name), key: key ?? self.key)
         addTeardownBlock { try? await store.close() }
         return store
     }
@@ -409,54 +406,6 @@ final class LibrarySyncTests: XCTestCase {
         XCTAssertEqual(onServer.map { Set($0.keys) }, [pinKey(entries[1].id), pinKey(entries[2].id)])
     }
 
-    func testSigningInAfterEncryptionWasTurnedOnElsewhereAddsOnlyWhatTheServerLacks() async throws {
-        let server = MemoryServer()
-        let mac = try device("mac", protection: .plaintext)
-        let phone = try device("phone", protection: .plaintext)
-        let macSync = SyncEngine(store: mac, server: server)
-        let phoneSync = SyncEngine(store: phone, server: server)
-        let (_, entries) = try await journalWithEntries(mac, count: 3)
-        let more = JournalItem(kind: "journal", title: "Travel")
-        try await mac.save(more)
-        try await mac.setPinned(true, entry: entries[0].id)
-        try await mac.setPinned(true, entry: entries[1].id)
-        try await macSync.synchronize()
-        try await phoneSync.synchronize()
-
-        // The Mac moves a journal, then turns on encryption, which empties the server.
-        let shown = try await mac.arrangedJournals().map(\.id)
-        try await mac.moveJournal(more.id, shown: shown, to: 0)
-        try await macSync.synchronize()
-        let newKey = try VaultCrypto.generateKey()
-        let encrypted = try await mac.reencryptedCopy(
-            to: root.appendingPathComponent("mac-encrypted"), key: newKey, baseline: .restart)
-        addTeardownBlock { try? await encrypted.close() }
-        await server.restore(.init(), identity: "encrypted")
-        try await SyncEngine(store: encrypted, server: server).synchronize()
-
-        // The phone, offline meanwhile, pinned an entry, unpinned another and moved the same journal.
-        try await phone.setPinned(true, entry: entries[2].id)
-        try await phone.setPinned(false, entry: entries[0].id)
-        let phoneShown = try await phone.arrangedJournals().map(\.id)
-        try await phone.moveJournal(more.id, shown: phoneShown, to: phoneShown.count - 1)
-        let signedIn = try await phone.reencryptedCopy(
-            to: root.appendingPathComponent("phone-encrypted"), key: newKey, baseline: .reconcile)
-        addTeardownBlock { try? await signedIn.close() }
-        let signedInSync = SyncEngine(store: signedIn, server: server)
-        try await signedInSync.synchronize()
-        try await signedInSync.synchronize()
-        try await SyncEngine(store: encrypted, server: server).synchronize()
-
-        let onPhone = try await signedIn.libraryArrangement()
-        let onMac = try await encrypted.libraryArrangement()
-        XCTAssertEqual(onPhone, onMac)
-        XCTAssertEqual(onPhone.pinned, [entries[1].id, entries[2].id], "The never-sent unpin still applies")
-        let order = try await encrypted.arrangedJournals().map(\.id)
-        XCTAssertEqual(order.last, more.id, "The phone's never-sent move applies")
-        let reviews = try await conflictCount(signedIn)
-        XCTAssertEqual(reviews, 0)
-    }
-
     func testAnotherVersionAtTheSameRevisionAfterARollbackDoesNotUnpinItsPins() async throws {
         let server = MemoryServer()
         let mac = try device("mac")
@@ -705,32 +654,20 @@ final class LibrarySyncTests: XCTestCase {
         XCTAssertEqual(values[pinKey(entries[2].id)], .bool(true))
     }
 
-    func testTurningOnEncryptionSealsUnsentChangesAndADamagedValueBlocksNothing() async throws {
-        let plain = try device("plain", protection: .plaintext)
-        let (_, entries) = try await journalWithEntries(plain)
-        try await plain.setPinned(true, entry: entries[0].id)
-        let raw = try await plain.setting(LibraryChanges.setting)
-        let plaintextValue = try XCTUnwrap(raw)
-        XCTAssertNotNil(
-            Data(base64Encoded: plaintextValue).flatMap { try? JSONSerialization.jsonObject(with: $0) },
-            "Readable in a library without encryption")
-        let newKey = try VaultCrypto.generateKey()
-        let copy = try await plain.reencryptedCopy(
-            to: root.appendingPathComponent("sealed"), key: newKey, baseline: .reconcile)
-        addTeardownBlock { try? await copy.close() }
-        let sealed = try await copy.setting(LibraryChanges.setting)
-        let sealedValue = try XCTUnwrap(sealed)
-        XCTAssertNil(Data(base64Encoded: sealedValue).flatMap { try? JSONSerialization.jsonObject(with: $0) })
-        let intents = try await copy.libraryChanges()
+    func testADamagedValueBlocksNothing() async throws {
+        let store = try device("damaged")
+        let (_, entries) = try await journalWithEntries(store)
+        try await store.setPinned(true, entry: entries[0].id)
+        let intents = try await store.libraryChanges()
         XCTAssertEqual(Set(intents.keys), [pinKey(entries[0].id)])
 
         // A value that can't be opened: the library opens, pins and syncs.
-        try await copy.setSetting(LibraryChanges.setting, value: Data("not sealed".utf8))
+        try await store.setSetting(LibraryChanges.setting, value: Data("not sealed".utf8))
         let server = MemoryServer()
-        try await SyncEngine(store: copy, server: server).synchronize()
-        try await copy.setPinned(true, entry: entries[1].id)
-        try await SyncEngine(store: copy, server: server).synchronize()
-        let onServer = await server.libraryValues(openedBy: copy)
+        try await SyncEngine(store: store, server: server).synchronize()
+        try await store.setPinned(true, entry: entries[1].id)
+        try await SyncEngine(store: store, server: server).synchronize()
+        let onServer = await server.libraryValues(openedBy: store)
         XCTAssertEqual(onServer.map { Set($0.keys) }, Set(entries.map { pinKey($0.id) }))
     }
 

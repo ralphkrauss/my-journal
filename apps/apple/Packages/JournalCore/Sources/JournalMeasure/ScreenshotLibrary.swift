@@ -51,8 +51,7 @@ struct ScreenshotLibrary {
         let key = try VaultCrypto.generateKey()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: password, formatVersion: 2).0
         let folder = "vault-" + UUID().uuidString.lowercased()
-        let store = try JournalStore(
-            directory: directory.appendingPathComponent(folder), key: key, protection: recovery.contentProtection)
+        let store = try JournalStore(directory: directory.appendingPathComponent(folder), key: key)
         var templates: [String: UUID] = [:]
         // The person's own templates: four with the questions earlier builds started with, and Book Notes.
         for template in BuiltInTemplates.asEarlierBuildsCreated() {

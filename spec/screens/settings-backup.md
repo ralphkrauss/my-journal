@@ -36,9 +36,9 @@ Makes a complete, private copy of the journals that can be imported later (an ar
 
 Header `settings.backup.archive.header` ("Archive").
 1. A button `common.exportArchive` ("Export Archive…"). While the archive is being prepared for longer than 0.3 seconds, a small activity indicator appears at the row's end (accessibility label `settings.backup.preparingArchive` "Preparing Archive…"); the row keeps its size.
-2. An error line in red, selectable, when the last export failed. After a save, in the same place and until the next export starts: `messages.export.archiveSaved` ("Archive saved. Keep your {credential} with it.", credential in lower case), announced when it appears. Journals without encryption show nothing.
+2. An error line in red, selectable, when the last export failed. After a save, in the same place and until the next export starts: `messages.export.archiveSaved` ("Archive saved. Keep your {credential} with it.", credential in lower case), announced when it appears.
 3. A button `common.importArchive` ("Import Archive…").
-- Footer: `settings.backup.archive.footerEncrypted` ("An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your {credential}.", credential in lower case) or, for journals without encryption, `settings.backup.archive.footerUnencrypted` ("An archive includes readable entries, images and earlier versions. Keep it private.").
+- Footer: `settings.backup.archive.footerEncrypted` ("An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your {credential}.", credential in lower case).
 - Under the footer, for master-password journals only: a borderless button `settings.backup.archive.changePassword` ("Not sure of your password? Change Password…"), which opens Change Password (`screens/change-password`). There is no password check before exporting; typing the current password in Change Password is the check, and a local-only library can reset a forgotten password there.
 
 ### 2. Markdown section
@@ -47,7 +47,7 @@ Header `settings.backup.markdown.header` ("Markdown").
 1. A button `settings.backup.exportMarkdown` ("Export as Markdown…"), disabled while preparing or without a library. Indicator after 0.3 seconds (accessibility label `settings.backup.preparingFiles` "Preparing Files…").
 2. An error line in red, when the last export failed.
 3. A note in secondary text after a successful save that left something out (see `flows/export-markdown`).
-- Footer: `settings.backup.markdown.footer` for encrypted journals (it says the files aren’t encrypted), or `settings.backup.markdown.footerUnencrypted`.
+- Footer: `settings.backup.markdown.footer` for encrypted journals (it says the files aren’t encrypted).
 
 ### Export Archive sheet (File menu, and from Erase)
 
@@ -77,7 +77,7 @@ A sheet titled `settings.backup.exportMarkdownSheet.title` ("Export as Markdown"
 ## Rules
 
 - One export of each kind at a time.
-- With App Lock on, both exports ask for the device's authentication first: Export Archive only when the journals aren't encrypted (`settings.backup.archiveReason`), Export as Markdown always (`settings.backup.markdownReason`, `settings.backup.markdownReasonUnencrypted`). A cancel says nothing; a failure shows `settings.backup.verifyFailed` in the export's error line ([flows/export-archive](../flows/export-archive.md), [flows/export-markdown](../flows/export-markdown.md)).
+- With App Lock on, Export as Markdown asks for the device's authentication first (`settings.backup.markdownReason`), because it writes files that aren’t encrypted; Export Archive doesn't, because the archive is encrypted and opens only with the password or recovery key. A cancel says nothing; a failure shows `settings.backup.verifyFailed` in the export's error line ([flows/export-archive](../flows/export-archive.md), [flows/export-markdown](../flows/export-markdown.md)).
 - Leaving the pane or sheet while preparing cancels the export; while the save dialog is open it stays.
 - The computer doesn't lock for inactivity while an export is being prepared (it may while the save dialog waits).
 - Temporary copies are removed after the dialog closes, and at the next launch if the app quit meanwhile.

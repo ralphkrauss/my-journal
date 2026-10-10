@@ -15,7 +15,6 @@ sources:
   - apps/apple/JournalApp/Views/EntryHeaderView.swift
   - apps/apple/JournalApp/Views/RootView.swift
   - apps/apple/JournalApp/Views/SyncNowRows.swift
-  - apps/apple/JournalApp/Views/EncryptionNotice.swift
   - apps/apple/JournalApp/Editor/JournalWritingView.swift
   - apps/apple/JournalApp/Views/UnlockView.swift
   - docs/design/save-failure-retry.md
@@ -46,8 +45,8 @@ State: `AppModel.saveFailure` (a published Bool, set and cleared only by `flush`
 Writing paused while the library is replaced:
 
 - While the library is being replaced (`replacingVault`), `canEdit` is false, so the editor is read-only and `flush` and `sync` do nothing. The open entry is saved before the replacement starts, or the replacement does not start.
-- Mac only: `ConnectionPauseNotice` (`SaveFailureNotice.swift`, `#if os(macOS)`) sits above the editor in `RootView.detail`. The encryption notice (`EncryptionNotice` in `Views/EncryptionNotice.swift`) is device-neutral in 1.1: the same view is shown on the Mac above the editor, and on iPhone and iPad above the content of every stacked screen and column, with `messages.writingPaused.encrypting` (or `messages.encryption.unfinished` when unfinished), the status row, Cancel (accessible name `settings.encryption.cancel.accessibilityLabel`) or Try Again and Stop Syncing…. See `screens/encrypt-journals`. It takes the same fade as the connection notice (A45). The connection notice follows. Each notice is an `HStack` of callout text, a spacer and a button on `.quaternary`; at accessibility text sizes (`dynamicTypeSize.isAccessibilitySize`) a `VStack` with the button below. Texts: `messages.writingPaused.connecting`, `messages.writingPaused.connectionFailed` with `messages.writingPaused.showConnection` (opens Settings). The model is `AppModel.serverConnectionPause` (`.connecting`, `.waitingForRetry`) and `EncryptionUpgrade.pausesWriting`. The connecting notice waits 1 second so that a quick connection does not flash it (`.task(id:)`).
-- iPhone and iPad have no such notice: the connection and encryption sheets cover the app.
+- Mac only: `ConnectionPauseNotice` (`SaveFailureNotice.swift`, `#if os(macOS)`) sits above the editor in `RootView.detail`. The notice is an `HStack` of callout text, a spacer and a button on `.quaternary`, and takes a fade (A45). At accessibility text sizes (`dynamicTypeSize.isAccessibilitySize`) a `VStack` with the button below. Texts: `messages.writingPaused.connecting`, `messages.writingPaused.connectionFailed` with `messages.writingPaused.showConnection` (opens Settings). The model is `AppModel.serverConnectionPause` (`.connecting`, `.waitingForRetry`). The connecting notice waits 1 second so that a quick connection does not flash it (`.task(id:)`).
+- iPhone and iPad have no such notice: the connection sheet covers the app.
 - An archive opened while the library is replaced: `RootView.openPendingArchive` sets the generic alert to `messages.writingPaused.updating`.
 
 ## Layout
@@ -76,7 +75,7 @@ Writing paused while the library is replaced:
 
 - The alert is the announcement; it is a standard alert whose cancel button reads OK. When the notice first appears (`onAppear`) it also posts the announcement "Not Saved" (`JournalAccessibility.announce`), once, not on each edit. It does not take focus.
 - "Not Saved" is red and says so in words. Try Again and its disabled state are standard button traits; Saving… is the progress view's label.
-- Reduce Motion: the Mac connection notice fades with `.transition(.opacity)` and no animation under Reduce Motion. The encryption notice has no animation of its own in the source.
+- Reduce Motion: the Mac connection notice fades with `.transition(.opacity)` and no animation under Reduce Motion.
 - At accessibility text sizes the pause notices put the button below the text; the save-failure notice is already a column.
 - VoiceOver on iPhone and iPad reaches the notice first in the header, before the title.
 
@@ -85,7 +84,7 @@ Writing paused while the library is replaced:
 - Place of the notice: iPhone and iPad put it in the header, which scrolls with the text and leaves the bottom of the screen to the keyboard and writing controls; the Mac puts it below the editor because the window has room and the notice then stays in view.
 - Only the Mac guards closing the window and quitting (`WindowCloseGuard`, `ApplicationDelegate`). On iPhone and iPad the app asks iOS for background time to save (`BackgroundActivity`) but iOS can still end it; a draft that could not be saved then is lost (open question D17).
 - Only iPhone and iPad scroll the header to the notice after the alert (`revealSaveFailure`).
-- Only the Mac shows writing-paused notices, because on iPhone and iPad the connection and encryption sheets cover the app.
+- Only the Mac shows writing-paused notices, because on iPhone and iPad the connection sheet covers the app.
 
 ## Screenshots
 
@@ -99,7 +98,6 @@ View:
 - `apps/apple/JournalApp/Views/EntryHeaderView.swift`: the notice's place on iPhone and iPad.
 - `apps/apple/JournalApp/Views/RootView.swift`: the alert, the Mac placement, the archive-while-updating message.
 - `apps/apple/JournalApp/Editor/JournalWritingView.swift`: the header host and the scroll to the notice.
-- `apps/apple/JournalApp/Views/EncryptionNotice.swift`: the device-neutral encryption notice (working, failed, unfinished).
 - `apps/apple/JournalApp/Views/UnlockView.swift`, `SyncNowRows.swift`: the locked message and the dimmed Sync Now.
 
 Model:
@@ -114,4 +112,4 @@ Design records: `docs/design/save-failure-retry.md`, `docs/design/save-failure-r
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), D17 and A45 (the Mac encryption notice has no fade). The alert title (B5, resolved: "My Journal") and the alert shown once per failure (A1, resolved in build 18) no longer differ. Still reported: the "Not Saved" announcement when the notice appears.
+See [open-questions.md](../../../open-questions.md), D17 and A45. The alert title (B5, resolved: "My Journal") and the alert shown once per failure (A1, resolved in build 18) no longer differ. Still reported: the "Not Saved" announcement when the notice appears.

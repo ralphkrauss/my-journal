@@ -285,7 +285,7 @@ extension AppModel {
         }
     }
     var isReady: Bool {
-        store != nil && configuration?.recoveryConfirmed == true && !showsEncryptionForm
+        store != nil && configuration?.recoveryConfirmed == true
     }
     var canEdit: Bool {
         guard !locked, !replacingVault, let draft, draft.deletedAt == nil, draft.document.isEditable else {
