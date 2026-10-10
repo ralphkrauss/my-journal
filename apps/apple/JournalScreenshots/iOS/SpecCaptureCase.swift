@@ -139,8 +139,17 @@ class SpecCaptureCase: XCTestCase {
 
     // MARK: - Capturing
 
-    /// Writes the screen as `<name>.png` in the output folder once animations have finished.
+    /// The section of Connect to a Server that lists servers Bonjour found on the machine's own network.
+    static let networkServersMarker = "Servers on This Network"
+
+    /// Writes the screen as `<name>.png` in the output folder once animations have finished. Any screen that lists
+    /// servers found on this network is skipped, whichever state it is, so the machine's own servers never reach
+    /// the repository.
     @MainActor func shot(_ app: XCUIApplication, _ name: String, settle: Bool = true) throws {
+        if app.staticTexts[Self.networkServersMarker].exists {
+            try shot(app, name, unlessShowing: Self.networkServersMarker)
+            return
+        }
         try write(app, name, settle: settle, tree: environment["JOURNAL_SPEC_TREES"]?.isEmpty == false)
     }
 

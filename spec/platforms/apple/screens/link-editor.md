@@ -29,7 +29,7 @@ screenshots:
 
 How the Apple apps implement the spec's [link-editor](../../../screens/link-editor.md). Read [platform.md](../platform.md) for sheets (section 9) and the editor's text input conventions. The sheet is shared by the three devices; the Mac fixes its size and the iPhone and iPad add URL keyboard behaviour.
 
-Since build 18 the sheet is also Edit Link: with the caret or selection inside a link it opens filled with that link's address and offers Remove Link. The spec now describes both ([screens/link-editor](../../../screens/link-editor.md); rules L-7 to L-10 in [flows/editing-rules](../../../flows/editing-rules.md)). **Draft:** the screenshots of the Edit Link states are pending (see Screenshots).
+Since build 18 the sheet is also Edit Link: with the caret or selection inside a link it opens filled with that link's address and offers Remove Link. The spec now describes both ([screens/link-editor](../../../screens/link-editor.md); rules L-7 to L-10 in [flows/editing-rules](../../../flows/editing-rules.md)). **Draft:** the Edit Link states are not captured (see Screenshots).
 
 ## Controls
 
@@ -98,7 +98,7 @@ None: no `mac` variant applies. The code uses `editor.link.editTitle`, `editor.l
 
 None for the Mac (the screenshot set has no Mac capture); the Mac claims above come from the source.
 
-**Screenshots pending** (capture script run needed; none made by hand): the Edit Link sheet on iPhone, iPad and Mac (link-editor-edit: filled address, Remove Link group, "Done"); the Edit Link sheet for a link without a Text field (link-editor-edit-address-only); the Add Link sheet on the Mac (link-editor-default); the Mac right-click menu on a link (link-editor-link-menu). This page stays `draft` until they exist.
+**Not captured** (the capture script has only the Add Link state, link-editor-default, on iPhone and iPad): the Edit Link sheet with a filled address and the Remove Link group, the Edit Link sheet for a link without a Text field, the Add Link sheet on the Mac, and the Mac right-click menu on a link (context menus are not windows the test can capture; design/spec-screenshots/README.md, Not captured). This page stays `draft` until the others are captured.
 
 ## Source files
 

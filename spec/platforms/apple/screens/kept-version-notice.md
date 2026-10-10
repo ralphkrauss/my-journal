@@ -62,7 +62,7 @@ None. All keys are the same on iPhone, iPad and Mac; no `mac` variants. The text
 
 ## Screenshots
 
-None yet: the capture script has not been run for the kept-both notice (captured by `SpecConflictCaptureTests` as entry-editor-kept-both-notice and entry-editor-held-notice, listed by [entry-editor.md](entry-editor.md) once they exist). The 1.0 captures of the Review Changes notice and list marker were removed with their screen.
+None listed here: the notice is captured as part of the entry editor, so [entry-editor.md](entry-editor.md) lists entry-editor-kept-both-notice (iPhone, iPad and Mac) and entry-editor-held-notice (iPhone and iPad; not captured on the Mac). The 1.0 captures of the Review Changes notice and list marker were removed with their screen.
 
 ## Source files
 

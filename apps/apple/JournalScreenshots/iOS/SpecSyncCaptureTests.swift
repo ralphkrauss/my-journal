@@ -23,7 +23,7 @@ final class SpecSyncCaptureTests: SpecCaptureCase {
         connect.tap()
         let field = app.textFields["Server Address"]
         try require(field, app: app, timeout: 5)
-        try shot(app, "connect-to-server-address", unlessShowing: "Servers on This Network")
+        try shot(app, "connect-to-server-address", unlessShowing: Self.networkServersMarker)
         field.tap()
         field.typeText(address)
         app.navigationBars["Connect to a Server"].buttons["Continue"].tap()

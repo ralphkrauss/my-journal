@@ -86,7 +86,7 @@ Keyboard: system alert keys; this alert declares no default button and no key eq
 | iPhone | ![Warning on iPhone](../screenshots/iphone/erase-default.png) The warning for a device that is not syncing, with journals written: the "Export an archive first..." message and Export Archive…, Erase and Cancel buttons, over the Settings list. |
 | iPad | ![Warning on iPad](../screenshots/ipad/erase-default.png) The same warning over the scrolled Settings sheet; the Erase row and its footer are visible behind the alert. |
 
-No Mac capture of the alert exists.
+No Mac capture of the alert exists, and the `unopened` warning is not captured on any device: the capture script has no state for it (see [settings-erase](../screens/settings-erase.md)).
 
 ## Source files
 
@@ -105,4 +105,4 @@ Design records: `docs/design/erase-device-2026-10-04.md`, `client-only-mac-lists
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), C12. The `unopened` warning is now in the neutral flow ("Erasing journals that can't be opened"). **Screenshots pending:** the unopened warning (see [settings-erase](../screens/settings-erase.md)).
+See [open-questions.md](../../../open-questions.md), C12. The `unopened` warning is now in the neutral flow ("Erasing journals that can't be opened"). The unopened warning is not captured (see Screenshots).

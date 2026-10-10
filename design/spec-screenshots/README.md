@@ -20,7 +20,7 @@ Environment variables, all optional: `JOURNAL_SPEC_OUTPUT` (where the processed 
 4. Mac: builds the `JournalMacScreenshots` scheme, team-signed, and runs `SpecMacCapture` in the app itself. It opens a copy of the sample library inside the app's container, so your own library and keychain are never touched.
 5. Resamples every capture with `process.py` into `spec/platforms/apple/screenshots/<device>/<page-id>-<state>.png`: half of native size (iPhone 603 x 1311, iPad 1210 x 834 in landscape, a Mac window at one pixel per point, 1280 x 800 for the journal window), no alpha, at most 256 colours, typically 50 to 200 KB. A state that failed leaves `failed-*` files that are not copied, and the script exits with an error.
 
-Only the sample library is ever shown. Two guards keep other things out: the Connect to a Server screen lists servers that Bonjour finds on the local network, so it is captured only when none is found (the skipped state is printed), and a Mac capture refuses to write a window that has a sheet open when none was expected.
+Only the sample library is ever shown. Two guards keep other things out: the Connect to a Server screen lists servers that Bonjour finds on the local network, so no state of it is captured while one is listed (on iPhone and iPad every capture checks for "Servers on This Network"; the skipped state is printed), and a Mac capture refuses to write a window that has a sheet open when none was expected.
 
 ## Where the code is
 

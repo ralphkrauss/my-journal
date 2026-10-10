@@ -45,7 +45,7 @@ Where it is: iPhone and iPad, a last section of its own in the Settings list; Ma
 
   Buttons in declaration order: `common.exportArchive` ("Export Archive…", only when `losesJournals`: unsent, unconfirmed, not syncing), `settings.erase.alert.erase` with `role: .destructive`, `common.cancel` with `role: .cancel`. The system places the cancel-role button; no button is marked as the default. Export Archive… closes the alert and, after `afterAlertCloses` (a 350 ms wait so the sheet can appear), sets `exporting`, which presents `ArchiveExportSheet` (see `export-archive`); afterwards the person erases again from the button.
 - **Failure alert**: `settings.erase.failed.title`, message `settings.erase.failed.message`, one `common.ok` button (role cancel).
-- **The sixth warning, `unopened`.** Used only by `UnopenedEraseButton` (`Views/UnopenedEraseButton.swift`), the Erase button of the library problem screen and the lock screen of a missing device key, not by this section. It has the same title, Erase and Cancel buttons (no Export Archive…, because nothing can be read), a plain red `.buttonStyle(.plain)` button and the failure alert. It authenticates the device owner before showing the warning (when App Lock is on or cannot be known, `removalNeedsAuthentication`), and not again at Erase. Its message is built in code (`unopenedMessage`) from `settings.erase.alert.unopened.reasonCantOpen` or `.reasonNeedsKey` (with the credential name) and `.serverKnown` (with the host) or `.serverUnknown`; the spec describes it in [flows/erase](../../../flows/erase.md). **Screenshots pending:** the alert on iPhone, iPad and Mac (settings-erase-unopened-alert).
+- **The sixth warning, `unopened`.** Used only by `UnopenedEraseButton` (`Views/UnopenedEraseButton.swift`), the Erase button of the library problem screen and the lock screen of a missing device key, not by this section. It has the same title, Erase and Cancel buttons (no Export Archive…, because nothing can be read), a plain red `.buttonStyle(.plain)` button and the failure alert. It authenticates the device owner before showing the warning (when App Lock is on or cannot be known, `removalNeedsAuthentication`), and not again at Erase. Its message is built in code (`unopenedMessage`) from `settings.erase.alert.unopened.reasonCantOpen` or `.reasonNeedsKey` (with the credential name) and `.serverKnown` (with the host) or `.serverUnknown`; the spec describes it in [flows/erase](../../../flows/erase.md). The alert is not captured (see Screenshots).
 
 States and transitions:
 - Checking (`checking`): the button is disabled until the alert appears; the open entry is saved first (`eraseWarning()` calls `flush()`).
@@ -101,6 +101,8 @@ Keyboard: the alert follows the system's rules (Return for the default, Escape f
 | iPad | ![Settings sheet on iPad](../screenshots/ipad/settings-erase-default.png) The Settings sheet at its top; the Erase section is below the visible part. |
 
 The alert is on the `erase` page. The Mac section is in the `settings-general` screenshot.
+
+**Not captured:** the alert for journals that can't be opened (`unopened`) on iPhone, iPad and Mac. It is a system alert opened from the library problem screen, and the capture script has no state for it (design/spec-screenshots/README.md, Not captured, covers system sheets and panels). The page stays `draft`.
 
 ## Source files
 

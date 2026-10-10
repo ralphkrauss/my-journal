@@ -32,12 +32,15 @@ screenshots:
   - screenshots/iphone/unavailable-content-library-cant-open.png
   - screenshots/iphone/unavailable-content-library-newer-version.png
   - screenshots/iphone/unavailable-content-library-settings-unread.png
+  - screenshots/iphone/unavailable-content-library-not-encrypted.png
   - screenshots/ipad/unavailable-content-library-cant-open.png
   - screenshots/ipad/unavailable-content-library-newer-version.png
   - screenshots/ipad/unavailable-content-library-settings-unread.png
+  - screenshots/ipad/unavailable-content-library-not-encrypted.png
   - screenshots/mac/unavailable-content-library-cant-open.png
   - screenshots/mac/unavailable-content-library-newer-version.png
   - screenshots/mac/unavailable-content-library-settings-unread.png
+  - screenshots/mac/unavailable-content-library-not-encrypted.png
 ---
 
 # Unavailable and read-only content (Apple)
@@ -61,7 +64,7 @@ Model: `AppModel.libraryProblem` (`Model/LibraryProblem.swift`) with five values
 - Erase Journals and Settings…: `UnopenedEraseButton` (plain red Button, `role: .destructive`; asks for the device's authentication when App Lock is on or unknown, then an `.alert` with Erase and Cancel). Offered only after one failed Try Again (`failedRetries > 0`), when protected data is available, and not for a newer version; for `notEncrypted` it is offered at once (there is no Try Again to fail), when protected data is available.
 - Learn More: plain Button in the tint colour, opens the troubleshooting guide (`AboutLink.cantOpenGuide`) with `openURL`; accessibility hint says it opens a browser. It is the only button for a newer version, and on the Mac takes Return there (`.keyboardShortcut(.defaultAction)` for that case and for not encrypted).
 
-**Not encrypted (`notEncrypted`, state not-encrypted).** The same screen as can't open with these differences: title `library.problem.title`; first paragraph `library.problem.cantOpen.message`, then `library.problem.notEncrypted.message` in place of `library.problem.cantOpen.advice`; buttons Erase Journals and Settings… (plain red, offered at once) and Learn More; no Try Again, no Import Archive…, and no "Still can't be opened." or may-be-fine line. The library's files are not opened, read or changed by this version (never migrated, rewritten or deleted except by Erase). No new flow. There is no screenshot yet; the capture is listed under Screenshots pending.
+**Not encrypted (`notEncrypted`, state not-encrypted).** The same screen as can't open with these differences: title `library.problem.title`; first paragraph `library.problem.cantOpen.message`, then `library.problem.notEncrypted.message` in place of `library.problem.cantOpen.advice`; buttons Erase Journals and Settings… (plain red, offered at once) and Learn More; no Try Again, no Import Archive…, and no "Still can't be opened." or may-be-fine line. The library's files are not opened, read or changed by this version (never migrated, rewritten or deleted except by Erase). No new flow. The screenshots are listed under Screenshots.
 
 On iPhone and iPad, `AppModel` listens for the protected-data notifications: a launch before the first unlock fails to open for a reason that ends by itself, so `protectedDataBecameAvailable` runs `retryOpening(tapped: false)`; that attempt never counts toward Erase.
 
@@ -151,16 +154,19 @@ The text is the spec's. Where it is written in code:
 | iPhone | ![cantOpen on iPhone](../screenshots/iphone/unavailable-content-library-cant-open.png) | Triangle, title, two paragraphs, Try Again (prominent), Import Archive… (bordered), Learn More; no Erase because no retry has failed |
 | iPhone | ![Newer version on iPhone](../screenshots/iphone/unavailable-content-library-newer-version.png) | Down-arrow symbol, "Update My Journal", one paragraph, Learn More only |
 | iPhone | ![Settings unreadable on iPhone](../screenshots/iphone/unavailable-content-library-settings-unread.png) | Same title as cantOpen with the settings paragraphs; Try Again and Learn More, no Import |
+| iPhone | ![Not encrypted on iPhone](../screenshots/iphone/unavailable-content-library-not-encrypted.png) | Triangle, title, the can't-open paragraph and the not-encrypted paragraph; Erase Journals and Settings… (plain red) and Learn More; no Try Again and no Import Archive… |
 | iPad | ![cantOpen on iPad](../screenshots/ipad/unavailable-content-library-cant-open.png) | The same screen centered in the full window; "restart your iPad" |
 | iPad | ![Newer version on iPad](../screenshots/ipad/unavailable-content-library-newer-version.png) | The newer-version screen, paragraph on one line |
 | iPad | ![Settings unreadable on iPad](../screenshots/ipad/unavailable-content-library-settings-unread.png) | The settings-unreadable screen |
+| iPad | ![Not encrypted on iPad](../screenshots/ipad/unavailable-content-library-not-encrypted.png) | The not-encrypted screen centered in the window, each paragraph on one line |
 | Mac | ![cantOpen on the Mac](../screenshots/mac/unavailable-content-library-cant-open.png) | The journal window with the title bar "Untitled" and "restart your Mac"; Try Again, Import Archive… and Learn More (the window is not in front, so the prominent button is drawn grey) |
 | Mac | ![Newer version on the Mac](../screenshots/mac/unavailable-content-library-newer-version.png) | Newer-version screen; Learn More is the default button |
 | Mac | ![Settings unreadable on the Mac](../screenshots/mac/unavailable-content-library-settings-unread.png) | Settings-unreadable screen |
+| Mac | ![Not encrypted on the Mac](../screenshots/mac/unavailable-content-library-not-encrypted.png) | The not-encrypted screen in the journal window titled "Untitled": the same elements as on iPhone |
 
 The read-only entry, the Unavailable Journals list and the privacy cover have no screenshots: the capture set holds only the library problem screens for this page (the recovery notice is shown on [recently-deleted](recently-deleted.md)).
 
-**Screenshots pending** (a capture run is needed; none made by hand): unavailable-content-library-not-encrypted (the not-encrypted screen: triangle, title, the two paragraphs, Erase Journals and Settings…, Learn More; no Try Again, no Import Archive…), unavailable-content-library-cant-open-retried (cantOpen after one failed Try Again: "Still can't be opened.", the secondary paragraph, the red Erase Journals and Settings… button), unavailable-content-erase-unopened-alert (the erase warning for journals that can't be opened, per device), unavailable-content-import-note (the Import Archive sheet with the extra sentence) and unavailable-content-settings-problem (Settings with the one line of text). The missing-key lock screen is already in the lock-screen captures (master-password, wrong-password). Until then the page is `draft`.
+**Not captured** (the capture script has no state for them yet): cantOpen after one failed Try Again ("Still can't be opened.", the secondary paragraph, the red Erase Journals and Settings… button), the erase warning for journals that can't be opened, the Import Archive sheet with the extra sentence, and Settings with the one line of text. The erase warning and the file picker are system alerts and panels, which the capture set does not include (design/spec-screenshots/README.md, Not captured). The missing-key lock screen is already in the lock-screen captures (master-password, wrong-password). The page stays `draft` until the other states are captured.
 
 ## Source files
 

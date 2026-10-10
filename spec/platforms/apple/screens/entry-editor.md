@@ -77,6 +77,11 @@ screenshots:
   - screenshots/mac/entry-editor-default-dark.png
   - screenshots/mac/entry-editor-checklist.png
   - screenshots/mac/entry-editor-table.png
+  - screenshots/iphone/entry-editor-kept-both-notice.png
+  - screenshots/iphone/entry-editor-held-notice.png
+  - screenshots/ipad/entry-editor-kept-both-notice.png
+  - screenshots/ipad/entry-editor-held-notice.png
+  - screenshots/mac/entry-editor-kept-both-notice.png
 ---
 
 # Entry editor (Apple)
@@ -239,6 +244,8 @@ iPhone (stacked navigation, the editor pushed on the stack):
 | Entry Actions menu | ![Entry Actions on iPhone](../screenshots/iphone/entry-editor-actions-menu.png) The menu: Find in Entry, a divider, Pin Entry, Change Date…, Move Entry…, Save as Template…, Image Descriptions…, Version History…, a divider and Delete Entry in red. |
 | Checklist | ![Checklist on iPhone](../screenshots/iphone/entry-editor-checklist.png) A checklist with a second level one list column in; boxes are filled in the accent colour when checked. |
 | Table | ![Table on iPhone](../screenshots/iphone/entry-editor-table.png) A three-column table with a semibold header row and a hairline grid; the third column runs off the right edge because the grid scrolls sideways. |
+| Other version, kept | ![Kept-both notice on iPhone](../screenshots/iphone/entry-editor-kept-both-notice.png) The notice as a grey band under the navigation bar, above the title: the sentence for a newer other version, then Show Other Version and Dismiss as plain text buttons in a row. |
+| Other version, held | ![Held notice on iPhone](../screenshots/iphone/entry-editor-held-notice.png) The same band with one line, no buttons, on the entry "Gratitude". |
 
 iPad (three columns, regular width; the editor is the right column):
 
@@ -250,6 +257,8 @@ iPad (three columns, regular width; the editor is the right column):
 | Entry Actions menu | ![Entry Actions on iPad](../screenshots/ipad/entry-editor-actions-menu.png) The same items as on iPhone in a menu hanging from the "…" button. |
 | Checklist | ![Checklist on iPad](../screenshots/ipad/entry-editor-checklist.png) The same checklist at the editor column's width, in an entry of the Travel journal. |
 | Table | ![Table on iPad](../screenshots/ipad/entry-editor-table.png) The table at full text width; all three columns fit, so nothing scrolls. |
+| Other version, kept | ![Kept-both notice on iPad](../screenshots/ipad/entry-editor-kept-both-notice.png) The band across the top of the editor column, with the buttons in a row under the wrapped sentence; the list shows the copy as "Slow Sunday (other version)". |
+| Other version, held | ![Held notice on iPad](../screenshots/ipad/entry-editor-held-notice.png) The one-line band without buttons above the title. |
 
 Mac (window 1280 x 800 points; the window is not the key window in these captures, so the title bar and toolbar are dimmed):
 
@@ -259,10 +268,9 @@ Mac (window 1280 x 800 points; the window is not the key window in these capture
 | Default, dark | ![Entry editor on Mac, dark](../screenshots/mac/entry-editor-default-dark.png) The same in dark appearance. |
 | Checklist | ![Checklist on Mac](../screenshots/mac/entry-editor-checklist.png) The checklist with native checkboxes, one level of nesting. |
 | Table | ![Table on Mac](../screenshots/mac/entry-editor-table.png) The table with a hairline grid, a semibold header row and compact rows. |
+| Other version, kept | ![Kept-both notice on the Mac](../screenshots/mac/entry-editor-kept-both-notice.png) The band above the title in the editor column, with Show Other Version and Dismiss drawn as bordered Mac buttons under the one-line sentence; the list shows the copy as "Slow Sunday (other version)". |
 
-No capture exists of: the writing state on the Mac (nothing visible changes), the Formatting popover on the Mac, notices, the save-failure and recovery states, or an empty body with the template link.
-
-None yet for the other-version notice: the capture script has not been run for the kept-both notice (captured by `SpecConflictCaptureTests` as entry-editor-kept-both-notice and entry-editor-held-notice on iPhone and iPad, and by `SpecMacLibraryStates` on the Mac). They are listed here once the files exist. The 1.0 conflict notice captures were removed.
+No capture exists of: the writing state on the Mac (nothing visible changes), the Formatting popover on the Mac, the held notice on the Mac, the save-failure and recovery notices, or an empty body with the template link. The notice itself is described in [kept-version-notice](kept-version-notice.md).
 
 ## Source files
 

@@ -20,6 +20,7 @@ screenshots:
   - screenshots/iphone/create-library-password.png
   - screenshots/ipad/create-library-mismatch.png
   - screenshots/ipad/create-library-password.png
+  - screenshots/mac/create-library-password.png
 ---
 
 # Create a library (Apple)
@@ -68,11 +69,10 @@ None.
 
 | Device | State |
 | --- | --- |
-| iPhone | ![Choose a Master Password](../screenshots/iphone/create-library-password.png) Key symbol, two empty fields, Show Password off, advice; Create (dimmed). Captured before 1.1, when this was step 2 (it still shows a back chevron where Cancel now is). ![Passwords don't match](../screenshots/iphone/create-library-mismatch.png) Both fields filled, the red message under Verify, Create enabled. |
+| iPhone | ![Choose a Master Password](../screenshots/iphone/create-library-password.png) Cancel and a dimmed Create in the sheet's top corners, key symbol, two empty fields, Show Password off, advice. ![Passwords don't match](../screenshots/iphone/create-library-mismatch.png) Both fields filled, the red message under Verify, Create enabled. |
 | iPad | ![Choose a Master Password](../screenshots/ipad/create-library-password.png) The same sheet, centred over the dimmed window. ![Passwords don't match](../screenshots/ipad/create-library-mismatch.png) |
-| Mac | None captured for the one-step sheet. The 1.0 capture of the first step (Protect Your Journals) is gone with that step. |
+| Mac | ![Choose a Master Password on the Mac](../screenshots/mac/create-library-password.png) The sheet over the grey, not-frontmost journal window: key symbol, heading, the explanation, two empty fields, Show Password unchecked, the advice, and Cancel and a dimmed Create in the bottom row. The mismatch state is not captured on the Mac. |
 
-Screenshots are refreshed by the capture script when the owner says ready.
 
 ## Source files
 
