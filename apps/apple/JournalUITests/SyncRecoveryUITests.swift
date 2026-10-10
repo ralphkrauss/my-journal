@@ -51,7 +51,7 @@ final class SyncRecoveryUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Add Device…"].exists, "Devices is absent while the server refuses this device.")
         capture(app, "2 This device was removed")
         tap(app.buttons["Reconnect…"])
-        XCTAssertTrue(app.navigationBars["Reconnect"].waitToAppear(timeout: 15))
+        // Reconnect knows the server, so it opens on the sign-in step; the "Reconnect" title is the first page's.
         signIn(app)
         expectSynced(app)
         // Devices lists the devices again without reopening the pane, this one included.
@@ -101,7 +101,9 @@ final class SyncRecoveryUITests: XCTestCase {
         XCTAssertTrue(labeled("Not on Server Yet, 1 item", app: app).waitToAppear(timeout: 30))
         capture(app, "5 Unreachable with a change waiting two days")
         try request("start")
-        tap(app.buttons["Try Again"])
+        // The Devices section can offer its own Try Again (spec/screens/settings-devices.md, Couldn't load) below the
+        // Server section's action, which is first in the pane.
+        tap(app.buttons.matching(identifier: "Try Again").element(boundBy: 0))
         expectSynced(app)
 
         // Another web server answers at the address: Check Again once the journal server is back.
@@ -239,7 +241,8 @@ final class SyncRecoveryUITests: XCTestCase {
     @MainActor private func expectSynced(_ app: XCUIApplication, line: UInt = #line) {
         if let message = shownMessage {
             let gone = XCTNSPredicateExpectation(
-                predicate: NSPredicate(format: "exists == false"), object: app.staticTexts[message])
+                predicate: NSPredicate(format: "exists == false"),
+                object: app.staticTexts.matching(NSPredicate(format: "label == %@", message)).firstMatch)
             XCTAssertEqual(Waiting.wait(for: gone, timeout: 40), .completed, "Still: \(message)", line: line)
             shownMessage = nil
         }
@@ -257,7 +260,9 @@ final class SyncRecoveryUITests: XCTestCase {
         app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", text)).firstMatch
     }
     @MainActor private func expectMessage(_ message: String, app: XCUIApplication) {
-        XCTAssertTrue(app.staticTexts[message].waitToAppear(timeout: 30), message)
+        // Matched by label: XCTest refuses identifier queries longer than 128 characters, and messages can be longer.
+        let text = app.staticTexts.matching(NSPredicate(format: "label == %@", message)).firstMatch
+        XCTAssertTrue(text.waitToAppear(timeout: 30), message)
         shownMessage = message
     }
     /// Scrolls the pane until `element` exists, which a list may not build until it is near the screen.
