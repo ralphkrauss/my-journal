@@ -16,6 +16,8 @@ extension AppModel {
     func inspectArchive(_ source: URL, phrase: String) async throws -> VaultArchive.Restored {
         let session = vaultSessionID
         try validateVaultSession(session)
+        // A device that has never held a library has no folder for it yet, and the archive is opened inside it.
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let destination = directory.appendingPathComponent("import-" + UUID().uuidString.lowercased())
         var restored: VaultArchive.Restored?
         do {

@@ -125,7 +125,8 @@ extension NativeEditor.Coordinator: NSTextStorageDelegate {
             !NSLocationInRange(before, inserted),
             storage.attribute(.journalMarker, at: before, effectiveRange: nil) == nil
         {
-            // Typing continues inline code, as it does on the Mac.
+            // Typing continues inline code, as it does on the Mac, unless the typed text says otherwise: Code turned
+            // off at the end of code gives it a value of its own.
             context[.journalCode] = storage.attribute(.journalCode, at: before, effectiveRange: nil)
         }
         storage.enumerateAttributes(in: piece) { attributes, part, _ in
@@ -133,7 +134,9 @@ extension NativeEditor.Coordinator: NSTextStorageDelegate {
             var adopted = attributes
             let joins = attributes[.journalKind] == nil
             if joins {
-                for (key, value) in context { adopted[key] = value }
+                for (key, value) in context where key != .journalCode || attributes[.journalCode] == nil {
+                    adopted[key] = value
+                }
             }
             let kind = adopted[.journalKind] as? String ?? "paragraph"
             if isForeign(adopted, kind: kind, size: size) {

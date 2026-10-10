@@ -73,6 +73,24 @@ final class ArchiveFileTests: XCTestCase {
         try? FileManager.default.removeItem(at: archive)
     }
 
+    /// A device that has never held a library has no data folder yet: an archive opens from the welcome screen all
+    /// the same, and the folder is made for it. It failed with “Couldn’t open this archive.”
+    func testAnArchiveOpensOnADeviceThatNeverHeldALibrary() async throws {
+        let root = temporaryRoot()
+        let source = library(named: "source", in: root)
+        await source.start()
+        source.confirmRecovery()
+        let archive = try await source.prepareArchive()
+        addTeardownBlock { try? FileManager.default.removeItem(at: archive) }
+
+        let fresh = library(named: "fresh", in: root)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fresh.directory.path))
+        let restored = try await fresh.inspectArchive(archive, phrase: AppModel.testPassword)
+        let summary = ArchiveSummary(snapshot: try await restored.store.lifecycleSnapshot())
+        XCTAssertEqual(summary.journals.count, 1)
+        await fresh.discardImportedCopy(restored)
+    }
+
     /// An archive made by 1.0 is a folder. It still opens in 1.1, from a name that 1.1 files also use.
     func testAFolderArchiveFromVersionOneStillRestoresThroughTheAppModel() async throws {
         let root = temporaryRoot()

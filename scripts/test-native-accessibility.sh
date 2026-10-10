@@ -35,8 +35,8 @@ if [[ $# -eq 0 ]]; then
     -only-testing:JournalIOSUITests/HistoryUITests/testRestoreHistoricalEntryThenReopen \
     -only-testing:JournalIOSUITests/ArchiveUITests/testArchiveWrongKeyRetryRestoreAndReopen \
     -only-testing:JournalIOSUITests/EntryActionsUITests/testFormattingAndDateActionsPreserveWritingAcrossRelaunch \
-    -only-testing:JournalIOSUITests/WritingWorkflowUITests/testDefaultTemplateWritingScopedSearchAndRelaunchPreserveContent \
-    -only-testing:JournalIOSUITests/EntryConflictUITests/testReviewRemoteImageCancelThenKeepBothAcrossRelaunch \
+    -only-testing:JournalIOSUITests/WritingWorkflowUITests/testTemplateWritingScopedSearchAndRelaunchPreserveContent \
+    -only-testing:JournalIOSUITests/KeptBothUITests/testTheNoticeOffersTheOtherVersionAndSettingsListsItAcrossRelaunch \
     -only-testing:JournalIOSUITests/PermanentDeletionUITests/testCancelThenPermanentlyDeleteEntryAndRelaunch \
     -only-testing:JournalIOSUITests/EntryParentRecoveryUITests/testRestoreToAnotherJournalLeavesTheDeletedJournalAndSiblingStatesAcrossRelaunch \
     -only-testing:JournalIOSUITests/KeptNotesUITests/testAnEditAgainstAPermanentDeletionIsListedAndOpensWhereItWasSaved

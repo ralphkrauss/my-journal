@@ -2,7 +2,7 @@ import JournalCore
 import XCTest
 
 final class WritingWorkflowUITests: XCTestCase {
-    @MainActor func testDefaultTemplateWritingScopedSearchAndRelaunchPreserveContent() async throws {
+    @MainActor func testTemplateWritingScopedSearchAndRelaunchPreserveContent() async throws {
         continueAfterFailure = false
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("Writing-" + UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -16,15 +16,17 @@ final class WritingWorkflowUITests: XCTestCase {
         recovery.typeText(fixture.phrase)
         app.buttons["Unlock"].tap()
         NavigationTestSupport.openEntry(fixture.source.title, journal: "Work", app: app)
-        createDefaultTemplate(app, journalID: fixture.work.id)
-        let create = app.buttons["New Entry"].firstMatch
-        XCTAssertTrue(create.waitToAppear(timeout: 15))
-        create.tap()
+        saveEntryAsTemplate(app)
+        // New Entry is always blank; a template is used from inside the empty entry, which it fills.
+        NavigationTestSupport.selectCollection("Work", app: app)
+        NavigationTestSupport.openTemplateChooserInNewEntry(app)
+        capture(app, "Template chooser in a new work entry")
+        app.buttons["Daily review"].firstMatch.tap()
         let title = NavigationTestSupport.title(app)
         let body = app.textViews["Entry text"]
         XCTAssertTrue(title.waitToAppear(timeout: 10))
         assertEventually((body.value as? String ?? "").contains("What did I finish?"))
-        capture(app, "New work entry from default template")
+        capture(app, "New work entry filled from the template")
         title.tap()
         title.typeText("Monday review")
         NavigationTestSupport.dismissKeyboardTips(app)
@@ -69,7 +71,7 @@ final class WritingWorkflowUITests: XCTestCase {
         let source = try XCTUnwrap(items.first { $0.id == fixture.source.id })
         XCTAssertEqual(source.document, fixture.source.document)
         let work = try XCTUnwrap(items.first { $0.id == fixture.work.id })
-        XCTAssertEqual(work.defaultTemplateID, template.id)
+        XCTAssertNil(work.defaultTemplateID, "1.1 has no default template; using one leaves the journal alone.")
         let personal = try XCTUnwrap(items.first { $0.id == fixture.personal.id })
         XCTAssertEqual(personal.document, fixture.personal.document)
         let written = try XCTUnwrap(items.first { $0.title == "Monday review" })
@@ -161,7 +163,7 @@ final class WritingWorkflowUITests: XCTestCase {
         throw InteractionError.missingEditAction
     }
 
-    @MainActor private func createDefaultTemplate(_ app: XCUIApplication, journalID: UUID) {
+    @MainActor private func saveEntryAsTemplate(_ app: XCUIApplication) {
         let alert = openTemplateAlert(app)
         let cancel = alert.buttons["Cancel"]
         for _ in 0..<4 {

@@ -70,6 +70,23 @@ enum InlineStyles {
         guard carries(style, attributes) else { return .off }
         return isOn(style, attributes) ? .on : .off
     }
+    /// UIKit rebuilds its typing attributes whenever the caret moves or text is typed, and leaves out the editor's own
+    /// inline-code attribute, so a caret inside code, or the next character after typing code, would read Code as Off
+    /// and turn it on again on the next press. The typing attributes with that attribute restored from the character
+    /// before the caret, or nil when they are right already. An attribute the typing attributes carry (set by the Code
+    /// command, on or off) stays; a line break before the caret never decides.
+    static func typingRestoringCode(
+        _ typing: [NSAttributedString.Key: Any], in text: NSAttributedString, caret: Int
+    ) -> [NSAttributedString.Key: Any]? {
+        guard typing[.journalCode] == nil, caret > 0, caret <= text.length else { return nil }
+        let before = NSRange(location: caret - 1, length: 1)
+        guard !(text.string as NSString).substring(with: before).allSatisfy(\.isNewline),
+            (text.attribute(.journalCode, at: before.location, effectiveRange: nil) as? Int ?? 0) != 0
+        else { return nil }
+        var restored = typing
+        restored[.journalCode] = 1
+        return restored
+    }
     /// Whether the command would change anything: some character of the selection (or the caret) carries the style.
     static func canApply(
         _ style: InlineStyle, in text: NSAttributedString, range: NSRange, typing: [NSAttributedString.Key: Any]

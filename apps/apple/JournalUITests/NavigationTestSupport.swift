@@ -152,8 +152,13 @@ enum NavigationTestSupport {
         newEntryFromList(app)
         let suggestion = app.buttons["Use a Template"].firstMatch
         XCTAssertTrue(suggestion.waitToAppear(timeout: 10))
-        suggestion.tap()
-        XCTAssertTrue(app.searchFields["Search Templates"].waitToAppear(timeout: 5))
+        // The link is there while the new entry is still settling, and a tap in that moment can be lost.
+        let search = app.searchFields["Search Templates"]
+        for _ in 0..<3 where !search.exists {
+            if suggestion.exists { suggestion.tap() }
+            if search.waitToAppear(timeout: 3) { break }
+        }
+        XCTAssertTrue(search.waitToAppear(timeout: 5))
     }
     /// Saves a template as a person does, since a new library has none (no-built-in-templates-2026-10-04.md): a new
     /// entry in Default titled “‹name› draft” with `text` as its body, then Entry Actions ▸ Save as Template…, named

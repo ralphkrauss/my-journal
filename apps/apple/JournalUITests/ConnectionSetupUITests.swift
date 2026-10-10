@@ -96,7 +96,9 @@ final class ConnectionSetupUITests: XCTestCase {
         let refusal =
             host.prefix(1).uppercased() + host.dropFirst()
             + " doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption."
-        XCTAssertTrue(app.staticTexts[refusal].waitToAppear(timeout: 10))
+        // Matched by predicate: a string identifier is limited to 128 characters, which the message exceeds.
+        let message = app.staticTexts.matching(NSPredicate(format: "label == %@", refusal)).firstMatch
+        XCTAssertTrue(message.waitToAppear(timeout: 10))
         attachScreen(app, name: "A server without encryption is refused")
         XCTAssertFalse(app.navigationBars["Add This Device"].exists)
         XCTAssertFalse(app.navigationBars["Choose a Master Password"].exists)

@@ -830,6 +830,13 @@ enum EntryTextInset {
                     {
                         textView.typingAttributes = typing
                     }
+                    if textView.selectedRange.length == 0,
+                        let restored = InlineStyles.typingRestoringCode(
+                            textView.typingAttributes, in: textView.textStorage,
+                            caret: textView.selectedRange.location)
+                    {
+                        textView.typingAttributes = restored
+                    }
                 }
                 previousSelection = textView.selectedRange
                 applySubstitutions()

@@ -77,6 +77,8 @@ final class CollectionNavigationUITests: XCTestCase {
         let deletion = app.alerts["Delete “Work”?"]
         XCTAssertTrue(deletion.waitToAppear(timeout: 5))
         deletion.buttons["Delete"].tap()
+        // The journal was deleted from the Journals list's edit mode, which stays open for the next change.
+        NavigationTestSupport.finishJournalEditing(app)
         NavigationTestSupport.selectCollection("Recently Deleted", app: app)
         let entry = app.staticTexts["Work plan"].firstMatch
         XCTAssertTrue(entry.waitToAppear(timeout: 10))

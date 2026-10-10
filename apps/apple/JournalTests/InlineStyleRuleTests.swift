@@ -155,6 +155,22 @@ final class InlineStyleRuleTests: XCTestCase {
         }
     }
 
+    /// A caret inside Inline Code reads Code as On, as typing there is code, so one press turns it off. UIKit leaves
+    /// the attribute out of the typing attributes it rebuilds when the caret moves, and Code read Off.
+    func testACaretInsideInlineCodeReadsOnAndOnePressTurnsItOff() {
+        let harness = EditorHarness(markdown: "a `code` b")
+        defer { harness.close() }
+        harness.caret(at: 4)
+        XCTAssertEqual(state(harness, .code), .on)
+        press(harness, .code)
+        XCTAssertEqual(state(harness, .code), .off)
+        harness.type("x")
+        let typed = harness.document.blocks[0].runs.filter { $0.text.contains("x") }
+        XCTAssertFalse(typed.isEmpty)
+        XCTAssertFalse(typed.contains(where: \.code), "Code was turned off before typing.")
+        XCTAssertEqual(state(harness, .code), .off)
+    }
+
     /// A table cell follows the same rule for all five styles.
     func testATableCellFollowsTheSameRule() throws {
         for style in InlineStyle.allCases {
