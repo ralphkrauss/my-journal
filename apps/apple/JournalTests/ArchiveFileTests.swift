@@ -105,19 +105,55 @@ final class ArchiveFileTests: XCTestCase {
     func testOnlyAFileURLWithTheArchiveExtensionIsOpenedFromOutside() throws {
         let root = temporaryRoot()
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let file = root.appendingPathComponent("Journal Archive 2026-10-09.journalarchive")
+        let file = root.appendingPathComponent("Journal Archive 2026-10-09.journalbackup")
         try Data("PK".utf8).write(to: file)
         let folder = root.appendingPathComponent("Old.journalarchive", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         XCTAssertTrue(ArchiveFileType.isArchive(file))
         XCTAssertTrue(ArchiveFileType.isArchive(folder))
+        XCTAssertTrue(ArchiveFileType.isArchive(root.appendingPathComponent("BACKUP.JOURNALBACKUP")))
         XCTAssertTrue(ArchiveFileType.isArchive(root.appendingPathComponent("BACKUP.JOURNALARCHIVE")))
         XCTAssertFalse(ArchiveFileType.isArchive(root.appendingPathComponent("Backup.zip")))
         XCTAssertFalse(ArchiveFileType.isArchive(root.appendingPathComponent("journalarchive")))
-        XCTAssertFalse(try XCTUnwrap(URL(string: "https://example.com/Journal.journalarchive")).isFileURL)
+        XCTAssertFalse(ArchiveFileType.isArchive(root.appendingPathComponent("journalbackup")))
+        XCTAssertFalse(
+            ArchiveFileType.isArchive(try XCTUnwrap(URL(string: "https://example.com/Journal.journalbackup"))))
         XCTAssertFalse(
             ArchiveFileType.isArchive(try XCTUnwrap(URL(string: "https://example.com/Journal.journalarchive"))))
-        XCTAssertEqual(ArchiveFileType.importTypes.map(\.identifier), [ArchiveFileType.identifier])
+    }
+
+    /// Both archive types are declared by the app and offered by the pickers. The new file type is data, because Files
+    /// greys out a regular file typed as a package in the import picker (the on-device spike, rung (a) failed), and
+    /// the old package type stays so that 1.0 archives still import and open from Files and the Finder. The names are
+    /// frozen once shipped.
+    func testTheAppDeclaresTheArchiveFileTypeAndKeepsTheOldPackageType() throws {
+        let info = try XCTUnwrap(Bundle.main.infoDictionary)
+        let declared = try XCTUnwrap(info["UTExportedTypeDeclarations"] as? [[String: Any]])
+        func declaration(_ identifier: String) throws -> [String: Any] {
+            try XCTUnwrap(declared.first { $0["UTTypeIdentifier"] as? String == identifier }, identifier)
+        }
+        func fileExtension(of declaration: [String: Any]) -> Any? {
+            (declaration["UTTypeTagSpecification"] as? [String: Any])?["public.filename-extension"]
+        }
+        let file = try declaration("org.privatejournal.archive.file")
+        XCTAssertEqual(file["UTTypeConformsTo"] as? [String], ["public.data"])
+        XCTAssertEqual(fileExtension(of: file) as? String, "journalbackup")
+        let package = try declaration("org.privatejournal.archive")
+        XCTAssertEqual(package["UTTypeConformsTo"] as? [String], ["com.apple.package"])
+        XCTAssertEqual(fileExtension(of: package) as? String, "journalarchive")
+
+        let documents = try XCTUnwrap(info["CFBundleDocumentTypes"] as? [[String: Any]])
+        let handled = documents.flatMap { $0["LSItemContentTypes"] as? [String] ?? [] }
+        XCTAssertEqual(Set(handled), ["org.privatejournal.archive.file", "org.privatejournal.archive"])
+
+        XCTAssertEqual(ArchiveFileType.archiveFile.identifier, "org.privatejournal.archive.file")
+        XCTAssertTrue(ArchiveFileType.archiveFile.conforms(to: .data))
+        XCTAssertFalse(ArchiveFileType.archiveFile.conforms(to: .package))
+        XCTAssertEqual(
+            ArchiveFileType.importTypes.map(\.identifier),
+            ["org.privatejournal.archive.file", "org.privatejournal.archive"])
+        XCTAssertTrue(ArchiveFileType.stagedFilename().hasSuffix(".journalbackup"))
+        XCTAssertTrue(ArchiveFileType.filename().hasSuffix(".journalbackup"))
     }
 
     /// A full volume is said once, in the same words, whether the writer's own check caught it before anything was

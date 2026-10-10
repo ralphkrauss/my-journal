@@ -199,11 +199,11 @@ extension AppModel {
 }
 
 /// Removes what an export or a restore left behind when the save dialog was cancelled or the app quit meanwhile:
-/// - in the data folder, the staged archive `export-<UUID>.journalarchive` (a file; a folder, from 1.0), Markdown
+/// - in the data folder, the staged archive `export-<UUID>.journalbackup` (a file; a `.journalarchive` folder, from 1.0), Markdown
 ///   folders named `markdown-<UUID>`, and, when the library folders are known, a restore's staging folder
 ///   `import-<UUID>` that no configuration names;
-/// - in the app's own temporary folder, the save dialog's `Journal Archive <yyyy-MM-dd>.journalarchive` (a file; a
-///   folder, from 1.0) and `Journal Markdown <yyyy-MM-dd>` copies, and the export's database copy `export-<UUID>.sqlite`.
+/// - in the app's own temporary folder, the save dialog's `Journal Archive <yyyy-MM-dd>.journalbackup` (a file; a
+///   `.journalarchive` folder, from 1.0) and `Journal Markdown <yyyy-MM-dd>` copies, and the export's database copy `export-<UUID>.sqlite`.
 /// Links are never followed or removed, and nothing else is touched.
 enum ArchiveExportLeftovers {
     @MainActor private static var removed = false
@@ -245,8 +245,7 @@ enum ArchiveExportLeftovers {
     }
 
     static func isStagedArchive(_ name: String) -> Bool {
-        let suffix = "." + ArchiveFileType.filenameExtension
-        guard name.hasPrefix("export-"), name.hasSuffix(suffix) else { return false }
+        guard name.hasPrefix("export-"), let suffix = ArchiveFileType.archiveSuffix(of: name) else { return false }
         let identifier = name.dropFirst("export-".count).dropLast(suffix.count)
         return UUID(uuidString: String(identifier)) != nil
     }
@@ -259,8 +258,9 @@ enum ArchiveExportLeftovers {
     }
 
     static func isDialogArchive(_ name: String) -> Bool {
-        let suffix = "." + ArchiveFileType.filenameExtension
-        guard name.hasPrefix("Journal Archive "), name.hasSuffix(suffix) else { return false }
+        guard name.hasPrefix("Journal Archive "), let suffix = ArchiveFileType.archiveSuffix(of: name) else {
+            return false
+        }
         return isDate(name.dropFirst("Journal Archive ".count).dropLast(suffix.count))
     }
 

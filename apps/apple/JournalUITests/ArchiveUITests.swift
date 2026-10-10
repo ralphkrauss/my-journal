@@ -176,7 +176,7 @@ final class ArchiveUITests: XCTestCase {
         for item in [journal, deletedJournal, live, deleted, inherited, missing] { try await store.save(item) }
         let items = try await store.items()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
-        let archive = root.appendingPathComponent("Recovery.journalarchive")
+        let archive = root.appendingPathComponent("Recovery.journalbackup")
         try await VaultArchive.exportFile(store: store, recovery: recovery, key: key, to: archive)
         try await store.close()
         return Fixture(archive: archive, key: key, phrase: phrase, items: items, imageID: imageID, image: image)

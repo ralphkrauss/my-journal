@@ -22,7 +22,7 @@ Replace the master password on every device at once, without re-encrypting the j
 ## Entry points
 
 - Settings ▸ Privacy ▸ Change Password… (`screens/change-password`).
-- Settings ▸ Backup ▸ "Not sure of your password? Change Password…" and the same line in the Export Archive sheet (`flows/export-archive`). Typing the current password is the check that it is the saved one; an unwanted change is cancelled.
+- Settings ▸ Backup ▸ "Not sure of your password?" with the button "Change Password…" under it, and the same lines in the Export Archive sheet (`flows/export-archive`). Typing the current password is the check that it is the saved one; an unwanted change is cancelled.
 
 ## Steps
 

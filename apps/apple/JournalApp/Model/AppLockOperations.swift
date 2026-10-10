@@ -199,7 +199,7 @@ extension AppModel {
     func storeForUnlock() -> JournalStore? {
         guard locked, !Task.isCancelled, !replacingVault else { return nil }
         guard masterKey != nil else {
-            error = "Your device key is unavailable. Use your recovery key to unlock your journals."
+            error = missingDeviceKeyMessage
             return nil
         }
         guard let store else {

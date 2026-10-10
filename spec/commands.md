@@ -233,7 +233,7 @@ Every command in Settings and the flows it opens. Commands that live on other su
 
 | id | Name (copy key) | Enabled when | What it does |
 | --- | --- | --- | --- |
-| `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the archive footer) | master-password journals, unlocked | Opens Change Password (`flows/change-password`). |
+| `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the archive footer, after `settings.backup.archive.changePasswordPrompt`) | master-password journals, unlocked | Opens Change Password (`flows/change-password`). |
 | `change-password-submit` | `settings.changePassword.change` | all fields filled, new matches confirm | Changes the password. |
 | `change-password-retry` | `common.tryAgain` | the server changed, this device didn't save | Saves on this device again. |
 | `change-password-cancel` | `common.cancel` | not working; while a local save is pending, only after Try Again failed | Closes without changing anything. |

@@ -23,7 +23,7 @@ Opens a My Journal archive, shows what it holds, and either restores it (on a de
 ## Entry points
 
 - Settings ▸ Backup ▸ Import Archive…, File ▸ Import Archive…, the first-launch screen's Import Archive…, after choosing a file.
-- Opening a `.journalarchive` file from the system (Files, Finder, Mail): the sheet opens once the journals are shown (after unlocking, if needed).
+- Opening a `.journalbackup` file from the system (Files, Finder, Mail): the sheet opens once the journals are shown (after unlocking, if needed).
 
 ## Content
 

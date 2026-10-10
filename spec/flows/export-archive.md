@@ -28,13 +28,13 @@ Saves one file with everything needed to bring the journals back: entries, journ
 
 1. Export Archive….
 2. **Preparing:** the open entry is saved (if it can't be: `messages.save.before.goBack`); the archive is written to a temporary file in the app's own storage, with enough free space checked first. After 0.3 seconds an indicator appears.
-3. **Save dialog:** the system's dialog, suggesting `settings.backup.archiveFilename` ("Journal Archive {yyyy-MM-dd}.journalarchive", the date in the Gregorian calendar, numerals 0–9).
+3. **Save dialog:** the system's dialog, suggesting `settings.backup.archiveFilename` ("Journal Archive {yyyy-MM-dd}.journalbackup", the date in the Gregorian calendar, numerals 0–9).
    - Saved: the Export row shows `messages.export.archiveSaved` ("Archive saved. Keep your {credential} with it.", the credential in lower case: master password or recovery key) until the next export starts, and the message is announced.
    - Cancelled: nothing; not an error.
    - Saving failed: `messages.export.archiveSaveFailed`.
 4. The temporary file is removed when the dialog closes.
 
-There is no password check before exporting. A person who isn't sure of their password uses **Not sure of your password? Change Password…** (`settings.backup.archive.changePassword`), shown under the footer in Settings ▸ Backup and in the Export Archive sheet, for master-password journals only. It opens Change Password (`flows/change-password`): typing the current password is the check, a local-only library can reset a forgotten one with Forgot Password?, and an unwanted change is cancelled. Archives made before a change keep the old password.
+There is no password check before exporting. A person who isn't sure of their password uses **Change Password…** (`settings.backup.archive.changePassword`) under the line "Not sure of your password?" (`settings.backup.archive.changePasswordPrompt`), both at the end of the footer in Settings ▸ Backup and in the Export Archive sheet, for master-password journals only. It opens Change Password (`flows/change-password`): typing the current password is the check, a local-only library can reset a forgotten one with Forgot Password?, and an unwanted change is cancelled. Archives made before a change keep the old password.
 
 ## Errors
 

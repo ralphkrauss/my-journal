@@ -25,7 +25,7 @@ Brings journals back from an archive, safely: nothing changes until the person h
 
 ## Entry points
 
-- Settings ▸ Backup ▸ Import Archive…; File ▸ Import Archive…; the first-launch screen's Import Archive…; the library problem screen's Import Archive… and the missing-device-key lock screen's, when the journals can't be opened (not offered when the library isn't encrypted) ([screens/unavailable-content](../screens/unavailable-content.md)); opening a `.journalarchive` file from the system.
+- Settings ▸ Backup ▸ Import Archive…; File ▸ Import Archive…; the first-launch screen's Import Archive…; the library problem screen's Import Archive… and the missing-device-key lock screen's, when the journals can't be opened (not offered when the library isn't encrypted) ([screens/unavailable-content](../screens/unavailable-content.md)); opening a `.journalbackup` file from the system.
 
 ## Steps
 

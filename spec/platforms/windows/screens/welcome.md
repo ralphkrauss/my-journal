@@ -59,7 +59,7 @@ The page is the same at every window width, so no layout step applies. The minim
 | `open-settings` | The More button's flyout; Ctrl+, | as in commands.md | Enabled here; there is no navigation pane on this page. The Settings page opens in the main window and Back returns to this page |
 | `quit` | The More button's flyout; the Close button | Alt+F4 | Always |
 
-The commands that need a library (New entry, Use a template…, New journal…, Export archive…, Export journals as Markdown…, Search entries, Pin entry and Lock My Journal) are not reachable on this page because the menu bar is not shown; the shortcuts do nothing. Keyboard: the first Tab stop is Start a journal and has focus when the page appears; Enter chooses the focused button; Tab goes Start, Connect, Import. A `.journalarchive` file dragged onto the window or opened from Explorer starts the import ([import-archive](../flows/import-archive.md)).
+The commands that need a library (New entry, Use a template…, New journal…, Export archive…, Export journals as Markdown…, Search entries, Pin entry and Lock My Journal) are not reachable on this page because the menu bar is not shown; the shortcuts do nothing. Keyboard: the first Tab stop is Start a journal and has focus when the page appears; Enter chooses the focused button; Tab goes Start, Connect, Import. A `.journalbackup` file dragged onto the window or opened from Explorer starts the import ([import-archive](../flows/import-archive.md)).
 
 ## Copy differences
 
@@ -85,7 +85,7 @@ The title and message are unchanged. The ellipses stay: each opens a page or pic
 - **Three buttons, not a link and a plain action.** Apple's secondary action is a link styled in the accent colour; on Windows a hyperlink navigates and a button acts, so all three are buttons, the one primary action accented.
 - **No pane, no recovery-key step.** The page has no navigation pane because there is nothing to navigate to, and the early-build recovery key state does not exist on Windows.
 - **No menu bar here.** The Mac keeps its menu bar with most items disabled; Windows shows the title bar's More button instead, with Settings, Help and Exit.
-- **Dropping an archive file onto the window**, or opening one from Explorer, starts the import from here through the `.journalarchive` file association ([import-archive](../flows/import-archive.md)).
+- **Dropping an archive file onto the window**, or opening one from Explorer, starts the import from here through the `.journalbackup` file association ([import-archive](../flows/import-archive.md)).
 
 ## Open questions
 

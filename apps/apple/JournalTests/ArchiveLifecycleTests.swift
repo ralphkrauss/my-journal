@@ -265,6 +265,8 @@ final class ArchiveLifecycleTests: XCTestCase {
         let leftovers = [
             try folder(data.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
             try folder(temporary.appendingPathComponent("Journal Archive 2026-09-30.journalarchive")),
+            try folder(data.appendingPathComponent("export-\(UUID().uuidString).journalbackup")),
+            try folder(temporary.appendingPathComponent("Journal Archive 2026-09-30.journalbackup")),
             // Export as Markdown's prepared folder and the save dialog's copy of it, which hold readable journals.
             try folder(data.appendingPathComponent("markdown-\(UUID().uuidString.lowercased())")),
             try folder(temporary.appendingPathComponent("Journal Markdown 2026-10-05")),
@@ -321,8 +323,11 @@ final class ArchiveLifecycleTests: XCTestCase {
         let current = "import-\(UUID().uuidString.lowercased())"
         let earlier = "import-\(UUID().uuidString.lowercased())"
         let leftovers = [
+            try file(data.appendingPathComponent("export-\(UUID().uuidString).journalbackup")),
+            try file(temporary.appendingPathComponent("Journal Archive 2026-09-30.journalbackup")),
+            // Files an earlier build of 1.1 staged under the extension of the 1.0 folder.
             try file(data.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
-            try file(temporary.appendingPathComponent("Journal Archive 2026-09-30.journalarchive")),
+            try file(temporary.appendingPathComponent("Journal Archive 2026-09-27.journalarchive")),
             try file(temporary.appendingPathComponent("export-\(UUID().uuidString.lowercased()).sqlite")),
             try folder(data.appendingPathComponent("import-\(UUID().uuidString.lowercased())")),
         ]
@@ -332,22 +337,23 @@ final class ArchiveLifecycleTests: XCTestCase {
             try folder(data.appendingPathComponent("vault-\(UUID().uuidString.lowercased())")),
             try folder(data.appendingPathComponent("import-notes")),
             try file(data.appendingPathComponent("import-\(UUID().uuidString.lowercased())-file")),
-            try file(data.appendingPathComponent("export-notes.journalarchive")),
-            try file(data.appendingPathComponent("Journal Archive 2026-09-30.journalarchive")),
-            try file(temporary.appendingPathComponent("Journal Archive 2026-09-30 2.journalarchive")),
-            try file(temporary.appendingPathComponent("export-\(UUID().uuidString).journalarchive")),
+            try file(data.appendingPathComponent("export-notes.journalbackup")),
+            try file(data.appendingPathComponent("Journal Archive 2026-09-30.journalbackup")),
+            try file(temporary.appendingPathComponent("Journal Archive 2026-09-30 2.journalbackup")),
+            try file(temporary.appendingPathComponent("export-\(UUID().uuidString).journalbackup")),
+            try file(data.appendingPathComponent("export-\(UUID().uuidString).journalbackup.zip")),
             try file(temporary.appendingPathComponent("export-notes.sqlite")),
         ]
         let elsewhere = try folder(root.appendingPathComponent("elsewhere"))
         let stagedLink = data.appendingPathComponent("import-\(UUID().uuidString.lowercased())")
         try manager.createSymbolicLink(at: stagedLink, withDestinationURL: elsewhere)
-        let fileLink = temporary.appendingPathComponent("Journal Archive 2026-09-29.journalarchive")
+        let fileLink = temporary.appendingPathComponent("Journal Archive 2026-09-29.journalbackup")
         try manager.createSymbolicLink(
             at: fileLink, withDestinationURL: kept[0].appendingPathComponent("journal.sqlite"))
 
         // While the settings can't be read nothing can be called leftover: restore staging stays.
         ArchiveExportLeftovers.remove(dataDirectory: data, temporaryDirectory: temporary, libraryFolders: nil)
-        XCTAssertTrue(manager.fileExists(atPath: leftovers[3].path))
+        XCTAssertTrue(manager.fileExists(atPath: leftovers[5].path))
         XCTAssertFalse(manager.fileExists(atPath: leftovers[0].path))
 
         ArchiveExportLeftovers.remove(

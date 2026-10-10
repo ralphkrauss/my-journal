@@ -84,7 +84,7 @@
   },
   "common.importArchive": {
     "text": "Import Archive…",
-    "context": "File menu. Also: First-launch action; opens the file picker for a .journalarchive file. Also: Button in Settings ▸ Backup."
+    "context": "File menu. Also: First-launch action; opens the file picker for a .journalbackup file. Also: Button in Settings ▸ Backup."
   },
   "common.itemCount": {
     "text": {
@@ -2057,8 +2057,8 @@
     "context": "Unlocking when the journals were never opened and nothing else is shown. Since build 18 a library that fails to open shows the library problem screen and is never locked, so this text is only a guard."
   },
   "messages.library.deviceKeyUnavailable": {
-    "text": "Your device key is unavailable. Use your recovery key to unlock your journals.",
-    "context": "Launch or unlock: the key that opens the journals isn’t in this device’s keychain (for example after restoring a device backup). The lock screen asks for the password or recovery key."
+    "text": "Your device key is unavailable. Use your {credential} to unlock your journals.",
+    "context": "Launch or unlock: the key that opens the journals isn’t in this device’s keychain (for example after restoring a device backup). The lock screen asks for the library's credential. {credential} is the library's own credential name in lower case: “master password”, or “recovery key” for a library from an early build (every Windows library has a master password)."
   },
   "messages.library.itemUnavailable": {
     "text": "This item is no longer available.",
@@ -3005,8 +3005,12 @@
     "context": "Archive preview on a connected device."
   },
   "settings.backup.archive.changePassword": {
-    "text": "Not sure of your password? Change Password…",
-    "context": "Borderless button under the archive footer in Settings ▸ Backup and the Export Archive sheet, for master-password journals; opens Change Password."
+    "text": "Change Password…",
+    "context": "Borderless footnote button on its own line under settings.backup.archive.changePasswordPrompt, at the end of the archive footer in Settings ▸ Backup and the Export Archive sheet, for master-password journals; opens Change Password."
+  },
+  "settings.backup.archive.changePasswordPrompt": {
+    "text": "Not sure of your password?",
+    "context": "Last paragraph of the archive footer in Settings ▸ Backup and the Export Archive sheet, for master-password journals: footer text above the Change Password… button."
   },
   "settings.backup.archive.footerEncrypted": {
     "text": "An archive is an encrypted copy of your journals, including images and earlier versions. It opens only with your {credential}.",
@@ -3017,7 +3021,7 @@
     "context": "Header of the archive section in Settings ▸ Backup."
   },
   "settings.backup.archiveFilename": {
-    "text": "Journal Archive {date}.journalarchive",
+    "text": "Journal Archive {date}.journalbackup",
     "context": "Suggested archive name; {date} is yyyy-MM-dd with Western digits."
   },
   "settings.backup.exportArchiveSheet.title": {

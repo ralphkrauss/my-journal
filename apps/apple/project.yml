@@ -19,18 +19,28 @@ settings:
     GENERATE_INFOPLIST_FILE: YES
     CODE_SIGN_STYLE: Automatic
 targetTemplates:
-  # The archive's file type, declared once for both apps. The identifier and the extension are a public contract and
-  # also appear in JournalApp/Model/ArchiveFileType.swift (docs/design/1-1-archive-v2.md, 6.2).
+  # The archive's file types, declared once for both apps. The identifiers and the extensions are a public contract and
+  # also appear in JournalApp/Model/ArchiveFileType.swift (docs/design/1-1-archive-v2.md, 6.2, rung (c)): the archive
+  # file 1.1 writes (data, `journalbackup`) and the archive package 1.0 wrote (a folder, `journalarchive`).
   ArchiveFileType:
     info:
       properties:
         UTExportedTypeDeclarations:
+          - UTTypeIdentifier: org.privatejournal.archive.file
+            UTTypeDescription: Journal Archive
+            UTTypeConformsTo: [public.data]
+            UTTypeTagSpecification:
+              public.filename-extension: journalbackup
           - UTTypeIdentifier: org.privatejournal.archive
             UTTypeDescription: Journal Archive
             UTTypeConformsTo: [com.apple.package]
             UTTypeTagSpecification:
               public.filename-extension: journalarchive
         CFBundleDocumentTypes:
+          - CFBundleTypeName: Journal Archive
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.privatejournal.archive.file]
           - CFBundleTypeName: Journal Archive
             CFBundleTypeRole: Viewer
             LSHandlerRank: Owner

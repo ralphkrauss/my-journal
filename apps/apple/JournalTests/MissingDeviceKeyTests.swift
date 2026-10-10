@@ -45,6 +45,19 @@ final class MissingDeviceKeyTests: XCTestCase {
         let restored = try await model.store?.item(entry.id)
         XCTAssertEqual(restored, expected)
     }
+    /// The lock screen's field is named after the library's own credential, and so is the note above it.
+    func testDeviceKeyMessageNamesTheLibrarysCredential() throws {
+        let key = try VaultCrypto.generateKey()
+        let early = LocalConfiguration(recovery: try VaultCrypto.makeRecovery(masterKey: key, phrase: "recovery").0)
+        let password = LocalConfiguration(
+            recovery: try VaultCrypto.makeRecovery(masterKey: key, phrase: AppModel.testPassword, formatVersion: 2).0)
+        XCTAssertEqual(
+            AppModel.missingDeviceKeyMessage(credentialName: early.credentialName),
+            "Your device key is unavailable. Use your recovery key to unlock your journals.")
+        XCTAssertEqual(
+            AppModel.missingDeviceKeyMessage(credentialName: password.credentialName),
+            "Your device key is unavailable. Use your master password to unlock your journals.")
+    }
     /// A library that can't be opened is no longer a lock screen with a button that leads nowhere: it is a problem the
     /// person can act on, and nothing is locked.
     func testStoreOpenFailureIsAProblemNotALockScreen() async throws {

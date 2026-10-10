@@ -44,8 +44,15 @@ struct LibraryOpenHandled: Error {}
 struct LibraryDatabaseMissing: Error {}
 
 extension AppModel {
-    static let missingDeviceKeyMessage =
-        "Your device key is unavailable. Use your recovery key to unlock your journals."
+    /// `messages.library.deviceKeyUnavailable`: names the credential the lock screen asks for, which is the library's
+    /// own (`LocalConfiguration.credentialName`): the master password, or the recovery key of an early library.
+    static func missingDeviceKeyMessage(credentialName: String?) -> String {
+        "Your device key is unavailable. Use your \(credentialName?.lowercased() ?? "password") to unlock your journals."
+    }
+
+    var missingDeviceKeyMessage: String {
+        Self.missingDeviceKeyMessage(credentialName: configuration?.credentialName)
+    }
 
     /// A problem state is never locked: it has no store to unlock. The missing key is the exception, which is the lock
     /// screen with its credential field.
@@ -146,7 +153,7 @@ extension AppModel {
     func lockForMissingDeviceKey() {
         masterKey = nil
         locked = true
-        error = Self.missingDeviceKeyMessage
+        error = missingDeviceKeyMessage
         setLibraryProblem(.needsKey)
     }
 

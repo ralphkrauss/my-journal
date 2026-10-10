@@ -112,7 +112,7 @@ import os
             try manager.createDirectory(
                 at: model.directory.appendingPathComponent(name), withIntermediateDirectories: true)
         }
-        let export = "export-" + UUID().uuidString + ".journalarchive"
+        let export = "export-" + UUID().uuidString + ".journalbackup"
         try Data("archive".utf8).write(to: model.directory.appendingPathComponent(export))
         try Data("{}".utf8).write(to: model.directory.appendingPathComponent("local-server.json"))
         let earlierKey = "erase-test-earlier-" + UUID().uuidString

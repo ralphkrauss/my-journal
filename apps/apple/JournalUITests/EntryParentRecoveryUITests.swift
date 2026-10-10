@@ -111,7 +111,7 @@ final class EntryParentRecoveryUITests: XCTestCase {
         deleted.deletedAt = date
         for item in [journal, entry, archived, deleted] { try await store.save(item) }
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: phrase).0
-        let archive = root.appendingPathComponent("Work.journalarchive")
+        let archive = root.appendingPathComponent("Work.journalbackup")
         try await VaultArchive.exportFile(store: store, recovery: recovery, key: key, to: archive)
         return Fixture(
             archive: archive, phrase: phrase, key: key, journal: journal, entry: entry, archived: archived,

@@ -66,7 +66,7 @@ import-archive-from-welcome:
   reference: apple
   apple: shipped
   windows: planned
-  windows-notes: "Same file route as import-archive: the Open picker, a double-click through a `.journalarchive` association, and a dropped file; the Import archive task page."
+  windows-notes: "Same file route as import-archive: the Open picker, a double-click through a `.journalbackup` association, and a dropped file; the Import archive task page."
   android: planned
 
 three-column-layout:
@@ -1209,7 +1209,7 @@ export-archive:
   reference: apple
   apple: shipped
   windows: planned
-  apple-notes: "Writes one file, a ZIP container with a sealed manifest (protocol/archive.md, File archive), staged in the app's data folder and handed to the system save dialog. Every library this version opens has a password, so every library has one."
+  apple-notes: "Writes one file with the extension .journalbackup, a ZIP container with a sealed manifest (protocol/archive.md, File archive), typed org.privatejournal.archive.file (public.data), staged in the app's data folder and handed to the system save dialog. Every library this version opens has a password, so every library has one."
   windows-notes: "FileSavePicker with one file type and the suggested name; the app writes the file archive of protocol/archive.md with System.IO.Compression.ZipArchive over a temporary file, then copies it to the picked file."
   android: planned
 
@@ -1219,8 +1219,8 @@ import-archive:
   reference: apple
   apple: shipped
   windows: planned
-  apple-notes: "Reads a file archive, and the folder that My Journal 1.0 wrote (archive-directory-read). The kind is told by what the picked item is, never by its name."
-  windows-notes: "FileOpenPicker, a `.journalarchive` file association and a dropped file start the import. A file that is not an archive is damaged (`settings.archiveImport.error.damaged`); Windows never reads the 1.0 folder."
+  apple-notes: "Reads a file archive (.journalbackup), and the folder that My Journal 1.0 wrote (.journalarchive, archive-directory-read); the picker offers both types. The kind is told by what the picked item is, never by its name."
+  windows-notes: "FileOpenPicker, a `.journalbackup` file association and a dropped file start the import. A file that is not an archive is damaged (`settings.archiveImport.error.damaged`); Windows never reads the 1.0 folder."
   android: planned
 
 archive-directory-read:

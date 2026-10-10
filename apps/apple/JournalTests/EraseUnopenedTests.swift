@@ -20,7 +20,7 @@ final class EraseUnopenedTests: XCTestCase {
     /// beside the files of the server earlier Mac builds ran.
     private func strayFiles(_ fixture: LibraryFixture) throws -> (names: [String], former: [String]) {
         let manager = FileManager.default
-        let export = "export-" + UUID().uuidString + ".journalarchive"
+        let export = "export-" + UUID().uuidString + ".journalbackup"
         let names = ["vault-stray", "import-" + UUID().uuidString.lowercased(), "markdown-" + UUID().uuidString]
         for name in names {
             try manager.createDirectory(

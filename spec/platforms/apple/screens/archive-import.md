@@ -78,7 +78,7 @@ None for the sheet's text; every string is the catalog default, including the re
 
 - Size: the Mac sheet takes the ideal size; iOS sheets are sized by the system, with the minimum as a floor.
 - The Mac holds off the inactivity lock while opening or importing (`keepsUnlockedWhile`); iOS has none.
-- The file picker is the system's `.fileImporter` limited to `.journalArchive` on every device; opening a `.journalarchive` file from Files or Finder reaches the sheet through `onOpenURL` (see `import-archive`).
+- The file picker is the system's `.fileImporter` offers `ArchiveFileType.importTypes` (the archive file type, `journalbackup`, and the 1.0 folder type, `journalarchive`) on every device; opening one of them from Files or Finder reaches the sheet through `onOpenURL` (see `import-archive`).
 
 ## Screenshots
 

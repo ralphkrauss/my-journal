@@ -49,7 +49,6 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `editor.imageImport.cause.unavailable` | They may still be downloading from iCloud. Try again later. | They may still be downloading. Try again later. | vocabulary | 12.3 |
 | `messages.image.unavailable` | The image couldn’t be added. It may still be downloading from iCloud. Try again later. | The image couldn’t be added. It may still be downloading. Try again later. | vocabulary | 12.3 |
 | `messages.library.cannotOpen` | Your journals couldn’t be opened. Quit and reopen My Journal. | Your journals couldn’t be opened. Close My Journal and open it again. | vocabulary | 12.3 |
-| `messages.library.deviceKeyUnavailable` | Your device key is unavailable. Use your recovery key to unlock your journals. | Your device key is unavailable. Use your master password to unlock your journals. | vocabulary | B35 |
 | `messages.entry.dateChanged` | This entry’s date changed. Close this sheet and try again. | This entry’s date changed. Close this dialog and try again. | vocabulary | 12.3 |
 | `settings.addDevice.enterCodeInstead.footer` | For a Mac or a device that can’t scan the code. | For a computer or a device that can’t scan the code. | vocabulary | B28 |
 | `settings.general.formatAsYouType.footer` | Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it. Press Delete right after to keep what you typed. | Typing “- ”, “1. ”, “# ” or “> ” at the start of a line formats it. Press Backspace right after to keep what you typed. | vocabulary | 12.3 |
@@ -119,7 +118,7 @@ Sentence case also applies to about 340 more short strings that the mapping file
 | `library.menu.help.source` | Source Code on GitHub | Source code on GitHub | casing | 12.1 |
 | `common.chooseMasterPassword` | Choose a Master Password | Choose a master password | casing | 12.1 |
 | `settings.changePassword.forgot` | Forgot Password? | Forgot password? | casing | 12.1 |
-| `settings.backup.archive.changePassword` | Not sure of your password? Change Password… | Not sure of your password? Change password… | casing | 12.1 |
+| `settings.backup.archive.changePassword` | Change Password… | Change password… | casing | 12.1 |
 | `common.masterPassword` | Master Password | Master password | casing | 12.1 |
 | `common.showPassword` | Show Password | Show password | casing | 12.1 |
 | `library.templateChooser.useTemplate` | Use a Template | Use a template | casing | 12.1 |

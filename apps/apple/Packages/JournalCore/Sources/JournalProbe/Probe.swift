@@ -54,19 +54,8 @@ struct Probe {
         try await firstStore.save(entry)
         entry.document = .plain("Phone offline edit")
         try await phoneStore.save(entry)
-        try await firstSync.synchronize()
-        try await phoneSync.synchronize()
-        let conflicts = try await phoneStore.conflicts()
-        guard conflicts.isEmpty else {
-            throw ProbeFailure("offline edits were left for review, not kept as two entries")
-        }
-        try await phoneSync.synchronize()
-        try await firstSync.synchronize()
-        let texts = Set(try await firstStore.items().filter { $0.kind == "entry" }.map(\.document.text))
-        guard texts == Set(["Mac offline edit", "Phone offline edit"]) else {
-            throw ProbeFailure("keeping both versions lost an edit")
-        }
-        print("PASS: concurrent offline edits are both kept as entries and converge")
+        try await verifyOfflineEditsAreBothKept(
+            mac: firstStore, macSync: firstSync, phone: phoneStore, phoneSync: phoneSync, entryID: entry.id)
         let (published, third, recoveredKey) = try await recoverReplacement(
             anonymous, phrase: phrase, envelope: envelope)
         let replacementStore = try JournalStore(
@@ -109,6 +98,41 @@ struct Probe {
         try await verifyLocalJournalDeletion(
             sender: reconnectedStore, observer: firstStore, client: reconnectedClient, observerClient: firstClient,
             journalID: journal.id)
+    }
+    /// Two devices edit one entry offline. Neither edit is lost: the version that reached the server last stays the
+    /// entry and the other is kept as "(other version)", on both devices, with nothing left to review.
+    private static func verifyOfflineEditsAreBothKept(
+        mac: JournalStore, macSync: SyncEngine, phone: JournalStore, phoneSync: SyncEngine, entryID: UUID
+    ) async throws {
+        try await macSync.synchronize()
+        // The phone's edit is still being written, so a synchronization sends it, receives the Mac's version and keeps
+        // both only once the writing has paused (protocol/conflicts.md, Orchestration): nothing is settled over it.
+        try await phoneSync.synchronize()
+        guard try await phone.item(entryID)?.document.text == "Phone offline edit" else {
+            throw ProbeFailure("a synchronization replaced an entry that was still being written")
+        }
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+        try await phoneSync.synchronize()
+        let conflicts = try await phone.conflicts()
+        guard conflicts.isEmpty else {
+            throw ProbeFailure("offline edits were left waiting for a review that 1.1 no longer has")
+        }
+        let phoneEntries = try await phone.items().filter { $0.kind == "entry" }
+        let phoneCopies = phoneEntries.filter { $0.id != entryID }
+        guard try await phone.item(entryID)?.document.text == "Phone offline edit",
+            phoneCopies.count == 1, phoneCopies.first?.title == "Daily log (other version)",
+            phoneCopies.first?.document.text == "Mac offline edit"
+        else { throw ProbeFailure("the phone didn't keep its version and the Mac's as \"(other version)\"") }
+        try await macSync.synchronize()
+        let macEntries = try await mac.items().filter { $0.kind == "entry" }
+        let texts = Set(macEntries.map(\.document.text))
+        guard macEntries.count == 2, texts == Set(["Mac offline edit", "Phone offline edit"]),
+            macEntries.contains(where: { $0.title == "Daily log (other version)" })
+        else { throw ProbeFailure("keeping both versions lost an edit or didn't reach the other device") }
+        guard try await mac.conflicts().isEmpty else {
+            throw ProbeFailure("the Mac was left with a conflict to review")
+        }
+        print("PASS: concurrent offline edits are both kept as entries, one as (other version), and converge")
     }
     /// A restore phase, the agent check or the merge check, when the command line names one.
     private static func runNamedCheck() async throws -> Bool {

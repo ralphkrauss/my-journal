@@ -1,7 +1,7 @@
 #!/bin/bash
 # Reads file archives with tools that are not this repository's code: Info-ZIP unzip and zipinfo, bsdtar (where
 # installed) and Python's zipfile. Pass the archives. ArchiveIndependentToolsTests runs it on the writer's output;
-# run it by hand on any archive before a release:  Tests/check-archive-with-tools.sh MyArchive.journalarchive
+# run it by hand on any archive before a release:  Tests/check-archive-with-tools.sh MyArchive.journalbackup
 set -euo pipefail
 
 for archive in "$@"; do

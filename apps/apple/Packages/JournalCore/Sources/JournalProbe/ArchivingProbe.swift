@@ -48,7 +48,8 @@ extension Probe {
         let observed = try await observer.items()
         let pending = try await sender.pending()
         let conflicts = try await observer.conflicts()
-        guard try await observer.item(entryID) == restored, restored.archivedAt == nil,
+        // Restore puts back what is deleted: an entry that was only archived stays archived (StoreRestoreEntry.swift).
+        guard try await observer.item(entryID) == restored, restored.archivedAt == finalArchive.archivedAt,
             restored.deletedAt == nil, restored.document == finalArchive.document,
             try await observer.item(journalID)?.deletedAt == nil,
             siblings.allSatisfy({ sibling in observed.contains(sibling) }), pending.isEmpty, conflicts.isEmpty

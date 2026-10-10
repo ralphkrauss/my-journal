@@ -25,17 +25,23 @@ struct ArchiveFooter: View {
     @EnvironmentObject private var model: AppModel
     @State private var changingPassword = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(ArchiveControls.explanation(model))
             if model.configuration?.recovery.formatVersion == 2 {
-                // Leading-aligned like the footer text above it; a wrapped button label is centred otherwise.
-                Button("Not sure of your password? Change Password…") { changingPassword = true }
-                    .buttonStyle(.borderless).disabled(model.locked)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .sheet(isPresented: $changingPassword) { ChangePasswordView() }
+                // The prompt reads as part of the footer and only the action is a control, as one button named
+                // "Change Password…" for VoiceOver, Voice Control and Full Keyboard Access. A borderless button does
+                // not take the footer's text style, so it is set here.
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Not sure of your password?")
+                    Button("Change Password…") { changingPassword = true }
+                        .buttonStyle(.borderless).disabled(model.locked)
+                        .font(.footnote)
+                        .sheet(isPresented: $changingPassword) { ChangePasswordView() }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .multilineTextAlignment(.leading)
     }
 }
 
@@ -85,7 +91,7 @@ struct ArchiveExportControls: View {
             if saved, let message = model.archiveSavedMessage { announceForAccessibility(message) }
         }
         .fileExporter(
-            isPresented: $export.presenting, document: export.document, contentType: ArchiveFileType.journalArchive,
+            isPresented: $export.presenting, document: export.document, contentType: ArchiveFileType.archiveFile,
             defaultFilename: export.document?.filename ?? ArchiveFileType.filename()
         ) { result in
             export.finish(result)

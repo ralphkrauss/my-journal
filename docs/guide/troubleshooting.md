@@ -144,8 +144,9 @@ Then turn on App Lock and set up agent access again; they aren’t copied. Check
 ## An archive won’t open
 
 - **“Update My Journal to open this archive.”** The archive was made by a newer version. Update My Journal on this device.
-- **“Couldn’t open this archive…”** from a device that still runs 1.0: 1.0 can’t open the single-file archives that 1.1 saves. Update My Journal on this device first. The folder archives that 1.0 saved still open in 1.1.
+- **“Couldn’t open this archive…”** from a device that still runs 1.0: 1.0 can’t open the single-file archives that 1.1 saves. Update My Journal on this device first. The folder archives that 1.0 saved (ending in `.journalarchive`) still open in 1.1.
 - **“This archive is incomplete or damaged.”** The file was cut short or changed, for example by a download that stopped. Copy or download it again. A file that was unpacked with an archive tool is no longer an archive; use the original file.
+- **The archive is greyed out in the file picker.** Choose a file ending in `.journalbackup`, or a `.journalarchive` folder from 1.0. If you renamed the file, give it back the ending `.journalbackup`; a copy that was unpacked or renamed to `.zip` is not an archive.
 - **“Couldn’t open this archive. Check that the file is available and your device has enough space.”** The file may still be downloading from iCloud Drive or another service, or the device is too full. Opening an archive needs about twice its size free, plus 256 MB.
 - **“There isn’t enough space to export the archive.”** Exporting needs room for the archive on the device (the database, the images and 256 MB), and on the place you save it to. Free up space, or save to another place. Nothing is saved when this appears.
 

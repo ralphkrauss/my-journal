@@ -49,7 +49,7 @@ final class FileArchiveTests: XCTestCase {
 
     func testARestoredFileArchiveHoldsTheImagesTheUnsentEditAndTheEarlierVersion() async throws {
         let library = try await makeLibrary()
-        let archive = root.appendingPathComponent("library.journalarchive")
+        let archive = root.appendingPathComponent("library.journalbackup")
         try await VaultArchive.exportFile(
             store: library.store, recovery: library.recovery, key: library.key, to: archive)
         XCTAssertNoThrow(try VaultArchive.checkHeader(at: archive))
@@ -86,7 +86,7 @@ final class FileArchiveTests: XCTestCase {
         let before = try await library.store.conflicts()
         XCTAssertEqual(before.count, 1)
 
-        let archive = root.appendingPathComponent("conflict.journalarchive")
+        let archive = root.appendingPathComponent("conflict.journalbackup")
         try await VaultArchive.exportFile(
             store: library.store, recovery: library.recovery, key: library.key, to: archive)
         let restored = try await VaultArchive.restore(
@@ -101,7 +101,7 @@ final class FileArchiveTests: XCTestCase {
     /// The writer's container choices that other tools rely on: stored entries, fixed time, order, and no leftovers.
     func testTheArchiveIsOneFileOfStoredEntriesInTheDocumentedOrder() async throws {
         let library = try await makeLibrary()
-        let archive = root.appendingPathComponent("library.journalarchive")
+        let archive = root.appendingPathComponent("library.journalbackup")
         try await VaultArchive.exportFile(
             store: library.store, recovery: library.recovery, key: library.key, to: archive)
         let input = try ArchiveInput(path: archive.path)
@@ -123,7 +123,7 @@ final class FileArchiveTests: XCTestCase {
         var options = ArchiveOptions.standard
         options.chunkBytes = 7
         options.forceZip64 = true
-        let archive = root.appendingPathComponent("zip64.journalarchive")
+        let archive = root.appendingPathComponent("zip64.journalbackup")
         try await FileArchive.export(
             store: library.store, recovery: library.recovery, key: library.key, to: archive, options: options)
         let restored = try await VaultArchive.restore(
@@ -141,7 +141,7 @@ final class FileArchiveTests: XCTestCase {
         let image = root.appendingPathComponent("source/attachments/\(firstImage)")
         let kept = try Data(contentsOf: image)
         try manager.removeItem(at: image)
-        let failed = root.appendingPathComponent("failed.journalarchive")
+        let failed = root.appendingPathComponent("failed.journalbackup")
         do {
             try await VaultArchive.exportFile(
                 store: library.store, recovery: library.recovery, key: library.key, to: failed)
@@ -150,7 +150,7 @@ final class FileArchiveTests: XCTestCase {
         XCTAssertFalse(manager.fileExists(atPath: failed.path))
         try kept.write(to: image)
 
-        let existing = root.appendingPathComponent("existing.journalarchive")
+        let existing = root.appendingPathComponent("existing.journalbackup")
         try Data("not ours".utf8).write(to: existing)
         do {
             try await VaultArchive.exportFile(
@@ -165,7 +165,7 @@ final class FileArchiveTests: XCTestCase {
 
     func testACancelledExportLeavesNothing() async throws {
         let library = try await makeLibrary()
-        let archive = root.appendingPathComponent("cancelled.journalarchive")
+        let archive = root.appendingPathComponent("cancelled.journalbackup")
         let task = Task {
             try await VaultArchive.exportFile(
                 store: library.store, recovery: library.recovery, key: library.key, to: archive)
@@ -183,7 +183,7 @@ final class FileArchiveTests: XCTestCase {
     /// same reserve. Both are refused before anything is written.
     func testTooLittleFreeSpaceRefusesExportAndRestoreBeforeWriting() async throws {
         let library = try await makeLibrary()
-        let archive = root.appendingPathComponent("space.journalarchive")
+        let archive = root.appendingPathComponent("space.journalbackup")
         let estimate = try await library.store.archiveBytesEstimate()
         let short = ArchiveOptions(availableSpace: { _ in estimate + ArchiveLimits.spaceReserve - 1 })
         do {
@@ -249,7 +249,7 @@ final class FileArchiveTests: XCTestCase {
     func testAnArchiveForAnEnvelopeOfALibraryWithoutEncryptionIsNotWritten() async throws {
         let key = try VaultCrypto.generateKey()
         let store = try JournalStore(directory: root.appendingPathComponent("library"), key: key)
-        let archive = root.appendingPathComponent("plain.journalarchive")
+        let archive = root.appendingPathComponent("plain.journalbackup")
         var envelope = try VaultCrypto.makeRecovery(masterKey: key, phrase: "a password", formatVersion: 2).0
         envelope.formatVersion = 4
         do {
@@ -279,10 +279,10 @@ final class FileArchiveTests: XCTestCase {
     /// chunks that split the compressed stream and its output at every kind of boundary.
     func testDeflatedEntriesRestoreInSmallChunks() async throws {
         let library = try await makeDenseLibrary()
-        let stored = root.appendingPathComponent("stored.journalarchive")
+        let stored = root.appendingPathComponent("stored.journalbackup")
         try await VaultArchive.exportFile(
             store: library.store, recovery: library.recovery, key: library.key, to: stored)
-        let deflated = root.appendingPathComponent("deflated.journalarchive")
+        let deflated = root.appendingPathComponent("deflated.journalbackup")
         let count = try ArchiveRepack.deflate(stored, to: deflated)
         XCTAssertGreaterThanOrEqual(count, 2, "the database and the header at least are deflated")
         XCTAssertLessThan(
@@ -311,7 +311,7 @@ final class FileArchiveTests: XCTestCase {
     /// reports the cancellation rather than damage.
     func testCancellingARestoreMidExtractionRemovesTheStagingFolder() async throws {
         let library = try await makeLibrary()
-        let archive = root.appendingPathComponent("library.journalarchive")
+        let archive = root.appendingPathComponent("library.journalbackup")
         try await VaultArchive.exportFile(
             store: library.store, recovery: library.recovery, key: library.key, to: archive)
         let before = try Data(contentsOf: archive)

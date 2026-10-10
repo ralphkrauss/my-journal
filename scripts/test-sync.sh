@@ -55,7 +55,10 @@ import sqlite3, sys
 for path in sys.argv[1:]:
     db = sqlite3.connect(path)
     assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-    assert db.execute('SELECT count(*) FROM Records').fetchone()[0] == 3
+    # The journal, the entry (by now a permanent-deletion marker), the "(other version)" copy that kept the two
+    # concurrent offline edits, and the edit parked next to the deletion (docs/design/1-1-conflicts-and-reconnect.md).
+    records = db.execute('SELECT count(*) FROM Records').fetchone()[0]
+    assert records == 4, records
     assert db.execute('SELECT count(*) FROM Attachments').fetchone()[0] == 1
 restored = sqlite3.connect(sys.argv[2])
 assert restored.execute("SELECT count(*) FROM Devices WHERE Revoked = 0").fetchone()[0] == 0

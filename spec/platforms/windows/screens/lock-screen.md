@@ -31,7 +31,7 @@ Locking replaces the window's content with a `Page` and releases the journal vie
 
 **Credential form** (the device key is unavailable, or Use master password was chosen): `PasswordBox`, `Header` the credential's name (`common.passwordOrRecoveryKey` when it is not known), `InputScope` Password, focused, with the built-in reveal button (the spec has no Show Password switch on the lock screen, [platform.md, 25](../platform.md#25-text-input-and-spelling)); an `InfoBar` for the error; an accent `Button` `settings.lock.unlock`, the default button, disabled while the field is empty (Enter in the field unlocks); and, when the PC can still use Windows Hello, a `HyperlinkButton` `settings.lock.useMethod` ("Use Windows Hello") that returns to the first state.
 
-Errors, as the spec lists them: `messages.error.invalidRecoveryKey` (Error), `messages.library.deviceKeyUnavailable` (Warning: it explains why the password is asked), `messages.library.cannotOpen` (Error; Windows form below), or another error's own message. Unlocking with the password also tries the server's copy of the password when this PC's fails, accepting it only if it opens these journals; unlocking with the master password marks the password as checked; App Lock stays on after unlocking with the credential; the device key is saved again ([Missing device key](#missing-device-key)).
+Errors, as the spec lists them: `messages.error.invalidRecoveryKey` (Error), `messages.library.deviceKeyUnavailable` with {credential} “master password” (Warning: it explains why the password is asked), `messages.library.cannotOpen` (Error; Windows form below), or another error's own message. Unlocking with the password also tries the server's copy of the password when this PC's fails, accepting it only if it opens these journals; unlocking with the master password marks the password as checked; App Lock stays on after unlocking with the credential; the device key is saved again ([Missing device key](#missing-device-key)).
 
 ### Unlocking with Windows Hello
 
@@ -99,7 +99,6 @@ Sentence case applies ("My Journal is locked", "Use master password", "Unlock").
 | New string for the one-time warning when the device key cannot be saved again | none | In [copy-proposals.md](../copy-proposals.md) | new, D43 |
 | `messages.library.cannotOpen` | Your journals couldn’t be opened. Quit and reopen My Journal. | Your journals couldn’t be opened. Close My Journal and open it again. | vocabulary (platform.md, 12.3) |
 | `settings.privacy.appLock.reason.unlock` | {"default": "Unlock your journals", "mac": …} | The default form | vocabulary (platform.md, 12.3) |
-| `messages.library.deviceKeyUnavailable` | Your device key is unavailable. Use your recovery key to unlock your journals. | Your device key is unavailable. Use your master password to unlock your journals. | vocabulary, B35 |
 
 ## Accessibility
 

@@ -22,7 +22,7 @@ Changes the master password that protects the journals' key, on this device and 
 ## Entry points
 
 - Settings ▸ Privacy ▸ Change Password… (master-password libraries only).
-- Settings ▸ Backup ▸ Export Archive and the Export Archive sheet: "Not sure of your password? Change Password…" (`settings.backup.archive.changePassword`, `screens/settings-backup`).
+- Settings ▸ Backup ▸ Export Archive and the Export Archive sheet: "Not sure of your password?" and the button "Change Password…" (`settings.backup.archive.changePasswordPrompt`, `settings.backup.archive.changePassword`, `screens/settings-backup`).
 
 ## Content
 

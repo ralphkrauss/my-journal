@@ -241,5 +241,12 @@
       "settings.addDevice.title"
     ],
     "reason": "Button versus sheet title."
+  },
+  {
+    "keys": [
+      "settings.backup.archive.changePassword",
+      "settings.privacy.changePassword"
+    ],
+    "reason": "The button under the archive footer's prompt and the Settings ▸ Privacy button open the same sheet from different places."
   }
 ]

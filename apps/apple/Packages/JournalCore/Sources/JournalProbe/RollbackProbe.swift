@@ -37,10 +37,12 @@ extension Probe {
         case "rollback-unsent": try await rollbackUnsent(phone, state: state)
         case "rollback-check-unsent":
             try await rollbackCheck(
-                phone: phone, mac: mac, entries: [state.entries[2]], phase: "sent without reading on")
+                phone: phone, mac: mac, entries: [state.entries[2]], phase: "sent without reading on", earlierCopies: 0)
         case "rollback-read": try await rollbackRead(phone, state: state)
         case "rollback-check-read":
-            try await rollbackCheck(phone: phone, mac: mac, entries: Array(state.entries[0...1]), phase: "read past")
+            // The devices keep their libraries between the phases, so the copy the first phase made is still there.
+            try await rollbackCheck(
+                phone: phone, mac: mac, entries: Array(state.entries[0...1]), phase: "read past", earlierCopies: 1)
         default: fatalError("Unknown rollback phase")
         }
         return true
@@ -106,9 +108,9 @@ extension Probe {
         try await edit(phone.store, state.entries[1], "Phone, read past and edited again")
     }
     /// The Mac edits the entries in the order the phone did, so its changes take the positions the server lost.
-    private static func rollbackCheck(phone: RollbackDevice, mac: RollbackDevice, entries: [UUID], phase: String)
-        async throws
-    {
+    private static func rollbackCheck(
+        phone: RollbackDevice, mac: RollbackDevice, entries: [UUID], phase: String, earlierCopies: Int
+    ) async throws {
         for entry in entries { try await edit(mac.store, entry, "Mac, after the copy") }
         try await mac.sync.synchronize()
         let expected = try await entries.asyncMap { try await phone.store.item($0)?.document.text }
@@ -126,7 +128,7 @@ extension Probe {
             }
         }
         let phoneCopies = phoneItems.filter { isMacCopy($0) }
-        guard phoneCopies.count == entries.count else {
+        guard phoneCopies.count == entries.count + earlierCopies else {
             throw ProbeFailure("rollback probe (\(phase)): the Mac's versions aren't kept as entries of their own")
         }
         try await mac.sync.synchronize()
@@ -136,7 +138,7 @@ extension Probe {
                 throw ProbeFailure("rollback probe (\(phase)): the version kept on the phone didn't reach the Mac")
             }
         }
-        guard macItems.filter({ isMacCopy($0) }).count == entries.count else {
+        guard macItems.filter({ isMacCopy($0) }).count == entries.count + earlierCopies else {
             throw ProbeFailure("rollback probe (\(phase)): the Mac lost its own version")
         }
         print("PASS: after the server lost edits it accepted (\(phase)), both versions are kept as entries")

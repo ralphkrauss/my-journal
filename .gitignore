@@ -48,6 +48,7 @@ design/screenshots/raw/
 
 # Journal archives, logs and private keys
 *.journalarchive
+*.journalbackup
 *.log
 *.pem
 *.key

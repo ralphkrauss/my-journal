@@ -68,7 +68,7 @@ The apps are only clients. None of them includes or starts a server: the server 
 
 ## Backups
 
-Export Archive writes a `.journalarchive` file: one ZIP container holding a SQLite snapshot plus the original image files and a header with a sealed inventory, for libraries with a password. Import Archive restores into an empty device or adds the journals to an existing library, and also reads the folder that version 1.0 wrote. `ArchiveFileType` (`JournalApp/Model/ArchiveFileType.swift`) and `project.yml` hold the file type's identifier and extension. See [archive format](../protocol/archive.md). Server backups are separate and are made with `--backup`.
+Export Archive writes a `.journalbackup` file: one ZIP container holding a SQLite snapshot plus the original image files and a header with a sealed inventory, for libraries with a password. Import Archive restores into an empty device or adds the journals to an existing library, and also reads the `.journalarchive` folder that version 1.0 wrote. `ArchiveFileType` (`JournalApp/Model/ArchiveFileType.swift`) and `project.yml` hold the two file types' identifiers and extensions. See [archive format](../protocol/archive.md). Server backups are separate and are made with `--backup`.
 
 ## Agent access
 
@@ -92,6 +92,6 @@ Some formats are shared with other devices, older app versions and future client
 - record and attachment encryption, AAD strings, key derivation and recovery envelope versions;
 - the sync, pairing and recovery wire format;
 - the archive and server backup formats;
-- bundle identifiers, the Keychain access group and the `org.privatejournal.archive` file type, which existing installations depend on.
+- bundle identifiers, the Keychain access group and the archive file types, which existing installations depend on: `org.privatejournal.archive` (extension `journalarchive`, a package: the folder 1.0 saved, still declared and imported) and `org.privatejournal.archive.file` (extension `journalbackup`, `public.data`: the file 1.1 saves). The second was added beside the first, never in its place, because a type that conforms to a package type is greyed out for a regular file in the system's import picker and retyping the first would turn every 1.0 archive into a plain folder in Files and the Finder.
 
 Unknown fields and newer formats must be preserved, not dropped.

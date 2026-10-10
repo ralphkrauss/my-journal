@@ -49,7 +49,7 @@ Centered column, scrolling when the text is large:
 | `common.connectToServer` | Opens the connection sheet ([flows/connect-to-server](../flows/connect-to-server.md)). |
 | `common.importArchive` (command `import-archive`) | Opens the system file picker limited to journal archives; the chosen archive opens the import sheet (Settings ▸ Backup, screens/settings-backup). |
 
-Opening a `.journalarchive` file from the system (Files, Finder, Mail) while this screen shows also starts the import.
+Opening a `.journalbackup` file from the system (Files, Finder, Mail) while this screen shows also starts the import.
 
 ## States
 

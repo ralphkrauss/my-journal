@@ -9,15 +9,15 @@ Your server is not a backup: it can fail or lose data too. Export an archive reg
 ## Export an archive
 
 1. Choose Settings > Backup > **Export Archive…**. On the Mac, you can also choose File > **Export Archive…**.
-2. Choose where to save the archive.
+2. Choose where to save the archive. It’s saved as a file such as `Journal Archive 2026-10-10.journalbackup`; leave the ending as it is, because it’s how My Journal recognizes the file.
 
-If you’re not sure of your master password, choose **Not sure of your password? Change Password…** under the button first: typing the current password there checks it.
+If you’re not sure of your master password, choose **Change Password…** under “Not sure of your password?” below the button first: typing the current password there checks it.
 
 Keep your master password separate from your archives. An archive opens only with the password you had when you exported it, even if you change your password later.
 
 Exporting needs room for the archive on the device first, and on the place you save it to. If either is too full, My Journal says so and saves nothing.
 
-Archives made by My Journal 1.0 were folders. 1.1 still opens them when they are encrypted; a folder archive made by 1.0 for journals without encryption doesn’t open (My Journal says it couldn’t open the archive). But 1.0 can’t open the single file that 1.1 saves, so update My Journal on every device before you move an archive between them.
+Archives made by My Journal 1.0 were folders ending in `.journalarchive`. 1.1 still opens them when they are encrypted; a folder archive made by 1.0 for journals without encryption doesn’t open (My Journal says it couldn’t open the archive). But 1.0 can’t open the single file that 1.1 saves, so update My Journal on every device before you move an archive between them.
 
 ## Restore journals on a new device
 

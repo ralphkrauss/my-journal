@@ -22,7 +22,7 @@ output="$(cd "$output" && pwd)"
 filename="Journal-Import-$(uuidgen).png"
 fixture="$provider_root/File Provider Storage/$filename"
 [[ ! -e "$fixture" ]]
-archive="$provider_root/File Provider Storage/${filename%.png}-backup.journalarchive"
+archive="$provider_root/File Provider Storage/${filename%.png}-backup.journalbackup"
 [[ ! -e "$archive" ]]
 trap 'rm -f "$fixture"; rm -rf "$archive"' EXIT
 encoded="$(

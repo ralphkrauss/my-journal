@@ -682,3 +682,17 @@ The app now writes and reads the file archive under file-type rung (a): the type
 | Tests removed | `ArchivePackageTests`: system files in `attachments/`, the header bytes of the database and the trigger case are pinned by the v1 mutations (`system-file-in-attachments`), the file archive round trip and `database-v2.json`; the plain-manifest `../x` case of `ArchiveTests` by `ConformanceArchiveUnlistedTests` | They protected nothing the fixtures do not |
 | Libraries that are not encrypted | A file archive holds only the recovery formats 1 and 2, so a library the person kept unencrypted with Not Now has no archive to export: preparing ends with `messages.export.archiveFailed`. Open question D66 | "1.1 always exports encrypted archives" assumed no unencrypted library remained, but simplification G keeps them until Not Now is removed. A readable file archive was rejected by the first review (finding 4). Not changed here: it is a product decision |
 
+
+## Spike outcome and file type, rung (c) (2026-10-10)
+
+The on-device spike (iOS 26.5 simulator) showed that rung (a) fails: a regular file saved to Files under `org.privatejournal.archive` (a type conforming to `com.apple.package`) is greyed out in the Import Archive picker. Per decision 1 the app takes rung (c) with the approved strings. Where the build differs from the text above or settles something it left open:
+
+| Topic | Built | Why |
+| --- | --- | --- |
+| The new type | Exported type `org.privatejournal.archive.file`, description "Journal Archive", conforming to `public.data` only, extension `journalbackup`, document role Editor, handler rank Owner, in both apps' Info.plists | `public.content` was left out: the archive is not a document a person reads, and `public.data` is the approved conformance. It does not conform to `public.zip-archive` (review finding 2) |
+| The old type | `org.privatejournal.archive`, `com.apple.package`, `journalarchive`, role Viewer, rank Owner: unchanged, still declared and imported | 1.0 folders import and open from Files and the Finder as before |
+| In code and in the project | `ArchiveFileType` has `archiveFile` and `archivePackage`, `importTypes` (both), `extensions`, `isArchive(_:)` (either extension) and `archiveSuffix(of:)`; `project.yml` `targetTemplates.ArchiveFileType` declares both | One place each, as phase 8b built it |
+| Names | The suggested name is `Journal Archive {yyyy-MM-dd}.journalbackup`; the staged export is `export-<uuid>.journalbackup`. The launch cleaner removes both of those names and, from earlier 1.1 builds and 1.0, the same names ending in `.journalarchive` | A killed export leaves nothing, whichever build made it |
+| The kind of an item | Unchanged: decided by what the picked item is (a folder or a regular file), never by extension | A `.journalarchive` regular file from an early build still restores |
+| 1.0.x message | Not shipped. On rung (c) a 1.0 install neither registers nor lets the person pick `.journalbackup`, so "Update My Journal to open this archive." could never appear (6.2, finding 5) | |
+| Media type | `application/x-journalarchive+zip` stays | It names the format, not the extension, and was approved as written |

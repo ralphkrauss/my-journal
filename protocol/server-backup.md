@@ -1,6 +1,6 @@
 # Server backup directory
 
-This is the backend maintenance format, separate from the native `.journalarchive` format. It retains the encrypted server vault, revision log, device credential hashes, recovery envelope, and immutable uploaded attachment bytes. For encrypted libraries, the server does not possess the keys needed to authenticate/decrypt journal payloads; libraries created without encryption are stored readable.
+This is the backend maintenance format, separate from the native `.journalbackup` archive format. It retains the encrypted server vault, revision log, device credential hashes, recovery envelope, and immutable uploaded attachment bytes. For encrypted libraries, the server does not possess the keys needed to authenticate/decrypt journal payloads; libraries created without encryption are stored readable.
 
 New backups use version 2:
 

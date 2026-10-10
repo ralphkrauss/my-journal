@@ -33,7 +33,7 @@ final class ArchiveIndependentToolsTests: XCTestCase {
         }
         let key = try VaultCrypto.generateKey()
         let recovery = try VaultCrypto.makeRecovery(masterKey: key, phrase: "tools", formatVersion: 2).0
-        let archive = root.appendingPathComponent("\(name).journalarchive")
+        let archive = root.appendingPathComponent("\(name).journalbackup")
         try FileArchive.write(
             databaseFile: database, images: images, recovery: recovery, key: key, to: archive, options: options)
         return archive

@@ -355,7 +355,7 @@ final class PreReleaseUITests: XCTestCase {
         app.buttons["Backup"].firstMatch.tap()
         let export = app.buttons["Export Archive…"].firstMatch
         XCTAssertTrue(export.waitToAppear(timeout: 5))
-        let pointer = app.buttons["Not sure of your password? Change Password…"]
+        let pointer = app.buttons["Change Password…"]
         XCTAssertTrue(pointer.waitToAppear(timeout: 5))
         capture(app, "Export Archive with the Change Password pointer")
         export.tap()

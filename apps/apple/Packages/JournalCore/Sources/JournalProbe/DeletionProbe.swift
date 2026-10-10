@@ -33,6 +33,8 @@ extension Probe {
         let cleanSync = SyncEngine(store: clean, client: client)
         let offlineSync = SyncEngine(store: offline, client: offlineClient)
         try await cleanSync.synchronize()
+        // A record that was just written is left alone until the writing pauses (protocol/conflicts.md).
+        try await Task.sleep(nanoseconds: 2_500_000_000)
         try await offlineSync.synchronize()
         try await cleanSync.synchronize()
         try await offlineSync.synchronize()
@@ -84,7 +86,9 @@ extension Probe {
         let received = try await observer.items()
         let pending = try await sender.pending()
         let conflicts = try await observer.conflicts()
-        guard sent.count == 3, received.count == 3, sent.allSatisfy(\.isPermanentlyDeleted),
+        // The journal and its three entries: the one deleted earlier, the "(other version)" copy that kept the
+        // concurrent offline edits and the edit parked next to the deletion.
+        guard sent.count == 4, received.count == 4, sent.allSatisfy(\.isPermanentlyDeleted),
             received.allSatisfy(\.isPermanentlyDeleted), pending.isEmpty, conflicts.isEmpty
         else {
             throw ProbeFailure("the confirmed journal deletion did not converge, or left queued changes or conflicts")
