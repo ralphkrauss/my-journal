@@ -137,8 +137,28 @@ final class SpecMacCapture: SpecMacCase {
         try await settle(2)
         try await capture(window, "lock-screen-default")
         await model.unlockWithRecovery(try password())
+        // Lock My Journal from Settings, unlock, open Settings again: its tabs keep their names and icons (owner
+        // report on builds 21 and 22, docs/design/1-1-final-fixes.md §5).
+        let settings = try await openSettings(.privacy, model: model)
+        let tabs = Self.tabLabels(settings)
+        XCTAssertEqual(tabs.count, 5, "Settings has five tabs.")
+        XCTAssertFalse(tabs.contains { $0.isEmpty || $0.hasSuffix("(no icon)") }, "\(tabs)")
+        // Lock My Journal, below Lock when inactive in Privacy ▸ App Lock.
+        tap(settings, at: 92, fromTop: 393)
+        try await settle(2)
+        XCTAssertTrue(model.locked, "Lock My Journal didn't lock; its place in the pane moved.")
+        await model.unlockWithRecovery(try password())
+        try await settle()
+        let reopened = try await openSettings(.privacy, model: model)
+        XCTAssertEqual(Self.tabLabels(reopened), tabs)
+        model.settingsPresented = false
         model.configuration?.appLock = false
         try await settle()
+    }
+
+    /// The Settings window's tabs, each with whether its icon is there.
+    private static func tabLabels(_ window: NSWindow) -> [String] {
+        (window.toolbar?.items ?? []).map { $0.label + ($0.image == nil ? " (no icon)" : "") }
     }
 
     // MARK: - Settings

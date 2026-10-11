@@ -11,6 +11,10 @@ struct SettingsView: View {
     @State private var connect: ConnectionRequest?
     /// Changes when a Connect or Reconnect sheet opened from Sync closes, so Devices reads its list again.
     @State private var devicesReload = 0
+    #if os(macOS)
+        /// Counts the times the Settings window is shown again after it was hidden (`SettingsWindowShowings`).
+        @StateObject private var showings = SettingsWindowShowings()
+    #endif
     @StateObject private var serverAgents = ServerAgentsController()
     #if os(iOS)
         /// The pane shown, so Sync Status can open Settings at Sync.
@@ -25,7 +29,7 @@ struct SettingsView: View {
             #if os(macOS)
                 // The window keeps its tabs in every state: replacing the tab view takes the tabs out of the window's
                 // toolbar, and they don't come back correctly when it returns. Each pane says why it is empty.
-                settings
+                settings.background(SettingsWindowWatcher(showings: showings))
             #else
                 if let unavailable = unavailableText {
                     Text(unavailable).foregroundStyle(.secondary).padding()
@@ -68,6 +72,10 @@ struct SettingsView: View {
                     tab(.backup, "Backup", symbol: "externaldrive")
                     tab(.agents, "Agent Access", symbol: "person.badge.key")
                 }
+                // Made again each time the window is shown after it was hidden. A pane that changed while the window
+                // was hidden, as when the app locks or unlocks, otherwise leaves the toolbar's tabs without their
+                // names and icons (owner report on builds 21 and 22, docs/design/1-1-final-fixes.md §5).
+                .id(showings.count)
             #else
                 List {
                     Section {
@@ -293,6 +301,46 @@ struct SettingsView: View {
 }
 
 #if os(macOS)
+    /// Counts the times the Settings window is shown again after it was hidden.
+    @MainActor final class SettingsWindowShowings: ObservableObject {
+        @Published private(set) var count = 0
+        private var hidden = false
+        fileprivate func visibilityChanged(_ visible: Bool) {
+            if !visible {
+                hidden = true
+            } else if hidden {
+                hidden = false
+                count += 1
+            }
+        }
+    }
+
+    /// Watches whether the window the Settings content is in is on screen, for `SettingsWindowShowings`. SwiftUI's
+    /// `dismiss` hides the Settings window without closing it, so visibility is watched rather than closing. AppKit
+    /// reports `isVisible` changes to key-value observers when it orders the window in and out (seen, not documented);
+    /// an extra report only makes the tab view again once more.
+    private struct SettingsWindowWatcher: NSViewRepresentable {
+        let showings: SettingsWindowShowings
+        func makeNSView(context: Context) -> NSView { Watcher(showings: showings) }
+        func updateNSView(_ view: NSView, context: Context) {}
+
+        final class Watcher: NSView {
+            private let showings: SettingsWindowShowings
+            private var visibility: NSKeyValueObservation?
+            init(showings: SettingsWindowShowings) {
+                self.showings = showings
+                super.init(frame: .zero)
+            }
+            required init?(coder: NSCoder) { nil }
+            override func viewDidMoveToWindow() {
+                super.viewDidMoveToWindow()
+                visibility = window?.observe(\.isVisible) { [weak self] window, _ in
+                    MainActor.assumeIsolated { self?.showings.visibilityChanged(window.isVisible) }
+                }
+            }
+        }
+    }
+
     /// A pane whose content fits doesn't rubber-band when scrolled.
     private struct BouncesOnlyWhenScrollable: ViewModifier {
         func body(content: Content) -> some View {
