@@ -95,8 +95,8 @@ final class ConnectionSetupUITests: XCTestCase {
         let host = address.replacingOccurrences(of: "http://", with: "")
         let refusal =
             host.prefix(1).uppercased() + host.dropFirst()
-            + " doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption."
-        // Matched by predicate: a string identifier is limited to 128 characters, which the message exceeds.
+            + " doesn’t use encryption. My Journal can only sync with a server that does."
+        // Matched by label: the message is the element's label, not its identifier.
         let message = app.staticTexts.matching(NSPredicate(format: "label == %@", refusal)).firstMatch
         XCTAssertTrue(message.waitToAppear(timeout: 10))
         attachScreen(app, name: "A server without encryption is refused")

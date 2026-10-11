@@ -45,6 +45,8 @@ struct EntryRecoveryNotice: View {
         case .needsUpdate:
             Text("Update My Journal to restore this entry.")
             ArchiveExportControls()
+        case .unreadable:
+            Text(AppModel.unreadableAction)
         case .createJournalFirst:
             Text("Create a journal to restore this entry.")
         case .unavailable:
@@ -60,8 +62,12 @@ struct EntryRecoveryNotice: View {
     @ViewBuilder private func unavailable(_ reason: UnavailableJournal) -> some View {
         switch reason {
         case .unsupported:
-            Text("Update My Journal to restore this entry.")
-            ArchiveExportControls()
+            if model.restoreAvailability(for: entry) == .unreadable {
+                Text(AppModel.unreadableAction)
+            } else {
+                Text("Update My Journal to restore this entry.")
+                ArchiveExportControls()
+            }
         case .missing:
             if model.connection != nil {
                 Text("This journal hasn’t arrived on this device.")

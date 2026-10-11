@@ -85,8 +85,8 @@ extension AppModel {
     private func editJournal(_ id: UUID, update: @escaping @MainActor (inout JournalItem) -> Void) {
         guard !locked, !replacingVault else { return }
         guard !conflictedIDs.contains(id) else {
-            // A journal's conflict waits for a newer version of the app; this one makes no change to it.
-            error = JournalLifecycleError.unsupportedJournal.shown(.saving)
+            // A journal with a conflict is not changed: it waits for a version that can read it, or for the next sync.
+            error = conflictRefusal(for: id)
             return
         }
         let prior = journalEditTask

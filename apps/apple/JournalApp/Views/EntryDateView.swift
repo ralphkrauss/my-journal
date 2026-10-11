@@ -108,6 +108,11 @@ struct EntryDateView: View {
                 dismiss()
             } catch is CancellationError {} catch {
                 guard !Task.isCancelled, !model.locked, model.selectedID == entry.id else { return }
+                if case JournalLifecycleError.conflict(let id) = error {
+                    // Whether it can't be read, waits for a newer version or finishes combining at the next sync.
+                    self.error = model.conflictRefusal(for: id)
+                    return
+                }
                 self.error = error.shown(.saving)
             }
         }

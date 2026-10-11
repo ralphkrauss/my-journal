@@ -28,6 +28,8 @@ struct DeletedJournalView: View {
                 .foregroundStyle(.secondary)
                 if canRestore {
                     restoreControls
+                } else if model.unreadableConflictIDs.contains(journal.id) {
+                    Text(AppModel.unreadableAction)
                 } else if needsNewerVersion {
                     Text("Update My Journal to restore this journal.")
                     ArchiveExportControls()

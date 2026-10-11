@@ -905,6 +905,13 @@
     },
     "context": "Delete All message when items stay for mixed reasons."
   },
+  "library.deleteAll.held.unreadable": {
+    "text": {
+      "one": "1 item can’t be deleted because a version from another device can’t be read. It stays in Recently Deleted.",
+      "other": "{count} items can’t be deleted because a version from another device can’t be read. They stay in Recently Deleted."
+    },
+    "context": "Delete All message, before the retention sentence, when every item that stays has a version that can’t be read (itself, its journal, or an entry of its journal). No update would help, so it doesn’t mention one. Mixed reasons use library.deleteAll.held.other."
+  },
   "library.deleteAll.includes": {
     "text": "Includes {list}.",
     "context": "Delete All message for mixed kinds; {list} joins the counts below with the system list format, for example “2 journals, 1 template, and 14 entries”."
@@ -1720,6 +1727,10 @@
     "text": "This template was also changed on another device, and that version is newer. It is saved as a separate template.",
     "context": "As messages.conflict.kept.notice.template, when the other version’s modified time is later than this device’s (device clocks; wording only)."
   },
+  "messages.conflict.kept.noticeUnreadable": {
+    "text": "A version from another device can’t be read, so it wasn’t combined with this one.",
+    "context": "Notice above an entry or template whose conflict has a version that can’t be opened (damaged, or sealed under another key). Text only, no buttons; it also shows for a template, and takes precedence over messages.conflict.kept.noticeUpdate. No action is offered because the app has none: the data is kept."
+  },
   "messages.conflict.kept.noticeUpdate": {
     "text": "This entry has a version from a newer My Journal. Update My Journal to combine them.",
     "context": "Notice above an entry or template whose conflict waits for a newer version of My Journal. Text only, no buttons; it also shows for a template."
@@ -1736,9 +1747,17 @@
     "text": "Show Other Version",
     "context": "Button of the notice above an entry or template that was kept as two versions: opens the other version, saved as a separate entry or template, wherever it is, and marks the notice seen."
   },
+  "messages.conflict.kept.unreadable": {
+    "text": "Some changes from another device can’t be read, so they weren’t combined. Nothing on this device was changed.",
+    "context": "Line added to the Settings ▸ Sync footer while a conflict has a version that can’t be opened (damaged, or sealed under another key) and stays held. Shown beside messages.conflict.kept.updateNeeded when both kinds exist."
+  },
   "messages.conflict.kept.updateNeeded": {
     "text": "Some changes from another device need a newer version of My Journal. Update My Journal to combine them.",
     "context": "Line added to the Settings ▸ Sync footer while a journal or deletion change from another device was saved by a newer version and stays held."
+  },
+  "messages.conflict.unreadableAction": {
+    "text": "This can’t be done because a version from another device can’t be read.",
+    "context": "The one line shown wherever an action is refused because the record, its journal or one of its entries has a conflict with a version that can’t be opened: Move Entry, restoring a Version History version, changing a journal, restoring an entry, template or journal, Delete Permanently, deleting a journal, and the message of Delete All’s notice when nothing in Recently Deleted can be deleted and every item stays for this reason (one item or several; the title is library.deleteAll.nothing.title). In a restore it replaces the update line, and the Export controls beside it, in Recently Deleted, Unavailable Journals and a deleted journal’s page. It is an error alert or a line of text; it has no recovery action."
   },
   "messages.connection.alreadyConnected": {
     "text": "This device is already connected to this server.",
@@ -1785,7 +1804,7 @@
     "context": "Signing in: the server rate-limited attempts. {credential} as in messages.connection.credentialIncorrect."
   },
   "messages.connection.encryptionOff": {
-    "text": "{host} doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption.",
+    "text": "{host} doesn’t use encryption. My Journal can only sync with a server that does.",
     "context": "Connect to a Server: a server set up without encryption, refused by every device of this version. One text for checking an address, a scanned code and finishing a pairing."
   },
   "messages.connection.finishFailed": {
@@ -2086,7 +2105,7 @@
   },
   "messages.lifecycle.combining": {
     "text": "Some changes from another device will finish combining when My Journal next syncs.",
-    "context": "JournalLifecycleError.conflict: Move Entry, restoring a Version History version and Delete Permanently on an item that has a change from another device waiting to be combined. A change from a pull is settled at the end of the next completed sync; a change made by saving over a version that arrived is settled by this device a moment after writing pauses, with or without a connection. A change that only a newer version can read shows the update messages instead. Delete All reads such an item as one that can’t be deleted yet (library.deleteAll.held.other)."
+    "context": "JournalLifecycleError.conflict: Move Entry, restoring a Version History version and Delete Permanently on an item that has a change from another device waiting to be combined. A change from a pull is settled at the end of the next completed sync; a change made by saving over a version that arrived is settled by this device a moment after writing pauses, with or without a connection. A change that only a newer version can read shows the update messages instead, and one with a version that can’t be read shows messages.conflict.unreadableAction. Delete All reads such an item as one that can’t be deleted yet (library.deleteAll.held.other)."
   },
   "messages.lifecycle.missingJournal": {
     "text": "This journal is unavailable.",
@@ -2094,7 +2113,7 @@
   },
   "messages.lifecycle.unsupportedJournal": {
     "text": "Update My Journal to make changes to this journal.",
-    "context": "JournalLifecycleError.unsupportedJournal: a journal saved by a newer version."
+    "context": "JournalLifecycleError.unsupportedJournal: a journal saved by a newer version, or a conflict held for one. A conflict with a version that can’t be read shows messages.conflict.unreadableAction instead."
   },
   "messages.pairing.codeNotFound": {
     "text": "That pairing code wasn’t found. Check the code and try again.",

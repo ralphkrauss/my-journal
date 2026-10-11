@@ -86,7 +86,7 @@ private struct PermanentDeletionPrompt: ViewModifier {
         } catch {
             guard !Task.isCancelled else { return }
             returnRow(id)
-            report(error)
+            report(error, deleting: id)
         }
     }
     private func commit(_ reviewed: PermanentDeletionConfirmation) async {
@@ -97,9 +97,9 @@ private struct PermanentDeletionPrompt: ViewModifier {
                 model.error =
                     "The item was deleted, but My Journal couldn’t update the view. Reopen My Journal to continue."
             }
-        } catch { report(error) }
+        } catch { report(error, deleting: reviewed.plan.recordID) }
     }
-    private func report(_ failure: Error) {
+    private func report(_ failure: Error, deleting id: UUID) {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
         switch failure {
         case PermanentDeletionError.missing, PermanentDeletionError.permanentlyDeleted:
@@ -107,9 +107,13 @@ private struct PermanentDeletionPrompt: ViewModifier {
         case PermanentDeletionError.changed, PermanentDeletionError.notDeleted:
             model.error = "This has changed since you chose to delete it. Check it and try again."
         case PermanentDeletionError.unsupported:
-            model.error = "Update My Journal to delete this."
+            model.error =
+                model.unreadableConflictInvolves(id) ? AppModel.unreadableAction : "Update My Journal to delete this."
         case PermanentDeletionError.conflict:
-            model.error = "Some changes from another device will finish combining when My Journal next syncs."
+            model.error =
+                model.unreadableConflictInvolves(id)
+                ? AppModel.unreadableAction
+                : "Some changes from another device will finish combining when My Journal next syncs."
         default:
             model.report(failure, .saving)
         }

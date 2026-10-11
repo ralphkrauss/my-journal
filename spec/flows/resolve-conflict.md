@@ -46,6 +46,7 @@ Until it is settled the record can be edited and saved on this device, but its c
 
 | Situation | Record | The other version | Note in Changed on Two Devices |
 | --- | --- | --- | --- |
+| A version that can't be opened (damaged, or sealed under another key) | **Held**: nothing changes, nothing is sent | none | none; a line in the Settings ▸ Sync footer, `messages.conflict.kept.unreadable`, on the open entry or template `messages.conflict.kept.noticeUnreadable`, and `messages.conflict.unreadableAction` for every refused action. The data is kept; no action is offered because none exists in the app |
 | A version this app can't read (saved by a newer version) | **Held**: nothing changes, nothing is sent | none | none; a line in the Settings ▸ Sync footer, `messages.conflict.kept.updateNeeded`, and on the open entry or template `messages.conflict.kept.noticeUpdate` |
 | Same content (below) | The merged deletion state (below) on that content; if that equals R, R is adopted and nothing is sent | none | none |
 | An entry or template that differs, neither deleted permanently | **This device's version, unchanged** (the same bytes, so an editor that has it open sees nothing) | The other version, saved as a **separate entry or template** (below) | `messages.conflict.kept.entry` or `messages.conflict.kept.entryNewer` |
@@ -93,6 +94,13 @@ The later name (the server's order, not the newer edit) stays; the other name is
 
 A version this app cannot read stays as it is. The record isn't sent, the item is not changed, nothing is created. At each point below the app tries again, so it settles once the app can read both. The person sees the line in the Sync footer and, on the open entry or template, the notice with no buttons ([screens/kept-version-notice.md](../screens/kept-version-notice.md)). A journal that is held is treated like one saved by a newer version everywhere ([screens/unavailable-content.md](../screens/unavailable-content.md)). A held entry or template can still be edited here; Move Entry, Version History restore and Delete Permanently show the update messages.
 
+There are two kinds of held version, and the app says which:
+
+- **Needs a newer version.** The version authenticates and opens, but a member of it is unknown or it doesn't decode. A newer My Journal may read it, so the lines and notices tell the person to update. A version that authenticates but doesn't decode counts as this kind: the app can't tell it from a newer version's.
+- **Can't be opened.** The ciphertext doesn't authenticate or isn't valid base64 (damaged data, or a library or server mix-up that sealed it under another key). No version of the app can read it, so nothing tells the person to update: the Sync footer adds `messages.conflict.kept.unreadable`, the open entry or template shows `messages.conflict.kept.noticeUnreadable`, and every action that is refused for a held record shows the single line `messages.conflict.unreadableAction` instead of an update message (Move Entry, Version History restore, changing a journal, Restore for an entry, template or journal, Delete Permanently, Delete Journal, and Delete All for the items that stay: `library.deleteAll.held.unreadable`). It applies when the record, its journal or one of its entries has such a version. A record with both kinds shows the second. The data stays where it is, unchanged and unsent; the app has no action for it, so no line offers one. A failed database read is not this kind: the state from the last read stays until the next read succeeds.
+
+Both kinds block the same actions, and both count as a problem for the rating request.
+
 ## When the device settles it
 
 1. The conflicts the device finds are kept in a local list, one per record (the latest other version only; earlier ones go to Version History).
@@ -118,7 +126,7 @@ When 1.1 opens a library in which 1.0 left conflicts pending, it settles them on
 - Both versions are kept in every outcome. Nothing is overwritten silently; a permanent deletion is never undone by an edit.
 - No clock decides. The version that reached the server last is the record; an item the person typed longer ago can win, and the other version is then its copy. Device clocks only choose the notice's and the row's wording ("newer").
 - Nobody is asked and nothing blocks syncing. Only a held conflict needs the person, by updating My Journal.
-- A conflict never counts as a problem for the rating request ([flows/rating-request.md](rating-request.md)); a held one still does.
+- A conflict never counts as a problem for the rating request ([flows/rating-request.md](rating-request.md)); a held one still does, of either kind.
 - A record being written is never settled under the person.
 - The notes are local to the device: never synced, 30 days, at most 20; journal rename notes stay until Clear List.
 

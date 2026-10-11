@@ -179,6 +179,11 @@ extension AppModel {
             error = nil
             return
         }
+        if case JournalLifecycleError.conflict(let id) = failure {
+            // Whether it waits for a version that can read it, can't be read at all or finishes combining at the sync.
+            error = conflictRefusal(for: id)
+            return
+        }
         error = failure.shown(operation)
     }
 

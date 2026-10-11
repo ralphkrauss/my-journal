@@ -181,6 +181,30 @@ final class ConflictNotesTests: XCTestCase {
         XCTAssertFalse(model.reviewStateIsClear)
     }
 
+    /// A version that doesn't open, as after a damaged row or a key mix-up, is not one a newer version could read: it
+    /// says so, not to update, still blocks what a held change blocks and still counts as a problem for the rating
+    /// request.
+    func testAVersionThatCannotBeOpenedIsNotAskedToBeUpdatedButStillHoldsAndCounts() async throws {
+        let library = try await startedLibrary()
+        let model = library.model
+        model.applicationActive = true
+        XCTAssertTrue(model.reviewStateIsClear)
+
+        let damaged = try await library.entryWithAnUnreadableVersion(title: "Damaged")
+        try await model.refresh()
+
+        XCTAssertTrue(model.heldChangesUnreadable)
+        XCTAssertFalse(model.heldChangesNeedUpdate, "Updating can't help it")
+        XCTAssertEqual(model.entryNotice(for: damaged), .unreadable)
+        XCTAssertTrue(model.heldConflictIDs.contains(damaged.id), "It blocks what a held change blocks")
+        XCTAssertEqual(model.conflictRefusal(for: damaged.id), AppModel.unreadableAction)
+        var deleted = damaged
+        deleted.deletedAt = Date()
+        XCTAssertEqual(model.restoreAvailability(for: deleted), .unreadable)
+        XCTAssertNil(model.restoreAvailability(for: deleted).offer, "Restore stays unavailable")
+        XCTAssertFalse(model.reviewStateIsClear)
+    }
+
     // MARK: The notice above the open entry
 
     func testTheOpenEntryShowsTheNoticeOnceUntilItIsDismissedOrTheOtherVersionIsOpened() async throws {
@@ -431,6 +455,20 @@ final class ConflictNotesTests: XCTestCase {
                     future, key: key, context: VaultCrypto.recordContext(id: entry.id, kind: "entry")
                 ).base64EncodedString(), deviceId: UUID(), modifiedAt: Date())
             try await store.apply([change], cursor: cursor)
+            return mine
+        }
+
+        /// A record edited here whose other version no longer authenticates, as after a damaged row: the version
+        /// arrives intact, then its stored bytes are overwritten, as the store can't be made to accept them.
+        @discardableResult func entryWithAnUnreadableVersion(title: String) async throws -> JournalItem {
+            let mine = try await entryEditedOnTwoDevices(title: title)
+            let folder = model.configuration?.storageFolder.map { model.directory.appendingPathComponent($0) }
+            let database = try SQLiteFile(
+                (folder ?? model.directory).appendingPathComponent("journal.sqlite"))
+            defer { database.close() }
+            let damaged = Data(repeating: 7, count: 64).base64EncodedString()
+            try database.run(
+                "UPDATE conflicts SET payload='\(damaged)' WHERE record='\(mine.id.uuidString.lowercased())'")
             return mine
         }
 

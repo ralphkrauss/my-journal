@@ -194,11 +194,18 @@ final class AppModel: ObservableObject {
     var conflictedIDs: Set<UUID> = []
     /// The conflicted records that settle at the next pull, which don't keep a journal out of use.
     var settlingConflictIDs: Set<UUID> = []
-    /// The conflicts that wait for a version of this app that can read them.
+    /// The conflicts that wait: those for a version of this app that can read them, and those whose versions can't be
+    /// opened. Every action they block is blocked for both.
     var heldConflictIDs: Set<UUID> = []
+    /// The held conflicts with a version that can't be opened at all, so no version of the app could combine them.
+    var unreadableConflictIDs: Set<UUID> = []
     /// A conflict waits for a newer version (Settings ▸ Sync says so, and so does the entry).
     @Published var heldChangesNeedUpdate = false {
         didSet { if heldChangesNeedUpdate { reviewRequests.noteProblem() } }
+    }
+    /// A conflict has a version that can't be read (Settings ▸ Sync says so, and so does the entry).
+    @Published var heldChangesUnreadable = false {
+        didSet { if heldChangesUnreadable { reviewRequests.noteProblem() } }
     }
     /// What this device settled by keeping both versions (Settings ▸ Sync ▸ Changed on Two Devices).
     @Published var keptNotes: [KeptNote] = []
@@ -478,7 +485,8 @@ final class AppModel: ObservableObject {
         // The first read worked, so the library can be read: a library without conflicts records its one-time pass.
         if firstReadPending { await recordOpeningPassAfterFirstRead(store) }
         let libraryState = try? await store.librarySyncState()
-        let held = snapshot.conflictedIDs.isEmpty ? [] : ((try? await store.heldConflictIDs()) ?? [])
+        // Nil when the held conflicts couldn't be read: the ones already known stay held until the next refresh.
+        let held = snapshot.conflictedIDs.isEmpty ? ([], []) : (try? await store.heldConflicts())
         let notes = (try? await store.keptNotes()) ?? []
         guard isCurrent() else { return }
         firstReadPending = false
@@ -771,7 +779,7 @@ final class AppModel: ObservableObject {
         mutationTask?.cancel()
         if let agentCopies { Task { await agentCopies.stop() } }
         items = []
-        adoptConflicts([], held: [])
+        adoptConflicts([], held: ([], []))
         keptNotes = []
         localResolution?.cancel()
         localResolution = nil
@@ -856,7 +864,7 @@ extension AppModel {
         selectedID = nil
         selectedJournalID = nil
         items = []
-        adoptConflicts([], held: [])
+        adoptConflicts([], held: ([], []))
         keptNotes = []
         localResolution?.cancel()
         localResolution = nil

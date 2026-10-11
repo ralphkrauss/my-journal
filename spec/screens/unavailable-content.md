@@ -84,10 +84,10 @@ Nothing is written to the library in any of these states.
 | --- | --- | --- |
 | An entry or template | Opens read-only: the editor can't be edited and its actions are limited; a note under the title | `messages.error.unsupportedFormat` ("Update My Journal to edit this entry.") |
 | An entry whose Markdown can only be shown as source | Opens in source; View Preview is dimmed with a help tag | `messages.unavailable.markdownSource`, `common.previewUnavailable` |
-| A journal, or a change to it from another device that a newer version wrote and that stays held | Left out of the Journals list; its entries are listed in Unavailable Journals | `common.updateToRestoreEntry` on each entry; a held change adds `messages.conflict.kept.updateNeeded` to the Settings ▸ Sync footer |
-| A journal in Recently Deleted | Shown without Restore; Export Archive… is offered | `messages.unavailable.restoreJournalNeedsUpdate` |
+| A journal, or a change to it from another device that a newer version wrote and that stays held | Left out of the Journals list; its entries are listed in Unavailable Journals | `common.updateToRestoreEntry` on each entry; a held change adds `messages.conflict.kept.updateNeeded` to the Settings ▸ Sync footer. When the held conflict has a version that can’t be read at all, the entry shows `messages.conflict.unreadableAction` instead and the footer adds `messages.conflict.kept.unreadable` |
+| A journal in Recently Deleted | Shown without Restore; Export Archive… is offered | `messages.unavailable.restoreJournalNeedsUpdate` (`messages.conflict.unreadableAction` and no Export control when a version can’t be read) |
 | Pins and journal order | Kept as they are; changes are refused | `messages.library.needsUpdate` in Settings ▸ Sync; pinning, unpinning and moving a journal show `messages.library.needsUpdate` in the error alert |
-| A version of an entry or template in a conflict | The two versions can't be combined yet; the entry can still be edited | The notice above it, `messages.conflict.kept.noticeUpdate` (see [kept-version-notice.md](kept-version-notice.md)) |
+| A version of an entry or template in a conflict | The two versions can't be combined yet; the entry can still be edited | The notice above it, `messages.conflict.kept.noticeUpdate`, or `messages.conflict.kept.noticeUnreadable` when a version can’t be read (see [kept-version-notice.md](kept-version-notice.md)) |
 | The server, or content arriving by sync | Sync stops | `messages.sync.appUpdateNeeded` |
 | An archive to import into a device with journals | Refused | `messages.import.archiveNeedsUpdate` |
 | Merging this device's journals while connecting | Refused | `messages.import.mergeNeedsUpdate` |
@@ -108,7 +108,8 @@ An unavailable entry opens read-only with a notice above the title, by reason:
 | --- | --- | --- |
 | Missing, while syncing with a server | `common.journalNotArrived` | `common.trySyncingAgain` (a sync that also resends refused items); `library.recentlyDeleted.restoreTo` when the entry itself is deleted |
 | Missing, without a server | `common.journalUnavailableEntrySaved` | `library.recentlyDeleted.restoreTo` when the entry itself is deleted |
-| Newer version, or a held change | `common.updateToRestoreEntry` | none |
+| Newer version, or a change held for one | `common.updateToRestoreEntry` | none |
+| A conflict with a version that can’t be read, on the entry or its journal | `messages.conflict.unreadableAction` | none |
 | No journal in use at all, and the entry itself is deleted | `library.recoveryNotice.createJournalFirst` | none |
 
 Restore to “{name}” puts the entry in the Default Journal at once; it is decided when it is chosen ([flows/delete-and-restore.md](../flows/delete-and-restore.md), Restore), because a journal that merely hasn't arrived may still come. An entry that is not itself deleted has nothing to restore. When the journal arrives or the app is updated, the entry returns to its journal; if it is open, the list follows it there.

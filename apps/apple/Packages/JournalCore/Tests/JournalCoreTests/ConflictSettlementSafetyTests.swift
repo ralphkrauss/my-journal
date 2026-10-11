@@ -43,6 +43,10 @@ final class ConflictSettlementSafetyTests: ConflictTestCase {
         XCTAssertEqual(report.held, 2, "The damaged rows are held for a later round")
         let held = try await store.heldConflictIDs()
         XCTAssertEqual(held, Set(bad))
+        // A damaged row is not one a newer version could read, so nothing tells the person to update.
+        let kinds = try await store.heldConflicts()
+        XCTAssertEqual(kinds.unreadable, Set(bad))
+        XCTAssertTrue(kinds.needUpdate.isEmpty)
         let waiting = try await store.settledFactsAwaitConflict()
         XCTAssertFalse(waiting, "A damaged row is not waiting for a round")
     }

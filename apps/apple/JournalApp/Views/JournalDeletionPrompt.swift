@@ -54,7 +54,7 @@ private struct JournalDeletionPrompt: ViewModifier {
             let prepared = try await model.prepareJournalDeletion(id)
             guard !Task.isCancelled, !model.locked else { return }
             plan = prepared
-        } catch { report(error) }
+        } catch { report(error, deleting: id) }
     }
     private func commit(_ plan: JournalDeletionPlan) async {
         defer { model.showInLists(plan.journalID) }
@@ -64,17 +64,28 @@ private struct JournalDeletionPrompt: ViewModifier {
                 model.error =
                     "The journal was deleted, but My Journal couldn’t update the view. Reopen My Journal to continue."
             }
-        } catch { report(error) }
+        } catch { report(error, deleting: plan.journalID) }
     }
-    private func report(_ failure: Error) {
+    private func report(_ failure: Error, deleting journalID: UUID) {
         guard !model.locked, !Task.isCancelled, !(failure is CancellationError) else { return }
         switch failure {
-        case JournalLifecycleError.unsupportedJournal:
-            model.error = "Update My Journal to delete this journal."
+        case JournalLifecycleError.unsupportedJournal, JournalLifecycleError.conflict:
+            model.error = refusal(for: failure, deleting: journalID)
         case JournalLifecycleError.alreadyDeleted, JournalLifecycleError.missingJournal:
             return
         default:
             model.report(failure, .saving)
         }
+    }
+    /// Why a journal with a conflict is not deleted: a version that can't be read, a newer version's, or changes
+    /// that finish combining at the next sync. The journal, or one of its entries, is the one with the conflict.
+    private func refusal(for failure: Error, deleting journalID: UUID) -> String {
+        if model.unreadableConflictInvolves(journalID) { return AppModel.unreadableAction }
+        let update = "Update My Journal to delete this journal."
+        if case JournalLifecycleError.conflict(let id) = failure {
+            return model.heldConflictIDs.contains(id) ? update : JournalLifecycleError.conflict(id).shown(.saving)
+        }
+        let settling = model.conflictedIDs.contains(journalID) && !model.heldConflictIDs.contains(journalID)
+        return settling ? JournalLifecycleError.conflict(journalID).shown(.saving) : update
     }
 }

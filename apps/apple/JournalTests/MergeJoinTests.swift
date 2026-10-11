@@ -131,7 +131,7 @@ final class MergeJoinTests: XCTestCase {
     /// One text for every refusal, pointing at the action rather than an update (`messages.connection.encryptionOff`).
     private static func encryptionOffMessage(_ host: String) -> String {
         host.prefix(1).uppercased() + host.dropFirst()
-            + " doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption."
+            + " doesn’t use encryption. My Journal can only sync with a server that does."
     }
 
     /// A 1.1 device never starts an unencrypted library: with no library at all, a server that holds unencrypted data

@@ -237,13 +237,9 @@ struct VersionHistoryView: View {
             } catch JournalLifecycleError.conflict(let id) {
                 do { try await model.refresh() } catch {}
                 guard !model.locked else { return }
-                // Changes from another device are combined at the next sync; what a newer version of the app must read
-                // waits for it.
-                if model.heldConflictIDs.contains(id) {
-                    error = JournalLifecycleError.unsupportedJournal.shown(.saving)
-                } else {
-                    error = JournalLifecycleError.conflict(id).shown(.saving)
-                }
+                // Changes from another device are combined at the next sync; what a newer version of the app must read,
+                // or what can't be read at all, waits.
+                error = model.conflictRefusal(for: id)
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
                 if case HistoryRecoveryError.unavailableVersion = error { needsReload = true }

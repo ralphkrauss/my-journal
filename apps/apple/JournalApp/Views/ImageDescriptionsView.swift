@@ -263,6 +263,11 @@ struct ImageDescriptionsView: View {
                 if error is ImageDescriptionError || error is JournalLifecycleError { invalidated = true }
                 if case JournalError.saveRequired = error { invalidated = true }
                 if case JournalError.saveRequired = error { needsEntrySave = true }
+                if case JournalLifecycleError.conflict(let id) = error {
+                    // Whether it can't be read, waits for a newer version or finishes combining at the next sync.
+                    self.error = model.conflictRefusal(for: id)
+                    return
+                }
                 self.error = error.shown(.saving)
             }
         }

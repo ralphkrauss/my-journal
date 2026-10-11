@@ -68,7 +68,7 @@ Pin, Change Date…, Move Entry…, Save as Template… and Delete Entry aren't 
   1. Title: the journal's name (`common.untitledJournal`).
   2. Secondary: `library.recentlyDeleted.journalCount`.
   3. `common.restoredAsRenamed`, only when its name is taken (it returns with a number); it stays directly above the button because it changes the result.
-  4. The button `library.recentlyDeleted.restoreJournal` (`restore-journal`), which acts at once, without a sheet; or, for a journal saved by a newer version or one whose change from another device is held, `messages.unavailable.restoreJournalNeedsUpdate` and an Export Archive… control (Settings ▸ Backup, screens/settings-backup).
+  4. The button `library.recentlyDeleted.restoreJournal` (`restore-journal`), which acts at once, without a sheet; or, for a journal saved by a newer version or one whose change from another device is held for a newer version, `messages.unavailable.restoreJournalNeedsUpdate` and an Export Archive… control (Settings ▸ Backup, screens/settings-backup). A journal that has, or whose entry has, a version that can’t be read shows `messages.conflict.unreadableAction` instead of both: no update would help.
   5. Secondary text: `library.restoreJournal.explanation`, then `library.restoreJournal.legacy` when entries from an earlier version were deleted with it and must be restored one by one.
   6. `library.entryActions.deletePermanently` (destructive), last.
   All disabled while the library is being replaced. The primary action stays near the top at the largest text sizes, and a screen reader reaches it before the explanation.
@@ -83,7 +83,7 @@ Pin, Change Date…, Move Entry…, Save as Template… and Delete Entry aren't 
 2. Alert, title `library.deletePermanently.title` with the item's name (`library.entryList.untitledEntryInAlert`, `library.entryList.untitledTemplate` or `common.untitledJournal` when blank); for a journal with entries `library.deletePermanently.titleWithEntries`. Message: for a journal with entries `library.deletePermanently.journalEntries`, then `library.deletePermanently.retention`. Buttons `common.delete` (destructive) and `common.cancel`.
 3. **Delete:** the row (and for a journal its entries' rows) leaves at once with the list's animation; the item is deleted from this device and the deletion syncs. An open item closes; on iPhone its page goes back at once. No message.
 4. **Cancel:** nothing changes; a row the swipe removed comes back and VoiceOver focus returns to it.
-5. An item saved by a newer version, or held, isn't deleted (`messages.generic.deleteNeedsUpdate`); an entry, template or journal whose conflict still waits to be combined isn't deleted either and shows `messages.lifecycle.combining`. There is no special alert. Failures (general error alert; a removed row comes back): `messages.generic.deleteChanged`, `messages.generic.deleteNeedsUpdate`, `messages.lifecycle.combining`, `messages.save.before.tryAgain`, `messages.refresh.itemDeleted`. An item already gone is ignored quietly.
+5. An item saved by a newer version, or held, isn't deleted (`messages.generic.deleteNeedsUpdate`); an entry, template or journal whose conflict still waits to be combined isn't deleted either and shows `messages.lifecycle.combining`; one that has, or whose journal or entries have, a version that can’t be read shows `messages.conflict.unreadableAction` instead of either. There is no special alert. Failures (general error alert; a removed row comes back): `messages.generic.deleteChanged`, `messages.generic.deleteNeedsUpdate`, `messages.lifecycle.combining`, `messages.save.before.tryAgain`, `messages.refresh.itemDeleted`. An item already gone is ignored quietly.
 
 ### Delete All
 
@@ -96,11 +96,11 @@ Available from the bar button (iPhone, iPad), the bar's Delete All… (Mac) and 
    - exactly one item (or one journal with its entries): the Delete Permanently alert above;
    - one kind: `library.deleteAll.title.entries`, `library.deleteAll.title.templates` or `library.deleteAll.title.journals`;
    - several kinds: `library.deleteAll.title.items`, message starting `library.deleteAll.includes` with the non-zero counts (`common.entryCount`, `common.journalCount`, `common.templateCount`, joined in the system list format);
-   - if some items stay, one sentence: `library.deleteAll.held.newerVersion` or, when the reasons are mixed or an item has a conflict that still waits to be combined, `library.deleteAll.held.other`;
+   - if some items stay, one sentence: `library.deleteAll.held.newerVersion`, `library.deleteAll.held.unreadable` (every item that stays has a version that can’t be read) or, when the reasons are mixed or an item has a conflict that still waits to be combined, `library.deleteAll.held.other`;
    - always last `library.deletePermanently.retention`;
    - buttons `common.delete` (destructive) and `common.cancel`.
    Entries are counted including a deleted journal's entries, since the list shows them as rows.
-3. If nothing can be deleted, no confirmation: a notice `library.deleteAll.nothing.title` with `library.deleteAll.nothing.newerVersion` or `library.deleteAll.nothing.other`, and `common.ok`.
+3. If nothing can be deleted, no confirmation: a notice `library.deleteAll.nothing.title` with `library.deleteAll.nothing.newerVersion`, `messages.conflict.unreadableAction` (every item has a version that can’t be read) or `library.deleteAll.nothing.other`, and `common.ok`.
 4. **Delete:** every row being deleted leaves at once; rows that stay remain. Items are deleted one by one (journals first, each with its entries), each checked again. Entries deleted with their journal aren't deleted twice. With nothing left, `library.entryList.empty.noDeletedItems` shows and the button disappears.
 5. Items that changed between the alert and deleting stay, their rows come back, and a notice says `library.deleteAll.changed.title` / `library.deleteAll.changed.message` (`common.ok`).
 6. Stored but not shown: `messages.refresh.itemsDeleted`.
@@ -118,7 +118,8 @@ Shown above the title of a read-only entry or template opened from Recently Dele
 | Entry in Recently Deleted, its journal in Recently Deleted | `library.recoveryNotice.entry`, then `library.recoveryNotice.journalDeleted` | `library.recentlyDeleted.restoreTo` (the Default Journal) |
 | Entry deleted with its journal by an earlier version, journal in use | `library.recoveryNotice.legacy` | `common.restore` |
 | Unavailable: the entry's own journal is missing or was deleted permanently, and the entry itself is deleted (its own deletion, a legacy marker, or saved next to a permanent deletion) | `common.journalNotArrived` (library syncs) or `common.journalUnavailableEntrySaved` (no sync) | `library.recentlyDeleted.restoreTo`; with a server also `common.trySyncingAgain` (syncs now, retrying refused items) |
-| Unavailable: journal saved by a newer version, or a change to it held | `common.updateToRestoreEntry` | — |
+| Unavailable: journal saved by a newer version, or a change to it held for one | `common.updateToRestoreEntry` | — |
+| The entry, or its journal, has a conflict with a version that can’t be read (in Recently Deleted or Unavailable) | the row above that applies, then `messages.conflict.unreadableAction` in place of any update line or Restore | — |
 | Any entry, and no journal in use at all | `library.recoveryNotice.createJournalFirst` | — |
 
 Actions are offered only when the entry is editable (not saved by a newer version) and has no held conflict. `{name}` in `library.recentlyDeleted.restoreTo` is the Default Journal (Settings ▸ General, else the oldest journal in use; `common.untitledJournal` when blank). Restoring there makes the entry readable by an agent granted that journal and no longer by a grant on the old one; this is why the label names the journal, and why it is never on a swipe.

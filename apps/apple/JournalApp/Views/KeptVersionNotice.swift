@@ -36,7 +36,7 @@ struct KeptVersionNotice: View {
     private func identity(of notice: AppModel.EntryNotice) -> UUID {
         switch notice {
         case .keptBoth(let note): return note.id
-        case .updateNeeded: return item.id
+        case .updateNeeded, .unreadable: return item.id
         }
     }
 
@@ -72,6 +72,8 @@ struct KeptVersionNotice: View {
         switch notice {
         case .updateNeeded:
             return "This entry has a version from a newer My Journal. Update My Journal to combine them."
+        case .unreadable:
+            return "A version from another device can’t be read, so it wasn’t combined with this one."
         case .keptBoth(let note):
             let newer = note.otherIsNewer == true
             switch (template, newer) {

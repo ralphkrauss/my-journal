@@ -31,6 +31,8 @@ enum RestoreAvailability: Equatable {
     case offer(RestoreOffer)
     /// A newer version of the app saved the entry or its journal, or a conflict waits for one.
     case needsUpdate
+    /// The entry or its journal has a conflict with a version that can't be read, which no update would combine.
+    case unreadable
     /// No journal is in use to restore into.
     case createJournalFirst
     /// Nothing to restore, or the entry's own changes from another device are about to be combined.
@@ -47,6 +49,7 @@ extension AppModel {
         guard entry.kind == "entry" else { return .unavailable }
         let location = lifecycle.location(of: entry)
         if location == .journal { return .unavailable }
+        if unreadableConflictInvolves(entry.id) { return .unreadable }
         guard entry.document.isEditable, entry.preservedJSON == nil, !heldConflictIDs.contains(entry.id) else {
             return .needsUpdate
         }

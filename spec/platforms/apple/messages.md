@@ -40,7 +40,7 @@ Maps [messages.md](../../messages.md), the catalog of messages that come from th
 
 ## Controls
 
-The spec's surfaces and their Apple implementation. `AppModel` (`Model/AppModel.swift`) owns the state: `error` (the pending message), `syncError`, `syncHealth`, `saveFailure`, `conflictedIDs`, `heldConflictIDs`, `keptNotes`, `libraryProblem`, `locked`.
+The spec's surfaces and their Apple implementation. `AppModel` (`Model/AppModel.swift`) owns the state: `error` (the pending message), `syncError`, `syncHealth`, `saveFailure`, `conflictedIDs`, `heldConflictIDs`, `unreadableConflictIDs`, `keptNotes`, `libraryProblem`, `locked`.
 
 | Surface | Apple control and file | Model type that produces it |
 | --- | --- | --- |
@@ -55,7 +55,7 @@ The spec's surfaces and their Apple implementation. `AppModel` (`Model/AppModel.
 | Keep Open alert | Mac only: an app-modal `NSAlert` with one button, shown by `AppModel.presentSaveRecovery` when quitting (`applicationShouldTerminate`) or closing the journal window (`windowShouldClose`) while the open entry cannot be saved; the quit or close is cancelled | `ApplicationDelegate`, `WindowDelegateProxy` in `WindowSafety.swift` |
 | Writing paused | Mac only: `ConnectionPauseNotice`, a band above the editor in the journal window (HStack, stacked at accessibility sizes, `.quaternary` background, fade unless Reduce Motion) with Show Connection; the connecting notice appears after one second. | `AppModel.serverConnectionPause` |
 | Entry notices | `KeptVersionNotice` (a version kept as two, or held), `EntryRecoveryNotice` (recovery and unavailable), `EntryEditingNote` (read-only and Markdown-source note under the title). iOS: in the entry's header or just above the editor; Mac: bands above the title | `AppModel.entryNotice(for:)`, `JournalLifecycleSnapshot.location(of:)`, `JournalDocument.isEditable` |
-| Changed on Two Devices | `KeptNotesSection` in Settings ▸ Sync built from the sealed “kept-notes” key (`KeptNote`) and the items as they are now (`AppModel.keptNoteRows`), with the footer line `messages.conflict.kept.updateNeeded` for held changes. Entries, templates, journals and permanent deletions all appear here; the review sheets and the list-row mark of 1.0 are gone | `KeptNotes`, `AppModel.keptNoteRows`, `JournalStore.heldConflictIDs()` |
+| Changed on Two Devices | `KeptNotesSection` in Settings ▸ Sync built from the sealed “kept-notes” key (`KeptNote`) and the items as they are now (`AppModel.keptNoteRows`), with the footer lines `messages.conflict.kept.updateNeeded` (`heldChangesNeedUpdate`) and `messages.conflict.kept.unreadable` (`heldChangesUnreadable`) for held changes. Entries, templates, journals and permanent deletions all appear here; the review sheets and the list-row mark of 1.0 are gone | `KeptNotes`, `AppModel.keptNoteRows`, `JournalStore.heldConflicts()` |
 | Privacy cover | `LockedCover` overlay and, on iOS, system-level windows, see [screens/unavailable-content](screens/unavailable-content.md) | `PrivacyCover` |
 | Announcements | `JournalAccessibility.announce` (`UIAccessibility` announcement on iOS, `NSAccessibility` on the Mac) and the model's `announceForAccessibility` | after a manual sync (`SyncSchedule.swift`), pin and journal moves (`LibraryOperations.swift`), errors in open sheets |
 

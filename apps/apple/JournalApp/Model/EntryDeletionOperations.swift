@@ -153,7 +153,7 @@ extension AppModel {
                 error = "The template was restored, but couldn’t be displayed. Reopen My Journal to try again."
             }
         } catch {
-            self.error = error.shown(.saving)
+            report(error, .saving)
         }
     }
 }

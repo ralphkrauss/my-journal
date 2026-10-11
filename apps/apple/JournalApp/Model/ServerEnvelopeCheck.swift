@@ -13,7 +13,7 @@ enum ServerConnectionError: Error, LocalizedError, Equatable {
     static func encryptionOffMessage(host: String?) -> String {
         let name = host.map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? "This server"
         return name
-            + " doesn’t use encryption. On a device that has your journals, turn on encryption in Settings, or connect to a server that uses encryption."
+            + " doesn’t use encryption. My Journal can only sync with a server that does."
     }
 
     var errorDescription: String? {

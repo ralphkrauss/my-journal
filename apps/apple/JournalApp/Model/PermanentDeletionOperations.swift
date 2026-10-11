@@ -103,7 +103,7 @@ enum DeleteAllPhase: Equatable {
 
 /// Why Delete All leaves an item in Recently Deleted.
 enum DeletionHold: Error, Sendable {
-    case newerVersion, other
+    case newerVersion, unreadable, other
 }
 
 /// What Delete All checked before its confirmation: the items it will delete, journals first, each with the rows that
@@ -174,7 +174,10 @@ extension AppModel {
     /// confirmation.
     func reviewDeleteAll() async throws -> DeleteAllReview {
         let store = try await deletionStoreAfterSaving()
-        let review = await Self.review(recentlyDeletedContents, in: store)
+        let contents = recentlyDeletedContents
+        let everyID = contents.journals + contents.templates + contents.entries.map(\.id)
+        let unreadable = Set(everyID.filter(unreadableConflictInvolves))
+        let review = await Self.review(contents, unreadable: unreadable, in: store)
         try Task.checkCancellation()
         guard !locked, !replacingVault, self.store === store else { throw JournalError.locked }
         return review
@@ -206,9 +209,10 @@ extension AppModel {
         result.batch.refreshed = refreshed
         return result.batch
     }
-    private nonisolated static func review(_ contents: RecentlyDeletedContents, in store: JournalStore) async
-        -> DeleteAllReview
-    {
+    /// `unreadable` holds the listed items that, or whose journal or entries, have a version that can't be read.
+    private nonisolated static func review(
+        _ contents: RecentlyDeletedContents, unreadable: Set<UUID>, in store: JournalStore
+    ) async -> DeleteAllReview {
         var review = DeleteAllReview()
         var heldJournals: [UUID: DeletionHold] = [:]
         var deletedJournals = Set<UUID>()
@@ -218,7 +222,7 @@ extension AppModel {
             } catch PermanentDeletionError.missing, PermanentDeletionError.permanentlyDeleted {
                 return nil
             } catch PermanentDeletionError.unsupported {
-                return .failure(.newerVersion)
+                return .failure(unreadable.contains(id) ? .unreadable : .newerVersion)
             } catch {
                 return .failure(.other)
             }

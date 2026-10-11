@@ -39,19 +39,49 @@ struct NoticeRelease: Equatable {
 }
 
 extension AppModel {
-    /// Takes the conflicts a read of the library found: all of them for the lifecycle, and whether any waits for a
-    /// newer version. Every one this version can read settles at the next pull.
-    func adoptConflicts(_ ids: Set<UUID>, held: Set<UUID>) {
+    /// Takes the conflicts a read of the library found: all of them for the lifecycle, and which wait for a newer
+    /// version and which have a version that can't be read. Every other one this version settles at the next pull.
+    /// `held` is nil when asking the store failed: the conflicts already known to be held, of those still present,
+    /// stay held, so a journal never looks usable for a failed read.
+    func adoptConflicts(_ ids: Set<UUID>, held: (needUpdate: Set<UUID>, unreadable: Set<UUID>)?) {
         if conflictedIDs != ids {
             conflictedIDs = ids
             lists.invalidate()
         }
-        heldConflictIDs = held
+        let unreadable = held?.unreadable ?? unreadableConflictIDs.intersection(ids)
+        let needUpdate = held?.needUpdate ?? heldConflictIDs.subtracting(unreadableConflictIDs).intersection(ids)
+        let all = needUpdate.union(unreadable)
+        heldConflictIDs = all
+        unreadableConflictIDs = unreadable
         // A conflict that settles at the next pull doesn't make its journal unavailable.
-        settlingConflictIDs = ids.subtracting(held)
-        let needsUpdate = !held.isEmpty
+        settlingConflictIDs = ids.subtracting(all)
+        let needsUpdate = !needUpdate.isEmpty
         if heldChangesNeedUpdate != needsUpdate { heldChangesNeedUpdate = needsUpdate }
+        let hasUnreadable = !unreadable.isEmpty
+        if heldChangesUnreadable != hasUnreadable { heldChangesUnreadable = hasUnreadable }
     }
+
+    /// What a refused change says about the conflict on `id` (a journal or an entry): a version nobody can read, a
+    /// newer version that must read it, or changes that finish combining at the next sync.
+    func conflictRefusal(for id: UUID) -> String {
+        if unreadableConflictIDs.contains(id) { return Self.unreadableAction }
+        if heldConflictIDs.contains(id) { return JournalLifecycleError.unsupportedJournal.shown(.saving) }
+        return JournalLifecycleError.conflict(id).shown(.saving)
+    }
+
+    /// Whether the record, the journal it is in or, for a journal, one of its entries has a version that can't be
+    /// read. A deletion or restore that covers them is refused for that reason, not for a newer version's.
+    func unreadableConflictInvolves(_ id: UUID) -> Bool {
+        guard !unreadableConflictIDs.isEmpty else { return false }
+        if unreadableConflictIDs.contains(id) { return true }
+        guard let item = items.first(where: { $0.id == id }) else { return false }
+        if let journalID = item.journalID, unreadableConflictIDs.contains(journalID) { return true }
+        guard item.kind == "journal" else { return false }
+        return items.contains { $0.journalID == id && unreadableConflictIDs.contains($0.id) }
+    }
+
+    /// Shared by every refused action for a record with a version that can't be read.
+    nonisolated static let unreadableAction = "This can’t be done because a version from another device can’t be read."
 
     // MARK: The list
 
@@ -124,9 +154,13 @@ extension AppModel {
         case keptBoth(KeptNote)
         /// A version from a newer My Journal waits to be combined with this one.
         case updateNeeded
+        /// A version from another device can't be read, so it wasn't combined with this one. It wins over
+        /// `updateNeeded`: updating can't help it.
+        case unreadable
     }
     func entryNotice(for item: JournalItem) -> EntryNotice? {
         guard !locked, item.kind != "journal" else { return nil }
+        if unreadableConflictIDs.contains(item.id) { return .unreadable }
         if heldConflictIDs.contains(item.id) { return .updateNeeded }
         let note = keptNotes.first { note in
             note.kind == .keptBoth && note.recordID == item.id && !note.seen

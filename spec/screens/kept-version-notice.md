@@ -33,6 +33,7 @@ A band above the writing, in the style of the other notices (callout text on a q
 | `messages.conflict.kept.notice.template` | A template; as the first row |
 | `messages.conflict.kept.notice.templateNewer` | A template; as the second row |
 | `messages.conflict.kept.noticeUpdate` | The conflict is held because a version of the entry or template was saved by a newer My Journal. No buttons |
+| `messages.conflict.kept.noticeUnreadable` | The conflict is held because a version of the entry or template can't be opened (damaged, or sealed under another key). No buttons. Wins over the row above: updating can't help |
 
 Buttons: **Show Other Version** (`messages.conflict.kept.showOther`) and **Dismiss** (`common.dismiss`). The text is always above the buttons; at accessibility text sizes the buttons stack one above the other.
 
@@ -47,7 +48,7 @@ Buttons: **Show Other Version** (`messages.conflict.kept.showOther`) and **Dismi
 
 - **When it appears.** Nothing is settled while the entry is being written, so a notice never arrives mid-keystroke. It is added when neither the title nor the text has the keyboard focus. If the cursor is resting in the title or the text it waits until the entry is shown again, or until focus leaves, so the writing never moves under a resting cursor. Once it has appeared it stays when the person starts writing again.
 - **Replaced copy.** When a later version from the other device replaces an untouched copy, the existing note is updated, not added; if the person has already dismissed it, it stays dismissed.
-- **Held.** The notice shows `messages.conflict.kept.noticeUpdate` with no buttons until a newer My Journal can read both versions; it settles by itself then.
+- **Held.** The notice shows `messages.conflict.kept.noticeUpdate` with no buttons until a newer My Journal can read both versions; it settles by itself then. A version that can't be opened shows `messages.conflict.kept.noticeUnreadable` with no buttons instead; nothing settles it, and no action is offered because the app has none.
 - **The other version is gone** (deleted permanently, or removed): the note is dropped silently and no notice shows.
 - **Locked.** Not shown; nothing it names is read.
 - **Library being replaced.** The buttons do nothing.

@@ -148,12 +148,9 @@ struct MoveEntryView: View {
             } catch JournalLifecycleError.conflict(let id) {
                 try? await model.refresh()
                 guard !model.locked else { return }
-                // An entry's changes are combined at the next sync; what a newer version of the app must read waits for it.
-                if model.heldConflictIDs.contains(id) {
-                    showError(JournalLifecycleError.unsupportedJournal.shown(.saving))
-                } else {
-                    showError(JournalLifecycleError.conflict(id).shown(.saving))
-                }
+                // An entry's changes are combined at the next sync; what a newer version of the app must read, or
+                // what can't be read at all, waits.
+                showError(model.conflictRefusal(for: id))
             } catch is CancellationError {} catch {
                 guard !model.locked else { return }
                 showError(error.shown(.saving))

@@ -178,6 +178,10 @@ struct DeleteAllCopy {
             return one
                 ? "1 item was saved by a newer version and stays in Recently Deleted. Update My Journal to delete it."
                 : "\(held.count) items were saved by a newer version and stay in Recently Deleted. Update My Journal to delete them."
+        case .unreadable:
+            return one
+                ? "1 item can’t be deleted because a version from another device can’t be read. It stays in Recently Deleted."
+                : "\(held.count) items can’t be deleted because a version from another device can’t be read. They stay in Recently Deleted."
         case .other: reason = "can’t be deleted yet"
         }
         return "\(items) \(reason) and will stay in Recently Deleted."
@@ -190,6 +194,8 @@ struct DeleteAllCopy {
         switch held.allSatisfy({ $0 == held.first }) ? held.first ?? .other : .other {
         case .newerVersion:
             message = one ? "Update My Journal to delete this." : "Update My Journal to delete these items."
+        case .unreadable:
+            message = AppModel.unreadableAction
         case .other: message = one ? "This can’t be deleted yet." : "These items can’t be deleted yet."
         }
         return DeletionNotice(title: one ? "Item Can’t Be Deleted" : "Items Can’t Be Deleted", message: message)

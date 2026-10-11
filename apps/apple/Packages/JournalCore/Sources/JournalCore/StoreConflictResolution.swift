@@ -111,16 +111,28 @@ extension JournalStore {
 
     /// The identifiers of conflicts that are held for a version this one can't read, or whose versions can't be opened.
     public func heldConflictIDs() throws -> Set<UUID> {
-        var held = Set<UUID>()
+        let held = try heldConflicts()
+        return held.needUpdate.union(held.unreadable)
+    }
+
+    /// The held conflicts by why they wait. `needUpdate` holds a version a newer My Journal saved (or one that opens but
+    /// doesn't decode, which can't be told apart from it); `unreadable` a version that doesn't open at all, which no
+    /// version of the app can combine. A record is unreadable when either of its versions is. A failed database read
+    /// is not unreadable: it is thrown.
+    public func heldConflicts() throws -> (needUpdate: Set<UUID>, unreadable: Set<UUID>) {
+        var needUpdate = Set<UUID>()
+        var unreadable = Set<UUID>()
         for recordID in try conflictedRecordIDs() {
-            let isHeld =
-                (try? db.read { db -> Bool in
-                    guard let state = try conflictState(db, recordID: recordID) else { return false }
-                    return state.local.isHeld || state.other.isHeld
-                }) ?? true
-            if isHeld { held.insert(recordID) }
+            let state: ConflictState?
+            do { state = try db.read { try conflictState($0, recordID: recordID) } } catch let error as DatabaseError {
+                throw error
+            } catch {
+                unreadable.insert(recordID)
+                continue
+            }
+            if let state, state.local.isHeld || state.other.isHeld { needUpdate.insert(recordID) }
         }
-        return held
+        return (needUpdate, unreadable)
     }
 
     /// The conflicted records that this version settles on its own at the next pull: those it can read. They keep a

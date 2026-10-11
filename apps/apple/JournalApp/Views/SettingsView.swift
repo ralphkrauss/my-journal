@@ -195,6 +195,11 @@ struct SettingsView: View {
                         "Some changes from another device need a newer version of My Journal. Update My Journal to combine them."
                     )
                 }
+                if model.heldChangesUnreadable {
+                    Text(
+                        "Some changes from another device can’t be read, so they weren’t combined. Nothing on this device was changed."
+                    )
+                }
             }
             KeptNotesSection(open: openKeptNote)
             if model.connection != nil {
