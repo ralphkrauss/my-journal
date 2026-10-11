@@ -37,10 +37,9 @@ The two shells are different controls, not one layout at two sizes. iPhone and i
 
 Model: `AppModel` (`settingsPresented`, `settingsTab`, `settingsRequestedTab`, `locked`, `showsLibraryProblem`). Every pane body is a `Form` with `.formStyle(.grouped)`.
 
-**Root (`SettingsView.body`).** A `Group` that shows, in order of precedence:
-1. Locked (`model.locked`): one secondary-coloured `Text`, copy key `settings.locked`, with padding. Nothing else is built.
-2. Library problem screen showing (`model.showsLibraryProblem`): one secondary `Text`, copy key `settings.libraryProblem` ("Settings are available once your journals open."), the spec's library problem state. **Screenshot pending:** settings-library-problem.
-3. Otherwise the shell below.
+**Root (`SettingsView.body`).** `unavailableText` is, in order of precedence, `settings.locked` while `model.locked` and `settings.libraryProblem` ("Settings are available once your journals open.") while `model.showsLibraryProblem`, else nil. **Screenshot pending:** settings-library-problem.
+- **iPhone and iPad:** with an unavailable text, the body is one secondary-coloured `Text` with padding and nothing else is built; otherwise the shell below.
+- **Mac:** the body is always the `TabView`, so the window's toolbar tabs are never taken out and rebuilt (taking them out left the toolbar blank after unlocking, owner report on build 21, [docs/design/1-1-final-fixes.md](../../../../docs/design/1-1-final-fixes.md) §5). With an unavailable text, `paneContent` replaces each pane with the secondary `Text`, centred, inside the pane's usual frame; the pane itself is not built. An `onValueChange(of: model.locked)` clears the Connect or Reconnect sheet's request when the app locks.
 
 **iPhone and iPad shell.**
 - `NavigationStack(path: $panes)` with a `List` as root. `panes` is `[AppSettingsTab]`; a requested pane is pushed by setting it. The navigation title is `settings.title`, `.navigationBarTitleDisplayMode(.inline)`. The sheet is `.sheet(isPresented: $model.settingsPresented) { SettingsView() }` on `RootView`.

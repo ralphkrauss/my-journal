@@ -22,13 +22,14 @@ struct SettingsView: View {
     #endif
     var body: some View {
         Group {
-            if model.locked {
-                Text("Unlock My Journal to open Settings.").foregroundStyle(.secondary).padding()
-            } else if model.showsLibraryProblem {
-                // Settings need a library, and Erase is on the problem screen, so no controls are shown greyed out.
-                Text("Settings are available once your journals open.").foregroundStyle(.secondary).padding()
-            } else {
-                #if os(iOS)
+            #if os(macOS)
+                // The window keeps its tabs in every state: replacing the tab view takes the tabs out of the window's
+                // toolbar, and they don't come back correctly when it returns. Each pane says why it is empty.
+                settings
+            #else
+                if let unavailable = unavailableText {
+                    Text(unavailable).foregroundStyle(.secondary).padding()
+                } else {
                     NavigationStack(path: $panes) {
                         settings.navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
                             .navigationDestination(for: AppSettingsTab.self) { tab in
@@ -41,11 +42,20 @@ struct SettingsView: View {
                             model.settingsRequestedTab = nil
                         }
                     }
-                #else
-                    settings
-                #endif
-            }
+                }
+            #endif
         }
+        // A Connect or Reconnect sheet never stays open, or opens, while the app is locked.
+        .onValueChange(of: model.locked) { locked in
+            if locked { connect = nil }
+        }
+    }
+    /// Why Settings shows no controls: the app is locked, or the journals can't be opened. Settings need a library,
+    /// and Erase is on the problem screen, so no controls are shown greyed out.
+    private var unavailableText: String? {
+        if model.locked { return "Unlock My Journal to open Settings." }
+        if model.showsLibraryProblem { return "Settings are available once your journals open." }
+        return nil
     }
     private var settings: some View {
         Group {
@@ -87,7 +97,16 @@ struct SettingsView: View {
             paneContent(tab).tabItem { Label(title, systemImage: symbol) }.tag(tab)
         }
         @ViewBuilder private func paneContent(_ tab: AppSettingsTab) -> some View {
-            let content = pane(tab).modifier(BouncesOnlyWhenScrollable()).frame(width: 560)
+            let content = Group {
+                // Removed, not hidden, while unavailable: nothing in the pane can be read or reached. The pane keeps
+                // its size, so the window doesn't jump when the app unlocks.
+                if let unavailable = unavailableText {
+                    Text(unavailable).foregroundStyle(.secondary).padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    pane(tab).modifier(BouncesOnlyWhenScrollable())
+                }
+            }.frame(width: 560)
             if tab == .sync {
                 content.frame(height: min(Self.syncPaneHeight, maxPaneHeight), alignment: .top)
             } else {

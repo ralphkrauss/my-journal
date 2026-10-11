@@ -70,8 +70,8 @@ There is no About section and no Done button: About is in the Help menu (`screen
 
 ## States
 
-- **Locked** (App Lock on and My Journal locked): the whole of Settings shows only `settings.locked`, in secondary text. Locking while Settings is open closes the Settings sheet on phone and tablet (every window's presentations close when the app locks); on the computer the window shows the locked text.
-- **Library problem** (the journals can't be opened, so there is no library to set up): the whole of Settings shows only `settings.libraryProblem`, in secondary text, in place of its panes, on every device ([screens/unavailable-content](unavailable-content.md)). Every sheet closes when a problem appears.
+- **Locked** (App Lock on and My Journal locked): the whole of Settings shows only `settings.locked`, in secondary text. Locking while Settings is open closes the Settings sheet on phone and tablet (every window's presentations close when the app locks); on the computer the Settings window stays open with its tabs, and every pane shows only the locked text, centred, at the pane's usual size; the tabs can still be chosen but show nothing else. Nothing of the panes is built while locked, so nothing in them can be read or reached.
+- **Library problem** (the journals can't be opened, so there is no library to set up): the whole of Settings shows only `settings.libraryProblem`, in secondary text, in place of its panes, on every device (on the computer inside each pane, with the tabs kept, as for Locked) ([screens/unavailable-content](unavailable-content.md)). Every sheet closes when a problem appears.
 - **No library** (just after Erase Journals and Settings, while Settings closes): Privacy shows nothing; Settings then closes by itself.
 - **Requested pane:** when another screen asks for a pane (Sync Status, Show Connection), Settings opens on that pane. On phone and tablet the pane is pushed on top of the list; on the computer that tab is selected.
 

@@ -55,6 +55,19 @@ All new text appears in existing views with existing behaviour: the footer is st
 
 `spec/copy/en.json`, `spec/messages.md`, `spec/flows/connect-to-server.md`, `spec/flows/resolve-conflict.md` (a row for a version that can't be read), the Apple notes (`spec/platforms/apple/flows/resolve-conflict.md`, `screens/kept-version-notice.md`, `messages.md`), [docs/guide/devices.md](../guide/devices.md) and a note in [1-1-encryption-and-passwords.md](1-1-encryption-and-passwords.md) where the old text was decided.
 
+## 5. The Mac Settings window after locking (owner report on build 21, 2026-10-11)
+
+**Today.** On the Mac, `SettingsView` shows a standard Settings window: a `TabView` whose tabs SwiftUI turns into the window's toolbar (General, Sync, Privacy, Backup, Agent Access). While the app is locked the whole view is replaced by one line, "Unlock My Journal to open Settings." (`settings.locked`), and while the journals can't be opened by "Settings are available once your journals open." The owner turned on App Lock, chose Lock, unlocked and opened Settings again: the window's toolbar showed one blank tile and no tab icons or names. The same code is in 1.0.
+
+**Cause.** Replacing the `TabView` with a `Text` removes the tabs SwiftUI put into the window's toolbar; when the `TabView` comes back in the same window, the toolbar is not rebuilt correctly.
+
+**Proposal (Mac only).** The window always shows the tab view. While locked, or while the journals can't be opened, every tab shows the existing one-line text instead of its controls, centred in the pane, at the pane's usual width; the tabs stay in the toolbar and can be chosen, but show nothing else. No new copy. No journal content and no setting is shown while locked, as today. iPhone and iPad are unchanged (their Settings is a navigation stack in a sheet, which isn't affected).
+
+- Accessibility: the text is the pane's only element; VoiceOver reads the tab names, then the text.
+- The window keeps its size rules; the pane is the minimum height of a normal pane, so the window doesn't jump when unlocking.
+
+**Review and implementation (2026-10-11).** The independent review approved with changes, all applied: the panes are removed, not hidden, while unavailable (nothing reachable by VoiceOver or Full Keyboard Access, no pane loaders run); a Connect or Reconnect sheet's request is cleared when the app locks; each locked pane keeps that tab's usual frame, so the window doesn't jump. Closing Settings on lock was rejected: Settings can also be opened while locked, so it wouldn't fix the bug, and Apple's apps don't do it. A temporary check in the Mac screenshot harness (lock with Settings open, unlock; close and reopen Settings while locked, unlock) passed on both the old and the new code, so it didn't reproduce the owner's exact trigger, most likely unlocking with Touch ID while the shrunken locked window was in front, which the harness can't drive. With the fix the window never changes structure or shrinks, which removes that path; its captures show the tabs kept while locked and after unlocking. The owner checks it on build 22.
+
 ## Changes after review
 
 The review (Sonnet, 2026-10-11) approved with changes. Each finding and its change:
