@@ -1,6 +1,6 @@
 # App Review notes
 
-The text for App Store Connect > App Review Information, for the iOS and macOS versions of build 16 (version 1.0), plus the background behind it. Written on 2026-10-05 and checked against the code. The Notes field takes at most 4000 bytes ([Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)).
+The text for App Store Connect > App Review Information, for the iOS and macOS versions of version 1.1 (build 23), plus the background behind it. Written on 2026-10-05 for 1.0 and updated on 2026-10-15 for 1.1 against the 1.1 code and spec (`spec/flows/create-library.md`, `spec/copy/en.json`). The Notes field takes at most 4000 bytes ([Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)).
 
 Nothing private belongs here: no tailnet names, host names, personal paths or real journal content. The demo server address and password, if you use one, go only into App Store Connect, never into this repository.
 
@@ -23,22 +23,23 @@ Paste into the Notes field of the iOS version. Edit or delete the bracketed demo
 My Journal is a private journal for iPhone, iPad and Mac (one universal app). There is no account, sign-in or login, and everything except sync works offline without a server.
 
 TRY IT WITHOUT A SERVER
-1. Choose Start a Journal > Use Encryption. Enter any master password in Master Password and Verify, and choose Create. A journal named Default opens.
+1. Choose Start a Journal. Enter any master password in Master Password and Verify, and choose Create. A journal named Default opens. Every journal is encrypted; there is no option to turn encryption off.
 2. Tap New Entry. The Formatting button (Aa) has headings, lists, checklists, quotes and indentation; Insert Image adds several photos at once (Photo Library, Take Photo or Choose File…). Touch and hold an image for Copy, Share…, Save to Photos and Delete.
 3. The entry's … menu has Pin Entry, Change Date…, Move Entry…, Save as Template… and Version History…. New libraries have no templates: save one with Save as Template…, then a new empty entry offers "use a template".
 4. In Journals: New Journal, Edit to reorder journals, Recently Deleted (Restore, Delete All) and the search field.
 5. Settings (gear at the top of Journals):
 - Privacy: "Your Journals Are Encrypted", Change Password…, and App Lock (Require Face ID, then Lock My Journal).
-- Backup: Export Archive… and Import Archive….
+- Sync: Connect to a Server…, and Devices once connected.
+- Backup: Export Archive… (saves one .journalbackup file) and Import Archive…, and Export as Markdown….
 - Erase Journals and Settings… at the end returns the app to its first screen.
 
 MASTER PASSWORD
 It protects the encryption key on the device and never leaves it. Nobody can reset it, so no recovery key or account is involved. App Lock uses only Face ID, Touch ID or the passcode.
 
 SYNC IS OPTIONAL
-Sync goes only through a server the customer runs themselves: the open-source server, on a home server, a computer of their own or a host they choose. The app only connects to it. We don't operate a server for customers and have no access to theirs. Without a server, Settings > Sync, Devices and Agent Access explain what they need, and everything else works.
+Sync goes only through a server the customer runs themselves: the open-source server, on a home server, a computer of their own or a host they choose. The app only connects to it. We don't operate a server for customers and have no access to theirs. Without a server, Settings > Sync and Agent Access explain what they need, and everything else works.
 [DEMO SERVER: delete this block if no demo server is ready]
-To try sync with our review server: on the first screen of a fresh install choose Connect to a Server…, enter [DEMO SERVER ADDRESS], choose Continue, then enter the master password [DEMO MASTER PASSWORD] and choose Connect. Sample journals download. Settings > Devices > Add Device… shows a code that a second iPhone or iPad can scan.
+To try sync with our review server: on the first screen of a fresh install choose Connect to a Server…, enter [DEMO SERVER ADDRESS], choose Continue, then enter the master password [DEMO MASTER PASSWORD] and choose Connect. Sample journals download. Settings > Sync > Devices > Add Device… shows a code that a second iPhone or iPad can scan.
 
 AGENT ACCESS (OPTIONAL, NEEDS A SERVER)
 Settings > Agent Access shows the server's MCP address. A person adds it to an AI agent they already use; the agent's request then appears in Agent Access, where they enter the number shown on the agent's page and choose the journals it may read. Access is read-only and can be revoked. Before allowing, the sheet explains that the agent may send what it reads to its AI provider. No AI service is built in.
@@ -64,16 +65,16 @@ Paste into the Notes field of the macOS version. (about 3270 bytes with the plac
 My Journal is a private journal for Mac, iPhone and iPad (one universal app). There is no account, sign-in or login, and everything except sync works offline without a server.
 
 TRY IT WITHOUT A SERVER
-1. Choose Start a Journal > Use Encryption, enter any master password in Master Password and Verify, and choose Create.
+1. Choose Start a Journal, enter any master password in Master Password and Verify, and choose Create. Every journal is encrypted.
 2. File > New Entry (Cmd-N). The Format menu and the Formatting toolbar button format text, including checklists and Increase/Decrease Indent; Format > Insert > Image… or dragging adds images. Control-click an image for Copy, Share, Save Image As… and Delete.
 3. The entry's … menu has Pin Entry, Change Date…, Move Entry…, Save as Template… and Version History…. New libraries have no templates: save one, then File > New Entry (Cmd-N) and, in the empty entry, "use a template" or File > Use a Template…. Drag journals in the sidebar to reorder them. Recently Deleted has Restore and Delete All….
-4. My Journal > Settings: General (Erase Journals and Settings… at the end), Sync, Devices, Privacy (App Lock with Touch ID or the login password, and Lock when inactive), Backup (Export Archive…, Import Archive…), Agent Access.
+4. My Journal > Settings: General (Erase Journals and Settings… at the end), Sync (the server, and Devices once connected), Privacy (Change Password…, App Lock with Touch ID or the login password, and Lock when inactive), Backup (Export Archive… saves one .journalbackup file; Import Archive…; Export as Markdown…), Agent Access.
 
 MASTER PASSWORD
 It protects the encryption key on the device and never leaves it. Nobody can reset it, so no recovery key or account is involved.
 
 SYNC IS OPTIONAL
-Sync goes only through a server the customer runs themselves: the open-source server, as a container or standalone program on a home server, a computer of their own or a host they choose. The app doesn't include or start a server; it only connects to one with Settings > Sync > Connect to a Server…. We don't operate a server for customers and have no access to theirs. Without a server, Settings > Sync, Devices and Agent Access explain what they need, and everything else works.
+Sync goes only through a server the customer runs themselves: the open-source server, as a container or standalone program on a home server, a computer of their own or a host they choose. The app doesn't include or start a server; it only connects to one with Settings > Sync > Connect to a Server…. We don't operate a server for customers and have no access to theirs. Without a server, Settings > Sync and Agent Access explain what they need, and everything else works.
 [DEMO SERVER: delete this block if no demo server is ready]
 To try sync with our review server: on the first screen of a fresh install choose Connect to a Server…, enter [DEMO SERVER ADDRESS], choose Continue, then enter the master password [DEMO MASTER PASSWORD] and choose Connect. Sample journals download.
 
@@ -98,7 +99,8 @@ No analytics, advertising or tracking. The app sends nothing to us.
 ### How App Review can test everything
 
 - **No account.** Guideline [2.1](https://developer.apple.com/app-store/review/guidelines/#app-completeness) asks for demo account details only if the app has a login. My Journal has none, and everything except sync and agent access works offline on one device, so the notes lead with that path. Any master password works; the minimum length is one character, and it's never sent anywhere.
-- **No recovery key.** New libraries are protected by the master password alone; "Recovery Key" appears only for libraries from early test builds. Forgot Password? appears only in the one-time password check before the first archive export, for a library that isn't on a server, after the device owner authenticates. The notes don't send the reviewer there.
+- **No recovery key.** New libraries are protected by the master password alone; "Recovery Key" appears only for libraries from early test builds. Since 1.1, Forgot Password? is part of Change Password…, for a library that isn't on a server, after the device owner authenticates. The notes don't send the reviewer there.
+- **Only encrypted journals (1.1).** 1.0 could create a library without encryption (Continue Without Encryption). 1.1 can't create one and doesn't open one: it shows "These journals aren't encrypted, and this version of My Journal opens only encrypted journals." with Erase. The files stay on the device untouched. A reviewer on a fresh install never sees this.
 - **App Lock** has no PIN: it uses Face ID, Touch ID, Optic ID or the device passcode (Mac: Touch ID or the login password). On a review device without enrolled biometrics, the passcode works.
 - **Erase Journals and Settings…** returns to the first screen, which is a quick way for a reviewer to start over or to try Connect to a Server… on a fresh install.
 - **Hidden features.** Guideline [2.3.1](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata) requires every feature to be discoverable and described. Sync and Agent Access are optional and need a server, so the notes give exact steps.

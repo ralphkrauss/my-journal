@@ -30,7 +30,7 @@ python3 -c 'import sys; s=sys.stdin.read().rstrip("\n"); print(len(s), "characte
 | Description, iOS | 4000 characters | 3508 characters (3564 bytes) | same |
 | Description, macOS | 4000 characters | 3682 characters (3736 bytes) | same |
 | Keywords | 100 bytes, comma-separated, no spaces after commas, each longer than 2 characters | 97 bytes, 13 keywords; English (U.K.) set 100 bytes, 11 keywords | same; [App Store search](https://developer.apple.com/app-store/search/) |
-| What's New | Not shown for the first version | 593 characters, for TestFlight and GitHub | same |
+| What's New | 4000 characters; not shown for the first version | 1.1: see [What's New](#whats-new) | same |
 
 Metadata rules that shaped this copy (guidelines [2.3.7](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata) and 2.3.10): no other apps', companies' or AI products' names; no prices in the name, subtitle, screenshots or previews; no unverifiable claims; no other mobile platforms, so the planned Windows, Android and Linux apps aren't mentioned. The case for My Journal is made with plain facts instead: no account, no subscription, your server or none, open source, Markdown. The promotional text and the "One purchase" paragraph say "no subscription" without naming a price, as many approved apps do; if App Review objects, remove it from the promotional text first.
 
@@ -154,7 +154,7 @@ Left out on purpose:
 | Support URL | `https://github.com/ralphkrauss/my-journal/blob/main/SUPPORT.md` |
 | Marketing URL | `https://github.com/ralphkrauss/my-journal` |
 | Copyright | `2026 Ralph Krauss` (App Store Connect shows it after ©) |
-| Version | `1.0` (`MARKETING_VERSION` in `apps/apple/project.yml`) |
+| Version | `1.1` (`MARKETING_VERSION` in `apps/apple/project.yml`) |
 
 All four GitHub addresses in this file answered HTTP 200 without signing in on 2026-10-05. They point at `main`, so renaming or moving PRIVACY.md or SUPPORT.md breaks them until App Store Connect is updated.
 
@@ -243,7 +243,24 @@ zero-knowledge,end-to-end,local-first,plain text,vault,lock,password,server,agen
 
 ## What's New
 
-App Store Connect doesn't show What's New for the first version of an app ([Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)). Use this text for TestFlight's What to Test and the GitHub release notes, and write a new one for 1.0.1.
+### 1.1
+
+Shown on the App Store for version 1.1 (both platforms), and used for TestFlight's What to Test and the GitHub release notes. Limit 4000 characters.
+
+```text
+• When an entry changes on two devices before they sync, both versions are now kept automatically, and nothing is overwritten. Settings ▸ Sync ▸ Changed on Two Devices lists what happened.
+• A backup is now a single .journalbackup file, easy to keep and move. Backups made with version 1.0 still open.
+• Simpler Settings: Devices is now part of Sync.
+• Forgot your master password? If your journals are only on this device, Change Password lets you choose a new one after Face ID, Touch ID or your device password.
+• Bold, italic and the other styles now apply to the whole selection, even when part of it is already formatted. Return in the middle of a heading makes two headings.
+• Every journal is encrypted. Journals created without encryption in version 1.0 can’t be opened in this version.
+• Removed to keep My Journal simple: a journal’s default template (choose a template from inside a new entry), merging journals, and a journal’s version history.
+• Backup import is safer, and many smaller fixes.
+```
+
+### 1.0
+
+App Store Connect doesn't show What's New for the first version of an app ([Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)). This text was used for TestFlight's What to Test and the GitHub release notes.
 
 ```text
 The first release of My Journal for iPhone, iPad and Mac.
