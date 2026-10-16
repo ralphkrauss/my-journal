@@ -76,7 +76,7 @@ jobs:
           install_args: --locked swiftlint xcodegen
       - run: scripts/check.sh apple
       - if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: apple-test-results
           path: artifacts/DerivedData/Logs/Test
@@ -107,7 +107,7 @@ jobs:
         env:
           JOURNAL_TEST_RESULTS: artifacts/ci/server-recovery
       - if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: integration-test-results
           path: artifacts/ci
@@ -135,7 +135,7 @@ jobs:
       - name: Unit and UI tests with a disposable server
         run: scripts/test-native-pairing.sh
       - if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ios-ui-test-results
           path: artifacts/ci/ios-ui
@@ -163,7 +163,7 @@ jobs:
       - name: Recovery flows at the largest text size in dark mode
         run: scripts/test-native-accessibility.sh
       - if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ios-accessibility-test-results
           path: artifacts/ci/ios-accessibility
