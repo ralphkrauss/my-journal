@@ -1,6 +1,6 @@
 # Base images are pinned to immutable multi-platform index digests; the tag records the reviewed version.
 # mcr.microsoft.com/dotnet/sdk:10.0.401
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:35d40304542c8689331f8cab17c65926cdf48fe711e289321d71924b230a7d29 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS build
 # The release workflow passes the tag's version; GET /v1/server reports it.
 ARG JOURNAL_VERSION=0.0.0-dev
 WORKDIR /src
