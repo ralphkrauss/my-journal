@@ -12,7 +12,7 @@ Update it when the apps reach the App Store or new platforms arrive.
 
 ## Website
 
-Leave empty until the App Store listing is live, then use the App Store link.
+https://apps.apple.com/app/id6816758959
 
 ## Topics
 

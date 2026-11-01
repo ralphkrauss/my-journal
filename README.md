@@ -20,7 +20,7 @@ My Journal is for people who want to own their writing. Your journals stay on yo
   <img src="docs/app-store/screenshots/iphone/06-dark.jpg" width="250" alt="My Journal on iPhone in dark appearance: the entry Porto, day two with a photo of the river at sunset and a checklist">
 </p>
 
-**Status: coming to the App Store.** Version 1.0 for iPhone, iPad and Mac is ready for App Review; this page will link to the App Store once it’s available. You can also [build it from source](docs/development.md) for free. Keep an [archive](docs/guide/backups.md) of anything you can’t afford to lose.
+**[Get My Journal on the App Store](https://apps.apple.com/app/id6816758959)** for iPhone, iPad and Mac: one purchase covers all three. You can also [build it from source](docs/development.md) for free. Keep an [archive](docs/guide/backups.md) of anything you can’t afford to lose.
 
 ## Why My Journal
 
@@ -114,12 +114,12 @@ Many journaling apps are good at what they do. Most are built around an account 
 
 | Platform | Status |
 | --- | --- |
-| iPhone and iPad (iOS and iPadOS 16 or later) | Version 1.0 coming to the App Store. |
-| Mac (macOS 14 or later, Apple silicon or Intel) | Version 1.0 coming to the Mac App Store. |
+| iPhone and iPad (iOS and iPadOS 16 or later) | [App Store](https://apps.apple.com/app/id6816758959) |
+| Mac (macOS 14 or later, Apple silicon or Intel) | [Mac App Store](https://apps.apple.com/app/id6816758959) |
 | Sync server (Linux, macOS or a container) | Run it yourself; see [self-hosting](docs/self-hosting/README.md). |
 | Windows, Android and Linux | Planned, after the Apple apps. |
 
-- **App Store:** one purchase covers iPhone, iPad and Mac, and supports development.
+- **[App Store](https://apps.apple.com/app/id6816758959):** one purchase covers iPhone, iPad and Mac, and supports development.
 - **Build from source:** free. You need a Mac with Xcode; see [development](docs/development.md).
 
 The Apple apps are the first clients. Apps for other platforms will each follow their own platform’s conventions and use the same open protocol, encryption and data format, so your journals can move with you.
