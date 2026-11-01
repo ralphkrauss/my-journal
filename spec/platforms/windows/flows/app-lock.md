@@ -39,7 +39,7 @@ One interface, `IDeviceOwnerAuthenticator`, with three members (the Windows coun
 | Canceled | Cancelled | Switch returns; nothing said | Nothing happens; nothing said | Lock page stays; Unlock asks again |
 | NotConfiguredForUser | NoPasscode | Cannot turn on: footer says how to set Hello up | Continues without authentication (turning off needs none) | **App Lock pauses**: no lock page, the journals open, the paused bar explains (below, D42) |
 | DisabledByPolicy, DeviceNotPresent | Cannot | Cannot turn on: footers in [settings-privacy](../screens/settings-privacy.md) | Continues without authentication, as the spec's rule "a device without a passcode continues" | **App Lock pauses**, as above |
-| RetriesExhausted, DeviceBusy, anything else | Failed | Switch returns; nothing said | Nothing happens; nothing said (Add device stays on its confirmation) | `settings.lock.failed` and Use master password when there is a password |
+| RetriesExhausted, DeviceBusy, anything else | Failed | Switch returns; nothing said | Nothing happens; nothing said (Add device stays on its confirmation), except Export as Markdown, which shows `settings.backup.verifyFailed` where its errors show | `settings.lock.failed` and Use master password (`settings.lock.useCredential`) |
 
 Reasons are the spec's reason keys in their capitalised form: `settings.privacy.appLock.reason.turnOn`, `settings.privacy.appLock.reason.turnOff`, `settings.privacy.appLock.reason.change`, `settings.privacy.appLock.reason.unlock`, `settings.addDevice.authReason`, `settings.backup.markdownReason`, `settings.erase.authReason`, `settings.changePassword.authReason`. The reason is the prompt's message.
 
@@ -58,7 +58,7 @@ Steps 1 to 3 of the spec's "Turning App Lock on" use the gate: the switch is ava
 
 ### App Lock is paused
 
-If Windows Hello is removed, turned off by policy or not available (a Remote Desktop session) while App Lock is on, App Lock **pauses** rather than locking the person out or silently turning itself off (D42, the review's recommendation): at launch, at unlock and whenever a trigger would lock, the gate's availability is read first; when it is NotSetUp, Policy or Unavailable the library does not lock, the journals open, and a Warning `InfoBar` at the top of the library window, not closable and shown on every page of the window while the state lasts, says that App Lock is paused (a new title string, settings ▸ privacy.appLock.paused.title, B32) with the reason message and, for NotSetUp, the link Open Sign-in options (B32). The setting stays on. The bar closes and App Lock resumes by itself when the gate says Available again (read when the window is activated and before every trigger); the next trigger then locks normally. A person who wants App Lock off turns it off in Settings > Privacy, which needs no authentication in these states. The transient result Busy keeps the lock page with Try again. This replaces the Apple behaviour (turn itself off, then the App Lock is off alert, which is not shown on Windows). The alternative is the lock page that stays, which can lock someone out of a journal without a password; a refinement is to pause only when the journals have no password, because with one the lock page offers it (D42).
+If Windows Hello is removed, turned off by policy or not available (a Remote Desktop session) while App Lock is on, App Lock **pauses** rather than locking the person out or silently turning itself off (D42, the review's recommendation): at launch, at unlock and whenever a trigger would lock, the gate's availability is read first; when it is NotSetUp, Policy or Unavailable the library does not lock, the journals open, and a Warning `InfoBar` at the top of the library window, not closable and shown on every page of the window while the state lasts, says that App Lock is paused (a new title string, settings ▸ privacy.appLock.paused.title, B32) with the reason message and, for NotSetUp, the link Open Sign-in options (B32). The setting stays on. The bar closes and App Lock resumes by itself when the gate says Available again (read when the window is activated and before every trigger); the next trigger then locks normally. A person who wants App Lock off turns it off in Settings > Privacy, which needs no authentication in these states. The transient result Busy keeps the lock page with Try again. This replaces the Apple behaviour (turn itself off, then the App Lock is off alert, which is not shown on Windows). The alternative is the lock page that stays, which can lock someone out of a journal without a password; every library has a master password now, so the lock page could always offer it instead, a refinement the owner may still choose (D42).
 
 ### When it locks
 
@@ -84,7 +84,7 @@ The time is held while the person's own long action runs: connecting, importing,
 ### Locking
 
 1. Writing in the open entry and in open dialogs is saved first, for about two seconds at most ([flows/save-entry](save-entry.md)).
-2. The library locks: the content is replaced by the lock page, the journal views are released, dialogs and flyouts hide with no result, and each page's locking rule runs (an export is cancelled and its temporary copy removed; the Connect page cancels as Cancel does; a waiting pairing request is declined; encryption continues once the server is being updated).
+2. The library locks: the content is replaced by the lock page, the journal views are released, dialogs and flyouts hide with no result, and each page's locking rule runs (an export is cancelled and its temporary copy removed; the Connect page cancels as Cancel does; a waiting pairing request is declined).
 3. Whatever could not be saved in step 1 is saved after locking, without showing journal content.
 
 ### Unlocking
@@ -93,7 +93,7 @@ See [lock-screen](../screens/lock-screen.md). Once per lock, when the window is 
 
 ### Other places Windows Hello is asked
 
-When App Lock is on, the device owner authenticates before Export as Markdown and Erase journals and settings. Adding a device always asks, whether or not App Lock is on. A PC without Windows Hello continues without it in each of these (the table above). Forgot password also asks, but it is the exception: the link is offered only when Windows Hello is available, as the spec requires that the device can authenticate its owner, so a PC without Hello never shows it.
+When App Lock is on, the device owner authenticates before Export as Markdown and Erase journals and settings. Adding a device always asks, whether or not App Lock is on. A PC without Windows Hello continues without it in each of these (the table above). Forgot password? inside Change password also asks, but it is the exception: the link is offered only when Windows Hello is available, as the spec requires that the device can authenticate its owner, so a PC without Hello never shows it ([change-password](change-password.md)).
 
 ## Layout at each window width
 

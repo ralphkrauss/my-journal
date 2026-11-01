@@ -15,3 +15,7 @@ Precommit cancellation is checked before entering the synchronous transaction. N
 ## Tests
 
 HistoryRecoveryTests use real encrypted stores and real conflict resolution to create history. They cover history membership, copying into a valid journal while the source is unavailable, preservation of rich text, images and dates, unchanged original, history, image and pending bytes, template kind, refusal of deleted or conflicted destinations and of unsupported supplied versions, preservation of an unsupported unresolved source conflict, and persistence after reopening.
+
+## Fixtures
+
+None. The operation is covered by the Swift `HistoryRecoveryTests`; the history rows it reads are part of the database in [archive.md](archive.md#database).

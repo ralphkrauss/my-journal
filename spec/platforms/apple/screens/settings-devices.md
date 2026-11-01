@@ -84,7 +84,7 @@ None. One string per element on all devices; only the date format differs with t
 
 ## Screenshots
 
-Sample library; the connected captures show only this device (no other device to revoke), so Revoke Access…, the loading row and every error row are not captured. **The captures below predate the 1.1 layout:** they show Devices as a pane of its own (this device's card, then Add Device…). The next capture run (`design/spec-screenshots/capture.sh iphone ipad mac`) takes them from the Sync pane, scrolled to the Devices section (the state “settings-devices-connected”), with Add Device… first. Devices has no not-connected state any more, so those captures are gone.
+Sample library; the connected captures show only this device (no other device to revoke), so Revoke Access…, the loading row and every error row are not captured. The captures show the Devices section of the Sync pane (the state “settings-devices-connected”), with Add Device… first. Devices has no not-connected state, so there is no capture of one.
 
 | Device | State | Capture |
 | --- | --- | --- |

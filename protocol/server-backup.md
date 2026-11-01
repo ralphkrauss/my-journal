@@ -26,3 +26,7 @@ This design works when the target itself is a mounted container volume, which ca
 When the server starts and its database needs migrations, it first copies the database with SQLite's online backup to `journal.pre-migration.db` in the data directory (self-contained, DELETE journal mode), replacing any earlier copy, and then migrates. If a migration fails, stop the server and restore that copy (or a backup) with the matching older server version. A new data directory needs no copy.
 
 The server refuses to start, logs the unknown migration and exits with status 1 without changing the database when the database was migrated by a newer server version. Install that version or later, or restore a backup made by this version into an empty data directory. Older releases without this check must not be run against a newer database.
+
+## Fixtures
+
+None. This is a server maintenance format, not a client contract; the server's `BackupTests` cover it.

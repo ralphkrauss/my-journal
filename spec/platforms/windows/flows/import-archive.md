@@ -32,6 +32,7 @@ A .NET `ZipArchive` materializes every entry when it is opened and checks neithe
 | Opened while the library is being replaced | The alert dialog `messages.writingPaused.updating` (Close `common.ok`) instead of the Import archive page | |
 | The goes-to-background rule of the spec | Not applicable | A Windows window is not suspended |
 | 2–6. The task page | [archive-import](../screens/archive-import.md) | Password step, opening, preview, importing, done |
+| Journals on this device that cannot be opened | The Import archive page shows `library.problem.importNote` above its buttons and the primary button reads Restore journals. With App Lock on, Windows Hello asks before the commit with `settings.archiveImport.restoreReason`; cancelled, nothing changes. The archive is read and checked before anything is replaced, so a bad archive or a wrong password leaves everything as it was. The page is offered from the lock page when the device key is unavailable and from the library problem screen (not mapped yet, D56), not for journals a newer version wrote or settings that could not be read. Replacing such a library records it as superseded, and the App lock settings carry over from the configuration it replaces | [lock-screen](../screens/lock-screen.md), [unavailable-content](../screens/unavailable-content.md) |
 
 ### Errors while importing
 

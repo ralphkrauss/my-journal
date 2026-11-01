@@ -47,7 +47,7 @@ Rules of the spec that Windows keeps: one export at a time (pressing again while
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `export-archive` | File ▸ Export archive…; Settings ▸ Backup (button) | as in commands.md | Unlocked and no export is running |
-| `change-password` | The link button `settings.backup.archive.changePassword` under the footer, on the Backup page and in the File-menu dialog | as in commands.md | Master-password journals (always on Windows), unlocked; it opens the [Change Password](change-password.md) dialog over the page or the File-menu dialog |
+| `change-password` | The link button `settings.backup.archive.changePassword` under the line `settings.backup.archive.changePasswordPrompt` at the end of the footer, on the Backup page and in the File-menu dialog | as in commands.md | Master-password journals (always on Windows), unlocked; it opens the [Change Password](change-password.md) dialog over the page or the File-menu dialog |
 | `export-sheet-done` | The File-menu dialog's Close button | Esc | Always |
 
 ## Copy differences

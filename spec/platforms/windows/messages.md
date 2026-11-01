@@ -30,7 +30,7 @@ Microsoft's guidance for choosing the surface, which the rules below apply: an `
 
 | Situation | `InfoBar` severity | Why |
 | --- | --- | --- |
-| A sync state that stops automatic sync or needs the person (sign-in needed, not set up, restored or replaced, access removed, update needed, certificate, not a journal server, unexpected, an item refused) | Warning | A condition that will cause a problem if left; nothing is lost, since the writing is saved on this device |
+| A sync state that stops automatic sync or needs the person (not set up, restored or replaced, access removed, update needed, certificate, not a journal server, unexpected, an item refused) | Warning | A condition that will cause a problem if left; nothing is lost, since the writing is saved on this device |
 | This device's own data cannot be read (`messages.sync.localDataUnreadable`), a failed save (`messages.save.notSaved`), an error inside a dialog or page, the lock page's note (except `messages.library.deviceKeyUnavailable`, below) | Error | A problem that has happened |
 | `messages.library.deviceKeyUnavailable` on the lock page | Warning | It explains why the password is asked; nothing has failed that the person can fix by retrying |
 | Offline, can't reach, server busy, `messages.sync.waiting`, writing paused, recovery and unavailable notices | Informational | Expected or temporary; quiet by design. |
@@ -60,6 +60,7 @@ The announcements of the spec are raised with `AutomationPeer.RaiseNotificationE
 | `messages.announce.pinned`, `messages.announce.unpinned` | ActionCompleted | MostRecent | pin |
 | `messages.announce.journalMovedAbove`, `messages.announce.journalMovedBelow` | ActionCompleted | MostRecent | journal-order |
 | `messages.announce.restoredIn` (with `{name}`; only when Restore put an entry in a journal other than its own) | ActionCompleted | MostRecent | restore |
+| `messages.export.archiveSaved` (after the archive is saved; also shown in the Export archive row of the Backup page until the next export starts) | ActionCompleted | MostRecent | export |
 | `common.saveFailed` for a failure that began while typing (the Apple alert is not shown, [save-failure](flows/save-failure.md)) | ActionAborted | ImportantMostRecent | save-failure |
 | An error in an open dialog or page | None of its own: the inline `InfoBar` opens and announces itself | | |
 | Pressing Copy for an address or code | ActionCompleted, the spec's copy confirmation where it has one | MostRecent | copy |
@@ -84,7 +85,7 @@ The messages and actions are the spec's table; this adds the Windows severity an
 
 ### Save failures
 
-The failure itself is [save-failure](flows/save-failure.md). The "save first" refusals (`messages.save.before.goBack`, and `messages.save.before.tryAgain` in the alert dialog) are errors of an action the person started, so they show where that action's errors show: inline in its dialog or page (the Export and Import dialogs show it in their own error bar), or the alert dialog when the action opens nothing (Delete journal, Restore, Review changes, and the like). `messages.save.before.goBack` stays inline in its dialog or page; the two texts have Windows wording in [Copy differences](#copy-differences).
+The failure itself is [save-failure](flows/save-failure.md). The "save first" refusals (`messages.save.before.goBack`, and `messages.save.before.tryAgain` in the alert dialog) are errors of an action the person started, so they show where that action's errors show: inline in its dialog or page (the Export and Import dialogs show it in their own error bar), or the alert dialog when the action opens nothing (restoring a template, Delete journal, Delete permanently, Delete all, and the like). `messages.save.before.goBack` stays inline in its dialog or page; the two texts have Windows wording in [Copy differences](#copy-differences).
 
 ### Writing paused
 
@@ -95,7 +96,8 @@ The failure itself is [save-failure](flows/save-failure.md). The "save first" re
 | Messages | Windows surface |
 | --- | --- |
 | `messages.library.deviceKeyUnavailable`, `messages.library.cannotOpen`, `messages.error.newerVersion` | The lock page's `InfoBar`: Warning for `messages.library.deviceKeyUnavailable`, Error for the others ([unavailable-content](screens/unavailable-content.md), [lock-screen](screens/lock-screen.md)) |
-| `library.problem.cantOpen.message` with `library.problem.notEncrypted.message` (a library made without encryption by version 1.0) | The library problem screen, which is not mapped yet ([unavailable-content](screens/unavailable-content.md)): text on the screen, not a message in an `InfoBar` or dialog |
+| `library.problem.*` (a library that cannot be opened, whose settings cannot be read, or that a newer version saved) | The library problem screen, which is not mapped yet (D56, [unavailable-content](screens/unavailable-content.md)): text on the screen, not a message in an `InfoBar` or dialog. `library.problem.notEncrypted.message` (a library made without encryption by version 1.0) does not occur on Windows, which never creates or reads an unencrypted library |
+| `messages.failure.*` (what an operation says when it fails with no text of its own: damaged or temporary data, a full disk, the secure store, offline, certificate, unreachable, other) | The alert dialog, or the error bar of the operation's dialog or page. The secure store failure (`messages.failure.keychain`) names the device key, which the Windows secure store (DPAPI behind `ISecretStore`) also holds. The system's own text never reaches the person |
 | `messages.refresh.*`, `common.entryMovedNotDisplayed`, `messages.connection.connectedNotDisplayed` | The alert dialog (Close `common.ok`), or the error bar of the operation's dialog while it is still open. They say what was saved and tell the person to reopen My Journal; nothing is described as failed that was stored |
 | `messages.generic.*` | The alert dialog |
 | `messages.export.*`, `messages.import.*` | Inline error bar of the export dialog or the Import archive page, or of the Backup page for exports that start there ([export-archive](flows/export-archive.md), [export-markdown](flows/export-markdown.md), [import-archive](flows/import-archive.md)) |
@@ -109,7 +111,7 @@ Messages marked unreachable or rare in the spec's notes are mapped like their gr
 
 - Unavailable and read-only content and `common.myJournalIsLocked` are in [unavailable-content](screens/unavailable-content.md) and [lock-screen](screens/lock-screen.md). There is no privacy cover on Windows ([platform.md, 20](platform.md#20-screen-capture-and-window-privacy)).
 - **App Lock is paused** (Windows Hello not set up, not available or turned off by policy while App Lock is on, D42) is a Warning `InfoBar`, not closable, at the top of the library window on every page while the state lasts; it is not part of the editor's notice order. Text and rules: [flows/app-lock](flows/app-lock.md).
-- Every key of the spec's Conflicts section is mapped in [kept-version-notice](screens/kept-version-notice.md), [settings-sync](screens/settings-sync.md) (the Changed on two devices group, `messages.conflict.kept.*`) and [resolve-conflict](flows/resolve-conflict.md). Settling a conflict has no message of its own: it is quiet and appears only in that group and in the notice above the open entry or template. `messages.lifecycle.combining` shows where a refused Move entry, Version history restore or Delete permanently shows its errors.
+- Every key of the spec's Conflicts section is mapped in [kept-version-notice](screens/kept-version-notice.md), [settings-sync](screens/settings-sync.md) (the Changed on two devices group, `messages.conflict.kept.*`) and [resolve-conflict](flows/resolve-conflict.md). Settling a conflict has no message of its own: it is quiet and appears only in that group and in the notice above the open entry or template. `messages.lifecycle.combining` shows where a refused Move entry, Version history restore, Delete permanently or Delete journal shows its errors; a held conflict that cannot be read shows `messages.conflict.unreadableAction` there instead ([resolve-conflict](flows/resolve-conflict.md)).
 - **Restore** (`messages.restore.destinationGone`, `common.entryMovedNotDisplayed`) and **the template chooser** (`library.templateChooser.entryChanged`) show in the alert dialog, as the spec's general error alert; the restored-elsewhere announcement is below.
 
 ### Title bar and command bar
@@ -128,7 +130,7 @@ Sync state has no title-bar text and no badge on the title bar during normal syn
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `sync-now` | The Sync page and the Sync status flyout, as the bar's or the card's action | none | As the spec's rule: connected, unlocked, not replacing the journals, no failed save, no sync the person started running |
-| `sync-reconnect` | The Sync page bar, the Devices page and the Sync status flyout | none | The state calls for it |
+| `sync-reconnect` | The Sync page bar, the Agent Access page and the Sync status flyout | none | The state calls for it |
 | `show-other-version`, `dismiss-kept-notice` | The other-version notice's action and close buttons | none | Unlocked |
 | `try-syncing-again` | The recovery notice | none | The journal is missing and the library syncs |
 
@@ -136,13 +138,16 @@ Keyboard: a bar's action button is in the tab order after the bar's title; Esc c
 
 ## Copy differences
 
-Sentence case applies as in [platform.md, 12](platform.md#12-copy-casing-ellipses-and-vocabulary): for example `messages.save.notSaved` reads "Not saved", `messages.syncStatus.title` "Sync status", `common.myJournalIsLocked` "My Journal is locked", and the action labels "Sync now", "Check again", "Set up server again…", "Connect again…", "Sign in…". Already proposed in platform.md and not repeated: `messages.save.mac.title` (this PC), the `messages.writingPaused.*` Mac wording, `messages.library.cannotOpen`, `messages.image.unavailable`, the "Close this sheet" strings. New here:
+Sentence case applies as in [platform.md, 12](platform.md#12-copy-casing-ellipses-and-vocabulary): for example `messages.save.notSaved` reads "Not saved", `messages.syncStatus.title` "Sync status", `common.myJournalIsLocked` "My Journal is locked", and the action labels "Sync now", "Check again", "Reconnect…". Already proposed in platform.md and not repeated: `messages.save.mac.title` (this PC), the `messages.writingPaused.*` Mac wording, `messages.library.cannotOpen`, `messages.image.unavailable`, the "Close this sheet" strings. New here:
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
 | `messages.syncStatus.settings` | Sync Settings… | Sync settings | ellipsis (opens a settings page) and casing |
+| `messages.save.before.tryAgain` | … Choose Try Again, then repeat … | … Select Try again, then repeat … | vocabulary (B26, B27) |
+| `messages.save.before.goBack` | … choose Try Again under Not Saved … | … select Try again under Not saved … | vocabulary (B26, B27) |
 | `messages.sync.pausedForSaveFailure` | … Choose Try Again in the entry. | … Select Try again in the entry. | vocabulary (B26) |
-| `messages.sync.localDataUnreadable` | … choose Export Archive in Settings > Backup. | … select Export archive in Settings > Backup. | vocabulary |
+| `messages.sync.localDataUnreadable`, `messages.failure.damagedReading`, `messages.failure.damagedSaving` | … choose Export Archive in Settings ▸ Backup. | … select Export archive in Settings > Backup. | vocabulary |
+| `settings.agents.requests.declineFailed` | … Open it and choose Don’t Allow to try again. | … Open it and select Don’t allow to try again. | vocabulary (B26) |
 | `messages.connection.serverChanged` | … Choose Continue to check it again. | … Select Continue to check it again. | vocabulary |
 | `messages.connection.setUpElsewhere` | … Choose it again to sign in. | … Select it again to sign in. | vocabulary |
 | `messages.sync.appUpdateNeeded` and the other "Update My Journal" texts | Update My Journal … | Unchanged. Where an action is needed, a link "Get updates" (new Windows-only string) opens the Microsoft Store's updates page | new string (D51, B38) |

@@ -20,6 +20,7 @@ When the same entry or template changed on this PC and on another, the shared en
 | Show Other Version | The `InfoBar`'s `ActionButton`, `messages.conflict.kept.showOther` | Runs `show-other-version`: the library shows the other version wherever it is (its journal selected and the search cleared, Templates, or Recently deleted), then marks the note seen |
 | Dismiss | The `InfoBar`'s close button, `AutomationProperties.Name` `common.dismiss`, with `Closed` marking the note seen | Runs `dismiss-kept-notice`. The close button is the only second control the `InfoBar` offers; the spec's "Dismiss" button is that button, named for Narrator and Voice Access |
 | Held: a version only a newer My Journal can read | The same `InfoBar` with `messages.conflict.kept.noticeUpdate` and no action button; the close button is hidden (`IsClosable` false) because it settles by itself | The "Get updates" link (D51) follows the text, as for the other Update My Journal texts |
+| Held: a version that cannot be opened | The same `InfoBar` with `messages.conflict.kept.noticeUnreadable` (damaged, or sealed under another key), no action button, `IsClosable` false | Wins over the row above: updating cannot help, so no "Get updates" link follows it. Nothing settles it and the app has no action to offer |
 
 ## Layout at each window width
 

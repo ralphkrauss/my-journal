@@ -2,7 +2,7 @@
 id: settings-privacy
 title: Settings ▸ Privacy (Windows)
 spec: screens/settings-privacy.md
-features: [encryption-status, change-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
+features: [encryption-status, change-password, forgot-password, sync-recovery, app-lock, mac-inactivity-lock, lock-now]
 status: draft
 sources:
   - https://learn.microsoft.com/en-us/uwp/api/windows.security.credentials.ui.userconsentverifier

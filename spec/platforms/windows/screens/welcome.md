@@ -22,9 +22,10 @@ What the window shows at launch, in the spec's order of precedence, as the `Fram
 
 1. Reading the configuration: a loading page.
 2. A library exists and is locked: the lock page ([platform.md, 13](../platform.md#13-device-authentication-and-app-lock), [screens/lock-screen](../../../screens/lock-screen.md)).
-3. No library: this page.
-4. A library from an early build whose recovery key is not confirmed: not applicable on Windows ([recovery-key](recovery-key.md)).
-5. Otherwise the library window.
+3. The library cannot be opened, its settings cannot be read, a newer version wrote it, or it was made without encryption by version 1.0: the library problem page ([unavailable-content](unavailable-content.md)). An unreadable settings file is never treated as a first launch, and this page never starts a new library over it.
+4. No library: this page.
+5. A library from an early build whose recovery key is not confirmed: not applicable on Windows ([recovery-key](recovery-key.md)).
+6. Otherwise the library window.
 
 | Spec element | Windows control | Notes |
 | --- | --- | --- |
@@ -35,7 +36,7 @@ What the window shows at launch, in the spec's order of precedence, as the `Fram
 | Primary action | `Button` with `AccentButtonStyle`: `library.welcome.start`, the first focus and the default of the page | Opens [create-library](../flows/create-library.md) |
 | Secondary action | A standard `Button`: `common.connectToServer` | Opens the Connect task page ([connect-to-server](connect-to-server.md)) |
 | Plain action | A standard `Button`: `common.importArchive` | Opens the archive file picker, then the Import archive task page ([import-archive](../flows/import-archive.md)) |
-| Error | A `ContentDialog` (Close `common.ok`, no title, content the error) over the page | A failure opening the configuration. [8.1](../platform.md#81-rules) |
+| Error | A `ContentDialog` (Close `common.ok`, no title, content the error) over the page | A failure from an action started here (Start a journal, Connect to a server, Import archive); the spec's `common.alertTitle` is dropped ([8.1](../platform.md#81-rules)). A failure opening the configuration does not reach this page: it shows the library problem page |
 
 The three buttons are one column of equal width (280 epx), centred under the message. Their spacing is 8 epx; the primary one is accent-coloured, the other two are neutral.
 

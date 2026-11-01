@@ -150,8 +150,8 @@ iPhone (603 x 1311):
 | ![Recently Deleted with one entry](../screenshots/iphone/recently-deleted-default.png) | One deleted entry under Entries and a month; footer under it; "Delete All" top right; search and compose at the bottom |
 | ![Delete All asking about Travel](../screenshots/iphone/recently-deleted-delete-all.png) | The alert for a deleted journal with three entries, opened from the top-right button; the list is dimmed behind it |
 | ![No Deleted Items](../screenshots/iphone/recently-deleted-empty.png) | The empty state, no Delete All button |
-| ![A deleted entry opened](../screenshots/iphone/recently-deleted-entry.png) | Read-only entry with the recovery notice and its Restore button above the title (captured with 1.0, which also showed Restore and Move…) |
-| ![A deleted journal opened](../screenshots/iphone/recently-deleted-journal-page.png) | The journal's page: name, count, Restore Journal, Delete Permanently…; Entry Actions dimmed (captured with 1.0, where the button read Restore Journal… and opened a sheet) |
+| ![A deleted entry opened](../screenshots/iphone/recently-deleted-entry.png) | Read-only entry with the recovery notice and its Restore button above the title (1.1: Restore only, no Move…) |
+| ![A deleted journal opened](../screenshots/iphone/recently-deleted-journal-page.png) | The journal's page: name, count, Restore Journal, Delete Permanently…; Entry Actions dimmed; Restore Journal acts at once, without a sheet (1.1) |
 | ![A journal and its entries listed](../screenshots/iphone/recently-deleted-journals.png) | Journals section with Travel, then Entries with a month and three rows, footer |
 
 iPad Pro 11-inch landscape (1210 x 834):

@@ -21,11 +21,12 @@ Every way sync can fail ends in exactly one state with one message and at most o
 | --- | --- | --- |
 | The state's message | The Sync page's `InfoBar` and the Sync status flyout | Severity and actions: [messages](../messages.md), Sync states |
 | Sync now, Try again, Check again | The `ActionButton` of the Sync page's bar when a bar shows, otherwise a `Button` in the server card (D49); the flyout's action | "Syncing…" with a small indeterminate `ProgressBar` (or the text alone) beside Last synced, visible at least half a second ([11](../platform.md#11-progress-and-announcements)); the button dims while a sync runs. Nothing is shown in the title bar, the command bar or the taskbar while the library syncs |
-| Set up server again…, Connect again…, Sign in… | One `ContentDialog` flow | [reconnect-to-server](reconnect-to-server.md) |
+| Reconnect… (`common.reconnect`), the one action of the not set up, restored or replaced, and access removed states | The Connect task page, opened at this PC's server | [reconnect-to-server](reconnect-to-server.md) |
+| Devices section of the Sync page | Has no message or reconnect button of its own: while the server refuses this PC the section is absent and the server card says why. If the device list is refused before any sync has said so, the app runs a sync to learn why, and without an answer the state is access removed | [settings-sync](../screens/settings-sync.md) |
 | Stop syncing | A confirmation dialog with no default button | [stop-syncing](stop-syncing.md) |
 | Sync status button | Title bar, trailing area, at every width (D47) | [sync-status](../screens/sync-status.md) |
 | Item refusals | The same bar and flyout, action Sync now | Messages in [messages](../messages.md) |
-| Changes made on two devices | Quiet, like offline: everything the device settles itself (entries and templates kept as two versions, journals, permanent deletions) appears only in the Changed on two devices group of the Sync page and in the notice above the open entry, never in the bar, the flyout or a notification, and never counts as a problem for the rating request. A held change adds the line `messages.conflict.kept.updateNeeded` to the Sync page and nothing else (and still counts as a problem for the rating request) | [resolve-conflict](resolve-conflict.md), [settings-sync](../screens/settings-sync.md) |
+| Changes made on two devices | Quiet, like offline: everything the device settles itself (entries and templates kept as two versions, journals, permanent deletions) appears only in the Changed on two devices group of the Sync page and in the notice above the open entry, never in the bar, the flyout or a notification, and never counts as a problem for the rating request. A held change adds the line `messages.conflict.kept.updateNeeded`, or `messages.conflict.kept.unreadable` for a version that cannot be opened at all (both can show), to the Sync page and nothing else: the sync state does not change, and it still counts as a problem for the rating request | [resolve-conflict](resolve-conflict.md), [settings-sync](../screens/settings-sync.md) |
 
 ## What starts a sync
 
@@ -50,9 +51,9 @@ Windows desktop apps keep running while a window is open and do not run when it 
 | Condition | Windows signal |
 | --- | --- |
 | Locked | App Lock's locked state (launch, Ctrl+L, inactivity, Win+L, sleep, user switch); saved writing is still sent as the lock happens |
-| The library is being replaced | The connect, encrypt and import flows hold the library |
+| The library is being replaced | The connect and import flows hold the library |
 | A save has failed | The save-failure state ([save-failure](save-failure.md)) |
-| A stopped state | Sign-in needed, not set up, restored or replaced, access removed, update My Journal: one check at launch and when the window is activated, at most every 10 minutes; the state's action or Sync now always runs |
+| A stopped state | Not set up, restored or replaced, access removed, update My Journal: one check at launch and when the window is activated, at most every 10 minutes; the state's action or Sync now always runs |
 
 ### Paces after a failure and the long wait
 
@@ -67,7 +68,7 @@ Not applicable to the sync itself. The bar, flyout and dialog are mapped in [mes
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
 | `sync-now` | Sync page; Sync status flyout | none | Connected, unlocked, not replacing the journals, no failed save, no sync the person started running |
-| `sync-reconnect` | Sync page bar; Devices page; Agent Access page; Sync status flyout | none | The state calls for it |
+| `sync-reconnect` | Sync page bar; Agent Access page; Sync status flyout | none | The state calls for it |
 | `stop-syncing` | Sync page | none | Connected, not replacing the journals |
 | `try-syncing-again` | The recovery notice of an entry whose journal has not arrived | none | The journal is missing and the library syncs |
 | `sync-status` | Title bar, trailing area | none | Sync needs the person |

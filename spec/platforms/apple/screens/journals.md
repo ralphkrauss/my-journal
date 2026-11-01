@@ -134,7 +134,7 @@ The iPhone captures are the stacked Journals page; the iPad captures show the si
 | Default | ![Journals page with All Entries, three journals, Templates and Recently Deleted](../screenshots/iphone/journals-default.png) | ![Sidebar with Journals title, Edit, counts and Settings](../screenshots/ipad/journals-default.png) |
 | Default, dark | ![dark](../screenshots/iphone/journals-default-dark.png) | ![dark](../screenshots/ipad/journals-default-dark.png) |
 | Edit mode | ![Edit mode: dimmed fixed rows, ellipsis menus and handles, blue confirm button](../screenshots/iphone/journals-edit.png) | ![Edit mode in the sidebar: checkmark in the bar, ellipsis menus and handles](../screenshots/ipad/journals-edit.png) |
-| Journal actions menu | ![Menu as captured with 1.0 (Rename, Default Template, Merge Into, Version History, Delete Journal); 1.1 has Rename and Delete Journal only](../screenshots/iphone/journals-actions-menu.png) | ![the same menu in the sidebar](../screenshots/ipad/journals-actions-menu.png) |
+| Journal actions menu | ![The journal actions menu in 1.1: Rename and Delete Journal](../screenshots/iphone/journals-actions-menu.png) | ![the same menu in the sidebar](../screenshots/ipad/journals-actions-menu.png) |
 | Delete confirmation | ![Alert: Delete Travel with its three entries](../screenshots/iphone/journals-delete-confirm.png) | ![alert](../screenshots/ipad/journals-delete-confirm.png) |
 | New Journal alert | ![Alert with an empty Name field and a disabled Create, keyboard open](../screenshots/iphone/journals-new-journal.png) | ![alert](../screenshots/ipad/journals-new-journal.png) |
 

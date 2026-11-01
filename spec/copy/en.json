@@ -5,7 +5,7 @@
   },
   "common.back": {
     "text": "Back",
-    "context": "Mac: returns from the password step to the first step (iPhone and iPad use the system back button)."
+    "context": "Back to the previous step of a short flow. Not used by the Apple apps since 1.1 (Start a Journal is one step; iPhone and iPad use the system back button). Windows: the name of the back arrow in a two-step dialog (platforms/windows/screens/settings.md)."
   },
   "common.cancel": {
     "text": "Cancel",
@@ -2199,10 +2199,6 @@
     "text": "The items were deleted, but My Journal couldn’t update the view. Reopen My Journal to continue.",
     "context": "The change was committed when Delete All in Recently Deleted finished, but reading the journals again for display failed."
   },
-  "messages.refresh.journalDeleted": {
-    "text": "The journal was deleted, but couldn’t be displayed. Reopen My Journal to try again.",
-    "context": "The change was committed when Delete Journal found the journal already deleted elsewhere, but reading the journals again for display failed."
-  },
   "messages.refresh.journalDeletedView": {
     "text": "The journal was deleted, but My Journal couldn’t update the view. Reopen My Journal to continue.",
     "context": "The change was committed when deleting a journal finished, but reading the journals again for display failed."
@@ -3116,7 +3112,7 @@
   },
   "settings.backup.verifyFailed": {
     "text": "Couldn’t verify it’s you. Try again.",
-    "context": "Red line under Export Archive or Export as Markdown when the device's authentication failed (not when it was cancelled, which says nothing)."
+    "context": "Red line under Export as Markdown when the device's authentication failed (not when it was cancelled, which says nothing). Export Archive asks for no authentication."
   },
   "settings.changePassword.authReason": {
     "text": {

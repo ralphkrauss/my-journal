@@ -33,7 +33,7 @@ The Templates collection of the [navigation pane](journals.md): the [entry list]
 | separator | | | |
 | Delete template | `library.entryActions.deleteTemplate` | Delete | Editable and not deleted. Moves to Recently deleted at once; Undo brings it back |
 
-A template is never used from this list: there is no New entry in, New entry from template or any other way to start an entry from a template here. A template is used from inside an empty entry ([template-chooser](template-chooser.md)). Errors use the general error dialog with the spec's messages.
+A template is never used from this list: there is no way to start an entry from a template here. A template is used from inside an empty entry ([template-chooser](template-chooser.md)). Errors use the general error dialog with the spec's messages.
 
 ## Layout at each window width
 

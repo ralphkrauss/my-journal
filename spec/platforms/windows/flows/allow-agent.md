@@ -21,7 +21,7 @@ An agent asks for access from its own app; the person allows it in My Journal by
 | 3 The request appears | In Settings > Agent access > Requests within a few seconds: the page polls every three seconds while visible and the window is active, and when the window is activated, and after the allow dialog closes. When the window is not the one in front (the person is in the agent's app) the request waits until the window is activated; nothing notifies the person, because the app has no notifications in version 1 ([platform.md, 19](../platform.md#19-single-instance-and-activation)) |
 | 4 to 6 Review, number, journals | The allow dialog; digits only; All journals (including ones created later) or Selected journals; a reconnect keeps its journals and end date and needs only the number |
 | 7 Allow | The server checks the number; a wrong number declines the request, one try (`settings.allowAgent.mismatch.title`, `settings.allowAgent.mismatch.message`). A new agent is named after its client, numbered when the name is taken. The dialog closes as soon as the server accepts, then this PC uploads the chosen journals' copy for the agent in the background |
-| 8 Don't allow | Declines; the agent's page tells the agent. The dialog closes at once; if the decline can't be sent, the Agent access page shows `settings.agents.requests.declineFailed` below the requests and the request stays (open-questions C26) |
+| 8 Don't allow | Declines; the agent's page tells the agent. The dialog closes at once and the decline is sent in the background by a service owned by the app (not by the Settings page), so closing Settings doesn't cancel it. The request is left out of the Requests list meanwhile. Once the server has recorded the decline, or no longer has the request, `settings.allowAgent.declinedAnnouncement` is announced once. If it can't be sent, the request returns to the list and the Agent access page shows `settings.agents.requests.declineFailed` as the footer of the Requests section, announced once; it stays until a later decline succeeds, the person opens that request again, a reload no longer lists it or the app locks. Erase and Stop syncing cancel a decline still being sent, without a message |
 
 ### Windows adds
 
@@ -50,7 +50,7 @@ None beyond the page files (sentence case; "this PC").
 
 ## Accessibility
 
-Allowed and declined are announced as notification events (`settings.allowAgent.allowedAnnouncement`, `settings.allowAgent.declinedAnnouncement`, `ImportantMostRecent`); the rest is in the page files.
+Allowed is announced when the server accepts, and declined once the server has recorded the decline, which can be after the dialog has closed (focus does not move), both as notification events (`settings.allowAgent.allowedAnnouncement`, `settings.allowAgent.declinedAnnouncement`, `ImportantMostRecent`). A decline that fails is announced with `settings.agents.requests.declineFailed`; the rest is in the page files.
 
 ## Different by design
 

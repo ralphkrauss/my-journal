@@ -40,11 +40,11 @@ Writing is saved on this device after every edit, quietly. When a save fails, th
    - iPhone and iPad: first in the entry's header, above the title, recovery and other-version notices. Once the alert is dismissed, the header scrolls to it without animation.
    - Mac: below the editor.
 4. **The person keeps writing, or tries again.**
-   - Typing continues normally; the writing is kept in memory and every edit tries to save again. A failed attempt shows the alert again.
+   - Typing continues normally; the writing is kept in memory and every edit tries to save again. A failed attempt while typing doesn't show the alert again: the notice already says it (open question A1).
    - Try Again (in the notice or the alert) saves the retained writing now. In the notice, both actions are dimmed and `messages.save.saving` shows with a small spinner while it runs.
 5. **Outcome.**
    - Saved: the notice disappears without an announcement, syncing resumes and the writing is sent after the usual pause.
-   - Still failing: the alert shows again and the notice stays. Nothing retries by itself.
+   - Still failing after Try Again, leaving the entry or another action the person chose: the alert shows again and the notice stays. Nothing retries by itself.
 
 ### While a save has failed
 

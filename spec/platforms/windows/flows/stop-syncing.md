@@ -18,7 +18,7 @@ This PC stops using its server and keeps everything it has, for example before m
 | --- | --- | --- |
 | Entry point | A card with a Stop syncing `Button` in its own group on the Sync page ([settings-sync](../screens/settings-sync.md)), `settings.sync.stopSyncing` ("Stop syncing", no ellipsis, [12.2](../platform.md#122-ellipsis)); disabled while the library is being replaced | Shown only while connected |
 | Confirmation | A `ContentDialog`. Title `settings.sync.stopSyncing.title` (a question naming the host); content `settings.sync.stopSyncing.message` and, when items have not reached the server, `settings.sync.stopSyncing.messageUnsent` (plural); Primary `settings.sync.stopSyncing.confirm`; Close `common.cancel`. **No default button** | Platform.md 8.1 lists Stop syncing among the confirmations whose Enter never chooses. It is not destructive (nothing is deleted), so the Primary button has the normal style, not a warning colour or icon, as the spec says |
-| After Stop syncing | The dialog closes; this PC forgets its connection credential (removed from the secret store, [14](../platform.md#14-secure-storage)) and stops syncing at once; pending changes stay, marked as not yet sent; the Sync page shows the not-connected state with Connect to a server… and `settings.sync.footer.notConnected`; the Sync status button and any sync bar go | The server is asked in the background to revoke this device; if it does not answer nothing more is done |
+| After Stop syncing | The dialog closes; this PC forgets its connection credential (removed from the secret store, [14](../platform.md#14-secure-storage)) and stops syncing at once; pending changes stay, marked as not yet sent; the Sync page shows the not-connected state with Connect to a server… and `settings.sync.footer.notConnected`; the Sync status button and any sync bar go | The server is asked in the background to revoke this device; if it does not answer nothing more is done. A decline of an agent request that is still being sent is cancelled without a message ([allow-agent](allow-agent.md)) |
 | Former Mac server | Not applicable | `settings.sync.footer.formerMacServer` and its Learn more link exist only on the Mac ([12.3](../platform.md#123-vocabulary)) |
 
 Rules of the spec kept: nothing is deleted; the library keeps the identity it last synced with, so connecting to the same server later continues by identity and sends what waited; Cancel changes nothing. To follow a server that moved, Stop syncing and then connect to the new address ([sync-recovery](sync-recovery.md)).
@@ -47,7 +47,7 @@ Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-voca
 | --- | --- | --- | --- |
 | `settings.sync.stopSyncing` | Stop Syncing… | Stop syncing | ellipsis (platform.md, 12.2) |
 | `settings.sync.stopSyncing.confirm` | Stop Syncing | Stop syncing | casing |
-| `settings.sync.stopSyncing.message` | … choose Connect to a Server in Settings > Sync. | … select Connect to a server in Settings > Sync. | vocabulary (platform.md, 12.3) |
+| `settings.sync.stopSyncing.message` | … choose Connect to a Server in Settings ▸ Sync. | … select Connect to a server in Settings > Sync. | vocabulary (platform.md, 12.3) |
 
 ## Accessibility
 

@@ -97,6 +97,8 @@ The dialect is CommonMark with the GitHub Flavored Markdown tables, task lists a
 
 Editors keep the bytes of blocks the person didn't change, including reference definitions, list markers, line endings (LF, CR or CRLF) and other source details, and write new or changed blocks so that the Markdown reads back as the same blocks. Content an editor can't show natively stays unchanged and can be edited as source.
 
+[conformance/markdown/](conformance/markdown/README.md) pins how 24 bodies read (the neutral block vocabulary), that the stored text is kept byte for byte, and the image references of 18 bodies. It does not pin how an edited block is written back; see [conformance/README.md](conformance/README.md#rules-without-fixtures).
+
 ## Images
 
 An image whose destination is exactly `attachments/` followed by a UUID refers to an attachment: no `./`, query, fragment, suffix or percent-encoding. This applies to every image, whether it stands alone, is inline, is inside a link or a table cell, or is reached through a reference definition. The image's alt text is its description; line breaks in it are written as spaces.

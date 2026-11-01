@@ -74,7 +74,8 @@ The editing control, the title control and the keys; the rules themselves follow
 | --- | --- | --- | --- |
 | N-1 to N-4 | Enter in an item | Care | Handle Enter, split the item in the model, apply new identity, number and unchecked state; the new item continues the formatting at the caret. The control's own list continuation must not run as well |
 | N-5, N-6 | Enter on an empty item | App | Leave the list, or move out one level, with the caret on it; no extra line at the end of the entry |
-| N-7, N-8 | Enter in a quote or heading | App | As specified; Return in the middle of a heading is not specified (open question D6) |
+| N-7 | Enter on an empty quote line | App | As specified |
+| N-8 | Enter in a heading, of any level | App | As specified: at the end a plain paragraph below; in the middle two headings of the same level (the first keeps the block's identity, the second gets a new one, is not trimmed, and the caret is at its start); at the very start of a non-empty heading an empty plain paragraph above it, the heading unchanged; in an empty heading it becomes a plain empty paragraph, no line added. With a selection, Return first replaces it and the result is classified by where the caret lands; a selection across blocks is replaced by a line break. The split with its new identity is one replacement: one undo restores the single heading with its identity. Typing after a split continues the heading without a link. Return during composition only commits it. The app handles Enter itself rather than leaving it to the control (D6, resolved by the owner on 2026-10-09) |
 | N-9 | typing on the line after a list | Care | After leaving a list the empty paragraph must not inherit list formatting from the control's carry-over of the previous paragraph's format |
 | N-10 | Enter over a selection ending with a line break | Care | The selection of a whole line in the control includes its paragraph mark |
 | N-11 | multi-line text inserted in one piece (voice typing, drop, paste) | Care | Further items as Return would make them; the control may already continue the list natively, so the result is normalised against the model |
@@ -134,11 +135,11 @@ The editing control, the title control and the keys; the rules themselves follow
 
 | Rules | Windows trigger | Rating | What is needed |
 | --- | --- | --- | --- |
-| F-1, F-3 | Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X, Ctrl+Shift+C | App | On for the whole selection unless every character that can carry it already has it, for all five styles (F-3 is merged into F-1; the control reports a mixed value as undefined, which turns on); each run keeps its other styles and size |
+| F-1, F-3 | Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X, Ctrl+Shift+C | App | One rule for all five styles: the style turns on for the whole selection unless the whole selection already has it, in which case it turns off, so a Mixed selection turns on (F-3 is merged into F-1). The state shown and the change made are computed from the same characters, those that can carry the style; characters that cannot are left out of both: a heading's text for Bold (F-2), text in a code block (F-5) and pictures. Line breaks never decide the state and take the new value when the style is applied. A selection with no character that can carry the style does nothing. After one press the control reads On whatever the selection held (a heading and a bold paragraph, a struck selection across a line break, a selection with a picture). The same rule runs in a table cell. Whether the editor control can run this over a mixed selection is for the editor spike to show; if not, the app computes the target value from the model and applies it to the character format of the range. Each run keeps its other styles and size |
 | F-2 | Bold in a heading | Care | A heading's weight is SemiBold (a weight value), not the Bold effect (a higher weight), so Bold shows Off and is not saved as `**` |
-| F-4 | no selection | Native | Changes only what the next typed text gets, through the collapsed selection's character format; it resets when the caret moves, as expected |
+| F-4 | no selection | Native | Changes only what the next typed text gets, through the collapsed selection's character format: it turns on unless the typing style already has it; it resets when the caret moves, as expected |
 | F-5 | in a code block | App | Commands disabled |
-| F-6 | the Formatting state | App | On, Off or Mixed from the selection's character format |
+| F-6 | the Formatting state | App | On, Off or Mixed from the selection's character format, counting only the characters that can carry the style (F-1); pressing a Mixed control turns the style on, so it then reads On |
 | F-7 | typing after inline code | Care | Continues the code; the control's format carry-over at a run boundary is to prove |
 
 #### P. Paragraph styles
@@ -178,6 +179,7 @@ The editing control, the title control and the keys; the rules themselves follow
 | Rules | Windows trigger | Rating | What is needed |
 | --- | --- | --- | --- |
 | L-1, L-2, L-4, L-5 | Ctrl+K; the Link dialog | App | Applies to the selection keeping each run's formatting; accepted addresses as in [link-editor](../screens/link-editor.md); link titles kept |
+| L-7 to L-10 | Edit link, Remove link | App | Mapped in [link-editor](../screens/link-editor.md): Edit link applies when the caret or whole selection is in one link (L-7), Done gives the whole link the new address and keeps its formatting (L-8), Remove link takes off every link the selection touches, one undo step, announced with `editor.link.removed` (L-9); both do nothing in a table cell or the source (L-10) |
 | L-3 | reading Markdown | Care | http, https and mailto shown as links; other destinations shown as plain text and kept unchanged |
 | L-6 | typing an address | Care | Nothing is linked automatically: the control's own URL detection, if it has one, is turned off or reversed |
 

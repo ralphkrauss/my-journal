@@ -17,7 +17,7 @@ The links that leave the app, the version, and the Help menu. Behaviour and copy
 
 ### About group on the Settings home page
 
-Header `settings.about.header`, after the six pane cards. Four [link cards](settings.md#card-patterns) in the spec's order, each opening the address in the default browser with `Launcher.LaunchUriAsync`, `Header` the label, `ActionIcon` the external-link glyph, `AutomationProperties.LocalizedControlType` "link":
+Header `settings.about.header`, after the five pane cards. Four [link cards](settings.md#card-patterns) in the spec's order, each opening the address in the default browser with `Launcher.LaunchUriAsync`, `Header` the label, `ActionIcon` the external-link glyph, `AutomationProperties.LocalizedControlType` "link":
 
 1. `common.privacyPolicy`
 2. `settings.about.support`

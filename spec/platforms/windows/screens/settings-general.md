@@ -11,7 +11,7 @@ sources:
 
 # Settings ▸ General (Windows)
 
-The General page: where new entries go, Markdown as you type, and the Erase group. Behaviour and copy keys are the spec's [Writing / General](../../../screens/settings-general.md); the page shell and card patterns are in [settings](settings.md).
+The General page: where new entries go, Markdown as you type, and the Erase group. Behaviour and copy keys are the spec's [General](../../../screens/settings-general.md); the page shell and card patterns are in [settings](settings.md).
 
 ## Controls
 
@@ -34,7 +34,7 @@ States:
 | Width (epx) | Layout | Apple equivalent |
 | --- | --- | --- |
 | Large, medium | Cards in the column of [settings](settings.md); the combo box and switch sit at the trailing edge of their cards | Mac General tab |
-| Small | The combo box and switch move under the card text at full width | iPhone Writing pane |
+| Small | The combo box and switch move under the card text at full width | iPhone General pane |
 | Text size 200% or more | As small; the footers wrap | Accessibility sizes |
 
 ## Commands and shortcuts

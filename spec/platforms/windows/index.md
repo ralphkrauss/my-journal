@@ -32,7 +32,7 @@ Sources: [screens/library-window](../../screens/library-window.md), [screens/ent
 | `template-chooser` | screen | `screens/template-chooser.md` | reviewed | Flyout anchored to the editor with filter and list, filling the open empty entry; File ▸ Use a template…; IME composition rule. |
 | `entry-editor` | screen | `screens/entry-editor.md` | draft | Depends on two parallel editor control spikes with written pass and fail criteria; layout, notices, blocks, Zoom, UI Automation. |
 | `format-sheet` | screen | `screens/format-sheet.md` | draft | Formatting bar and selection mini-toolbar; toggle buttons; the Format menu. |
-| `link-editor` | screen | `screens/link-editor.md` | reviewed | Link dialog. |
+| `link-editor` | screen | `screens/link-editor.md` | draft | Link dialog: add and edit forms, Remove link, link context menu. |
 | `image-description` | screen | `screens/image-description.md` | reviewed | A page with a list of pictures and text boxes. |
 | `change-date` | screen | `screens/change-date.md` | reviewed | Dialog with a `CalendarDatePicker`, date only. |
 | `move-entry` | screen | `screens/move-entry.md` | reviewed | Dialog with a list of journals; moving only (restoring is plain Restore). |
@@ -54,8 +54,8 @@ Sources: [screens/settings](../../screens/settings.md), [screens/lock-screen](..
 | --- | --- | --- | --- | --- |
 | `settings` | screen | `screens/settings.md` | reviewed | Settings page, home cards, About group, `BreadcrumbBar`; sets the card patterns the other settings pages reuse. |
 | `settings-general` | screen | `screens/settings-general.md` | reviewed | General page: default journal, Markdown as you type, Erase group. |
-| `settings-sync` | screen | `screens/settings-sync.md` | reviewed | Sync page: status, Sync now, Stop syncing, Changed on two devices (clickable cards for entries, templates and edits against deletions; Clear list), footers as descriptions. |
-| `settings-devices` | screen | `screens/settings-devices.md` | reviewed | Devices page: list, Add device, revoke. |
+| `settings-sync` | screen | `screens/settings-sync.md` | draft | Sync page: status, the one action (Reconnect…), Changed on two devices, Devices group, Stop syncing, footers as descriptions. |
+| `settings-devices` | screen | `screens/settings-devices.md` | draft | Devices group of the Sync page: Add device, list, revoke. |
 | `settings-privacy` | screen | `screens/settings-privacy.md` | draft | Privacy page: encryption, App lock expander, Lock when inactive. |
 | `settings-backup` | screen | `screens/settings-backup.md` | draft | Backup page: archive and Markdown groups; pickers. |
 | `settings-agent-access` | screen | `screens/settings-agent-access.md` | reviewed | Agent Access page: address, requests, agents. |
@@ -68,12 +68,12 @@ Sources: [screens/settings](../../screens/settings.md), [screens/lock-screen](..
 | `lock-screen` | screen | `screens/lock-screen.md` | draft | Lock page, Windows Hello, App Lock paused, no privacy cover, capture exclusion; written with `platform.md` sections 13, 14 and 20. |
 | `agent-detail` | screen | `screens/agent-detail.md` | reviewed | Agent's page. |
 | `allow-agent` | screen | `screens/allow-agent.md` | reviewed | Allow access dialog. |
-| `connect-to-server` | flow | `flows/connect-to-server.md` | draft | Step by step, with the task page's states. |
+| `connect-to-server` | flow | `flows/connect-to-server.md` | draft | Step by step, with the task page's states; typed-code path, no scanner; every server must use encryption. |
 | `pair-device` | flow | `flows/pair-device.md` | reviewed | Both sides; no camera needed. |
-| `change-password` | flow | `flows/change-password.md` | reviewed | Steps, the failure branches and Forgot password?. |
+| `change-password` | flow | `flows/change-password.md` | reviewed | Steps, the failure branches and Forgot password? inside the dialog. |
 | `app-lock` | flow | `flows/app-lock.md` | draft | Triggers on Windows: launch, Ctrl+L, inactivity, session lock, sleep. |
 | `allow-agent` | flow | `flows/allow-agent.md` | reviewed | Connect and allow an agent. |
-| `erase` | flow | `flows/erase.md` | reviewed | What Windows removes; Windows Hello when App Lock is on. |
+| `erase` | flow | `flows/erase.md` | draft | What Windows removes; Windows Hello when App Lock is on; the variant for a library that cannot be opened (new in 1.1 review, needs the library problem screen mapping). |
 
 ## Batch 3: messages, states and flows not covered
 
@@ -89,10 +89,10 @@ Sources: [messages](../../messages.md), [flows/sync-recovery](../../flows/sync-r
 | `version-history` | screen | `screens/version-history.md` | reviewed | Entry and template version history page with side-by-side comparison. |
 | `messages` | messages | `messages.md` | reviewed | Sync states, save failures, kept versions, unavailable content as `InfoBar`s and dialogs; severity table; announcements. |
 | `create-library` | flow | `flows/create-library.md` | reviewed | Start a Journal with a master password. |
-| `import-archive` | flow | `flows/import-archive.md` | draft | File activation, Open picker, preview, restore or add. |
-| `export-archive` | flow | `flows/export-archive.md` | draft | Save picker, progress, password check. |
+| `import-archive` | flow | `flows/import-archive.md` | draft | `.journalbackup` file activation, Open picker, preview, restore or add; journals that cannot be opened. |
+| `export-archive` | flow | `flows/export-archive.md` | draft | Save picker for the one-file `.journalbackup` archive, progress; no authentication and no password check (Change password pointer). |
 | `export-markdown` | flow | `flows/export-markdown.md` | draft | Folder picker, Windows-safe file names, Windows Hello when App Lock is on. |
-| `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | Reconnect. |
+| `reconnect-to-server` | flow | `flows/reconnect-to-server.md` | draft | The one Reconnect… action for the three server states. |
 | `stop-syncing` | flow | `flows/stop-syncing.md` | reviewed | Confirmation dialog. |
 | `sync-recovery` | flow | `flows/sync-recovery.md` | reviewed | Triggers: window activation, network change, resume; paces. |
 | `resolve-conflict` | flow | `flows/resolve-conflict.md` | draft | Changes made on two devices: nothing shows when it happens; the notice, the quiet list, opening a note, the short refusals. |

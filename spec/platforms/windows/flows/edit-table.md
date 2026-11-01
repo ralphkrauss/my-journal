@@ -24,20 +24,20 @@ Writes in a Markdown (GitHub) table directly in the entry: type in cells, move b
 | The table in the body | A table in the editor, with hairline borders, columns of equal width of at least 7 × the text size inside a horizontal scroller when they do not fit; 12 epx extra after the table | Rows are as tall as their tallest cell. Spike B edits them natively; Spike A draws cell editors over reserved space and must still meet TB-1 to TB-7 |
 | Cell being edited | The cell is edited in place with lists, images and paragraph styles disabled; text wraps for display; a cell holds one line, so typed or pasted line breaks become spaces (TB-2) | Typing in a cell is one step in the entry's single history (TB-1, TB-7) |
 | Header row | The first row, SemiBold weight (not the Bold format, TB-5) | |
-| Cell context menu | A context flyout with the standard text commands as primary commands and, after a separator, a secondary sub-menu `library.menu.format.table` ▸ `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, an `editor.table.alignment` sub-menu (`editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right`), `library.menu.format.table.deleteRow`, `library.menu.format.table.deleteColumn`, `library.menu.format.table.deleteTable` | The alignment sub-menu follows [commands.md](../commands.md) and open question D7. Opened by right-click, Shift+F10, the Menu key and touch long-press, at the focused cell |
-| Format ▸ Table | `MenuFlyoutSubItem` of the Format menu with the same list and order as the cell context menu: Add row below, Add column after, an Alignment sub-menu (the column's alignment checked), a separator, Delete row, Delete column, Delete table | Enabled only while a cell is being edited (D7, built in 1.1; open-questions C26) |
+| Cell context menu | A context flyout with the standard text commands as primary commands and, after a separator, a secondary sub-menu `library.menu.format.table` ▸ `library.menu.format.table.addRow`, `library.menu.format.table.addColumn`, an `editor.table.alignment` sub-menu (`editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right`; three `RadioMenuFlyoutItem`s in one group, the column's alignment checked, Left when it has none), a separator, `library.menu.format.table.deleteRow`, `library.menu.format.table.deleteColumn`, `library.menu.format.table.deleteTable` | One list in one order in both places ([commands.md](../commands.md); D7 resolved). Opened by right-click, Shift+F10, the Menu key and touch long-press, at the focused cell |
+| Format ▸ Table | `MenuFlyoutSubItem` of the Format menu with the same list and order as the cell context menu: Add row below, Add column after, an Alignment sub-menu (the same three radio items, the column's alignment checked), a separator, Delete row, Delete column, Delete table | Enabled only while a cell is being edited (D7, built in 1.1) |
 
 ### Steps
 
 1. **Insert ▸ Table** adds a table with 2 columns, a header row and one body row, all empty, and the caret goes to the first header cell. A click or touch in any cell of an existing table edits that cell.
 2. **Moving.** Tab goes to the next cell (left to right, then the next row); Shift+Tab to the previous cell; Enter to the cell below. Past the last cell the caret leaves the table to the line after it; before the first cell, to just before the table (TB-3, N-15).
-3. **Formatting in a cell.** Bold, Italic, Underline, Strikethrough and Inline code (menu, shortcuts, the formatting bar and the mini-toolbar) apply to the cell's selection or typing; paragraph styles and lists are disabled.
-4. **Structure.** Add row below inserts an empty row under the cell's row; Add column after inserts an empty column after the cell's column (no alignment); Delete row, Delete column and Delete table remove them; deleting the last row or column removes the table and the caret goes to the line after it; Align left, center and right set the column's alignment (stored in the delimiter row, `:--`, `:-:`, `--:`). After a structure change the caret stays in the same row and column (or the nearest one left).
+3. **Formatting in a cell.** Bold, Italic, Underline, Strikethrough and Inline code (menu, shortcuts, the formatting bar and the mini-toolbar) apply to the cell's selection or typing by the one rule of F-1 ([editing-rules](editing-rules.md)); paragraph styles and lists are disabled.
+4. **Structure.** Add row below inserts an empty row under the cell's row; Add column after inserts an empty column after the cell's column (no alignment); Delete row, Delete column and Delete table remove them; deleting the last row or column removes the table and the caret goes to the line after it; Alignment ▸ Left, Center and Right set the column's alignment (stored in the delimiter row, `:--`, `:-:`, `--:`); the column's current alignment is checked, and a column with none shows Left checked (choosing Left still stores `:--`). After a structure change the caret stays in the same row and column (or the nearest one left).
 5. **Undo.** Typing in one cell is one step until anything else changes; each structure change is one step; both share the entry's history, so Ctrl+Z in a cell undoes in the entry (TB-1, TB-7).
 
 ### States
 
-- **Read-only entry:** cells can be selected and copied, not edited; no structure menu.
+- **Read-only entry:** cells can be selected and copied, not edited; no Table sub-menu is built in the cell menu, and Format ▸ Table is dimmed.
 - **Source view:** the table is its Markdown text ([source-view](source-view.md)).
 - **Selection and copy.** Select All, a selection across a table and Ctrl+C including a table give other apps its Markdown as plain text (PA-3); the app builds this from the model, so it is the same whichever control draws the cells.
 
@@ -57,7 +57,7 @@ Cell edits keep the other cells' text, alignment marks, escaped pipes and the su
 | --- | --- | --- | --- |
 | `insert-table` | Format ▸ Insert ▸ Table; the formatting bar's Insert drop-down | none | The entry is editable |
 | `table-add-row`, `table-add-column`, `table-delete-row`, `table-delete-column`, `table-delete-table` | Format ▸ Table; cell context menu | none | A cell is being edited |
-| `table-align-left`, `table-align-center`, `table-align-right` | Cell context menu ▸ Table ▸ Alignment | none | A cell is being edited |
+| `table-align-left`, `table-align-center`, `table-align-right` | Format ▸ Table ▸ Alignment; cell context menu ▸ Table ▸ Alignment | none | A cell is being edited |
 | `table-next-cell`, `table-previous-cell` | Tab, Shift+Tab in a cell | Tab, Shift+Tab | A cell is being edited |
 | `table-cell-below` | Enter in a cell | Enter | A cell is being edited |
 
@@ -78,7 +78,7 @@ Sentence case on every label: "Add row below", "Add column after", "Delete row",
 
 - **None for behaviour.** Tables are edited in place exactly as on the Mac, whichever editor control wins (owner decision, 2026-10-07).
 - **Cell menu** is a context flyout with the Table sub-menu; Windows has no Services or AutoFill items to remove.
-- **Alignment is a sub-menu**, as on iPhone and iPad, not five items.
+- **Alignment is a sub-menu with a checked item** in both menus, as on every platform since 1.1, not five items.
 
 ## Open questions
 

@@ -109,7 +109,7 @@ Keyboard: on iPad with a hardware keyboard, the list is reachable with arrow key
 
 | State | iPhone | iPad |
 | --- | --- | --- |
-| Settings list, light. The pane rows (five since 1.1; this capture predates the change and shows Writing and Devices), the About section with the version, the Erase section starting at the bottom edge | ![Settings list on iPhone, light](../screenshots/iphone/settings-default.png) | ![Settings sheet on iPad, light](../screenshots/ipad/settings-default.png) |
+| Settings list, light. The five pane rows, the About section with the version, the Erase section starting at the bottom edge | ![Settings list on iPhone, light](../screenshots/iphone/settings-default.png) | ![Settings sheet on iPad, light](../screenshots/ipad/settings-default.png) |
 | Settings list, dark | ![Settings list on iPhone, dark](../screenshots/iphone/settings-default-dark.png) | ![Settings sheet on iPad, dark](../screenshots/ipad/settings-default-dark.png) |
 
 The iPad captures show the sheet over the library with the sample journals; its list is cut off after Source Code and Rate My Journal. The Mac captures are on each pane's page (`settings-general`, `settings-privacy`, `settings-backup`).
@@ -131,4 +131,4 @@ Design records: `docs/design/owner-decisions-2026-09-25.md`, `ios-delete-all-and
 
 ## Open questions
 
-See [open-questions.md](../../../open-questions.md), A30: the question says the Mac window opens on Sync, but the current code initialises `settingsTab` to `.general`, so the item looks resolved and the spec's Rules text is out of date. The library-problem text is now `settings.libraryProblem` in the spec.
+None. (A30, the Mac window opening on Sync, was fixed in build 18; `settingsTab` starts at `.general`.) The library-problem text is `settings.libraryProblem` in the spec.

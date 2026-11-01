@@ -89,7 +89,7 @@ None. `library.menu.file.useTemplate` and `library.templateChooser.popoverTitle`
 | --- | --- |
 | iPhone | ![Sheet titled Choose a Template with a pinned search field, five templates and the keyboard](../screenshots/iphone/template-chooser-default.png) |
 | iPad | ![Popover from the use a template link in an empty entry, search field and five templates](../screenshots/ipad/template-chooser-default.png) |
-| Mac | ![Sheet as captured with 1.0 from File, New Entry from Template, with search field, five templates and Cancel; 1.1 opens the same sheet from File, Use a Template, without the journal picker](../screenshots/mac/template-chooser-default.png) |
+| Mac | ![Sheet opened from File, Use a Template…, with search field, five templates and Cancel and no journal picker](../screenshots/mac/template-chooser-default.png) |
 
 The iPad capture shows a system keyboard-introduction panel under the popover; it is not part of the app.
 

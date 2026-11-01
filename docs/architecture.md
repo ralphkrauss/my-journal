@@ -10,7 +10,7 @@ My Journal is local-first. Each device keeps a complete copy of the user's journ
 | JournalCore | `apps/apple/Packages/JournalCore` | Swift package without UI code: document model, Markdown, encryption, local storage, sync, archives and agent access. |
 | Server | `server/src/Journal.Api` | ASP.NET Core Minimal API with EF Core and SQLite. It stores revisions and attachments and never needs the vault key. |
 | Spec | `spec/` | Platform-neutral specification of every screen, flow, message, command and string, with per-platform implementation notes and screenshots in `spec/platforms/`. Features are specified here in the same change as their code. |
-| Windows app | `apps/windows` | Planned: a native WinUI 3 client in C#; not built yet. See its `AGENTS.md`. |
+| Windows app | `apps/windows` | Planned: a native WinUI 3 client in C# with its own C# engine; not built yet. See its `AGENTS.md`. [Porting the engine](porting-the-engine.md) maps JournalCore's behaviours to the contracts, fixtures and tests a port reproduces. |
 | Protocol | `protocol/` | Language-independent contracts and interoperability fixtures for record encryption, sync, pairing, recovery, archives, lifecycle and agent access. |
 | Deployment | `deploy/`, `packaging/`, `server/Dockerfile` | Compose files for local, Tailscale and public HTTPS hosting; the non-root container image; standalone server packages. |
 

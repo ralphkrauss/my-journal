@@ -34,7 +34,7 @@ So a Windows PC joining from an iPhone or iPad uses typed codes, with the phone 
 - **Timers.** The QR code changes every two minutes (the old one is watched 30 seconds more), the session lasts ten minutes, the server is asked every four seconds and three failures in a row show the unreachable status; the new device polls every second, up to every 16 seconds when the server asks. On Windows these are `DispatcherTimer`s tied to the dialog, stopped when it closes. The PC's display is kept on while a code is shown ([add-device](../screens/add-device.md)).
 - **Leaving or locking declines a waiting request** (best effort): the dialog's Close button, Esc, Alt+F4 (the window's close ends the app, so the request is declined first) and a lock do the same. If the app is closed without a chance to decline, the request expires.
 - **A name** shown for a pending device is cleaned as the spec says and shown as plain text.
-- **Network changes.** A lost connection while looking up or waiting shows the spec's messages (`messages.server.unavailable`, `messages.server.unanswered`) and, for failed approval, `settings.addDevice.error.unconfirmed` with only Done. Windows adds one trigger: `NetworkStatusChanged` ends a wait that is already failing sooner than the next poll ([platform.md, 30](../platform.md#30-sync-lifecycle-and-power)). The platform's own error text for a network failure is not shown (open-questions A9): the spec's message is.
+- **Network changes.** A lost connection while looking up or waiting shows the spec's messages (`messages.server.unavailable`, `messages.server.unanswered`) and, for failed approval, `settings.addDevice.error.unconfirmed` with only Done. Windows adds one trigger: `NetworkStatusChanged` ends a wait that is already failing sooner than the next poll ([platform.md, 30](../platform.md#30-sync-lifecycle-and-power)). A network failure is worded as sync words it (`messages.failure.offline`, `messages.failure.certificate`, `messages.failure.unreachable`); the platform's own error text is never shown (A9, resolved in build 18).
 - **Errors** are the spec's table, shown as the `InfoBar` or field error of the dialog ([Dialog patterns](../screens/settings.md)); the incomplete-code error is announced.
 
 ## Layout at each window width
@@ -45,7 +45,7 @@ The dialogs follow their files. Nothing in the flow depends on the width, except
 
 | Command | Placement | Shortcut | Enabled when |
 | --- | --- | --- | --- |
-| `add-device` | Button on the Devices page, link in two dialogs | — | Connected, loaded, not busy |
+| `add-device` | First row of the Devices section of the Sync page (the section is absent while the server refuses this PC), link in two dialogs | — | Connected, devices loaded, not busy |
 | `add-device-approve` | Approving dialog | `Ctrl+Enter` | The confirmation is shown |
 | `connect-confirm-check-code` | New device's dialog | `Ctrl+Enter` | The check code is shown |
 | `add-device-cancel`, `connect-cancel` | Close buttons | `Esc` | Not while approving or installing |

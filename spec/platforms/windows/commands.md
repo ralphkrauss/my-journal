@@ -35,7 +35,7 @@ On Windows the menus are File, Edit, Format, View and Help; the application and 
 | `use-a-template` | `library.menu.file.useTemplate`; `library.templateChooser.useTemplate`; `editor.body.placeholder.templateLink` | File ▸ Use a template…; the link in an empty entry's placeholder, opening a flyout | — | app | Template chooser flyout ([9](platform.md#9-sheets-popovers-and-notices)) anchored to the editor; the menu item is dimmed, not hidden, unless the link is shown. |
 | `new-journal` | `common.newJournalEllipsis` | File ▸ New journal…; New journal button above the navigation pane items | `Ctrl+Shift+J` | app | A dialog with a name field. Leaves Editor Only first. |
 | `pin-entry` | `library.entryActions.pin` / `library.entryActions.unpin` | File ▸ Pin entry / Unpin entry (own group after New journal…) | — | — | No shortcut: Ctrl+P is Print on Windows. |
-| `import-archive` | `common.importArchive` | File ▸ Import archive…; first-launch page; Settings ▸ Backup (button) | — | — | Open picker for a `.journalbackup` file (the archive is one file), then the Import archive task page. Dropping an archive file on the window or double-clicking it in Explorer starts the same flow ([19](platform.md#19-single-instance-and-activation)). |
+| `import-archive` | `common.importArchive` | File ▸ Import archive…; first-launch page; the lock page's missing-key group; Settings ▸ Backup (button) | — | — | Open picker for a `.journalbackup` file (the archive is one file), then the Import archive task page. Dropping an archive file on the window or double-clicking it in Explorer starts the same flow ([19](platform.md#19-single-instance-and-activation)). |
 | `export-archive` | `common.exportArchive` | File ▸ Export archive…; Settings ▸ Backup (button) | — | — | Save picker suggesting `settings.backup.archiveFilename` (the archive is one file, D29). No warning about synced folders such as OneDrive: where the file is saved is the person's decision and risk (owner decision, 2026-10-07). |
 | `export-markdown` | `library.menu.file.exportMarkdown` (menu); `settings.backup.exportMarkdown` (Settings) | File ▸ Export journals as Markdown…; Settings ▸ Backup (button) | — | — | Folder picker; Windows-safe file names ([16](platform.md#16-files-and-pickers)); no warning about synced folders such as OneDrive (owner decision, 2026-10-07). The two labels differ, as on Apple (see open-questions B). |
 | `delete-all-recently-deleted` | `library.menu.file.deleteAll` (menu); `library.recentlyDeleted.deleteAll` (button) | File ▸ Delete all in Recently deleted (after a separator); button in the Recently deleted list header | `Ctrl+Shift+Delete` | app | No ellipsis ([12.2](platform.md#122-ellipsis)); the confirmation dialog follows [8](platform.md#8-dialogs). |
@@ -123,8 +123,8 @@ Commands that act on the open entry or template. Behaviour is in [screens/entry-
 | `insert-code-block` | `library.menu.format.insert.codeBlock` | Format ▸ Insert ▸ Code block | — | — | Or type three backticks and Enter (K-2). |
 | `insert-table` | `library.menu.format.insert.table` | Format ▸ Insert ▸ Table | — | — |  |
 | `insert-horizontal-rule` | `library.menu.format.insert.horizontalRule` | Format ▸ Insert ▸ Horizontal rule | — | — | Or type three hyphens and Enter (K-2). |
-| `insert-link` | `library.menu.format.insert.link` / `library.menu.format.insert.editLink` | Format ▸ Insert ▸ Add Link… (Edit Link… with the caret in a link) | `Ctrl+K` | editor | Dialog ([screens/link-editor](../../screens/link-editor.md)). The edit form and the casing of the new labels are not mapped yet (the spec added them after the Apple build 18). |
-| `remove-link` | `library.menu.format.insert.removeLink` | Format ▸ Insert ▸ Remove link; the text context menu on a link | — | — | Proposed, not yet reviewed: the Apple apps have it in the Format menu and the context menu. |
+| `insert-link` | `library.menu.format.insert.link` / `library.menu.format.insert.editLink` | Format ▸ Insert ▸ Add Link… (Edit Link… with the caret in a link) | `Ctrl+K` | editor | Dialog ([screens/link-editor](../../screens/link-editor.md)). The edit form (Edit link…, Done, Remove link) is mapped in the same file; the labels follow the sentence-case rule. |
+| `remove-link` | `library.menu.format.insert.removeLink` | Format ▸ Insert ▸ Remove link; the text context menu on a link | — | — | Enabled when the caret or selection touches a link (L-9), never in a table cell or the source. Also the Remove link button in the Edit link dialog and the text context menu on a link ([screens/link-editor](screens/link-editor.md)). |
 | `insert-image` | `library.menu.format.insert.image` | Format ▸ Insert ▸ Image… | — | — | Image file picker starting in Pictures. |
 | `exit-code-block` | `editor.format.exitCodeBlock` | The formatting bar's overflow menu (enabled only in a code block) | `Down` | editor | Down Arrow at the end of a code block's last line. |
 
@@ -132,9 +132,9 @@ Commands that act on the open entry or template. Behaviour is in [screens/entry-
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `table-add-row` | `library.menu.format.table.addRow` | Format ▸ Table ▸ Add row below; table cell context menu ▸ Table | — | — |  |
+| `table-add-row` | `library.menu.format.table.addRow` | Format ▸ Table ▸ Add row below; table cell context menu ▸ Table | — | — | The Table list is one list in one order in both places: Add row below, Add column after, Alignment ▸, a divider, Delete row, Delete column, Delete table. Not built for a read-only entry; Format ▸ Table is dimmed there ([flows/edit-table](flows/edit-table.md)). |
 | `table-add-column` | `library.menu.format.table.addColumn` | Format ▸ Table ▸ Add column after; cell context menu ▸ Table | — | — |  |
-| `table-align-left` / `table-align-center` / `table-align-right` | `editor.table.alignment` ▸ `editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right` | Cell context menu ▸ Table ▸ Alignment ▸ Left, Center, Right | — | — | A sub-menu keeps the menu short, as on iPhone and iPad (see open-questions D7). |
+| `table-align-left` / `table-align-center` / `table-align-right` | `editor.table.alignment` ▸ `editor.table.alignment.left`, `editor.table.alignment.center`, `editor.table.alignment.right` | Format ▸ Table ▸ Alignment ▸ and cell context menu ▸ Table ▸ Alignment ▸ Left, Center, Right | — | — | A `MenuFlyoutSubItem` of three `RadioMenuFlyoutItem`s in one group; the column's current alignment is checked, and a column with none shows Left checked (choosing Left still stores `:--`). One list in both places (open-questions D7, resolved). |
 | `table-delete-row` | `library.menu.format.table.deleteRow` | Format ▸ Table ▸ Delete row; cell context menu | — | — |  |
 | `table-delete-column` | `library.menu.format.table.deleteColumn` | Format ▸ Table ▸ Delete column; cell context menu | — | — |  |
 | `table-delete-table` | `library.menu.format.table.deleteTable` | Format ▸ Table ▸ Delete table; cell context menu | — | — |  |
@@ -160,7 +160,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `settings-open-pane` | `settings.pane.*` | A card on the Settings home page opens the pane's page | — | — | General, Sync, Devices, Privacy, Backup, Agent access, in that order. |
+| `settings-open-pane` | `settings.pane.*` | A card on the Settings home page opens the pane's page | — | — | General, Sync, Privacy, Backup, Agent access, in that order (five panes since 1.1). Devices is a section of Sync. |
 | `settings-done` | `common.done` | Not offered | — | — | Settings is a page: Back (Alt+Left), the breadcrumb or the back button leave it. |
 
 ### Writing and General
@@ -174,9 +174,9 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `connect-to-server` | `common.connectToServer` | Accent button in the Sync, Devices and Agent access pages when not connected; first-launch page | — | — | Opens the Connect task page. |
+| `connect-to-server` | `common.connectToServer` | Accent button in the Sync and Agent access pages when not connected; first-launch page | — | — | Opens the Connect task page. |
 | `sync-now` | `messages.sync.action.syncNow` / `common.tryAgain` / `messages.sync.action.checkAgain` | The `ActionButton` of the Sync page's bar when a bar shows, otherwise a button in the server card (never both, D49); the Sync status flyout | — | — | "Syncing…" with a small indeterminate `ProgressBar` (or the text alone) for at least half a second: the page stays usable, so it is not a ring ([11](platform.md#11-progress-and-announcements)). |
-| `sync-reconnect` | `common.reconnect` | The state's action in an `InfoBar` or card on the Sync and Agent access pages | — | — |  |
+| `sync-reconnect` | `common.reconnect` | The state's action in an `InfoBar` or card on the Sync page (once), the Sync status flyout and the Agent access page (access refused) | — | — | One action, `common.reconnect`, for the three states; the state decides the step, not the label ([flows/reconnect-to-server](flows/reconnect-to-server.md)). |
 | `stop-syncing` | `settings.sync.stopSyncing` | A card with a Stop syncing button in its own group on the Sync page | — | — | No ellipsis; confirmation dialog with no default button. |
 | `open-setup-guide` | `settings.sync.footer.howToSetUp` | Hyperlink in the card description | — | — |  |
 | `open-former-server-guide` | `settings.sync.footer.learnMore` | Not offered | — | — | Mac-only state. |
@@ -207,7 +207,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `add-device` | `settings.devices.add`; `settings.connect.ready.addDevice` | Button in the Devices page | — | — | Opens the dialog. |
+| `add-device` | `settings.devices.add`; `settings.connect.ready.addDevice` | First row of the Devices section of the Sync page | — | — | Opens the dialog. The section is absent while the server refuses this PC. |
 | `revoke-device` | `settings.devices.revoke` | Button in the device's row; confirmation dialog | — | — | Destructive dialog rules ([8](platform.md#8-dialogs)). |
 | `devices-try-again` | `common.tryAgain` | Button in the error `InfoBar` | — | — |  |
 | `add-device-enter-code` | `settings.addDevice.enterCodeInstead` | Dialog: link button under the QR code | — | — |  |
@@ -223,7 +223,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` (the pointer under the Export Archive footer) | Button in the Privacy page; link button in the Export Archive card | — | — | Opens the dialog ([flows/change-password](flows/change-password.md)). |
+| `change-password` | `settings.privacy.changePassword` (Settings ▸ Privacy); `settings.backup.archive.changePassword` under `settings.backup.archive.changePasswordPrompt` (the pointer at the end of the Export Archive footer) | Button in the Privacy page; link button in the Export Archive card | — | — | Opens the dialog ([flows/change-password](flows/change-password.md)). |
 | `change-password-submit` | `settings.changePassword.change` | Dialog: primary button | `Enter` | dialog | Enter in the last field. |
 | `change-password-retry` | `common.tryAgain` | Dialog: button | — | — |  |
 | `change-password-cancel` | `common.cancel` | Dialog: close button | `Esc` | dialog |  |
@@ -241,7 +241,7 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `forgot-password` | `settings.changePassword.forgot` | Change Password dialog: link button under Current password | — | — | Offered only when Windows Hello is available and the journals exist only on this PC; asks for Windows Hello first (`settings.changePassword.authReason`). |
+| `forgot-password` | `settings.changePassword.forgot` | Change Password dialog: link button under Current password | — | — | Shown from the start whenever eligible: Windows Hello is available, the journals exist only on this PC (not connected), unlocked, not being replaced; asks for Windows Hello first (`settings.changePassword.authReason`). |
 | `archive-open` | `common.continue` | Task page: primary button | `Enter` | dialog | Enter in the password field. |
 | `archive-import` | `settings.archiveImport.restore` / `settings.archiveImport.importAsNew` | Task page: primary button | — | — |  |
 | `archive-import-cancel` | `common.cancel` | Task page: Cancel button | — | — | Esc is not bound. |
@@ -257,13 +257,13 @@ Settings is a page in the main window ([10](platform.md#10-settings)); sheets op
 
 ### Library problem
 
-Not mapped yet. The Apple apps added these commands in build 18 (the library problem screen); the Windows page for the screen is written against the earlier lock-screen note and needs a new mapping, which goes through the design gate ([open-questions.md](../../open-questions.md)).
+The library problem screen is not mapped yet (D56): the Windows page for it is written against the earlier lock-screen note and needs a new mapping, which goes through the design gate ([open-questions.md](../../open-questions.md)). `erase-unopened` is mapped on the lock page for a missing device key; `import-archive` is offered there too. The screen never says a library is not encrypted on Windows, which never creates or reads an unencrypted library.
 
 | id | Copy key | Placement | Shortcut | Scope | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `retry-opening` | `common.tryAgain` | Not mapped yet | — | — | Proposed: the primary button of the page that replaces the library. |
-| `erase-unopened` | `settings.erase.button` | Not mapped yet | — | — | Proposed: Windows Hello first when App lock is on or can't be known. |
-| `open-library-guide` | `library.problem.learnMore` | Not mapped yet | — | — | Proposed: a hyperlink button. |
+| `retry-opening` | `common.tryAgain` | Library problem screen, not mapped yet | — | — | Proposed: the primary button of the page that replaces the library. |
+| `erase-unopened` | `settings.erase.button` | Lock page, the group captioned `library.problem.missingKey.caption` (device key unavailable), mapped in [screens/lock-screen](screens/lock-screen.md); on the library problem screen, not mapped yet | — | — | Windows Hello first when App lock is on or can't be known; one warning dialog, no Export archive… ([flows/erase](flows/erase.md)). |
+| `open-library-guide` | `library.problem.learnMore` | Library problem screen, not mapped yet | — | — | Proposed: a hyperlink button. |
 
 ### Agent Access
 
@@ -300,7 +300,7 @@ Shortcuts and gestures Windows people expect that have no Apple command id.
 | --- | --- | --- | --- |
 | Finish saving the open entry now, silently | `Ctrl+S` | app | A hidden accelerator with no menu item and no message; a failed save shows the usual notice. Windows people press it by habit (open-questions D27). |
 | Move between the navigation pane, the list, the formatting bar (when shown) and the editor | `F6`, `Shift+F6` | app | Microsoft's "next UI pane" keys. Always leaves the editor, so Tab can stay a tab. |
-| Back (stacked layout, Settings pages, task pages, review, history and Image descriptions pages) | `Alt+Left` | app | Also the mouse back button and the back button. Not in dialogs. A page with unsaved work or a running action asks first. Esc is never Back ([7.2](platform.md#72-additions)). |
+| Back (stacked layout, Settings pages, task pages, history and Image descriptions pages) | `Alt+Left` | app | Also the mouse back button and the back button. Not in dialogs. A page with unsaved work or a running action asks first. Esc is never Back ([7.2](platform.md#72-additions)). |
 | Zoom the editor text | Ctrl+mouse wheel, touchpad pinch | — | Not keys; same range as `zoom-in` and `zoom-out`. |
 
 ## Keys in the text

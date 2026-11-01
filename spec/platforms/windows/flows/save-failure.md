@@ -24,7 +24,7 @@ When saving the open entry fails, the writing stays on screen and in memory, the
 | Lock screen: `common.saveFailedLocked` | The lock page's error `InfoBar` | [unavailable-content](../screens/unavailable-content.md). No entry title |
 | Mac only: closing or quitting with an unsaved entry | A `ContentDialog` on window close, Alt+F4 and File ▸ Exit: title `messages.save.mac.title`, content `messages.save.mac.message`, Close `messages.save.mac.keepOpen`; the window stays open | Applies on Windows as the one window: [library-window](../screens/library-window.md). Not offered when there is nothing unsaved |
 | Sign-out, restart or shutdown with an unsaved entry | The app sets a shutdown block reason (`ShutdownBlockReasonCreate`) with `messages.save.mac.title` and `messages.save.mac.message`, and removes it as soon as the entry is saved or the window is closed by the person | Windows lets the person choose to continue shutting down anyway; the app never refuses outright and never blocks without a failed save. Normal saves hold shutdown only for the brief save ([3](../platform.md#3-windows-and-instances)) |
-| The "save first" refusals (`messages.save.before.*` and the others of the spec's table) | Inline in the dialog or page of the operation, else the alert dialog | [messages](../messages.md), Save failures |
+| The "save first" refusals: one typed refusal with two wordings | `messages.save.before.tryAgain` in the alert dialog (restoring a template, Delete journal, Delete permanently, Delete all, Move entry when Restore calls it), which has Try again while a save has failed; `messages.save.before.goBack` inline in the dialog or page of every other operation (Move entry and New journal, Version history restore, Restore journal, Change date, Image descriptions, Export archive, Export as Markdown, Import archive, Connect to a server) and anywhere that does not say it is the alert. If the save has succeeded by the time the alert would show, nothing is shown. A new operation needs no new sentence | [messages](../messages.md), Save failures |
 | Writing paused (the library is being replaced) | An Informational `InfoBar` above the title: `messages.writingPaused.connecting` after 1 second, `messages.writingPaused.connectionFailed`; no action. | Show connection is not offered: the Connect task page is modal over the only window and is the way to leave the state. The editor is read-only meanwhile |
 | An archive opened while the library is replaced | The alert dialog with `messages.writingPaused.updating`, Close `common.ok` | |
 | Template suggestion hidden, Change date's Save dimmed, Erase unavailable, rating request not shown, sync paused | As the spec's table | The Sync page says why with `messages.sync.pausedForSaveFailure` |
@@ -78,11 +78,11 @@ The keys named `messages.save.mac.*` also serve Windows; their Mac-only name is 
 
 ## Different by design
 
-- **A failure while typing is not a dialog.** The spec shows the alert after every failed attempt, including attempts made by typing. A modal dialog that opens under the caret takes keyboard focus, so the next characters go to the dialog and the writing is not kept by the editor. On Windows the persistent bar and one Narrator notification tell the person, the dialog is kept for failures caused by a deliberate action, and the writing is kept in memory either way (D48).
+- **A failure while typing is not a dialog.** The spec (A1, build 18) shows the alert when saving first fails and again for a retry the person asked for, so a failure that first happens while typing would open a dialog. A modal dialog that opens under the caret takes keyboard focus, so the next characters go to the dialog and the writing is not kept by the editor. On Windows the persistent bar and one Narrator notification tell the person, the dialog is kept for failures caused by a deliberate action, and the writing is kept in memory either way (D48).
 - **The notice is above the writing**, not below it.
 - **Shutdown block reason** replaces macOS's refusal to quit; Windows decides, the app only says why it should not.
 - **No Show connection button**: the Connect page is the only way into that flow.
 
 ## Open questions
 
-Recorded in [open-questions.md](../../../open-questions.md): D48 (failed save while typing), A1 (save failure alert repeats).
+Recorded in [open-questions.md](../../../open-questions.md): D48 (failed save while typing). A1 (the alert once per failure) was resolved in build 18: later failures leave the notice and say nothing, which is also what Windows does.

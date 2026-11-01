@@ -23,7 +23,7 @@ A small status control that appears only when sync needs the person: it says wha
 | Nothing moves when it appears | The button takes the end of the drag region, so no other control shifts when it appears or goes. There is no reserved empty place | The old reserved gap was needed only in the editor header's command bar |
 | The menu | A `Flyout` (not a `MenuFlyout`), `Placement` BottomEdgeAlignedRight, 320 epx wide, content a `StackPanel` | A disabled menu item cannot take keyboard focus or be reached by Narrator, so the message cannot be a disabled item as on the Mac. In the flyout it is ordinary text that Narrator reads first |
 | 1. The state's message | `TextBlock`, `Body`, wrapping, `IsTextSelectionEnabled` true: the `messages.sync.*` text, or an item-level message, or `messages.sync.waiting` when none is held | The same text as the Sync page's bar |
-| 2. The state's single action | One `Button`, accent style: `messages.sync.action.syncNow`, `common.tryAgain`, `messages.sync.action.checkAgain` or `common.reconnect`, by state | The one primary action of the surface. The connect actions close the flyout, then open the Connect task page ([reconnect-to-server](../flows/reconnect-to-server.md)). After Sync now, Try again and Check again the flyout closes and focus returns to the button |
+| 2. The state's single action | One `Button`, accent style: `messages.sync.action.syncNow`, `common.tryAgain`, `messages.sync.action.checkAgain` or `common.reconnect`, by state | The one primary action of the surface. Reconnect… (`common.reconnect`, the one action for every state that needs the person to connect again) closes the flyout, then opens the Connect task page titled `settings.connect.reconnect.title`, which checks this PC's server at once ([reconnect-to-server](../flows/reconnect-to-server.md)). After Sync now, Try again and Check again the flyout closes and focus returns to the button |
 | 3. Sync settings | `HyperlinkButton` `messages.syncStatus.settings`, last | Opens the Settings page at Sync ([10](../platform.md#10-settings)); saves the open entry first |
 | Update messages | For `messages.sync.appUpdateNeeded`, a second `HyperlinkButton` "Get updates" under the action | New Windows-only string; opens the Microsoft Store's updates page (D51, B38) |
 | Busy | A sync the person started shows no progress here; the Sync page shows "Syncing…" | As the spec |
@@ -54,7 +54,7 @@ Keyboard: Tab reaches the button in the title bar, after the menu bar; Enter or 
 
 ## Copy differences
 
-Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): `messages.syncStatus.title` is "Sync status", and the actions "Sync now", "Check again", "Try again", "Sign in…". Beyond that:
+Sentence case ([platform.md, 12](../platform.md#12-copy-casing-ellipses-and-vocabulary)): `messages.syncStatus.title` is "Sync status", and the actions "Sync now", "Check again", "Try again", "Reconnect…". Beyond that:
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |

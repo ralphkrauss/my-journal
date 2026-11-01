@@ -3,7 +3,7 @@ id: erase
 title: Erase journals and settings (Windows)
 spec: flows/erase.md
 features: [erase-device]
-status: reviewed
+status: draft
 sources:
   - https://learn.microsoft.com/en-us/uwp/api/windows.security.credentials.ui.userconsentverifier
 ---
@@ -30,10 +30,18 @@ Removes everything My Journal keeps on this PC, as if it had just been installed
 
 ### What is removed on Windows
 
-- **Removed:** the library (journals, entries, templates, Recently deleted, images, history) and its database with its write-ahead and shared-memory files (the database is closed before the rename); the configuration; the secrets file protected with the Windows Data Protection API (`ISecretStore`: the library's key and this PC's server credentials), by deleting it; App Lock and Lock when inactive; the default journal; the last open collection and entry; earlier copies of the library; an unfinished encryption copy; leftovers of imports and exports in the temporary folder; Format Markdown as you type; the rating request's usage; and the device-only window state in local settings: window position, size and maximised state, list width, Show editor only, zoom if stored.
+- **Removed:** the library (journals, entries, templates, Recently deleted, images, history) and its database with its write-ahead and shared-memory files (the database is closed before the rename); the configuration; the secrets file protected with the Windows Data Protection API (`ISecretStore`: the library's key and this PC's server credentials), by deleting it; App Lock and Lock when inactive; the default journal; the last open collection and entry; earlier copies of the library; leftovers of imports and exports in the temporary folder; Format Markdown as you type; the rating request's usage; and the device-only window state in local settings: window position, size and maximised state, list width, Show editor only, zoom if stored.
 - **Stays:** the server and everything on it; other devices; and files the person exported with the pickers (archives, Markdown folders, saved images), wherever they were saved, including OneDrive folders. Erase says nothing about them because the app does not track them; the spec's wording applies.
 - **Not applicable:** files of the server earlier Mac versions ran (no such server exists on Windows), and the Mac's former-server footer.
 - **Not touched:** the app's package itself, the Store entitlement and anything the Windows jump list holds (it holds only the New entry task, never journal names, [platform.md, 19](../platform.md#19-single-instance-and-activation)).
+
+### Erasing journals that cannot be opened
+
+The spec's variant for a library that cannot be opened reads nothing and must work whatever state the files and the secret store are in. It is offered on the lock page when the device key is unavailable ([lock-screen](../screens/lock-screen.md)), and on the library problem screen after one failed Try again, which is not mapped yet (D56, [unavailable-content](../screens/unavailable-content.md)); not for a library a newer version saved. On Windows:
+
+- **Authenticate first** with Windows Hello (`settings.erase.authReason`) when App Lock is on or cannot be known (the configuration cannot be read); cancelled or failed: nothing happens. A PC without Hello goes on.
+- **The warning** is `settings.erase.alert.unopened`, built from `settings.erase.alert.unopened.reasonCantOpen` or `settings.erase.alert.unopened.reasonNeedsKey` and `settings.erase.alert.unopened.serverKnown` or `settings.erase.alert.unopened.serverUnknown`, with Primary `settings.erase.alert.erase` (destructive) and Close `common.cancel`, no default button and no Export archive… button.
+- **Erase** asks for no second authentication. The configuration file is renamed into the to-be-deleted folder as it is, even when it does not decode, and the rest goes by a list built first: every folder and file the app left in its local data, and the secrets file. The server is signed out with the saved connection when it could be read. Failure to start: `settings.erase.failed.title` with `settings.erase.failed.message`, and nothing was removed. Then the first-launch page shows.
 
 ### Windows details
 

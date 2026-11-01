@@ -77,7 +77,7 @@ There is no About section and no Done button: About is in the Help menu (`screen
 
 ## Rules
 
-- The computer's settings window remembers the selected tab for the session. Its initial tab when the app starts is **Sync** (the model's default), not General. See [open-questions.md](../open-questions.md), A30.
+- The computer's settings window remembers the selected tab for the session. Its initial tab when the app starts is **General**, the first tab (`AppModel.settingsTab`; the earlier Sync default was fixed in build 18, [open-questions.md](../open-questions.md), A30).
 - On the computer, Settings opens independently of the journal window; it can be open while no journal window is.
 - After Erase Journals and Settings: on the computer, if no journal window is open, one opens (showing the first-launch screen) and the settings window closes; on phone and tablet the sheet closes and, about 0.6 seconds later, VoiceOver is told the screen changed so its focus moves to the first-launch screen.
 - Settings never shows journal content while locked.

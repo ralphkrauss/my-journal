@@ -56,6 +56,7 @@ The library's key is kept for this PC and user with the Windows Data Protection 
 - The page opens directly in the credential form, with `messages.library.deviceKeyUnavailable` (Warning) above the field; there is no Windows Hello button, because there is no key to unlock with.
 - A wrong password shows `messages.error.invalidRecoveryKey`; the field is cleared and keeps focus.
 - On success the key is protected and saved again through `ISecretStore` and the journals open. If the app cannot save it (the local folder is read-only or full) the journals still open for this session, a one-time Warning `InfoBar` says that the key could not be saved on this PC and that the password will be asked again at the next launch (so that launch is not a surprise), and the same page appears at the next launch; the spec does not say more (D43).
+- **For a person who no longer has the password.** Below the form, a group captioned `library.problem.missingKey.caption` ({credential} in lower case): a `StackPanel` with `AutomationProperties.Name` that caption, so Narrator reads it as one container, holding the caption as a `TextBlock` (secondary) and two `HyperlinkButton`s, Import archive… (`import-archive`) and Erase journals and settings… (`erase-unopened`). Neither is red; the warning dialog protects Erase ([settings-erase](settings-erase.md)). Both ask Windows Hello first when App Lock is on, and Erase also when the setting cannot be known; a PC without Hello goes on. The same group is not shown when the credential form is only an alternative to Windows Hello. The library problem page for a library that cannot be opened at all is [unavailable-content](unavailable-content.md), which is not mapped yet (D56).
 - The blob is never in Documents, a roaming profile or a OneDrive folder, and Erase removes it.
 
 ### No privacy cover
@@ -81,6 +82,7 @@ The page has no state to lose: layouts change under the lock page without effect
 | `use-credential` | Hyperlink | — | After a failed attempt, with a password |
 | `unlock-with-credential` | Default button of the credential form | `Enter` | Field not empty |
 | `use-device-unlock` | Hyperlink | — | The PC can still use Windows Hello |
+| `import-archive`, `erase-unopened` | Hyperlinks in the missing-key group | — | Only when the device key is unavailable |
 | `lock-my-journal` | File menu while unlocked (not here) | `Ctrl+L` | Not while locked |
 
 Win+L is the system lock and is not intercepted; it locks the library too ([flows/app-lock](../flows/app-lock.md)). Alt+F4 closes the window while locked; nothing is saved because nothing is unsaved.

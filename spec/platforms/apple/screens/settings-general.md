@@ -76,7 +76,7 @@ Keyboard: the page adds no keys; the picker and switch are standard controls.
 
 | Device | State |
 | --- | --- |
-| iPhone | ![General on iPhone](../screenshots/iphone/settings-general-default.png) (the capture predates the rename and its title still reads Writing) Default journal "Personal", Markdown switch on, both footers. |
+| iPhone | ![General on iPhone](../screenshots/iphone/settings-general-default.png) Default journal "Personal", Markdown switch on, both footers. |
 | iPad | ![General on iPad](../screenshots/ipad/settings-general-default.png) The same inside the Settings sheet. |
 | Mac | ![General on Mac](../screenshots/mac/settings-general-default.png) The General tab, with the Erase group at the bottom; the window is inactive in the capture, so the controls are drawn in their inactive colours. |
 

@@ -122,3 +122,7 @@ Known differences elsewhere:
 - Editors that show the source (iA Writer, Bear, Obsidian's source mode) show `<!-- -->` and `<u>` as text.
 - Hard line breaks are written as two trailing spaces, which editors that trim whitespace remove.
 - Imported soft line breaks render as spaces on GitHub.
+
+## Fixtures
+
+[conformance/markdown-export/](conformance/markdown-export/README.md): `names-v1.json` (safe names, numbering, YAML strings, headings, dates and folder names) and `library-v1.json` (a whole library and the exact folder the export writes). The Swift tests are `ConformanceExportNamesTests` and `ConformanceExportLibraryTests`. A client passes when its export of the library in `library-v1.json` is the same tree, file for file.

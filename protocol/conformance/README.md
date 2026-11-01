@@ -35,6 +35,23 @@ Current checks:
 
 Windows (C#) and Android (Kotlin) clients add their own tests against the same files.
 
+## Rules without fixtures
+
+Contracts and Swift tests define these rules, but no file here pins them, so a new client can only check them against the documents, the Swift tests named in [docs/porting-the-engine.md](../../docs/porting-the-engine.md) and a real server. Ranked by the risk that two clients diverge without any test noticing:
+
+1. **Markdown writing.** `markdown/` pins how 24 bodies read and what the reference writer writes for them, plus 18 image-reference bodies. Rewriting an edited block (escaping, list marker and indentation spelling, edge spaces as character references, the inert comment between adjacent marks, table cells, an empty item before a nested item, a table interrupting a paragraph) and the segment metadata are defined only by the Swift tests `MarkdownFidelityTests` and `MarkdownTests`. The title the lists show for an untitled entry, which [conflicts.md](../conflicts.md#copies) uses for copies, comes from the rendered text of the blocks, not the Markdown source; the conflict fixtures cover plain paragraphs only.
+2. **The local store's change rules and ordinary sync.** `sync/exchanges-v1.json` pins the server's answers and `sync/conflict-scenarios-v1.json` pins conflict outcomes. Applying a pulled change over a dirty, queued or conflicted record, immutable queued operations and their acknowledgement, rejected records, images before records, page and cursor atomicity, retry timing and the order of one round have no fixture.
+3. **An archive from another client.** `archive/v2/database/` has no records (a script cannot seal records), so restoring a database with records that a non-Apple client wrote, and the ZIP writer's output as read by the Apple app, are proven only by the first real archive from that client. The `encrypted.zip` archive shows how the Apple writer's records look inside.
+4. **Reconciliation after a server restore.** One scenario (`server-restored-to-a-backup-and-three-devices-reconnect`) and the continuity cases of `exchanges-v1.json`; the digest-based detection of a rolled-back server, `reconcile_heads` and the image re-check have none.
+5. **Journal names.** The uniqueness and numbering rule of [journal-lifecycle.md](../journal-lifecycle.md#journal-names) (which journal keeps a name, the smallest free number, case-insensitive comparison) is unpinned, and the comparison's exact case folding is not specified.
+6. **The library record's merge rules** ([records.md](../records.md#merging-instead-of-reviews)): `records/library-record-v1.json` and `journal-ranks-v1.json` pin reading, sealing and ranks only.
+7. **Lifecycle and deletion.** An entry's effective location, Restore's fallback journal, moving, the scope check of Delete Permanently and the receiving rules for markers ([journal-lifecycle.md](../journal-lifecycle.md), [permanent-deletion.md](../permanent-deletion.md)) are covered only through conflict rows 4, 5 and 7, the scenarios and Swift tests.
+8. **Joining a server with local journals.** The derived identities (`design/join-with-local-journals.md`) and additive import into an existing library ([archive.md](../archive.md#restoring-and-importing)).
+9. **Version History and recovery.** Checkpoint timing and limits (`design/version-checkpoints.md`), copying an earlier version ([history-recovery.md](../history-recovery.md)), and `archivedAt` handling ([entry-archiving.md](../entry-archiving.md)).
+10. **Agent access beyond cryptography.** Approval, tokens, publishing the copy and the MCP tools ([agent-access-server.md](../agent-access-server.md)) are tested by the server's own tests only; `agent-copy/` pins the key derivations and sealing.
+
+Pairing's X25519 agreement is pinned (RFC 7748 keys in `crypto/encryption-v2.json`) but only Swift recomputes it; .NET has no portable X25519, so a C# client must bring a library and prove it with that vector.
+
 ## Changing a contract
 
 - **Never edit a fixture in place** to make a test pass or to follow a change. A published fixture is what existing clients were built and tested against.

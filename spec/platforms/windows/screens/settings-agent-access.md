@@ -24,6 +24,8 @@ Shown only when connected, the list has loaded and requests are waiting. Header 
 - `Header`: the client's name, cleaned as the spec says (control, format and direction characters removed, whitespace collapsed, at most 40 characters then "…", `settings.agents.anAgent` when empty), always plain text in a `TextBlock`, one line; it wraps at text size 200% or more.
 - `Description`: "{host the agent returns to} · {when}"; {when} is `settings.agents.justNow` under a minute, otherwise relative time built by the app (B34).
 - `AutomationProperties.Name` `settings.agents.requestLabel`, `HelpText` `settings.agents.requestHint`. Activating the card opens [allow-agent](allow-agent.md).
+- A request being declined and not yet answered by the server is left out of the list, even when a refresh still lists it.
+- **Decline could not be sent.** Only then, a `Caption` `TextBlock` in the secondary brush below the cards, `settings.agents.requests.declineFailed` with {name} cleaned as for the card (plain text, the agent's own words, never an instruction); it is not an `InfoBar` and not red, because the words carry it. The request's card is back in the list. It is announced once when it appears (a notification event, `MostRecent`) and goes when a later decline succeeds, the person opens that request again, a reload lists the request no more, or the window locks. How the dialog reports the same failure is in [allow-agent](allow-agent.md).
 
 ### Agents group
 
@@ -41,8 +43,8 @@ Header `settings.agents.connect.header`, then by state:
 | --- | --- |
 | Not connected | A [primary button card](settings.md#card-patterns): `Header` `settings.agents.connect.notConnected`, accent `Button` `common.connectToServer` |
 | Loading, first time | A card with a small indeterminate `ProgressBar` and `settings.agents.loading` (the page stays usable) |
-| Server needs an update | `InfoBar` (Warning), `messages.connection.serverNeedsUpdate` |
-| This device lost access | `InfoBar` (Warning), `settings.agents.connect.noAccess`, `ActionButton` `common.reconnect` |
+| Server needs an update | `InfoBar` (Warning), `messages.connection.serverNeedsUpdate` (a server below protocol revision 1); for a server that speaks a newer wire major, `messages.connection.updateApp` |
+| This device lost access | `InfoBar` (Warning), `settings.agents.connect.noAccess`, `ActionButton` `common.reconnect` (runs `sync-reconnect`: the Reconnect page, [reconnect-to-server](../flows/reconnect-to-server.md)) |
 | No public HTTPS address | `InfoBar` (Warning), `settings.agents.connect.publicUrlRequired` or `settings.agents.connect.httpsRequired`, and a `HyperlinkButton` `settings.agents.connect.guide` |
 | Unreachable | `InfoBar` (Error), `settings.agents.connect.unreachable`, `ActionButton` `common.tryAgain` |
 | Ready | A card: `Header` `settings.agents.mcpAddress`; `Description` the address in `Cascadia Mono` (`IsTextSelectionEnabled`, wrapping, below the label at text size 200% or more); trailing `Button` `common.copy` |
@@ -72,7 +74,8 @@ Requests are read when the page appears, when the window is activated, every thr
 | `open-agent` | Navigation card per agent | Enter or Space | Always |
 | `copy-mcp-address` | Button in the address card | — | Ready state |
 | `share-mcp-address` | Not offered | — | Copy only, as on the Mac |
-| `connect-to-server` | Primary button card; action of the access bar | as in commands.md | Not connected; access lost |
+| `connect-to-server` | Primary button card | as in commands.md | Not connected |
+| `sync-reconnect` | Action of the access bar | as in commands.md | This PC lost access |
 | `agents-try-again` | Action of the error bar | — | After an error |
 | `open-agent-guide` | Hyperlink | — | Always |
 

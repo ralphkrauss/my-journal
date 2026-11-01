@@ -2,8 +2,8 @@
 id: settings-sync
 title: Settings ▸ Sync (Windows)
 spec: screens/settings-sync.md
-features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changed-on-two-devices-list, former-mac-server-notice]
-status: reviewed
+features: [sync-connect, sync-now, sync-status-footer, stop-syncing, sync-recovery, changed-on-two-devices-list, conflict-kept-both, former-mac-server-notice, devices-list, revoke-device, add-device]
+status: draft
 sources:
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/infobar
   - https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/progress-controls
@@ -11,7 +11,7 @@ sources:
 
 # Settings ▸ Sync (Windows)
 
-The Sync page: which server this PC syncs with, how syncing stands, the one action that fits, Stop syncing and Changed on two devices. Behaviour, states and copy keys are the spec's [Settings ▸ Sync](../../../screens/settings-sync.md); the shell and patterns are in [settings](settings.md#card-patterns).
+The Sync page: which server this PC syncs with, how syncing stands, the one action that fits, what the app settled when something changed on two devices, the devices that sync with the server, and Stop syncing. Behaviour, states and copy keys are the spec's [Settings ▸ Sync](../../../screens/settings-sync.md); the shell and patterns are in [settings](settings.md#card-patterns).
 
 ## Controls
 
@@ -30,11 +30,15 @@ Header `settings.connect.server`.
 | State | Control | Notes |
 | --- | --- | --- |
 | Not connected | A [primary button card](settings.md#card-patterns): `Header` `settings.sync.footer.notConnected`; `Description` a `HyperlinkButton` `settings.sync.footer.howToSetUp` (opens the sync guide in the default browser); accent `Button` `common.connectToServer` | The footer and the link sit with the button they explain. The Mac-only former-server footer (`settings.sync.footer.formerMacServer`, `settings.sync.footer.learnMore`) is never shown |
-| Connected: server | `SettingsCard`, `Header` the address as typed (`IsTextSelectionEnabled`, `BodyStrongTextBlockStyle`), `Description` the library note when one applies and no bar shows, trailing the action button when it holds the action | Holds the single action of the spec's table only when no bar shows or the bar's state has none (Sync now, and the disabled Sync now beside `messages.sync.pausedForSaveFailure`); otherwise the bar carries it (D49). Standard `Button`; accent only for Sign in, Set up server again and Connect again |
+| Connected: server | `SettingsCard`, `Header` the address as typed (`IsTextSelectionEnabled`, `BodyStrongTextBlockStyle`), `Description` the library note when one applies and no bar shows, trailing the action button when it holds the action | Holds the single action of the spec's table only when no bar shows or the bar's state has none (Sync now, and the disabled Sync now beside `messages.sync.pausedForSaveFailure`); otherwise the bar carries it (D49). Standard `Button`; accent only for Reconnect… |
 | Connected: last synced | A value card, `Header` `settings.sync.lastSynced`, value the description | Shown while a sync the person started runs, and once this device has completed a sync with this server. While Sync now runs the value is a small indeterminate `ProgressBar` with `settings.sync.syncing` (or the text alone: the page stays usable, so not a ring, [platform.md, 11](../platform.md#11-progress-and-announcements)); otherwise `settings.sync.lastSynced.justNow`, a relative description, `settings.sync.lastSynced.yesterday` or `settings.sync.lastSynced.date`. A `DispatcherTimer` refreshes it every minute while the page is open and the window is active |
 | Connected: not on server yet | A value card, `Header` `settings.sync.notOnServerYet`, value `common.itemCount` | Only when items waiting. Read when the page appears and after every sync |
 
-The action button's title is chosen from the state alone, as in the spec's table: `messages.sync.action.syncNow`, `common.tryAgain`, `common.reconnect`, `messages.sync.action.checkAgain`. The ones that open the Connect task page keep their ellipsis. Windows has no relative-time formatter, so "5 minutes ago" and "2 hours ago" are built by the app (B34); the date forms use `DateTimeFormatter` with the user's regional format ([platform.md, 31](../platform.md#31-dates-time-zones-and-formats)).
+The action button's title is chosen from the state alone, as in the spec's table: `messages.sync.action.syncNow`, `common.tryAgain`, `common.reconnect`, `messages.sync.action.checkAgain`. Reconnect… (`common.reconnect`) is the one action that replaces Set Up Server Again…, Connect Again… and Sign In…; it opens the Connect task page, titled `settings.connect.reconnect.title`, at the server's next step ([flows/reconnect-to-server](../flows/reconnect-to-server.md)), and keeps its ellipsis. Windows has no relative-time formatter, so "5 minutes ago" and "2 hours ago" are built by the app (B34); the date forms use `DateTimeFormatter` with the user's regional format ([platform.md, 31](../platform.md#31-dates-time-zones-and-formats)).
+
+### Devices group (connected, and the server accepts this PC)
+
+The spec's Devices section ([settings-devices](settings-devices.md)) is a group of this page, between Changed on two devices (or the server card when that group is absent) and Stop syncing, with the heading `settings.sync.devices.header`. It is absent, not dimmed, when the PC is not connected and when the server does not accept it (a state that stops automatic sync: the status bar says why and carries Reconnect…). It has no reconnect button of its own. After Reconnect succeeds the group appears and lists the devices without reopening the page. The list is read when the page appears, when the Add device dialog closes and when a Connect or Reconnect page started from this page returns; not on every background sync.
 
 ### Stop syncing group (connected only)
 
@@ -72,8 +76,9 @@ While a change from another device (an entry, template, journal or permanent del
 | --- | --- | --- | --- |
 | `connect-to-server` | Primary button card | as in commands.md | Always (the window is unlocked) |
 | `sync-now` | The bar's action, or the button in the server card when no bar shows (D49) | as in commands.md | Not while a sync the person started runs; not while the library is being replaced, a save has failed, or without a working connection. Shows "Syncing…" for at least half a second |
-| `sync-reconnect` | The bar's action when the state needs it | as in commands.md | Not while a sync the person started runs |
+| `sync-reconnect` | The bar's action when the state needs it (the server card's button when no bar shows) | as in commands.md | Not while a sync the person started runs |
 | `stop-syncing` | The button in the Stop syncing card | — | Not while the library is being replaced |
+| `add-device`, `revoke-device`, `devices-try-again` | The Devices group | — | As in [settings-devices](settings-devices.md) |
 | `open-kept-note` | A Changed on two devices card that has something to open | — | The window is unlocked and the item still exists; a card whose item is gone is removed |
 | `clear-kept-notes` | Text button last in that group | — | The window is unlocked |
 | `open-setup-guide` | Hyperlink in the not-connected card | — | Always |
@@ -83,7 +88,7 @@ When Sync now ends, Narrator hears the status message if there is one, otherwise
 
 ## Copy differences
 
-Sentence case applies ("Last synced", "Not on server yet", "How to set up a server", "Sign in…"). Beyond that:
+Sentence case applies ("Last synced", "Not on server yet", "How to set up a server", "Reconnect…"). Beyond that:
 
 | Key | Default | Proposed Windows text | Category |
 | --- | --- | --- | --- |
@@ -106,6 +111,7 @@ Sentence case applies ("Last synced", "Not on server yet", "How to set up a serv
 ## Different by design
 
 - **Footer messages are an `InfoBar`.** Apple shows the state's message as the section footer. Windows shows a persistent status bar at the top of the page, the Windows 11 Settings pattern, and puts the one action in it (or beside the server when no bar shows). The text, order and "first that applies" rule are the spec's.
+- **Devices are a group of this page**, as the spec's section of Sync is, not a page of their own; a Windows Settings page may hold several groups.
 - **No former Mac server notice.** The server earlier Mac versions ran on that computer does not exist on Windows.
 - **Stop syncing has no ellipsis**: it only asks for confirmation ([platform.md, 12.2](../platform.md#122-ellipsis)).
 

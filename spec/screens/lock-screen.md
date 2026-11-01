@@ -75,7 +75,6 @@ When App Lock turned itself off because the device no longer has a passcode or l
 - On phone/tablet, a success that arrives while the app isn't active is applied when it becomes active, unless it locked again meanwhile.
 - After unlocking, VoiceOver's focus moves to the journals; after a cancel it returns to Unlock with {method}.
 - Unlocking with the password also checks the server's copy of the password when this device's copy fails (a password changed on another device), accepting it only if it opens these journals.
-- Unlocking with the master password marks the password as checked.
 - App Lock stays on after unlocking with the credential.
 
 ## Accessibility

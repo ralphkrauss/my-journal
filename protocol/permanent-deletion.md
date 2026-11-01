@@ -61,3 +61,7 @@ Resolution retires the superseded pending request and queues a new operation aga
 ## Tests
 
 Real SQLite tests cover rollback after a failure midway through a multi-record deletion (including the original pending bytes), shared images, entries deleted on their own, history of moved entries, history-only entries, stale scope and wrong-store refusal, replay after acknowledgement, intentional restoration and refusal of stale restoration after a second deletion, and copies with images and history. The automatic settlement is covered by the conflicts.md fixtures and scenarios. The sync test client (`scripts/test-sync.sh`) publishes markers over the real server, retries them, deletes a journal with pending changes, lets an offline edit meet a deletion (the deletion stays final and the edit is parked in Recently Deleted) and checks that other devices converge.
+
+## Fixtures
+
+[conformance/records/records-v1.json](conformance/records/README.md) has a canonical entry marker, a canonical journal marker, an entry restored from a deletion, a marker that is not canonical and a deletion ID on an ordinary record. The settlement of a deletion against an edit is pinned by rows 4, 5 and 7 of [conformance/records/conflict-resolution-v1.json](conformance/records/README.md#settling-conflicts) and by the scenarios in [conformance/sync/conflict-scenarios-v1.json](conformance/sync/README.md#conflict-scenarios). No fixture pins the confirmation scope, the receiving rules for an ordinary revision over a marker, or intentional restoration.

@@ -64,6 +64,16 @@ The owner accepted every reviewed recommendation in this folder (D20 to D54), wi
 - **No OneDrive warning for plain Markdown export.** The risk is the person's. The "Export to a OneDrive folder?" dialog (D46, B37) is not built, and the pages that mentioned it ([settings-backup](screens/settings-backup.md), [export-markdown](flows/export-markdown.md), [export-archive](flows/export-archive.md), [platform.md](platform.md) 16, [commands.md](commands.md), [copy-proposals.md](copy-proposals.md)) were updated on 2026-10-07 to say the app does not warn.
 - **Tables are fully editable in place, exactly like on the Mac.** A hard requirement for the editor technology choice (D30, D33): the read-only grid fallback is withdrawn, and R6 of [entry-editor](screens/entry-editor.md) is a Must for both spikes. [edit-table](flows/edit-table.md) is the behaviour to build; it and the other pages that described the fallback ([editing-rules](flows/editing-rules.md), entry-editor) were updated on 2026-10-07.
 
+## Version 1.1 (owner-approved simplifications)
+
+The spec of My Journal 1.1 (Apple build 23) changed several behaviours the first mappings were written against, and the mapping files follow the spec ([CHANGELOG.md](../../../CHANGELOG.md), Changed):
+
+- Every library is encrypted: there is no choice of encryption, no Turn On Encryption and no unencrypted library, and a server without encryption is refused. Check Your Password is gone; Forgot Password? is inside Change Password.
+- Conflicts settle themselves and keep both versions as separate items; there is no Review Changes page. The notice above the open entry and the Changed on Two Devices list in Settings > Sync tell the person afterwards.
+- Settings has five panes: General, Sync (with Devices as a section), Privacy, Backup and Agent Access. One Reconnect… action covers a server that was reset, restored or replaced, or that removed this PC's access.
+- No journal-level default template, version history or Merge Into…; New Entry is always empty and a template is used from inside it (File > Use a template…). Restore is one verb that acts at once.
+- An archive is one `.journalbackup` file ([protocol/archive.md](../../../protocol/archive.md)). Windows reads and writes only that file and registers only that file type; the folders that 1.0 saved on Apple (`.journalarchive`) are never read or written on Windows.
+
 ## Recording the implementation
 
 Once a page is implemented, add two sections after the required ones: **Implementation** (the XAML and C# files, view models and engine interfaces that implement the page, and anything a porter must not simplify) and **Screenshots** (what each file under `screenshots/<device>/` shows), and list the files in the front matter under `sources:` (repository paths) and `screenshots:` (`screenshots/<device>/<id>-<state>.png`). Choose the device folder names (for example `desktop`) in this README when the first screenshot is added, and write the capture script under `design/` so screenshots are regenerated, not taken by hand ([platforms/README.md](../README.md), Screenshots). The checker verifies that listed screenshots exist and are named for their page.

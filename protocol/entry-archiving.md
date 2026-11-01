@@ -13,3 +13,7 @@ Clients keep the field when they save other changes, move an entry or restore a 
 - Keep Entry and Keep Entry as Copy when resolving a conflict with a permanent deletion.
 
 The shared core still has a transactional operation that sets or clears the field against an expected previous value. Only the sync test client uses it, to check that other clients preserve and converge on the field.
+
+## Fixtures
+
+[conformance/records/records-v1.json](conformance/records/README.md) has an entry with `archivedAt` that stays editable and a journal with `archivedAt` that must be read as unreadable. No fixture covers the operations that clear the field.
