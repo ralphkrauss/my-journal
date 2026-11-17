@@ -42,7 +42,7 @@ The packages exist as workflow artifacts only between their build job and the dr
 
 ## TestFlight
 
-`.github/workflows/testflight.yml` is prepared and has not run. Dispatch it manually from `main`. It never runs on pull requests or tags. It uploads the iPhone and iPad app and the Mac app, which share the bundle identifier `io.github.ralphkrauss.myjournal` and one purchase, in two independent jobs.
+`.github/workflows/testflight.yml` is prepared and has not run. Dispatch it manually from `main`. It never runs on pull requests or tags. It uploads the iPhone and iPad app and the Mac app, which share the bundle identifier `io.github.ralphkrauss.myjournal` and one App Store record (a universal app), in two independent jobs.
 
 - It requires every check named in `.github/rulesets/quality.json` to have passed on that commit instead of running Quality again, and runs a fresh Dependency Audit.
 - The build number is `<run number + offset>.<run attempt>`, passed to Xcode as `CURRENT_PROJECT_VERSION`; `project.yml` keeps `1` for local builds. The offset is `IOS_BUILD_NUMBER_OFFSET` for iOS and `MAC_BUILD_NUMBER_OFFSET` for the Mac, whose builds are counted separately. App Store Connect rejects a second upload of the same version and build number, so keep this workflow the only automated uploader. If builds of the same version were uploaded another way, for example from Xcode Organizer, set the offset above their build numbers. The numbers are shown in the job summary.

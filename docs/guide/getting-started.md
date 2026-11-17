@@ -2,7 +2,7 @@
 
 ## Install My Journal
 
-Get My Journal from the App Store, where one purchase covers iPhone, iPad and Mac, with no subscription or in-app purchases. You can also build it from source for free on a Mac with Xcode; see [development](../development.md).
+Get My Journal from the App Store, free on iPhone, iPad and Mac, with no subscription or in-app purchases. You can also build it from source on a Mac with Xcode; see [development](../development.md).
 
 It runs on iOS 16, iPadOS 16 and macOS 14 or later, on Mac computers with Apple silicon or an Intel processor.
 

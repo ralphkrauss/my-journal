@@ -7,7 +7,7 @@ My Journal has no public release yet. This page describes the planned distributi
 | Product | Channel | Built by |
 | --- | --- | --- |
 | iPhone and iPad app | TestFlight, then the App Store | TestFlight workflow (signed at export and uploaded to App Store Connect) |
-| Mac app (one purchase with iPhone and iPad) | TestFlight, then the Mac App Store | TestFlight workflow (sandboxed; signed at export and uploaded to App Store Connect) |
+| Mac app (the same free app as on iPhone and iPad) | TestFlight, then the Mac App Store | TestFlight workflow (sandboxed; signed at export and uploaded to App Store Connect) |
 | Server for Linux (x64 and Arm64, glibc) | Self-contained archives on GitHub Releases | Release workflow |
 | Server container (amd64 and arm64) | GitHub Container Registry, referenced by digest | Release workflow |
 

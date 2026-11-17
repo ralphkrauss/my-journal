@@ -20,7 +20,7 @@ My Journal is for people who want to own their writing. Your journals stay on yo
   <img src="docs/app-store/screenshots/iphone/06-dark.jpg" width="250" alt="My Journal on iPhone in dark appearance: the entry Porto, day two with a photo of the river at sunset and a checklist">
 </p>
 
-**[Get My Journal on the App Store](https://apps.apple.com/app/id6816758959)** for iPhone, iPad and Mac: one purchase covers all three. You can also [build it from source](docs/development.md) for free. Keep an [archive](docs/guide/backups.md) of anything you can’t afford to lose.
+**[Get My Journal on the App Store](https://apps.apple.com/app/id6816758959)** for iPhone, iPad and Mac, free. You can also [build it from source](docs/development.md). Keep an [archive](docs/guide/backups.md) of anything you can’t afford to lose.
 
 ## Why My Journal
 
@@ -29,7 +29,7 @@ My Journal is for people who want to own their writing. Your journals stay on yo
 - **Open source and open formats.** The apps, the server and the protocol are Apache 2.0. Entries are Markdown, and the sync, encryption and archive formats are documented with test vectors, so other clients can read your data.
 - **Your writing is portable.** Export as Markdown gives you plain files, with their images, that any Markdown app opens, such as Obsidian or iA Writer. For a full backup, the encrypted archive keeps everything, including earlier versions.
 - **Native and simple.** Native SwiftUI apps with each platform’s controls, menus and keyboard shortcuts, not a web page in a wrapper. The basics, done well: write, format, add photos, find things again. No feeds, streaks or prompts.
-- **No subscription, no account.** One purchase covers iPhone, iPad and Mac, with no in-app purchases. Building from source is free.
+- **Free, no account.** Free on iPhone, iPad and Mac, with no subscription, in-app purchases or ads.
 - **AI on your terms.** No AI service is built in. If you want one, let the agent you already use, such as Claude Code or another MCP client on your own computer, read the journals you choose through your own server. Access is read-only, per journal and revocable.
 
 ## Who it’s for
@@ -51,7 +51,7 @@ Many journaling apps are good at what they do. Most are built around an account 
 | Encryption | Varies; end-to-end encryption is sometimes optional or paid | End-to-end, on by default |
 | Data format | Often undocumented | Markdown entries; documented archive, sync and encryption formats |
 | AI | Built in, with a provider the app chooses, or none | None built in; your own agent, read-only, for the journals you choose |
-| Price | Often a subscription | One purchase for iPhone, iPad and Mac, or build it free |
+| Price | Often a subscription | Free on iPhone, iPad and Mac |
 | Source code | Usually closed | Open source under Apache 2.0 |
 
 ## Features
@@ -119,7 +119,7 @@ Many journaling apps are good at what they do. Most are built around an account 
 | Sync server (Linux, macOS or a container) | Run it yourself; see [self-hosting](docs/self-hosting/README.md). |
 | Windows, Android and Linux | Planned, after the Apple apps. |
 
-- **[App Store](https://apps.apple.com/app/id6816758959):** one purchase covers iPhone, iPad and Mac, and supports development.
+- **[App Store](https://apps.apple.com/app/id6816758959):** free, for iPhone, iPad and Mac.
 - **Build from source:** free. You need a Mac with Xcode; see [development](docs/development.md).
 
 The Apple apps are the first clients. Apps for other platforms will each follow their own platform’s conventions and use the same open protocol, encryption and data format, so your journals can move with you.
@@ -143,7 +143,7 @@ Enter the setup code in the app with Connect to a Server…. This container list
 - **Can the person running the server read my journals?** Not with encryption on. They can see things like how many entries you have, their sizes and when your devices sync; the [security model](SECURITY.md#what-the-server-can-see) lists everything.
 - **What if I forget my master password?** Nobody can reset it, and your server never receives it. A device that has your journals keeps opening without it, and you can add devices by pairing; see [troubleshooting](docs/guide/troubleshooting.md#i-forgot-my-master-password).
 - **Can I get my entries out?** Yes. Export as Markdown saves plain [Markdown files](protocol/markdown-export.md) with their images, which other Markdown apps open. Export Archive saves all your journals, images and earlier versions in a [documented format](protocol/archive.md) that other clients can read.
-- **Is there a subscription?** No. One purchase covers iPhone, iPad and Mac, and there are no in-app purchases.
+- **Is there a subscription?** No. My Journal is free on iPhone, iPad and Mac, with no in-app purchases.
 
 ## Using My Journal
 
